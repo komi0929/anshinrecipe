@@ -478,7 +478,10 @@ async def admin_dashboard(current_user: str = Depends(verify_admin_credentials))
 
                 try {
                     // Load metrics
-                    const metricsResponse = await fetch(`/api/admin/overview-metrics?days=${currentDateRange}`);
+                    const metricsResponse = await fetch(`/api/admin/overview-metrics?days=${currentDateRange}`, {
+                        method: 'GET',
+                        credentials: 'include'
+                    });
                     const metrics = await metricsResponse.json();
                     
                     // Update KPI cards
@@ -495,7 +498,10 @@ async def admin_dashboard(current_user: str = Depends(verify_admin_credentials))
                     document.getElementById('mismatch-reports').textContent = metrics.mismatch_reports;
 
                     // Load trend data
-                    const trendsResponse = await fetch(`/api/admin/daily-trends?days=${currentDateRange}`);
+                    const trendsResponse = await fetch(`/api/admin/daily-trends?days=${currentDateRange}`, {
+                        method: 'GET',
+                        credentials: 'include'
+                    });
                     const trends = await trendsResponse.json();
                     
                     // Initialize charts
