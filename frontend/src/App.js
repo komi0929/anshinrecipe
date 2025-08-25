@@ -35,6 +35,11 @@ function App() {
     if (isDemoMode) {
       setSearchResults(mockRecipes);
       setHasSearched(true);
+      // Auto-expand Top10 for demo
+      const expandTimer = setTimeout(() => {
+        setShowTop10(true);
+      }, 1000);
+      return () => clearTimeout(expandTimer);
     }
   }, [isDemoMode]);
 
