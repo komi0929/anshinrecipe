@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Complete Admin Dashboard - Quality View Wiring by implementing logic to display daily allergen verdict ratios, a table of latest allergen mismatch reports, and a list of dictionary expansion candidates."
+user_problem_statement: "Wire Funnel, Extract, and Domains sections in the /api/admin/dashboard to real MongoDB data. Implement conversion funnel, parseSource distribution, top 10 recipe domains, and CSV export functionality."
 
 backend:
   - task: "Quality Metrics API Endpoint"
