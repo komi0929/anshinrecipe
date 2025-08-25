@@ -123,6 +123,54 @@ backend:
         agent: "main"
         comment: "Fixed admin dashboard routing issue - moved from /admin to /api/admin/dashboard to work with Kubernetes ingress routing. Quality API endpoint fully verified and functional."
 
+  - task: "Funnel Metrics API Endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/admin.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "backend_testing"
+        comment: "Comprehensive testing completed for /api/admin/funnel-metrics endpoint. All authentication tests passed (401 for no auth, 200 for valid auth). Data structure validation confirmed correct JSON format with required keys: period_days, funnel_stages, conversion_rates, summary. Funnel stages properly implemented: search_submitted, top3_impression, top3_click, dwell_5s_plus with count and percentage fields. Date range parameters (7, 30, 90 days) working correctly. Real MongoDB data integration functional - showing 153 total searches with 67 successful conversions (43.79% conversion rate) for 7-day period."
+
+  - task: "Extract Metrics API Endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/admin.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "backend_testing"
+        comment: "Comprehensive testing completed for /api/admin/extract-metrics endpoint. Authentication protection working correctly (401 for unauthorized, 200 for valid auth). Data structure validation passed with all required keys: parse_source_distribution, catchphrase_coverage, extraction_sources, quality_indicators. Parse source distribution includes jsonld, microdata, html sources. Catchphrase coverage shows 1247 total recipes with 87.3% coverage rate. Quality indicators report 78.4% average extraction confidence. Mock data implementation working as designed for MVP."
+
+  - task: "Domains Metrics API Endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/admin.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "backend_testing"
+        comment: "Comprehensive testing completed for /api/admin/domains-metrics endpoint. Authentication working correctly with proper 401/200 responses. Data structure validation passed with required keys: top_domains, summary, violations. Top domains array contains 10 domains with proper structure including domain, impressions, clicks, ctr, avg_anshin_score, violation_flag fields. Summary shows 10 total domains, 2 with violations, 56.7% average CTR, 78.7 average Anshin score. Mock data implementation provides realistic domain performance metrics for MVP."
+
+  - task: "Export CSV API Endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/admin.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "backend_testing"
+        comment: "Comprehensive testing completed for /api/admin/export-csv endpoint. Authentication protection working correctly. CSV export functionality fully operational with proper content-type (text/csv) and download headers (attachment; filename). CSV structure validated with correct headers: ts, session_id, context, datasource, axisShift, event_type, value. Real MongoDB data export working - 193 data rows exported from session_telemetry and allergen_feedback collections. Date range parameters functional (tested with 2024-01-01 to 2024-01-31). Filename generation includes date range as expected."
+
 frontend:
   - task: "Quality View Frontend Integration"
     implemented: true
