@@ -132,6 +132,66 @@ backend:
     needs_retesting: false
     status_history:
       - working: true
+        agent: "main"
+        comment: "Funnel metrics calculation using real MongoDB session_telemetry data. API endpoint /api/admin/funnel-metrics implemented with funnel stages, conversion rates, and date range support."
+      - working: true
+        agent: "backend_testing"
+        comment: "Funnel Metrics API testing passed with real MongoDB integration, proper funnel stages (search_submitted, top3_impression, top3_click, dwell_5s_plus), conversion rates, and date range support (7/30/90 days). Shows 43.79% overall conversion rate."
+
+  - task: "Extract Metrics API Endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/admin.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Extract metrics with mock data for parseSource distribution, catchphrase coverage, extraction sources, and quality indicators. API endpoint /api/admin/extract-metrics implemented."
+      - working: true
+        agent: "backend_testing"
+        comment: "Extract Metrics API tests passed with proper data structure including parse_source_distribution, catchphrase_coverage (87.3% rate), extraction_sources, and quality_indicators (78.4% confidence)."
+
+  - task: "Domains Metrics API Endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/admin.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Domain performance metrics with mock data for top 10 domains, impressions, CTR, average AnshinScore, and violation flags. API endpoint /api/admin/domains-metrics implemented."
+      - working: true
+        agent: "backend_testing"
+        comment: "Domains Metrics API validation passed with top_domains array (10 domains), summary metrics (56.7% avg CTR, 78.7 avg Anshin score), and violation tracking (2 domains with violations)."
+
+  - task: "CSV Export API Endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/admin.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "CSV export functionality using real MongoDB data from session_telemetry and allergen_feedback collections. API endpoint /api/admin/export-csv with date range filtering implemented."
+      - working: true
+        agent: "backend_testing"
+        comment: "Export CSV API functionality verified with proper CSV format, correct headers (ts, session_id, context, datasource, axisShift, event_type, value), real MongoDB data export (193 rows), and date range filtering."
+
+  - task: "Funnel Metrics API Endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/admin.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
         agent: "backend_testing"
         comment: "Comprehensive testing completed for /api/admin/funnel-metrics endpoint. All authentication tests passed (401 for no auth, 200 for valid auth). Data structure validation confirmed correct JSON format with required keys: period_days, funnel_stages, conversion_rates, summary. Funnel stages properly implemented: search_submitted, top3_impression, top3_click, dwell_5s_plus with count and percentage fields. Date range parameters (7, 30, 90 days) working correctly. Real MongoDB data integration functional - showing 153 total searches with 67 successful conversions (43.79% conversion rate) for 7-day period."
 
