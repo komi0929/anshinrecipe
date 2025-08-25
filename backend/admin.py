@@ -651,9 +651,11 @@ async def admin_dashboard(current_user: str = Depends(verify_admin_credentials))
                 const rangeText = days === 7 ? '過去7日間' : days === 30 ? '過去30日間' : '過去90日間';
                 document.getElementById('currentRange').textContent = rangeText;
                 
-                // Reload data if we're on overview
+                // Reload data if we're on overview or context
                 if (currentSection === 'overview') {
                     loadOverviewData();
+                } else if (currentSection === 'context') {
+                    loadContextData();
                 }
             }
 
