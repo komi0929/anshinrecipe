@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Session Feedback Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: "Noto Sans JP", system-ui, sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Mock recipe results page -->
+    <div class="container mx-auto p-4 max-w-md min-h-screen bg-gray-50">
+        <div class="text-center py-8 mb-8">
+            <h1 class="text-2xl font-bold text-gray-900 mb-2">あんしんレシピ Top3</h1>
+            <p class="text-lg font-medium text-green-600">3stepであんしん＆おいしいレシピと出会えます</p>
+        </div>
+
+        <!-- Mock recipe card -->
+        <div class="bg-white p-4 rounded-xl shadow-md mb-4">
+            <div class="w-full aspect-video mb-3 rounded-lg bg-gray-200 flex items-center justify-center">
+                <span class="text-gray-500">レシピ画像</span>
+            </div>
+            <h3 class="font-bold text-base text-gray-900 mb-2">卵と乳不使用！ふわふわ米粉パンケーキ</h3>
+            <div class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-md inline-block mb-3">cookpad.com</div>
+            <button class="w-full bg-green-600 text-white py-2 rounded-lg font-medium">レシピを見る</button>
+        </div>
+
+        <!-- More content to simulate scrollable page -->
+        <div class="h-64 bg-white rounded-lg p-4 mb-20">
+            <p class="text-gray-600">その他のレシピコンテンツ...</p>
+        </div>
+    </div>
+
+    <!-- Session Feedback Banner -->
+    <div id="feedbackBanner" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50">
+        <div class="container mx-auto p-4 max-w-md">
+            <!-- Main feedback question -->
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-sm font-medium text-gray-900">今日の検索で理想のレシピに出会えましたか？</h3>
+                <button onclick="closeFeedback()" class="text-gray-500 hover:text-gray-900 transition-colors">
+                    ✕
+                </button>
+            </div>
+
+            <!-- Feedback buttons -->
+            <div class="space-y-2">
+                <button onclick="selectFeedback('ideal')" class="w-full flex items-center justify-center gap-2 bg-green-600 text-white py-2 px-3 rounded-lg hover:bg-green-700 transition-colors text-sm">
+                    <span>✓</span>
+                    ◯ 出会えた
+                </button>
+                
+                <button onclick="selectFeedback('not_found')" class="w-full flex items-center justify-center gap-2 bg-yellow-600 text-white py-2 px-3 rounded-lg hover:bg-yellow-700 transition-colors text-sm">
+                    <span>⚠</span>
+                    △ 出会えなかった
+                </button>
+                
+                <button onclick="selectFeedback('allergen')" class="w-full flex items-center justify-center gap-2 bg-red-600 text-white py-2 px-3 rounded-lg hover:bg-red-700 transition-colors text-sm">
+                    <span>✕</span>
+                    ✕ アレルゲンが含まれていた
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reasons selection (hidden by default) -->
+    <div id="reasonsPanel" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50 hidden">
+        <div class="container mx-auto p-4 max-w-md">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-sm font-medium text-gray-900">理由を教えてください（複数選択可）</h3>
+                <button onclick="closeReasons()" class="text-gray-500 hover:text-gray-900">✕</button>
+            </div>
+
+            <div class="flex flex-wrap gap-2 mb-4">
+                <button onclick="toggleReason('difficult')" class="reason-chip px-3 py-1 rounded-full text-sm bg-gray-100 text-gray-900 hover:bg-gray-200">難しすぎた</button>
+                <button onclick="toggleReason('taste')" class="reason-chip px-3 py-1 rounded-full text-sm bg-gray-100 text-gray-900 hover:bg-gray-200">好みに合わなかった</button>
+                <button onclick="toggleReason('scene')" class="reason-chip px-3 py-1 rounded-full text-sm bg-gray-100 text-gray-900 hover:bg-gray-200">探しているシーンと違った</button>
+                <button onclick="toggleReason('other')" class="reason-chip px-3 py-1 rounded-full text-sm bg-gray-100 text-gray-900 hover:bg-gray-200">その他</button>
+            </div>
+
+            <div id="noteInput" class="mb-4 hidden">
+                <input type="text" maxlength="20" placeholder="詳細（20字以内）" 
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                <div class="text-xs text-gray-500 mt-1">0/20文字</div>
+            </div>
+
+            <button onclick="submitReasons()" class="w-full bg-yellow-600 text-white py-2 px-3 rounded-lg hover:bg-yellow-700 text-sm">送信</button>
+        </div>
+    </div>
+
+    <script>
+        let selectedReasons = [];
+
+        function closeFeedback() {
+            document.getElementById('feedbackBanner').style.display = 'none';
+        }
+
+        function selectFeedback(type) {
+            console.log('Feedback selected:', type);
+            
+            if (type === 'ideal') {
+                // Send telemetry and close
+                sendTelemetry({ type: 'session_feedback', value: 'ideal_match' });
+                closeFeedback();
+            } else if (type === 'not_found') {
+                // Show reasons panel
+                document.getElementById('feedbackBanner').style.display = 'none';
+                document.getElementById('reasonsPanel').style.display = 'block';
+            } else if (type === 'allergen') {
+                // Send allergen report and close
+                sendAllergenReport();
+                sendTelemetry({ type: 'session_feedback', value: 'allergen_included' });
+                closeFeedback();
+            }
+        }
+
+        function closeReasons() {
+            document.getElementById('reasonsPanel').style.display = 'none';
+        }
+
+        function toggleReason(reason) {
+            const chip = event.target;
+            if (selectedReasons.includes(reason)) {
+                selectedReasons = selectedReasons.filter(r => r !== reason);
+                chip.classList.remove('bg-yellow-600', 'text-white');
+                chip.classList.add('bg-gray-100', 'text-gray-900');
+            } else {
+                selectedReasons.push(reason);
+                chip.classList.remove('bg-gray-100', 'text-gray-900');
+                chip.classList.add('bg-yellow-600', 'text-white');
+            }
+
+            // Show note input if "その他" is selected
+            if (reason === 'other') {
+                document.getElementById('noteInput').style.display = 
+                    selectedReasons.includes('other') ? 'block' : 'none';
+            }
+        }
+
+        function submitReasons() {
+            const noteText = document.querySelector('#noteInput input').value;
+            sendTelemetry({
+                type: 'session_feedback',
+                value: 'not_found',
+                reasons: selectedReasons,
+                note: noteText || null
+            });
+            closeReasons();
+        }
+
+        function sendTelemetry(payload) {
+            payload.anonId = 'demo_anon_123';
+            payload.ts = new Date().toISOString();
+            payload.query = 'カレー';
+            payload.context = '時短';
+            payload.setIds = ['1', '2', '3'];
+
+            console.log('Telemetry payload:', payload);
+            alert('Telemetry sent: ' + JSON.stringify(payload, null, 2));
+        }
+
+        function sendAllergenReport() {
+            const payload = {
+                event: 'report_allergen_mismatch',
+                recipeId: '1',
+                context: '時短',
+                query: 'カレー',
+                anonId: 'demo_anon_123',
+                ts: new Date().toISOString()
+            };
+
+            console.log('Allergen feedback payload:', payload);
+            alert('Allergen report sent: ' + JSON.stringify(payload, null, 2));
+        }
+    </script>
+</body>
+</html>
