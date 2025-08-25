@@ -29,19 +29,22 @@ function App() {
   // Check for demo mode to show results immediately
   const isDemoMode = new URLSearchParams(window.location.search).get('demo') === '1';
   const isDebugMode = new URLSearchParams(window.location.search).get('debug') === '1';
+  const showExpanded = new URLSearchParams(window.location.search).get('expanded') === '1';
 
   // Show demo results if demo mode is enabled
   useEffect(() => {
     if (isDemoMode) {
       setSearchResults(mockRecipes);
       setHasSearched(true);
-      // Auto-expand Top10 for demo
-      const expandTimer = setTimeout(() => {
-        setShowTop10(true);
-      }, 1000);
-      return () => clearTimeout(expandTimer);
+      // Auto-expand Top10 for demo or if expanded param is set
+      if (showExpanded) {
+        const expandTimer = setTimeout(() => {
+          setShowTop10(true);
+        }, 1000);
+        return () => clearTimeout(expandTimer);
+      }
     }
-  }, [isDemoMode]);
+  }, [isDemoMode, showExpanded]);
 
   // Mandatory allergens (always visible)
   const mandatoryAllergens = ["卵", "乳", "小麦", "そば", "落花生", "えび", "かに", "くるみ"];
