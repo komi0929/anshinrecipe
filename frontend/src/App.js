@@ -29,12 +29,19 @@ function App() {
   const isDemoMode = new URLSearchParams(window.location.search).get('demo') === '1';
   const isDebugMode = new URLSearchParams(window.location.search).get('debug') === '1';
   const showExpanded = new URLSearchParams(window.location.search).get('expanded') === '1';
+  const demoContext = new URLSearchParams(window.location.search).get('context');
 
   // Show demo results if demo mode is enabled
   useEffect(() => {
     if (isDemoMode) {
       setSearchResults(mockRecipes);
       setHasSearched(true);
+      
+      // Set context from URL parameter
+      if (demoContext) {
+        setSelectedContext(demoContext);
+      }
+      
       // Auto-expand Top10 for demo or if expanded param is set
       if (showExpanded) {
         const expandTimer = setTimeout(() => {
@@ -43,7 +50,7 @@ function App() {
         return () => clearTimeout(expandTimer);
       }
     }
-  }, [isDemoMode, showExpanded]);
+  }, [isDemoMode, showExpanded, demoContext]);
 
   // Mandatory allergens (always visible)
   const mandatoryAllergens = ["卵", "乳", "小麦", "そば", "落花生", "えび", "かに", "くるみ"];
