@@ -52,6 +52,68 @@ async def get_status_checks():
     status_checks = await db.status_checks.find().to_list(1000)
     return [StatusCheck(**status_check) for status_check in status_checks]
 
+# Session feedback and telemetry endpoints
+@api_router.post("/v1/telemetry")
+async def submit_telemetry(telemetry_data: dict):
+    """
+    Submit session feedback telemetry
+    Expected payload: {
+        type: "session_feedback",
+        value: "ideal_match" | "not_found" | "allergen_included",
+        reasons?: string[],
+        note?: string,
+        query: string,
+        context: string,
+        setIds: string[],
+        anonId: string,
+        ts: string
+    }
+    """
+    logging.info(f"Telemetry received: {telemetry_data}")
+    
+    # Store in database
+    telemetry_entry = {
+        **telemetry_data,
+        "created_at": datetime.utcnow()
+    }
+    
+    result = await db.session_telemetry.insert_one(telemetry_entry)
+    
+    return {
+        "status": "success", 
+        "message": "Telemetry submitted successfully",
+        "id": str(result.inserted_id)
+    }
+
+@api_router.post("/v1/feedback")  
+async def submit_feedback(feedback_data: dict):
+    """
+    Submit allergen mismatch feedback
+    Expected payload: {
+        event: "report_allergen_mismatch",
+        recipeId?: string,
+        context: string,
+        query: string,
+        anonId: string,
+        ts: string
+    }
+    """
+    logging.info(f"Allergen feedback received: {feedback_data}")
+    
+    # Store in database
+    feedback_entry = {
+        **feedback_data,
+        "created_at": datetime.utcnow()
+    }
+    
+    result = await db.allergen_feedback.insert_one(feedback_entry)
+    
+    return {
+        "status": "success",
+        "message": "Allergen feedback submitted successfully", 
+        "id": str(result.inserted_id)
+    }
+
 # Include the router in the main app
 app.include_router(api_router)
 
