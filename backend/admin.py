@@ -248,6 +248,118 @@ async def calculate_context_metrics(days: int = 7):
             "suggestions": []
         } for context in contexts}
 
+async def calculate_quality_metrics(days: int = 7):
+    """Calculate quality metrics including allergen verdicts and mismatch analysis"""
+    start_date, end_date = get_date_range(days)
+    
+    # Convert to UTC for MongoDB queries
+    start_utc = start_date.astimezone(pytz.UTC)
+    end_utc = end_date.astimezone(pytz.UTC)
+    
+    try:
+        # Generate daily allergen verdict data (mock implementation)
+        # In real implementation, this would come from recipe analysis pipeline
+        daily_verdicts = []
+        tokyo_tz = pytz.timezone('Asia/Tokyo')
+        
+        for i in range(days):
+            date = start_date + timedelta(days=i)
+            date_str = date.strftime('%m/%d')
+            
+            # Mock daily verdict distribution (would come from actual allergen analysis)
+            total_recipes = random.randint(15, 35)
+            ok_count = int(total_recipes * random.uniform(0.65, 0.85))
+            ng_count = int(total_recipes * random.uniform(0.08, 0.15))
+            unknown_count = total_recipes - ok_count - ng_count
+            
+            daily_verdicts.append({
+                "date": date_str,
+                "ok": ok_count,
+                "ng": ng_count, 
+                "unknown": unknown_count,
+                "total": total_recipes
+            })
+        
+        # Get latest allergen mismatch reports
+        mismatch_reports = await db.allergen_feedback.find({
+            "event": "report_allergen_mismatch",
+            "created_at": {"$gte": start_utc, "$lte": end_utc}
+        }).sort("created_at", -1).limit(10).to_list(10)
+        
+        # Process mismatch reports
+        processed_reports = []
+        for report in mismatch_reports:
+            # Extract domain from query or context
+            domain_mapping = {
+                "カレー": "cookpad.com",
+                "パスタ": "kurashiru.com", 
+                "ケーキ": "recipe.rakuten.co.jp",
+                "サラダ": "delish-kitchen.tv",
+                "炒飯": "cookpad.com",
+                "味噌汁": "kurashiru.com",
+                "ハンバーグ": "recipe.rakuten.co.jp"
+            }
+            
+            domain = domain_mapping.get(report.get('query', ''), 'unknown.com')
+            
+            # Generate snippet based on query and context
+            query = report.get('query', 'レシピ')
+            context = report.get('context', '一般')
+            snippet = f"{context}向け{query}レシピに含有アレルゲン検出"
+            
+            processed_reports.append({
+                "timestamp": report['created_at'].strftime('%Y-%m-%d %H:%M:%S'),
+                "domain": domain,
+                "snippet": snippet,
+                "recipe_id": report.get('recipeId', 'N/A')
+            })
+        
+        # Dictionary expansion candidates (mock implementation)
+        # In real implementation, this would analyze Unknown/NG items for new allergen terms
+        expansion_candidates = [
+            "グルテン含有", "乳糖不耐", "大豆由来", "魚介エキス", "鶏肉エキス",
+            "アーモンド粉", "カシューナッツ", "ピーナッツオイル", "ごま油", "魚醤",
+            "昆布エキス", "鰹節", "チーズ粉末", "バター風味", "マヨネーズ"
+        ]
+        
+        # Calculate overall quality metrics
+        total_verdicts = sum(day['total'] for day in daily_verdicts)
+        total_ok = sum(day['ok'] for day in daily_verdicts)
+        total_ng = sum(day['ng'] for day in daily_verdicts) 
+        total_unknown = sum(day['unknown'] for day in daily_verdicts)
+        
+        quality_score = (total_ok / total_verdicts * 100) if total_verdicts > 0 else 0
+        
+        return {
+            "daily_verdicts": daily_verdicts,
+            "mismatch_reports": processed_reports,
+            "expansion_candidates": expansion_candidates,
+            "summary": {
+                "total_analyzed": total_verdicts,
+                "ok_rate": round((total_ok / total_verdicts * 100) if total_verdicts > 0 else 0, 1),
+                "ng_rate": round((total_ng / total_verdicts * 100) if total_verdicts > 0 else 0, 1),
+                "unknown_rate": round((total_unknown / total_verdicts * 100) if total_verdicts > 0 else 0, 1),
+                "quality_score": round(quality_score, 1),
+                "mismatch_count": len(processed_reports)
+            }
+        }
+        
+    except Exception as e:
+        print(f"Error calculating quality metrics: {e}")
+        return {
+            "daily_verdicts": [],
+            "mismatch_reports": [],
+            "expansion_candidates": [],
+            "summary": {
+                "total_analyzed": 0,
+                "ok_rate": 0,
+                "ng_rate": 0,
+                "unknown_rate": 0,
+                "quality_score": 0,
+                "mismatch_count": 0
+            }
+        }
+
 async def get_daily_trends(days: int = 7):
     """Get daily trend data for charts"""
     start_date, end_date = get_date_range(days)
