@@ -477,12 +477,22 @@ async def admin_dashboard(current_user: str = Depends(verify_admin_credentials))
                 document.getElementById('main-content').style.display = 'none';
 
                 try {
-                    // Load metrics
-                    const metricsResponse = await fetch(`/api/admin/overview-metrics?days=${currentDateRange}`, {
-                        method: 'GET',
-                        credentials: 'include'
+                    // Load metrics using XMLHttpRequest
+                    const metrics = await new Promise((resolve, reject) => {
+                        const xhr = new XMLHttpRequest();
+                        xhr.open('GET', `/api/admin/overview-metrics?days=${currentDateRange}`, true);
+                        xhr.withCredentials = true;
+                        xhr.onreadystatechange = function() {
+                            if (xhr.readyState === 4) {
+                                if (xhr.status === 200) {
+                                    resolve(JSON.parse(xhr.responseText));
+                                } else {
+                                    reject(new Error(`HTTP ${xhr.status}: ${xhr.statusText}`));
+                                }
+                            }
+                        };
+                        xhr.send();
                     });
-                    const metrics = await metricsResponse.json();
                     
                     // Update KPI cards
                     document.getElementById('total-searches').textContent = metrics.total_searches.toLocaleString();
@@ -498,11 +508,21 @@ async def admin_dashboard(current_user: str = Depends(verify_admin_credentials))
                     document.getElementById('mismatch-reports').textContent = metrics.mismatch_reports;
 
                     // Load trend data
-                    const trendsResponse = await fetch(`/api/admin/daily-trends?days=${currentDateRange}`, {
-                        method: 'GET',
-                        credentials: 'include'
+                    const trends = await new Promise((resolve, reject) => {
+                        const xhr = new XMLHttpRequest();
+                        xhr.open('GET', `/api/admin/daily-trends?days=${currentDateRange}`, true);
+                        xhr.withCredentials = true;
+                        xhr.onreadystatechange = function() {
+                            if (xhr.readyState === 4) {
+                                if (xhr.status === 200) {
+                                    resolve(JSON.parse(xhr.responseText));
+                                } else {
+                                    reject(new Error(`HTTP ${xhr.status}: ${xhr.statusText}`));
+                                }
+                            }
+                        };
+                        xhr.send();
                     });
-                    const trends = await trendsResponse.json();
                     
                     // Initialize charts
                     initializeTrendCharts(trends);
@@ -512,7 +532,7 @@ async def admin_dashboard(current_user: str = Depends(verify_admin_credentials))
                     
                 } catch (error) {
                     console.error('Error loading overview data:', error);
-                    document.getElementById('loading-indicator').innerHTML = '<div class="text-red-600">データの読み込みに失敗しました</div>';
+                    document.getElementById('loading-indicator').innerHTML = '<div class="text-red-600">データの読み込みに失敗しました: ' + error.message + '</div>';
                 }
             }
 
