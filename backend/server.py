@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 from typing import List
 import uuid
 from datetime import datetime
+from admin import admin_router
 
 
 ROOT_DIR = Path(__file__).parent
@@ -114,13 +115,14 @@ async def submit_feedback(feedback_data: dict):
         "id": str(result.inserted_id)
     }
 
-# Include the router in the main app
+# Include the routers
 app.include_router(api_router)
+app.include_router(admin_router)
 
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
