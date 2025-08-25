@@ -43,6 +43,7 @@ function App() {
   const isDebugMode = new URLSearchParams(window.location.search).get('debug') === '1';
   const showExpanded = new URLSearchParams(window.location.search).get('expanded') === '1';
   const demoContext = new URLSearchParams(window.location.search).get('context');
+  const showFeedbackDemo = new URLSearchParams(window.location.search).get('feedback') === '1';
 
   // Show demo results if demo mode is enabled
   useEffect(() => {
