@@ -141,7 +141,6 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Quality Metrics API Endpoint"
     - "Quality View Frontend Integration"
   stuck_tasks: []
   test_all: false
