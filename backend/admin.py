@@ -1269,10 +1269,129 @@ async def admin_dashboard(current_user: str = Depends(verify_admin_credentials))
                     <div id="extract-section" class="content-section hidden">
                         <div class="mb-8">
                             <h2 class="text-2xl font-bold text-gray-900 mb-2">Data Extract</h2>
-                            <p class="text-gray-600">データエクスポートと分析ツール</p>
+                            <p class="text-gray-600">データエクスポートと抽出分析ツール</p>
                         </div>
-                        <div class="bg-white p-6 rounded-lg shadow">
-                            <p class="text-gray-600">Data extraction tools will be implemented...</p>
+
+                        <!-- Loading Indicator for Extract -->
+                        <div id="extract-loading-indicator" class="text-center py-8">
+                            <div class="text-gray-600">抽出データを読み込み中...</div>
+                        </div>
+
+                        <!-- Extract Content -->
+                        <div id="extract-content" style="display: none;">
+                            <!-- Parse Source Distribution -->
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                                <div class="bg-white p-6 rounded-lg shadow">
+                                    <h3 class="text-lg font-semibold text-gray-900 mb-4">パースソース分布</h3>
+                                    <canvas id="parseSourceChart" width="400" height="200"></canvas>
+                                </div>
+                                
+                                <div class="bg-white p-6 rounded-lg shadow">
+                                    <h3 class="text-lg font-semibold text-gray-900 mb-4">キャッチフレーズカバレッジ</h3>
+                                    <div class="space-y-4">
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-gray-600">総レシピ数</span>
+                                            <span id="total-recipes" class="font-semibold">-</span>
+                                        </div>
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-gray-600">キャッチフレーズあり</span>
+                                            <span id="with-catchphrase" class="font-semibold text-green-600">-</span>
+                                        </div>
+                                        <div class="flex justify-between items-center border-t pt-2">
+                                            <span class="text-gray-900 font-medium">カバレッジ率</span>
+                                            <span id="coverage-rate" class="text-2xl font-bold text-blue-600">-%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Extraction Sources & Quality Indicators -->
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                                <div class="bg-white p-6 rounded-lg shadow">
+                                    <h3 class="text-lg font-semibold text-gray-900 mb-4">抽出ソース別分布</h3>
+                                    <div class="space-y-3">
+                                        <div class="extraction-source" id="source-title">
+                                            <div class="flex justify-between items-center">
+                                                <span class="text-gray-700">Title</span>
+                                                <span class="font-semibold" id="title-percentage">-%</span>
+                                            </div>
+                                            <div class="w-full bg-gray-200 rounded-full h-2 mt-1">
+                                                <div class="bg-blue-500 h-2 rounded-full" id="title-bar" style="width: 0%"></div>
+                                            </div>
+                                        </div>
+                                        <div class="extraction-source" id="source-meta">
+                                            <div class="flex justify-between items-center">
+                                                <span class="text-gray-700">Meta Description</span>
+                                                <span class="font-semibold" id="meta-percentage">-%</span>
+                                            </div>
+                                            <div class="w-full bg-gray-200 rounded-full h-2 mt-1">
+                                                <div class="bg-green-500 h-2 rounded-full" id="meta-bar" style="width: 0%"></div>
+                                            </div>
+                                        </div>
+                                        <div class="extraction-source" id="source-h2">
+                                            <div class="flex justify-between items-center">
+                                                <span class="text-gray-700">H2 Headings</span>
+                                                <span class="font-semibold" id="h2-percentage">-%</span>
+                                            </div>
+                                            <div class="w-full bg-gray-200 rounded-full h-2 mt-1">
+                                                <div class="bg-yellow-500 h-2 rounded-full" id="h2-bar" style="width: 0%"></div>
+                                            </div>
+                                        </div>
+                                        <div class="extraction-source" id="source-strong">
+                                            <div class="flex justify-between items-center">
+                                                <span class="text-gray-700">Strong/Bold Text</span>
+                                                <span class="font-semibold" id="strong-percentage">-%</span>
+                                            </div>
+                                            <div class="w-full bg-gray-200 rounded-full h-2 mt-1">
+                                                <div class="bg-purple-500 h-2 rounded-full" id="strong-bar" style="width: 0%"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="bg-white p-6 rounded-lg shadow">
+                                    <h3 class="text-lg font-semibold text-gray-900 mb-4">品質指標</h3>
+                                    <div class="space-y-4">
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-gray-600">平均抽出信頼度</span>
+                                            <span id="avg-confidence" class="font-semibold text-green-600">-%</span>
+                                        </div>
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-gray-600">抽出失敗率</span>
+                                            <span id="failed-extractions" class="font-semibold text-red-600">-%</span>
+                                        </div>
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-gray-600">手動確認要求</span>
+                                            <span id="manual-review" class="font-semibold text-yellow-600">-%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- CSV Export Section -->
+                            <div class="bg-white p-6 rounded-lg shadow">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-4">CSVエクスポート</h3>
+                                <p class="text-gray-600 mb-4">イベントとフィードバックデータをCSV形式でダウンロードできます</p>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">開始日</label>
+                                        <input type="date" id="export-start-date" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">終了日</label>
+                                        <input type="date" id="export-end-date" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    </div>
+                                </div>
+                                
+                                <button onclick="exportCSV()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    📥 CSVダウンロード
+                                </button>
+                                
+                                <div class="mt-3 text-sm text-gray-500">
+                                    含まれる列: ts, session_id, context, datasource, axisShift, event_type, value
+                                </div>
+                            </div>
                         </div>
                     </div>
 
