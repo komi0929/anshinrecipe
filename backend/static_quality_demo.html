@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anshin Recipe Admin - Quality Analysis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: "Noto Sans JP", system-ui, sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div class="w-64 bg-white shadow-lg">
+            <div class="p-6 border-b">
+                <h1 class="text-xl font-bold text-gray-900">あんしんレシピ</h1>
+                <p class="text-sm text-gray-600">Admin Dashboard</p>
+            </div>
+            
+            <!-- Navigation -->
+            <nav class="mt-6">
+                <div class="px-3">
+                    <button class="nav-item w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100">
+                        📊 Overview
+                    </button>
+                    <button class="nav-item w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 mt-1">
+                        🎯 Context
+                    </button>
+                    <button class="nav-item w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-gray-900 bg-green-50 hover:bg-green-100 mt-1">
+                        ⭐ Quality
+                    </button>
+                    <button class="nav-item w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 mt-1">
+                        🔄 Funnel
+                    </button>
+                    <button class="nav-item w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 mt-1">
+                        📈 Extract
+                    </button>
+                    <button class="nav-item w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 mt-1">
+                        🌐 Domains
+                    </button>
+                </div>
+            </nav>
+
+            <!-- Date Range Picker -->
+            <div class="px-6 mt-8">
+                <h3 class="text-sm font-medium text-gray-700 mb-3">期間選択</h3>
+                <div class="space-y-2">
+                    <button class="date-btn w-full text-left px-3 py-2 text-sm bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100">
+                        過去7日間
+                    </button>
+                    <button class="date-btn w-full text-left px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-100">
+                        過去30日間
+                    </button>
+                    <button class="date-btn w-full text-left px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-100">
+                        過去90日間
+                    </button>
+                </div>
+                <div class="mt-4 text-xs text-gray-500">
+                    選択期間: 過去7日間
+                </div>
+            </div>
+
+            <!-- User Info -->
+            <div class="absolute bottom-6 left-6 right-6">
+                <div class="px-3 py-2 bg-gray-50 rounded-lg">
+                    <div class="text-xs text-gray-600">ログイン中:</div>
+                    <div class="text-sm font-medium text-gray-900">admin</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 overflow-auto">
+            <div class="p-8">
+                <div class="mb-8">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-2">Quality Metrics</h2>
+                    <p class="text-gray-600">あんしんスコアと品質指標の分析 (Asia/Tokyo) - Real MongoDB Data</p>
+                </div>
+
+                <!-- Quality Summary Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">総解析数</p>
+                                <p class="text-2xl font-bold text-gray-900">164</p>
+                            </div>
+                            <div class="p-3 bg-blue-50 rounded-full">
+                                <div class="w-6 h-6 text-blue-600">🔍</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">OK率</p>
+                                <p class="text-2xl font-bold text-green-600">71.3%</p>
+                            </div>
+                            <div class="p-3 bg-green-50 rounded-full">
+                                <div class="w-6 h-6 text-green-600">✅</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">NG率</p>
+                                <p class="text-2xl font-bold text-red-600">10.4%</p>
+                            </div>
+                            <div class="p-3 bg-red-50 rounded-full">
+                                <div class="w-6 h-6 text-red-600">❌</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">Unknown率</p>
+                                <p class="text-2xl font-bold text-yellow-600">18.3%</p>
+                            </div>
+                            <div class="p-3 bg-yellow-50 rounded-full">
+                                <div class="w-6 h-6 text-yellow-600">❓</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Daily Allergen Verdict Chart -->
+                <div class="mb-6">
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">日別アレルゲン判定推移 (Stacked Chart)</h3>
+                        <canvas id="allergenVerdictChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+
+                <!-- Bottom Row: Mismatch Reports and Dictionary Candidates -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Latest Allergen Mismatch Reports -->
+                    <div class="bg-white rounded-lg shadow">
+                        <div class="px-6 py-4 border-b">
+                            <h3 class="text-lg font-semibold text-gray-900">最新不一致報告</h3>
+                            <p class="text-sm text-gray-600">アレルゲン含有の報告履歴</p>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">日時</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ドメイン</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">内容</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    <tr>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">2025-08-25 00:19</td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">kurashiru.com</td>
+                                        <td class="px-4 py-4 text-sm text-gray-500">健康向けパスタレシピに含有アレルゲン検出</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">2025-08-23 15:05</td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">recipe.rakuten.co.jp</td>
+                                        <td class="px-4 py-4 text-sm text-gray-500">初心者向けケーキレシピに含有アレルゲン検出</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">2025-08-22 12:12</td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">cookpad.com</td>
+                                        <td class="px-4 py-4 text-sm text-gray-500">時短向けカレーレシピに含有アレルゲン検出</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">2025-08-22 03:07</td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">kurashiru.com</td>
+                                        <td class="px-4 py-4 text-sm text-gray-500">イベント向け味噌汁レシピに含有アレルゲン検出</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">2025-08-18 10:04</td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">delish-kitchen.tv</td>
+                                        <td class="px-4 py-4 text-sm text-gray-500">イベント向けサラダレシピに含有アレルゲン検出</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Dictionary Expansion Candidates -->
+                    <div class="bg-white rounded-lg shadow">
+                        <div class="px-6 py-4 border-b">
+                            <h3 class="text-lg font-semibold text-gray-900">辞書拡張候補</h3>
+                            <p class="text-sm text-gray-600">Unknown/NG項目近傍の頻出トークン</p>
+                        </div>
+                        <div class="p-6">
+                            <div class="space-y-2">
+                                <div class="flex items-center justify-between py-2 px-3 bg-gray-50 rounded text-sm">
+                                    <span class="text-gray-700">グルテン含有</span>
+                                    <span class="text-xs text-gray-500">#1</span>
+                                </div>
+                                <div class="flex items-center justify-between py-2 px-3 bg-gray-50 rounded text-sm">
+                                    <span class="text-gray-700">乳糖不耐</span>
+                                    <span class="text-xs text-gray-500">#2</span>
+                                </div>
+                                <div class="flex items-center justify-between py-2 px-3 bg-gray-50 rounded text-sm">
+                                    <span class="text-gray-700">大豆由来</span>
+                                    <span class="text-xs text-gray-500">#3</span>
+                                </div>
+                                <div class="flex items-center justify-between py-2 px-3 bg-gray-50 rounded text-sm">
+                                    <span class="text-gray-700">魚介エキス</span>
+                                    <span class="text-xs text-gray-500">#4</span>
+                                </div>
+                                <div class="flex items-center justify-between py-2 px-3 bg-gray-50 rounded text-sm">
+                                    <span class="text-gray-700">鶏肉エキス</span>
+                                    <span class="text-xs text-gray-500">#5</span>
+                                </div>
+                                <div class="flex items-center justify-between py-2 px-3 bg-gray-50 rounded text-sm">
+                                    <span class="text-gray-700">アーモンド粉</span>
+                                    <span class="text-xs text-gray-500">#6</span>
+                                </div>
+                                <div class="flex items-center justify-between py-2 px-3 bg-gray-50 rounded text-sm">
+                                    <span class="text-gray-700">カシューナッツ</span>
+                                    <span class="text-xs text-gray-500">#7</span>
+                                </div>
+                                <div class="flex items-center justify-between py-2 px-3 bg-gray-50 rounded text-sm">
+                                    <span class="text-gray-700">ピーナッツオイル</span>
+                                    <span class="text-xs text-gray-500">#8</span>
+                                </div>
+                                <div class="flex items-center justify-between py-2 px-3 bg-gray-50 rounded text-sm">
+                                    <span class="text-gray-700">ごま油</span>
+                                    <span class="text-xs text-gray-500">#9</span>
+                                </div>
+                                <div class="flex items-center justify-between py-2 px-3 bg-gray-50 rounded text-sm">
+                                    <span class="text-gray-700">魚醤</span>
+                                    <span class="text-xs text-gray-500">#10</span>
+                                </div>
+                            </div>
+                            <div class="mt-4 text-xs text-gray-500">
+                                ※ 日本語ストップワード除去済み
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Real daily verdict data from MongoDB
+        const dailyVerdictData = [
+            {"date":"08/18","ok":14,"ng":2,"unknown":1,"total":17},
+            {"date":"08/19","ok":22,"ng":3,"unknown":5,"total":30},
+            {"date":"08/20","ok":24,"ng":4,"unknown":7,"total":35},
+            {"date":"08/21","ok":16,"ng":2,"unknown":4,"total":22},
+            {"date":"08/22","ok":12,"ng":2,"unknown":5,"total":19},
+            {"date":"08/23","ok":14,"ng":2,"unknown":3,"total":19},
+            {"date":"08/24","ok":15,"ng":2,"unknown":5,"total":22}
+        ];
+
+        function initializeAllergenVerdictChart() {
+            const ctx = document.getElementById('allergenVerdictChart');
+            
+            const labels = dailyVerdictData.map(d => d.date);
+            const okData = dailyVerdictData.map(d => d.ok);
+            const ngData = dailyVerdictData.map(d => d.ng);
+            const unknownData = dailyVerdictData.map(d => d.unknown);
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'OK',
+                            data: okData,
+                            backgroundColor: 'rgba(34, 197, 94, 0.8)',
+                            borderColor: 'rgb(34, 197, 94)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'NG',
+                            data: ngData,
+                            backgroundColor: 'rgba(239, 68, 68, 0.8)',
+                            borderColor: 'rgb(239, 68, 68)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Unknown',
+                            data: unknownData,
+                            backgroundColor: 'rgba(245, 158, 11, 0.8)',
+                            borderColor: 'rgb(245, 158, 11)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: false
+                        },
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        x: {
+                            stacked: true,
+                            title: {
+                                display: true,
+                                text: '日付'
+                            }
+                        },
+                        y: {
+                            stacked: true,
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'レシピ数'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initialize chart on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeAllergenVerdictChart();
+        });
+    </script>
+</body>
+</html>
