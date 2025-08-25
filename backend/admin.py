@@ -289,6 +289,15 @@ async def get_daily_trends_api(
     trends = await get_daily_trends(days)
     return JSONResponse(content=trends)
 
+@admin_router.get("/api/admin/context-metrics")
+async def get_context_metrics_api(
+    days: int = Query(7, description="Number of days to analyze"),
+    current_user: str = Depends(verify_admin_credentials)
+):
+    """Get context-specific metrics for the admin dashboard"""
+    metrics = await calculate_context_metrics(days)
+    return JSONResponse(content=metrics)
+
 @admin_router.get("/admin", response_class=HTMLResponse)
 async def admin_dashboard(current_user: str = Depends(verify_admin_credentials)):
     """Admin dashboard with Basic Auth protection"""
