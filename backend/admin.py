@@ -688,6 +688,99 @@ async def get_domains_metrics_api(
     metrics = await calculate_domains_metrics()
     return JSONResponse(content=metrics)
 
+@admin_router.get("/api/admin/export-csv")
+async def export_csv_data(
+    start_date: Optional[str] = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: Optional[str] = Query(None, description="End date (YYYY-MM-DD)"),
+    current_user: str = Depends(verify_admin_credentials)
+):
+    """Export events and feedback data as CSV"""
+    from fastapi.responses import StreamingResponse
+    import io
+    import csv
+    from datetime import datetime, timedelta
+    
+    # Default to last 30 days if no dates provided
+    if not start_date or not end_date:
+        end_dt = datetime.now(pytz.timezone('Asia/Tokyo'))
+        start_dt = end_dt - timedelta(days=30)
+    else:
+        tokyo_tz = pytz.timezone('Asia/Tokyo')
+        start_dt = tokyo_tz.localize(datetime.strptime(start_date, '%Y-%m-%d'))
+        end_dt = tokyo_tz.localize(datetime.strptime(end_date, '%Y-%m-%d')) + timedelta(days=1)
+    
+    # Convert to UTC for MongoDB queries
+    start_utc = start_dt.astimezone(pytz.UTC)
+    end_utc = end_dt.astimezone(pytz.UTC)
+    
+    # Create CSV in memory
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # CSV headers
+    writer.writerow(['ts', 'session_id', 'context', 'datasource', 'axisShift', 'event_type', 'value'])
+    
+    try:
+        # Get session telemetry data
+        session_data = await db.session_telemetry.find({
+            "created_at": {"$gte": start_utc, "$lte": end_utc}
+        }).sort("created_at", 1).to_list(10000)  # Limit to prevent timeout
+        
+        for session in session_data:
+            writer.writerow([
+                session.get('ts', session.get('created_at', '')),
+                session.get('anonId', ''),
+                session.get('context', ''),
+                'session_telemetry',  # datasource
+                session.get('axisShift', ''),
+                session.get('type', ''),
+                session.get('value', '')
+            ])
+        
+        # Get allergen feedback data
+        feedback_data = await db.allergen_feedback.find({
+            "created_at": {"$gte": start_utc, "$lte": end_utc}
+        }).sort("created_at", 1).to_list(10000)
+        
+        for feedback in feedback_data:
+            writer.writerow([
+                feedback.get('ts', feedback.get('created_at', '')),
+                feedback.get('anonId', ''),
+                feedback.get('context', ''),
+                'allergen_feedback',  # datasource
+                feedback.get('axisShift', ''),
+                feedback.get('event', ''),
+                feedback.get('recipeId', '')
+            ])
+        
+        # Prepare response
+        output.seek(0)
+        
+        # Generate filename with date range
+        filename = f"anshin_data_{start_dt.strftime('%Y%m%d')}_{end_dt.strftime('%Y%m%d')}.csv"
+        
+        return StreamingResponse(
+            io.BytesIO(output.getvalue().encode('utf-8')),
+            media_type='text/csv',
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+        
+    except Exception as e:
+        print(f"Error exporting CSV: {e}")
+        # Return error CSV
+        output.seek(0)
+        output.truncate()
+        writer = csv.writer(output)
+        writer.writerow(['error', 'message'])
+        writer.writerow(['export_failed', str(e)])
+        output.seek(0)
+        
+        return StreamingResponse(
+            io.BytesIO(output.getvalue().encode('utf-8')),
+            media_type='text/csv',
+            headers={"Content-Disposition": "attachment; filename=export_error.csv"}
+        )
+
 @admin_router.get("/api/admin/dashboard", response_class=HTMLResponse)
 async def admin_dashboard(current_user: str = Depends(verify_admin_credentials)):
     """Admin dashboard with Basic Auth protection"""
