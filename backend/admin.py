@@ -1523,6 +1523,12 @@ async def admin_dashboard(current_user: str = Depends(verify_admin_credentials))
                     loadContextData();
                 } else if (section === 'quality') {
                     loadQualityData();
+                } else if (section === 'funnel') {
+                    loadFunnelData();
+                } else if (section === 'extract') {
+                    loadExtractData();
+                } else if (section === 'domains') {
+                    loadDomainsData();
                 }
             }
 
