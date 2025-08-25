@@ -1106,6 +1106,172 @@ async def admin_dashboard(current_user: str = Depends(verify_admin_credentials))
                 }
             }
 
+            async function loadQualityData() {
+                document.getElementById('quality-loading-indicator').style.display = 'block';
+                document.getElementById('quality-content').style.display = 'none';
+
+                try {
+                    // Load quality metrics
+                    const qualityResponse = await new Promise((resolve, reject) => {
+                        const xhr = new XMLHttpRequest();
+                        xhr.open('GET', `/api/admin/quality-metrics?days=${currentDateRange}`, true);
+                        xhr.withCredentials = true;
+                        xhr.onreadystatechange = function() {
+                            if (xhr.readyState === 4) {
+                                if (xhr.status === 200) {
+                                    resolve(JSON.parse(xhr.responseText));
+                                } else {
+                                    reject(new Error(`HTTP ${xhr.status}: ${xhr.statusText}`));
+                                }
+                            }
+                        };
+                        xhr.send();
+                    });
+                    
+                    // Update quality summary cards
+                    updateQualitySummary(qualityResponse.summary);
+                    
+                    // Update allergen verdict chart
+                    updateAllergenVerdictChart(qualityResponse.daily_verdicts);
+                    
+                    // Update mismatch reports table
+                    updateMismatchReportsTable(qualityResponse.mismatch_reports);
+                    
+                    // Update dictionary expansion candidates
+                    updateExpansionCandidates(qualityResponse.expansion_candidates);
+                    
+                    document.getElementById('quality-loading-indicator').style.display = 'none';
+                    document.getElementById('quality-content').style.display = 'block';
+                    
+                } catch (error) {
+                    console.error('Error loading quality data:', error);
+                    document.getElementById('quality-loading-indicator').innerHTML = '<div class="text-red-600">品質データの読み込みに失敗しました: ' + error.message + '</div>';
+                }
+            }
+
+            function updateQualitySummary(summary) {
+                document.getElementById('total-analyzed').textContent = summary.total_analyzed.toLocaleString();
+                document.getElementById('ok-rate').textContent = summary.ok_rate + '%';
+                document.getElementById('ng-rate').textContent = summary.ng_rate + '%';
+                document.getElementById('unknown-rate').textContent = summary.unknown_rate + '%';
+            }
+
+            function updateAllergenVerdictChart(dailyVerdicts) {
+                const ctx = document.getElementById('allergenVerdictChart');
+                
+                // Destroy existing chart
+                if (chartInstances.allergenVerdict) {
+                    chartInstances.allergenVerdict.destroy();
+                }
+                
+                const labels = dailyVerdicts.map(d => d.date);
+                const okData = dailyVerdicts.map(d => d.ok);
+                const ngData = dailyVerdicts.map(d => d.ng);
+                const unknownData = dailyVerdicts.map(d => d.unknown);
+                
+                chartInstances.allergenVerdict = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'OK',
+                                data: okData,
+                                backgroundColor: 'rgba(34, 197, 94, 0.8)',
+                                borderColor: 'rgb(34, 197, 94)',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'NG',
+                                data: ngData,
+                                backgroundColor: 'rgba(239, 68, 68, 0.8)',
+                                borderColor: 'rgb(239, 68, 68)',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'Unknown',
+                                data: unknownData,
+                                backgroundColor: 'rgba(245, 158, 11, 0.8)',
+                                borderColor: 'rgb(245, 158, 11)',
+                                borderWidth: 1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            title: {
+                                display: false
+                            },
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            }
+                        },
+                        scales: {
+                            x: {
+                                stacked: true,
+                                title: {
+                                    display: true,
+                                    text: '日付'
+                                }
+                            },
+                            y: {
+                                stacked: true,
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'レシピ数'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function updateMismatchReportsTable(reports) {
+                const tableBody = document.getElementById('mismatch-reports-table');
+                
+                if (reports.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="3" class="px-4 py-4 text-center text-gray-500">報告なし</td></tr>';
+                    return;
+                }
+                
+                let tableHTML = '';
+                reports.forEach(report => {
+                    tableHTML += `
+                        <tr>
+                            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">${report.timestamp}</td>
+                            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">${report.domain}</td>
+                            <td class="px-4 py-4 text-sm text-gray-500">${report.snippet}</td>
+                        </tr>
+                    `;
+                });
+                
+                tableBody.innerHTML = tableHTML;
+            }
+
+            function updateExpansionCandidates(candidates) {
+                const candidatesContainer = document.getElementById('expansion-candidates');
+                
+                if (candidates.length === 0) {
+                    candidatesContainer.innerHTML = '<div class="text-gray-500">候補なし</div>';
+                    return;
+                }
+                
+                let candidatesHTML = '';
+                candidates.forEach((candidate, index) => {
+                    candidatesHTML += `
+                        <div class="flex items-center justify-between py-2 px-3 bg-gray-50 rounded text-sm">
+                            <span class="text-gray-700">${candidate}</span>
+                            <span class="text-xs text-gray-500">#${index + 1}</span>
+                        </div>
+                    `;
+                });
+                
+                candidatesContainer.innerHTML = candidatesHTML;
+            }
+
             function initializeTrendCharts(trends) {
                 const labels = trends.map(d => d.date);
                 const top3CtrData = trends.map(d => d.top3_ctr);
