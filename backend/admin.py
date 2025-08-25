@@ -682,13 +682,119 @@ async def admin_dashboard(current_user: str = Depends(verify_admin_credentials))
                         </div>
                     </div>
 
+                    <!-- Quality Section -->
                     <div id="quality-section" class="content-section hidden">
                         <div class="mb-8">
                             <h2 class="text-2xl font-bold text-gray-900 mb-2">Quality Metrics</h2>
-                            <p class="text-gray-600">あんしんスコアと品質指標の分析</p>
+                            <p class="text-gray-600">あんしんスコアと品質指標の分析 (Asia/Tokyo)</p>
                         </div>
-                        <div class="bg-white p-6 rounded-lg shadow">
-                            <p class="text-gray-600">Quality metrics data will be implemented...</p>
+
+                        <!-- Loading Indicator for Quality -->
+                        <div id="quality-loading-indicator" class="text-center py-8">
+                            <div class="text-gray-600">品質データを読み込み中...</div>
+                        </div>
+
+                        <!-- Quality Content (initially hidden) -->
+                        <div id="quality-content" style="display: none;">
+                            <!-- Quality Summary Cards -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                                <div class="bg-white p-6 rounded-lg shadow">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-600">総解析数</p>
+                                            <p id="total-analyzed" class="text-2xl font-bold text-gray-900">-</p>
+                                        </div>
+                                        <div class="p-3 bg-blue-50 rounded-full">
+                                            <div class="w-6 h-6 text-blue-600">🔍</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="bg-white p-6 rounded-lg shadow">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-600">OK率</p>
+                                            <p id="ok-rate" class="text-2xl font-bold text-green-600">-%</p>
+                                        </div>
+                                        <div class="p-3 bg-green-50 rounded-full">
+                                            <div class="w-6 h-6 text-green-600">✅</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="bg-white p-6 rounded-lg shadow">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-600">NG率</p>
+                                            <p id="ng-rate" class="text-2xl font-bold text-red-600">-%</p>
+                                        </div>
+                                        <div class="p-3 bg-red-50 rounded-full">
+                                            <div class="w-6 h-6 text-red-600">❌</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="bg-white p-6 rounded-lg shadow">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-600">Unknown率</p>
+                                            <p id="unknown-rate" class="text-2xl font-bold text-yellow-600">-%</p>
+                                        </div>
+                                        <div class="p-3 bg-yellow-50 rounded-full">
+                                            <div class="w-6 h-6 text-yellow-600">❓</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Daily Allergen Verdict Chart -->
+                            <div class="mb-6">
+                                <div class="bg-white p-6 rounded-lg shadow">
+                                    <h3 class="text-lg font-semibold text-gray-900 mb-4">日別アレルゲン判定推移</h3>
+                                    <canvas id="allergenVerdictChart" width="400" height="200"></canvas>
+                                </div>
+                            </div>
+
+                            <!-- Bottom Row: Mismatch Reports and Dictionary Candidates -->
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                <!-- Latest Allergen Mismatch Reports -->
+                                <div class="bg-white rounded-lg shadow">
+                                    <div class="px-6 py-4 border-b">
+                                        <h3 class="text-lg font-semibold text-gray-900">最新不一致報告</h3>
+                                        <p class="text-sm text-gray-600">アレルゲン含有の報告履歴</p>
+                                    </div>
+                                    <div class="overflow-x-auto">
+                                        <table class="min-w-full">
+                                            <thead class="bg-gray-50">
+                                                <tr>
+                                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">日時</th>
+                                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ドメイン</th>
+                                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">内容</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="mismatch-reports-table" class="bg-white divide-y divide-gray-200">
+                                                <!-- Dynamic content will be inserted here -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- Dictionary Expansion Candidates -->
+                                <div class="bg-white rounded-lg shadow">
+                                    <div class="px-6 py-4 border-b">
+                                        <h3 class="text-lg font-semibold text-gray-900">辞書拡張候補</h3>
+                                        <p class="text-sm text-gray-600">Unknown/NG項目近傍の頻出トークン</p>
+                                    </div>
+                                    <div class="p-6">
+                                        <div id="expansion-candidates" class="space-y-2">
+                                            <!-- Dynamic content will be inserted here -->
+                                        </div>
+                                        <div class="mt-4 text-xs text-gray-500">
+                                            ※ 日本語ストップワード除去済み
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
