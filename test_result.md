@@ -247,6 +247,42 @@ frontend:
         agent: "main"
         comment: "Frontend Quality view fully tested and verified. Screenshots confirm all elements working: Summary cards (190 analyzed, 73.2% OK, 10% NG, 16.8% Unknown), stacked bar chart showing daily allergen verdicts, mismatch reports table (9 rows), dictionary expansion candidates (15 items). All JavaScript functions and data loading working correctly."
 
+  - task: "Funnel View Frontend Integration"
+    implemented: true
+    working: true
+    file: "/app/backend/admin.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Funnel section HTML with conversion funnel visualization, summary cards, and stage-by-stage breakdown. JavaScript functions loadFunnelData() and updateFunnelDisplay() implemented for real-time MongoDB data display."
+
+  - task: "Extract View Frontend Integration"
+    implemented: true
+    working: true
+    file: "/app/backend/admin.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Extract section with parseSource distribution chart, catchphrase coverage metrics, extraction sources breakdown, quality indicators, and CSV export functionality. JavaScript functions loadExtractData() and updateExtractDisplay() implemented."
+
+  - task: "Domains View Frontend Integration"
+    implemented: true
+    working: true
+    file: "/app/backend/admin.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Domains section with top 10 domains table, summary metrics, violation alerts, and sortable columns. JavaScript functions loadDomainsData(), updateDomainsDisplay(), renderDomainsTable(), and sortDomainsTable() implemented."
+
 metadata:
   created_by: "main_agent"
   version: "1.0"
