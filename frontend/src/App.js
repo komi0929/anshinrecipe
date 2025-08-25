@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import "./App.css";
-import { X, Plus } from "lucide-react";
+import { X, Plus, ChevronDown, RefreshCw } from "lucide-react";
 import RecipeCard from "./components/RecipeCard";
-import { mockRecipes } from "./mockData";
+import { mockRecipes, alternativeRecipeSets } from "./mockData";
 
 function App() {
   // State for allergens
@@ -18,13 +18,20 @@ function App() {
   // State for search results
   const [searchResults, setSearchResults] = useState([]);
   const [hasSearched, setHasSearched] = useState(false);
+  
+  // State for Top10 expansion
+  const [showTop10, setShowTop10] = useState(false);
+  
+  // State for alternative sets
+  const [currentSet, setCurrentSet] = useState('default');
+  const [alternativeSetUsed, setAlternativeSetUsed] = useState(false);
 
   // Check for demo mode to show results immediately
   const isDemoMode = new URLSearchParams(window.location.search).get('demo') === '1';
   const isDebugMode = new URLSearchParams(window.location.search).get('debug') === '1';
 
   // Show demo results if demo mode is enabled
-  React.useEffect(() => {
+  useEffect(() => {
     if (isDemoMode) {
       setSearchResults(mockRecipes);
       setHasSearched(true);
@@ -98,14 +105,66 @@ function App() {
       });
     }
 
-    // Sort by score and take top 3
-    const top3Results = filteredRecipes
-      .sort((a, b) => b.anshinScore - a.anshinScore)
-      .slice(0, 3);
+    // Sort by score and take all recipes
+    const sortedResults = filteredRecipes
+      .sort((a, b) => b.anshinScore - a.anshinScore);
 
-    setSearchResults(top3Results);
+    setSearchResults(sortedResults);
     setHasSearched(true);
+    setShowTop10(false);
+    setCurrentSet('default');
+    setAlternativeSetUsed(false);
   };
+
+  const handleShowTop10 = () => {
+    setShowTop10(true);
+  };
+
+  const handleAlternativeSet = () => {
+    let alternativeRecipes;
+    let setKey;
+    
+    if (currentSet === 'default') {
+      // Show safety-first set
+      alternativeRecipes = alternativeRecipeSets.safety_first;
+      setKey = 'safety_first';
+    } else if (currentSet === 'safety_first') {
+      // Show popularity-first set
+      alternativeRecipes = alternativeRecipeSets.popularity_first;
+      setKey = 'popularity_first';
+    } else {
+      // Return to default set
+      alternativeRecipes = mockRecipes.slice(0, 10);
+      setKey = 'default';
+    }
+
+    setSearchResults(alternativeRecipes);
+    setCurrentSet(setKey);
+    setShowTop10(false);
+    setAlternativeSetUsed(true);
+  };
+
+  const getAlternativeButtonText = () => {
+    if (currentSet === 'default') {
+      return '安全性重視で検索';
+    } else if (currentSet === 'safety_first') {
+      return '人気度重視で検索';
+    } else {
+      return '元の結果に戻る';
+    }
+  };
+
+  const getSetDescription = () => {
+    if (currentSet === 'safety_first') {
+      return '軸を変更：安全性を最優先に選出';
+    } else if (currentSet === 'popularity_first') {
+      return '軸を変更：人気度を最優先に選出';
+    }
+    return '';
+  };
+
+  const top3Results = searchResults.slice(0, 3);
+  const top10Results = searchResults.slice(3, 10);
 
   return (
     <div className="min-h-screen bg-[#FAFAF9] pb-20">
@@ -231,13 +290,23 @@ function App() {
             {/* Search Results Header */}
             <div className="mb-6">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-bold text-[#111827]">
-                  あんしんレシピ Top3
-                </h3>
+                <div>
+                  <h3 className="text-lg font-bold text-[#111827]">
+                    あんしんレシピ {showTop10 ? 'Top10' : 'Top3'}
+                  </h3>
+                  {getSetDescription() && (
+                    <div className="text-sm text-[#0EA5E9] mt-1">
+                      {getSetDescription()}
+                    </div>
+                  )}
+                </div>
                 <button
                   onClick={() => {
                     setHasSearched(false);
                     setSearchResults([]);
+                    setShowTop10(false);
+                    setCurrentSet('default');
+                    setAlternativeSetUsed(false);
                   }}
                   className="text-[#10B981] text-sm hover:text-[#047857] transition-colors"
                 >
@@ -251,9 +320,9 @@ function App() {
               )}
             </div>
 
-            {/* Recipe Cards */}
-            <div className="space-y-4">
-              {searchResults.map((recipe, index) => (
+            {/* Top3 Recipe Cards */}
+            <div className="space-y-4 mb-6">
+              {top3Results.map((recipe, index) => (
                 <div key={recipe.id}>
                   <div className="text-sm font-medium text-[#6B7280] mb-2">
                     #{index + 1}
@@ -261,6 +330,52 @@ function App() {
                   <RecipeCard recipe={recipe} showDebug={isDebugMode} />
                 </div>
               ))}
+            </div>
+
+            {/* Top10 Expansion Button */}
+            {!showTop10 && top10Results.length > 0 && (
+              <div className="mb-6">
+                <button
+                  onClick={handleShowTop10}
+                  className="w-full bg-white border border-[#10B981] text-[#10B981] py-3 rounded-lg font-medium hover:bg-[#10B981] hover:text-white focus:outline-none focus:ring-2 focus:ring-[#10B981] focus:ring-offset-2 transition-colors flex items-center justify-center gap-2"
+                >
+                  <ChevronDown size={20} />
+                  Top10を表示
+                </button>
+              </div>
+            )}
+
+            {/* Top10 Results (4-10) */}
+            {showTop10 && (
+              <div className="space-y-4 mb-6">
+                <div className="text-center py-2">
+                  <div className="text-sm font-medium text-[#6B7280]">
+                    残りの結果 (4位〜10位)
+                  </div>
+                </div>
+                {top10Results.map((recipe, index) => (
+                  <div key={recipe.id}>
+                    <div className="text-sm font-medium text-[#6B7280] mb-2">
+                      #{index + 4}
+                    </div>
+                    <RecipeCard recipe={recipe} showDebug={isDebugMode} />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Alternative Set Button */}
+            <div className="mb-6">
+              <button
+                onClick={handleAlternativeSet}
+                className="w-full bg-[#0EA5E9] text-white py-3 rounded-lg font-medium hover:bg-[#0284C7] focus:outline-none focus:ring-2 focus:ring-[#0EA5E9] focus:ring-offset-2 transition-colors flex items-center justify-center gap-2"
+              >
+                <RefreshCw size={20} />
+                {getAlternativeButtonText()}
+              </button>
+              <div className="text-xs text-[#6B7280] text-center mt-2">
+                別の軸で検索結果を表示します
+              </div>
             </div>
           </>
         )}
