@@ -411,6 +411,15 @@ async def get_context_metrics_api(
     metrics = await calculate_context_metrics(days)
     return JSONResponse(content=metrics)
 
+@admin_router.get("/api/admin/quality-metrics")
+async def get_quality_metrics_api(
+    days: int = Query(7, description="Number of days to analyze"),
+    current_user: str = Depends(verify_admin_credentials)
+):
+    """Get quality metrics including allergen verdicts and mismatch analysis"""
+    metrics = await calculate_quality_metrics(days)
+    return JSONResponse(content=metrics)
+
 @admin_router.get("/admin", response_class=HTMLResponse)
 async def admin_dashboard(current_user: str = Depends(verify_admin_credentials)):
     """Admin dashboard with Basic Auth protection"""
