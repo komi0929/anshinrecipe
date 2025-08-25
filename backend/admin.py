@@ -723,6 +723,157 @@ async def admin_dashboard(current_user: str = Depends(verify_admin_credentials))
                 }
             }
 
+            async function loadContextData() {
+                document.getElementById('context-loading-indicator').style.display = 'block';
+                document.getElementById('context-content').style.display = 'none';
+
+                try {
+                    // Load context metrics
+                    const contextResponse = await new Promise((resolve, reject) => {
+                        const xhr = new XMLHttpRequest();
+                        xhr.open('GET', `/api/admin/context-metrics?days=${currentDateRange}`, true);
+                        xhr.withCredentials = true;
+                        xhr.onreadystatechange = function() {
+                            if (xhr.readyState === 4) {
+                                if (xhr.status === 200) {
+                                    resolve(JSON.parse(xhr.responseText));
+                                } else {
+                                    reject(new Error(`HTTP ${xhr.status}: ${xhr.statusText}`));
+                                }
+                            }
+                        };
+                        xhr.send();
+                    });
+                    
+                    // Update context table and heatmap
+                    updateContextTable(contextResponse);
+                    updateContextHeatmap(contextResponse);
+                    updateSuggestions(contextResponse);
+                    
+                    document.getElementById('context-loading-indicator').style.display = 'none';
+                    document.getElementById('context-content').style.display = 'block';
+                    
+                } catch (error) {
+                    console.error('Error loading context data:', error);
+                    document.getElementById('context-loading-indicator').innerHTML = '<div class="text-red-600">コンテキストデータの読み込みに失敗しました: ' + error.message + '</div>';
+                }
+            }
+
+            function updateContextTable(contextData) {
+                const tableBody = document.getElementById('context-table-body');
+                const contextMap = {
+                    '時短': 'quick',
+                    'イベント': 'event', 
+                    '健康': 'health',
+                    '初心者': 'beginner'
+                };
+
+                let tableHTML = '';
+                
+                Object.keys(contextData).forEach(context => {
+                    const data = contextData[context];
+                    const englishContext = contextMap[context] || context;
+                    
+                    // Status based on thresholds
+                    let status = '正常';
+                    let statusClass = 'bg-green-100 text-green-800';
+                    
+                    if (data.ctr < 45 || data.ideal_match_rate < 50) {
+                        status = '要改善';
+                        statusClass = 'bg-red-100 text-red-800';
+                    } else if (data.ctr < 50 || data.ideal_match_rate < 60) {
+                        status = '注意';
+                        statusClass = 'bg-yellow-100 text-yellow-800';
+                    }
+                    
+                    tableHTML += `
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${context}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${data.total_sessions.toLocaleString()}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <span class="${data.ctr < 45 ? 'text-red-600 font-semibold' : data.ctr >= 50 ? 'text-green-600' : 'text-yellow-600'}">${data.ctr}%</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <span class="${data.ideal_match_rate < 50 ? 'text-red-600 font-semibold' : data.ideal_match_rate >= 60 ? 'text-green-600' : 'text-yellow-600'}">${data.ideal_match_rate}%</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${data.not_found_rate}%</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${data.allergen_rate}%</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClass}">
+                                    ${status}
+                                </span>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                tableBody.innerHTML = tableHTML;
+            }
+
+            function updateContextHeatmap(contextData) {
+                const contextMap = {
+                    '時短': 'quick',
+                    'イベント': 'event', 
+                    '健康': 'health',
+                    '初心者': 'beginner'
+                };
+
+                Object.keys(contextData).forEach(context => {
+                    const data = contextData[context];
+                    const englishContext = contextMap[context];
+                    const heatmapCell = document.getElementById(`context-heatmap-${englishContext}`);
+                    
+                    if (heatmapCell) {
+                        const ctrValue = heatmapCell.querySelector('.text-2xl');
+                        ctrValue.textContent = `${data.ctr}%`;
+                        
+                        // Color coding based on CTR
+                        heatmapCell.className = 'context-heatmap-cell p-4 rounded-lg border-2 text-center ';
+                        if (data.ctr >= 50) {
+                            heatmapCell.className += 'bg-green-50 border-green-200 text-green-900';
+                        } else if (data.ctr >= 45) {
+                            heatmapCell.className += 'bg-yellow-50 border-yellow-200 text-yellow-900';
+                        } else {
+                            heatmapCell.className += 'bg-red-50 border-red-200 text-red-900';
+                        }
+                    }
+                });
+            }
+
+            function updateSuggestions(contextData) {
+                const suggestionsList = document.getElementById('suggestions-list');
+                const suggestionsPanel = document.getElementById('suggestions-panel');
+                
+                let allSuggestions = [];
+                
+                Object.keys(contextData).forEach(context => {
+                    const data = contextData[context];
+                    if (data.suggestions && data.suggestions.length > 0) {
+                        allSuggestions = allSuggestions.concat(data.suggestions);
+                    }
+                });
+                
+                if (allSuggestions.length > 0) {
+                    let suggestionsHTML = '';
+                    allSuggestions.forEach(suggestion => {
+                        const iconClass = suggestion.type === 'ctr_low' ? '📈' : '💡';
+                        suggestionsHTML += `
+                            <div class="flex items-start space-x-3 p-3 bg-white rounded border-l-4 ${suggestion.type === 'ctr_low' ? 'border-blue-400' : 'border-orange-400'}">
+                                <div class="text-xl">${iconClass}</div>
+                                <div class="flex-1">
+                                    <p class="text-sm text-gray-700">${suggestion.message}</p>
+                                    <p class="text-xs text-gray-500 mt-1">アクション: ${suggestion.action}</p>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    suggestionsList.innerHTML = suggestionsHTML;
+                    suggestionsPanel.style.display = 'block';
+                } else {
+                    suggestionsPanel.style.display = 'none';
+                }
+            }
+
             function initializeTrendCharts(trends) {
                 const labels = trends.map(d => d.date);
                 const top3CtrData = trends.map(d => d.top3_ctr);
