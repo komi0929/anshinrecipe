@@ -1,0 +1,88 @@
+<analysis>
+The AI engineer successfully built the Anshin Recipe application from an initial UI frame to a feature-rich MVP, including a comprehensive admin dashboard. The development was iterative, starting with a mobile-first static frontend, then adding interactive search components, recipe result displays, and sophisticated feedback mechanisms. A significant portion involved debugging frontend state updates and API integrations, often using static HTML demos and direct API calls for verification due to browser screenshot limitations. The AI adeptly handled environment variable configuration clarifications, demonstrating an understanding of the deployment model. The most recent focus has been on populating the server-side admin dashboard with real-time MongoDB data, calculating complex metrics, and generating actionable suggestions, showcasing strong backend and data integration capabilities. The process involved meticulous adherence to design guidelines, including specific color palettes, Japanese typography, and UI patterns, while also addressing challenges like timezone handling and frontend-backend communication.
+</analysis>
+
+<product_requirements>
+The Anshin Recipe application aims to provide a mobile-first Japanese recipe search experience focused on safety and user preferences. The core problem solved is to help users find recipes efficiently, especially considering allergen preferences, and to collect feedback to refine the search experience.
+
+**Implementation so far:**
+1.  **Base UI Frame**: An off-white background (), dark gray default text (), muted text (), primary green (), accent blue (), Noto Sans JP font. H1: 「あんしんレシピ」 (Bold, text-2xl), H2: 「3stepであんしん＆おいしいレシピと出会えます」 (Medium, text-lg, primary color). Centered layout with specific padding and spacing.
+2.  **Search Input Components**: Includes an allergen picker (8 mandatory + 20 collapsible allergens, dismissible badges for selected ones), context chips (時短 / イベント / 健康 / 初心者, single-select, horizontal scroll), and a free-text search input. A bottom-fixed search button 「レシピを検索」 with specific styling and hover/focus states.
+3.  **Search Result Cards (Top3/Top10)**: Displays up to 10 recipe cards vertically. Each card features an image, title, source badge, animated AnshinScore gauge (color-coded: ≥85 green, 70–84 yellow, <70 red), a ≤20 char catchphrase, and a レシピを見る CTA button. Includes Top10を表示 button to expand results.
+4.  **Context-Tied Alternative Set**: The 別の候補を試す button now provides context-specific alternative recipe sets. For 時短 it prioritizes shorter time; イベント for visual appeal; 健康 for healthier options; 初心者 for easier recipes. Reranking uses .
+5.  **End-of-Session Feedback**: A small footer banner appears after 30 seconds of idle time (once per day per user) asking 「今日の検索で理想のレシピに出会えましたか？」 with three buttons (◯ 出会えた, △ 出会えなかった, ✕ アレルゲンが含まれていた). Different flows for each, including multi-select reasons and allergen mismatch reports. Telemetry is sent to a backend API.
+6.  **Admin Dashboard**: A server-side  dashboard protected by Basic Auth (ADMIN_USER/ADMIN_PASS). It features a sidebar with sections: Overview, Context, Quality, Funnel, Extract, Domains, and a date-range picker.
+7.  **Admin Dashboard - Overview Wired**: The Overview section of the admin dashboard is wired to real MongoDB data, displaying KPIs like total searches, active users, success rate, and daily trends for top3_ctr and short_dwell_rate. Calculates metrics for 7/30/90 days in Asia/Tokyo timezone.
+8.  **Admin Dashboard - Context Wired**: The Context section displays CTR and feedback share (◯/△/✕) for each context (時短, イベント, 健康, 初心者). It also generates suggestions when performance thresholds are crossed (e.g., CTR < 45% or ◯ < 50%).
+</product_requirements>
+
+<key_technical_concepts>
+- **Full-stack Architecture**: React frontend, FastAPI backend, MongoDB database.
+- **Frontend Frameworks**: React.js, React Router DOM, Tailwind CSS, Shadcn UI components.
+- **Backend Frameworks**: FastAPI, Uvicorn, Motor (Async MongoDB driver).
+- **State Management**: React , , custom hooks.
+- **Environment Variables**:  files for , , , , , , .
+- **API Integration**: Axios for frontend calls, FastAPI for REST endpoints,  for backend ENV access.
+- **Authentication**: Server-side Basic Auth for admin dashboard.
+- **Data Aggregation**: MongoDB aggregation pipelines for dashboard metrics.
+- **Timezone Handling**:  for Asia/Tokyo (JST) date calculations.
+- **Design Principles**: Mobile-first, specific color palette, Noto Sans JP font, micro-animations, whitespace, lucide-react icons.
+</key_technical_concepts>
+
+<code_architecture>
+
+
+-   
+    -   **Importance**: This is the main entry point for the React application, handling routing and integrating all major components. It orchestrates the display of the search UI, recipe results, and session feedback.
+    -   **Changes**: Initially set up the base UI frame (H1/H2). Later, it was heavily modified to include the allergen picker, context chips, search input, search button, Top3/Top10 recipe cards, alternative sets, and session feedback. It manages the main application state (e.g., selected allergens, context, search results, demo/debug modes).
+-   
+    -   **Importance**: Contains global CSS styles and specific styles for key components not handled by Tailwind classes directly or for custom animations.
+    -   **Changes**: Updated to include styles for the base UI frame (background, colors). Later, added custom utility classes like  for recipe titles.
+-   
+    -   **Importance**: Initializes Tailwind CSS and defines base styles, including custom CSS variables for color themes.
+    -   **Changes**: Updated base  styles, and customized color variables according to Anshin Recipe's specific palette.
+-   
+    -   **Importance**: Renders the animated circular AnshinScore gauge on recipe cards.
+    -   **Changes**: New file created to implement the gauge, including animation and color-coding logic based on score value.
+-   
+    -   **Importance**: Displays a single recipe result, encapsulating all elements like image, title, source, AnshinScore, catchphrase, and CTA.
+    -   **Changes**: New file created. It was designed to be reusable for both Top3 and Top10 displays, and later updated to display debug information (, score breakdown, catchphrase source).
+-   
+    -   **Importance**: Renders the end-of-session feedback banner and handles its interaction logic.
+    -   **Changes**: New file created. Manages the display of feedback options, reason chips, and triggers API calls for telemetry and allergen reports.
+-   
+    -   **Importance**: Provides utility functions for managing user sessions, specifically for anonymous ID generation and checking daily display limits for the feedback banner.
+    -   **Changes**: New file created to support the end-of-session feedback feature.
+-   
+    -   **Importance**: Stores dummy data used for frontend-only development and for demonstrating various features before backend integration.
+    -   **Changes**: Progressively expanded to include mock recipes for Top3, Top10, alternative sets (safety-first, popularity-first, context-tied), and additional attributes (prepMinutes, ingredients, steps, calories, visualScore, etc.).
+-   
+    -   **Importance**: Stores frontend-specific environment variables.
+    -   **Changes**: Initially contained . Later, , , , and  were added.
+-   
+    -   **Importance**: The main FastAPI application, handling API routing, database connection, CORS middleware, and API endpoints.
+    -   **Changes**: Initially had  and  endpoints. Modified to include , , and  routes. Integrated Basic Auth logic for admin routes and included .
+-   
+    -   **Importance**: Defines the logic for the admin dashboard, including Basic Auth, data aggregation queries for MongoDB, and rendering the HTML page.
+    -   **Changes**: New file created. Implemented Basic Auth, MongoDB queries for Overview and Context sections, and the HTML structure of the admin dashboard.
+-   
+    -   **Importance**: Stores backend-specific environment variables.
+    -   **Changes**: Initially contained  and . Later, , , , , and  were added.
+</code_architecture>
+
+<pending_tasks>
+-   **Admin Dashboard - Quality View Wiring**: Implement the logic to display daily allergen verdict ratios, a table of latest allergen mismatch reports, and a list of dictionary expansion candidates.
+</pending_tasks>
+
+<current_work>
+The AI engineer is currently in the process of wiring the  Quality view to real MongoDB data. This task involves calculating and displaying:
+1.  **Stacked daily ratios of allergen verdict**: This will show the proportion of OK, NG (negative), and Unknown verdicts for allergens over time.
+2.  **Latest allergen mismatch reports table**: A table listing recent reports, including the timestamp, domain of the recipe, and a snippet of the relevant text.
+3.  **Dictionary expansion candidates**: A text list of top tokens found near Unknown or NG allergen items, with Japanese stopwords removed, to help improve the allergen dictionary.
+
+To achieve this, the engineer has already started by updating the  file to add the necessary API endpoint for quality metrics. They have also begun modifying the static HTML ( was created) and JavaScript ( function) that renders the admin dashboard to integrate and display this new data. A preliminary test of the API endpoint for quality metrics shows that it is returning a structured JSON response containing , , , and other quality-related aggregated metrics. The next step is to correctly render this data within the admin dashboard's Quality section.
+</current_work>
+
+<optional_next_step>
+Take a screenshot of the complete Quality analysis dashboard to verify data rendering.
+</optional_next_step>
