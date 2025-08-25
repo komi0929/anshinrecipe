@@ -133,7 +133,7 @@ function App() {
 
         {/* Context Chips */}
         <div className="mb-6">
-          <h3 className="text-[#111827] font-medium mb-3">カテゴリー</h3>
+          <h3 className="text-[#111827] font-medium mb-3">今日の気分</h3>
           <div className="flex gap-2 overflow-x-auto pb-2">
             {contextOptions.map((context) => (
               <button
