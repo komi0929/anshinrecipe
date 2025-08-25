@@ -484,13 +484,79 @@ async def admin_dashboard(current_user: str = Depends(verify_admin_credentials))
                     </div>
 
                     <!-- Other sections remain the same -->
+                    <!-- Context Section -->
                     <div id="context-section" class="content-section hidden">
                         <div class="mb-8">
                             <h2 class="text-2xl font-bold text-gray-900 mb-2">Context Analysis</h2>
-                            <p class="text-gray-600">コンテキスト選択の分析とパフォーマンス</p>
+                            <p class="text-gray-600">コンテキスト選択の分析とパフォーマンス (Asia/Tokyo)</p>
                         </div>
-                        <div class="bg-white p-6 rounded-lg shadow">
-                            <p class="text-gray-600">Context analysis data will be implemented...</p>
+
+                        <!-- Loading Indicator for Context -->
+                        <div id="context-loading-indicator" class="text-center py-8">
+                            <div class="text-gray-600">コンテキストデータを読み込み中...</div>
+                        </div>
+
+                        <!-- Context Content (initially hidden) -->
+                        <div id="context-content" style="display: none;">
+                            <!-- Suggestions Panel -->
+                            <div id="suggestions-panel" class="mb-6" style="display: none;">
+                                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                                    <h3 class="text-lg font-semibold text-yellow-800 mb-3">🔍 改善提案</h3>
+                                    <div id="suggestions-list" class="space-y-2"></div>
+                                </div>
+                            </div>
+
+                            <!-- Context Metrics Table -->
+                            <div class="bg-white rounded-lg shadow overflow-hidden">
+                                <div class="px-6 py-4 border-b">
+                                    <h3 class="text-lg font-semibold text-gray-900">コンテキスト別パフォーマンス</h3>
+                                </div>
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">コンテキスト</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">セッション数</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CTR</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">◯ 出会えた</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">△ 出会えなかった</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">✕ アレルゲン含有</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状態</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="context-table-body" class="bg-white divide-y divide-gray-200">
+                                            <!-- Dynamic content will be inserted here -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Context Performance Heatmap -->
+                            <div class="mt-6 bg-white p-6 rounded-lg shadow">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-4">パフォーマンスヒートマップ</h3>
+                                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                    <div id="context-heatmap-quick" class="context-heatmap-cell p-4 rounded-lg border-2 text-center">
+                                        <div class="font-medium text-sm text-gray-600">時短</div>
+                                        <div class="text-2xl font-bold mt-2">-</div>
+                                        <div class="text-xs text-gray-500 mt-1">CTR</div>
+                                    </div>
+                                    <div id="context-heatmap-event" class="context-heatmap-cell p-4 rounded-lg border-2 text-center">
+                                        <div class="font-medium text-sm text-gray-600">イベント</div>
+                                        <div class="text-2xl font-bold mt-2">-</div>
+                                        <div class="text-xs text-gray-500 mt-1">CTR</div>
+                                    </div>
+                                    <div id="context-heatmap-health" class="context-heatmap-cell p-4 rounded-lg border-2 text-center">
+                                        <div class="font-medium text-sm text-gray-600">健康</div>
+                                        <div class="text-2xl font-bold mt-2">-</div>
+                                        <div class="text-xs text-gray-500 mt-1">CTR</div>
+                                    </div>
+                                    <div id="context-heatmap-beginner" class="context-heatmap-cell p-4 rounded-lg border-2 text-center">
+                                        <div class="font-medium text-sm text-gray-600">初心者</div>
+                                        <div class="text-2xl font-bold mt-2">-</div>
+                                        <div class="text-xs text-gray-500 mt-1">CTR</div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
