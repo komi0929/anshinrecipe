@@ -1162,10 +1162,107 @@ async def admin_dashboard(current_user: str = Depends(verify_admin_credentials))
                     <div id="funnel-section" class="content-section hidden">
                         <div class="mb-8">
                             <h2 class="text-2xl font-bold text-gray-900 mb-2">User Funnel</h2>
-                            <p class="text-gray-600">ユーザーの行動フローとコンバージョン分析</p>
+                            <p class="text-gray-600">ユーザーの行動フローとコンバージョン分析 (Asia/Tokyo)</p>
                         </div>
-                        <div class="bg-white p-6 rounded-lg shadow">
-                            <p class="text-gray-600">Funnel analysis data will be implemented...</p>
+
+                        <!-- Loading Indicator for Funnel -->
+                        <div id="funnel-loading-indicator" class="text-center py-8">
+                            <div class="text-gray-600">ファネルデータを読み込み中...</div>
+                        </div>
+
+                        <!-- Funnel Content -->
+                        <div id="funnel-content" style="display: none;">
+                            <!-- Funnel Summary Cards -->
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                                <div class="bg-white p-6 rounded-lg shadow">
+                                    <div class="text-center">
+                                        <div class="text-sm font-medium text-gray-600">総検索数</div>
+                                        <div id="funnel-total-searches" class="text-3xl font-bold text-blue-600 mt-2">-</div>
+                                    </div>
+                                </div>
+                                <div class="bg-white p-6 rounded-lg shadow">
+                                    <div class="text-center">
+                                        <div class="text-sm font-medium text-gray-600">成功コンバージョン</div>
+                                        <div id="funnel-conversions" class="text-3xl font-bold text-green-600 mt-2">-</div>
+                                    </div>
+                                </div>
+                                <div class="bg-white p-6 rounded-lg shadow">
+                                    <div class="text-center">
+                                        <div class="text-sm font-medium text-gray-600">全体コンバージョン率</div>
+                                        <div id="funnel-conversion-rate" class="text-3xl font-bold text-purple-600 mt-2">-%</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Funnel Visualization -->
+                            <div class="bg-white p-6 rounded-lg shadow mb-8">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-6">コンバージョンファネル</h3>
+                                <div class="space-y-4">
+                                    <div class="funnel-stage" id="stage-search">
+                                        <div class="flex items-center justify-between bg-blue-50 p-4 rounded-lg">
+                                            <div class="flex items-center space-x-4">
+                                                <div class="w-12 h-12 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold">1</div>
+                                                <div>
+                                                    <div class="font-semibold text-gray-900">検索送信</div>
+                                                    <div class="text-sm text-gray-600">search_submitted</div>
+                                                </div>
+                                            </div>
+                                            <div class="text-right">
+                                                <div class="text-2xl font-bold text-gray-900" id="search-count">-</div>
+                                                <div class="text-sm text-gray-500">100%</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="funnel-stage" id="stage-impression">
+                                        <div class="flex items-center justify-between bg-green-50 p-4 rounded-lg">
+                                            <div class="flex items-center space-x-4">
+                                                <div class="w-12 h-12 bg-green-500 text-white rounded-full flex items-center justify-center font-bold">2</div>
+                                                <div>
+                                                    <div class="font-semibold text-gray-900">Top3表示</div>
+                                                    <div class="text-sm text-gray-600">top3_impression</div>
+                                                </div>
+                                            </div>
+                                            <div class="text-right">
+                                                <div class="text-2xl font-bold text-gray-900" id="impression-count">-</div>
+                                                <div class="text-sm text-gray-500" id="impression-rate">-%</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="funnel-stage" id="stage-click">
+                                        <div class="flex items-center justify-between bg-yellow-50 p-4 rounded-lg">
+                                            <div class="flex items-center space-x-4">
+                                                <div class="w-12 h-12 bg-yellow-500 text-white rounded-full flex items-center justify-center font-bold">3</div>
+                                                <div>
+                                                    <div class="font-semibold text-gray-900">Top3クリック</div>
+                                                    <div class="text-sm text-gray-600">top3_click</div>
+                                                </div>
+                                            </div>
+                                            <div class="text-right">
+                                                <div class="text-2xl font-bold text-gray-900" id="click-count">-</div>
+                                                <div class="text-sm text-gray-500" id="click-rate">-%</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="funnel-stage" id="stage-dwell">
+                                        <div class="flex items-center justify-between bg-purple-50 p-4 rounded-lg">
+                                            <div class="flex items-center space-x-4">
+                                                <div class="w-12 h-12 bg-purple-500 text-white rounded-full flex items-center justify-center font-bold">4</div>
+                                                <div>
+                                                    <div class="font-semibold text-gray-900">5秒以上滞在</div>
+                                                    <div class="text-sm text-gray-600">dwell>=5000ms</div>
+                                                </div>
+                                            </div>
+                                            <div class="text-right">
+                                                <div class="text-2xl font-bold text-gray-900" id="dwell-count">-</div>
+                                                <div class="text-sm text-gray-500" id="dwell-rate">-%</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
