@@ -83,7 +83,7 @@ function App() {
 
         {/* Allergen Picker */}
         <div className="mb-6">
-          <h3 className="text-[#111827] font-medium mb-3">アレルゲン選択</h3>
+          <h3 className="text-[#111827] font-medium mb-3">避けたい食材</h3>
           
           {/* Mandatory allergens */}
           <div className="flex flex-wrap gap-2 mb-3">
