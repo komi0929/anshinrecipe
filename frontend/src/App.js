@@ -68,11 +68,13 @@ function App() {
 
   // Handle idle detection for feedback banner
   useEffect(() => {
-    if (isIdle && hasSearched && !showFeedback && canShowFeedbackToday(anonId)) {
+    if ((isIdle && hasSearched && !showFeedback && canShowFeedbackToday(anonId)) || showFeedbackDemo) {
       setShowFeedback(true);
-      markFeedbackShownToday(anonId);
+      if (!showFeedbackDemo) {
+        markFeedbackShownToday(anonId);
+      }
     }
-  }, [isIdle, hasSearched, showFeedback, anonId]);
+  }, [isIdle, hasSearched, showFeedback, anonId, showFeedbackDemo]);
 
   // Mandatory allergens (always visible)
   const mandatoryAllergens = ["卵", "乳", "小麦", "そば", "落花生", "えび", "かに", "くるみ"];
