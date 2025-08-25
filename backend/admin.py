@@ -1,5 +1,6 @@
 import os
 import base64
+import random
 from fastapi import APIRouter, HTTPException, Depends, Request, Query
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
