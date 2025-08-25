@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Backend API Testing for Anshin Recipe Admin Dashboard
-Testing the Quality Metrics API endpoint with comprehensive scenarios
+Testing all admin dashboard API endpoints including Funnel, Extract, Domains, and Export functionality
 """
 
 import requests
@@ -10,6 +10,8 @@ import os
 import sys
 from datetime import datetime
 import base64
+import csv
+import io
 
 # Configuration
 BACKEND_URL = "https://anshin-recipe-admin.preview.emergentagent.com"
