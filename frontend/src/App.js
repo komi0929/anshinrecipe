@@ -2,7 +2,13 @@ import React, { useState, useEffect } from "react";
 import "./App.css";
 import { X, Plus, ChevronDown, RefreshCw } from "lucide-react";
 import RecipeCard from "./components/RecipeCard";
+import SessionFeedback from "./components/SessionFeedback";
 import { mockRecipes, contextAlternativeRecipes } from "./mockData";
+import useIdleDetection from "./hooks/useIdleDetection";
+import { getOrCreateAnonId, canShowFeedbackToday, markFeedbackShownToday, getSessionData } from "./utils/sessionUtils";
+
+// Environment constant for idle threshold
+const IDLE_THRESHOLD_MS = process.env.REACT_APP_IDLE_THRESHOLD_MS || 30000;
 
 function App() {
   // State for allergens
@@ -24,6 +30,13 @@ function App() {
   
   // State for alternative sets
   const [hasUsedAlternative, setHasUsedAlternative] = useState(false);
+
+  // State for session feedback
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [anonId] = useState(() => getOrCreateAnonId());
+
+  // Idle detection
+  const { isIdle, resetIdleTimer } = useIdleDetection(IDLE_THRESHOLD_MS);
 
   // Check for demo mode to show results immediately
   const isDemoMode = new URLSearchParams(window.location.search).get('demo') === '1';
@@ -52,6 +65,14 @@ function App() {
     }
   }, [isDemoMode, showExpanded, demoContext]);
 
+  // Handle idle detection for feedback banner
+  useEffect(() => {
+    if (isIdle && hasSearched && !showFeedback && canShowFeedbackToday(anonId)) {
+      setShowFeedback(true);
+      markFeedbackShownToday(anonId);
+    }
+  }, [isIdle, hasSearched, showFeedback, anonId]);
+
   // Mandatory allergens (always visible)
   const mandatoryAllergens = ["卵", "乳", "小麦", "そば", "落花生", "えび", "かに", "くるみ"];
   
@@ -71,14 +92,17 @@ function App() {
         ? prev.filter(item => item !== allergen)
         : [...prev, allergen]
     );
+    resetIdleTimer(); // Reset idle on user interaction
   };
 
   const removeAllergen = (allergen) => {
     setSelectedAllergens(prev => prev.filter(item => item !== allergen));
+    resetIdleTimer();
   };
 
   const handleContextSelect = (context) => {
     setSelectedContext(prev => prev === context ? "" : context);
+    resetIdleTimer();
   };
 
   const calculateDifferenceScore = (recipe, context) => {
@@ -158,10 +182,12 @@ function App() {
     setHasSearched(true);
     setShowTop10(false);
     setHasUsedAlternative(false);
+    resetIdleTimer(); // Reset idle timer on search
   };
 
   const handleShowTop10 = () => {
     setShowTop10(true);
+    resetIdleTimer();
   };
 
   const handleContextAlternative = () => {
@@ -221,6 +247,7 @@ function App() {
     setSearchResults(combinedResults);
     setShowTop10(false);
     setHasUsedAlternative(true);
+    resetIdleTimer();
   };
 
   const getAlternativeButtonText = () => {
@@ -249,6 +276,15 @@ function App() {
     return "";
   };
 
+  const handleFeedbackClose = () => {
+    setShowFeedback(false);
+  };
+
+  const handleFeedbackSubmit = (payload) => {
+    console.log('Feedback submitted:', payload);
+    // Additional handling if needed
+  };
+
   const top3Results = searchResults.slice(0, 3);
   const top10Results = searchResults.slice(3, 10);
 
@@ -256,13 +292,22 @@ function App() {
     <div className="min-h-screen bg-[#FAFAF9] pb-20">
       <div className="container mx-auto p-4 max-w-md">
         {/* Header */}
-        <div className="flex flex-col items-center justify-start pt-8 mb-8">
+        <div className="flex items-center justify-start pt-8 mb-8">
           <h1 className="text-2xl font-bold text-[#111827] mb-2">
             あんしんレシピ
           </h1>
           <h2 className="text-lg font-medium text-[#10B981] mb-6 text-center">
             3stepであんしん＆おいしいレシピと出会えます
           </h2>
+          
+          {/* Debug info */}
+          {isDebugMode && (
+            <div className="text-xs text-[#6B7280] mb-4">
+              Debug: Idle={isIdle ? 'Yes' : 'No'}, 
+              Threshold={IDLE_THRESHOLD_MS}ms, 
+              AnonId={anonId.slice(-8)}
+            </div>
+          )}
         </div>
 
         {!hasSearched ? (
@@ -312,7 +357,10 @@ function App() {
 
               {/* Expand button */}
               <button
-                onClick={() => setShowAllAllergens(!showAllAllergens)}
+                onClick={() => {
+                  setShowAllAllergens(!showAllAllergens);
+                  resetIdleTimer();
+                }}
                 className="flex items-center gap-2 text-[#10B981] text-sm hover:text-[#047857] transition-colors mb-3"
               >
                 <Plus size={16} />
@@ -365,7 +413,10 @@ function App() {
               <input
                 type="text"
                 value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
+                onChange={(e) => {
+                  setSearchText(e.target.value);
+                  resetIdleTimer();
+                }}
                 placeholder="例：ケーキ、カレー、パスタ"
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#10B981] focus:border-[#10B981] transition-colors"
               />
@@ -392,6 +443,8 @@ function App() {
                     setSearchResults([]);
                     setShowTop10(false);
                     setHasUsedAlternative(false);
+                    setShowFeedback(false);
+                    resetIdleTimer();
                   }}
                   className="text-[#10B981] text-sm hover:text-[#047857] transition-colors"
                 >
@@ -478,6 +531,18 @@ function App() {
             レシピを検索
           </button>
         </div>
+      )}
+
+      {/* Session Feedback Banner */}
+      {showFeedback && hasSearched && (
+        <SessionFeedback
+          onClose={handleFeedbackClose}
+          onFeedback={handleFeedbackSubmit}
+          searchContext={selectedContext}
+          searchQuery={searchText}
+          resultSetIds={searchResults.map(r => r.id)}
+          anonId={anonId}
+        />
       )}
     </div>
   );
