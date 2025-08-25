@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import "./App.css";
 import { X, Plus, ChevronDown, RefreshCw } from "lucide-react";
 import RecipeCard from "./components/RecipeCard";
-import { mockRecipes, alternativeRecipeSets } from "./mockData";
+import { mockRecipes, contextAlternativeRecipes } from "./mockData";
 
 function App() {
   // State for allergens
@@ -23,8 +23,7 @@ function App() {
   const [showTop10, setShowTop10] = useState(false);
   
   // State for alternative sets
-  const [currentSet, setCurrentSet] = useState('default');
-  const [alternativeSetUsed, setAlternativeSetUsed] = useState(false);
+  const [hasUsedAlternative, setHasUsedAlternative] = useState(false);
 
   // Check for demo mode to show results immediately
   const isDemoMode = new URLSearchParams(window.location.search).get('demo') === '1';
@@ -75,6 +74,37 @@ function App() {
     setSelectedContext(prev => prev === context ? "" : context);
   };
 
+  const calculateDifferenceScore = (recipe, context) => {
+    switch (context) {
+      case "時短":
+        // Prioritize shorter prepMinutes and fewer ingredients
+        const timeScore = Math.max(0, 100 - recipe.prepMinutes * 2); // Max 50 points for time
+        const ingredientScore = Math.max(0, 100 - recipe.ingredients * 8); // Max 20 points for ingredients
+        return (timeScore + ingredientScore) / 2;
+      
+      case "イベント":
+        // Prioritize visual score and ratings
+        const visualScore = recipe.visualScore || 50;
+        const ratingBonus = recipe.scoreBreakdown.popularity || 50;
+        return (visualScore + ratingBonus) / 2;
+      
+      case "健康":
+        // Prioritize lower calories and health keywords
+        const calorieScore = Math.max(0, 100 - recipe.calories / 5); // Lower calories = higher score
+        const healthKeywordScore = recipe.healthKeywords.length * 15; // Bonus for health keywords
+        return Math.min(100, (calorieScore + healthKeywordScore) / 2);
+      
+      case "初心者":
+        // Prioritize fewer steps and clarity keywords
+        const stepScore = Math.max(0, 100 - recipe.steps * 6); // Fewer steps = higher score
+        const clarityScore = recipe.clarityKeywords.length * 12; // Bonus for clarity keywords
+        return Math.min(100, (stepScore + clarityScore) / 2);
+      
+      default:
+        return 0;
+    }
+  };
+
   const handleSearch = () => {
     console.log("Search clicked:", { selectedAllergens, selectedContext, searchText });
     
@@ -120,55 +150,96 @@ function App() {
     setSearchResults(sortedResults);
     setHasSearched(true);
     setShowTop10(false);
-    setCurrentSet('default');
-    setAlternativeSetUsed(false);
+    setHasUsedAlternative(false);
   };
 
   const handleShowTop10 = () => {
     setShowTop10(true);
   };
 
-  const handleAlternativeSet = () => {
+  const handleContextAlternative = () => {
+    if (!selectedContext || hasUsedAlternative) return;
+
     let alternativeRecipes;
-    let setKey;
-    
-    if (currentSet === 'default') {
-      // Show safety-first set
-      alternativeRecipes = alternativeRecipeSets.safety_first;
-      setKey = 'safety_first';
-    } else if (currentSet === 'safety_first') {
-      // Show popularity-first set
-      alternativeRecipes = alternativeRecipeSets.popularity_first;
-      setKey = 'popularity_first';
-    } else {
-      // Return to default set
-      alternativeRecipes = mockRecipes.slice(0, 10);
-      setKey = 'default';
+    let contextKey;
+
+    // Map context to alternative recipe set
+    switch (selectedContext) {
+      case "時短":
+        alternativeRecipes = contextAlternativeRecipes.time_optimized;
+        contextKey = "time_optimized";
+        break;
+      case "イベント":
+        alternativeRecipes = contextAlternativeRecipes.visual_optimized;
+        contextKey = "visual_optimized";
+        break;
+      case "健康":
+        alternativeRecipes = contextAlternativeRecipes.health_optimized;
+        contextKey = "health_optimized";
+        break;
+      case "初心者":
+        alternativeRecipes = contextAlternativeRecipes.beginner_optimized;
+        contextKey = "beginner_optimized";
+        break;
+      default:
+        return;
     }
 
-    setSearchResults(alternativeRecipes);
-    setCurrentSet(setKey);
+    // Apply MMR-like reranking to existing results
+    const currentIds = searchResults.map(r => r.id);
+    const rerankedResults = searchResults.map(recipe => {
+      const baseScore = recipe.anshinScore;
+      const differenceScore = calculateDifferenceScore(recipe, selectedContext);
+      const newScore = 0.7 * baseScore + 0.3 * differenceScore;
+      
+      return {
+        ...recipe,
+        anshinScore: Math.round(newScore),
+        axisShift: `${selectedContext.toLowerCase()}:reranked`,
+        originalScore: baseScore,
+        differenceScore: Math.round(differenceScore)
+      };
+    });
+
+    // Add alternative recipes, excluding same domains and already shown IDs
+    const usedDomains = new Set(searchResults.map(r => r.source));
+    const validAlternatives = alternativeRecipes.filter(recipe => 
+      !currentIds.includes(recipe.id) && !usedDomains.has(recipe.source)
+    );
+
+    // Combine reranked results with alternatives
+    const combinedResults = [...rerankedResults, ...validAlternatives]
+      .sort((a, b) => b.anshinScore - a.anshinScore);
+
+    setSearchResults(combinedResults);
     setShowTop10(false);
-    setAlternativeSetUsed(true);
+    setHasUsedAlternative(true);
   };
 
   const getAlternativeButtonText = () => {
-    if (currentSet === 'default') {
-      return '安全性重視で検索';
-    } else if (currentSet === 'safety_first') {
-      return '人気度重視で検索';
-    } else {
-      return '元の結果に戻る';
-    }
+    if (!selectedContext) return "";
+    
+    const contextLabels = {
+      "時短": "時短をさらに優先",
+      "イベント": "見栄えを重視", 
+      "健康": "より健康的を優先",
+      "初心者": "やさしさを優先"
+    };
+
+    return `別の候補を試す（${contextLabels[selectedContext]}）`;
   };
 
   const getSetDescription = () => {
-    if (currentSet === 'safety_first') {
-      return '軸を変更：安全性を最優先に選出';
-    } else if (currentSet === 'popularity_first') {
-      return '軸を変更：人気度を最優先に選出';
+    if (hasUsedAlternative) {
+      const descriptions = {
+        "時短": "軸変更：調理時間と工程数を最優先",
+        "イベント": "軸変更：見た目と装飾性を最優先",
+        "健康": "軸変更：カロリーと栄養価を最優先", 
+        "初心者": "軸変更：手順の簡単さを最優先"
+      };
+      return descriptions[selectedContext] || "";
     }
-    return '';
+    return "";
   };
 
   const top3Results = searchResults.slice(0, 3);
@@ -313,8 +384,7 @@ function App() {
                     setHasSearched(false);
                     setSearchResults([]);
                     setShowTop10(false);
-                    setCurrentSet('default');
-                    setAlternativeSetUsed(false);
+                    setHasUsedAlternative(false);
                   }}
                   className="text-[#10B981] text-sm hover:text-[#047857] transition-colors"
                 >
@@ -372,19 +442,21 @@ function App() {
               </div>
             )}
 
-            {/* Alternative Set Button */}
-            <div className="mb-6">
-              <button
-                onClick={handleAlternativeSet}
-                className="w-full bg-[#0EA5E9] text-white py-3 rounded-lg font-medium hover:bg-[#0284C7] focus:outline-none focus:ring-2 focus:ring-[#0EA5E9] focus:ring-offset-2 transition-colors flex items-center justify-center gap-2"
-              >
-                <RefreshCw size={20} />
-                {getAlternativeButtonText()}
-              </button>
-              <div className="text-xs text-[#6B7280] text-center mt-2">
-                別の軸で検索結果を表示します
+            {/* Context-Tied Alternative Set Button */}
+            {selectedContext && !hasUsedAlternative && (
+              <div className="mb-6">
+                <button
+                  onClick={handleContextAlternative}
+                  className="w-full bg-[#0EA5E9] text-white py-3 rounded-lg font-medium hover:bg-[#0284C7] focus:outline-none focus:ring-2 focus:ring-[#0EA5E9] focus:ring-offset-2 transition-colors flex items-center justify-center gap-2"
+                >
+                  <RefreshCw size={20} />
+                  {getAlternativeButtonText()}
+                </button>
+                <div className="text-xs text-[#6B7280] text-center mt-2">
+                  選択したコンテキストに特化した軸で再検索します
+                </div>
               </div>
-            </div>
+            )}
           </>
         )}
       </div>

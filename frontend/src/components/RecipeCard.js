@@ -45,6 +45,19 @@ const RecipeCard = ({ recipe, showDebug }) => {
               breakdown={recipe.scoreBreakdown}
               showDebug={showDebug}
             />
+            
+            {/* Debug information for axis shift */}
+            {showDebug && recipe.axisShift && (
+              <div className="mt-2 text-xs text-[#6B7280] space-y-1">
+                <div>軸変更: {recipe.axisShift}</div>
+                {recipe.originalScore && (
+                  <div>元スコア: {recipe.originalScore} → {recipe.anshinScore}</div>
+                )}
+                {recipe.differenceScore !== undefined && (
+                  <div>差分スコア: {recipe.differenceScore}</div>
+                )}
+              </div>
+            )}
           </div>
           
           {/* Catchphrase */}

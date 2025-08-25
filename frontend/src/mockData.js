@@ -1,4 +1,4 @@
-// Mock recipe data for development
+// Mock recipe data for development with enhanced scoring dimensions
 export const mockRecipes = [
   {
     id: 1,
@@ -14,7 +14,15 @@ export const mockRecipes = [
     },
     catchphrase: "アレルギー対応で安心",
     catchphraseSource: "title",
-    url: "https://cookpad.com/recipe/example1"
+    url: "https://cookpad.com/recipe/example1",
+    // Enhanced properties for context-based scoring
+    prepMinutes: 20,
+    ingredients: 6,
+    steps: 8,
+    calories: 280,
+    visualScore: 85,
+    healthKeywords: ["米粉", "アレルギー対応"],
+    clarityKeywords: ["簡単", "ふわふわ"]
   },
   {
     id: 2,
@@ -30,7 +38,14 @@ export const mockRecipes = [
     },
     catchphrase: "30分で完成",
     catchphraseSource: "meta",
-    url: "https://kurashiru.com/recipe/example2"
+    url: "https://kurashiru.com/recipe/example2",
+    prepMinutes: 30,
+    ingredients: 8,
+    steps: 6,
+    calories: 320,
+    visualScore: 78,
+    healthKeywords: ["野菜たっぷり", "栄養満点"],
+    clarityKeywords: ["時短", "簡単"]
   },
   {
     id: 3,
@@ -46,7 +61,14 @@ export const mockRecipes = [
     },
     catchphrase: "しっとり濃厚",
     catchphraseSource: "h2",
-    url: "https://recipe.rakuten.co.jp/recipe/example3"
+    url: "https://recipe.rakuten.co.jp/recipe/example3",
+    prepMinutes: 45,
+    ingredients: 7,
+    steps: 12,
+    calories: 450,
+    visualScore: 95,
+    healthKeywords: ["グルテンフリー", "米粉"],
+    clarityKeywords: ["しっとり"]
   },
   {
     id: 4,
@@ -62,7 +84,14 @@ export const mockRecipes = [
     },
     catchphrase: "低カロリー",
     catchphraseSource: "meta",
-    url: "https://cookpad.com/recipe/example4"
+    url: "https://cookpad.com/recipe/example4",
+    prepMinutes: 25,
+    ingredients: 5,
+    steps: 7,
+    calories: 180,
+    visualScore: 72,
+    healthKeywords: ["ヘルシー", "豆腐", "低カロリー"],
+    clarityKeywords: ["簡単"]
   },
   {
     id: 5,
@@ -78,7 +107,14 @@ export const mockRecipes = [
     },
     catchphrase: "小麦不使用",
     catchphraseSource: "title",
-    url: "https://allrecipes.jp/recipe/example5"
+    url: "https://allrecipes.jp/recipe/example5",
+    prepMinutes: 35,
+    ingredients: 9,
+    steps: 10,
+    calories: 380,
+    visualScore: 80,
+    healthKeywords: ["アレルギー対応", "小麦不使用"],
+    clarityKeywords: []
   },
   {
     id: 6,
@@ -94,7 +130,14 @@ export const mockRecipes = [
     },
     catchphrase: "ビタミン豊富",
     catchphraseSource: "h2",
-    url: "https://kurashiru.com/recipe/example6"
+    url: "https://kurashiru.com/recipe/example6",
+    prepMinutes: 15,
+    ingredients: 4,
+    steps: 5,
+    calories: 120,
+    visualScore: 75,
+    healthKeywords: ["栄養満点", "野菜", "ビタミン豊富"],
+    clarityKeywords: ["簡単"]
   },
   {
     id: 7,
@@ -110,7 +153,14 @@ export const mockRecipes = [
     },
     catchphrase: "まろやか味",
     catchphraseSource: "meta",
-    url: "https://recipe.rakuten.co.jp/recipe/example7"
+    url: "https://recipe.rakuten.co.jp/recipe/example7",
+    prepMinutes: 40,
+    ingredients: 10,
+    steps: 15,
+    calories: 340,
+    visualScore: 82,
+    healthKeywords: ["乳製品不使用"],
+    clarityKeywords: ["まろやか"]
   },
   {
     id: 8,
@@ -126,7 +176,14 @@ export const mockRecipes = [
     },
     catchphrase: "5分で完成",
     catchphraseSource: "title",
-    url: "https://cookpad.com/recipe/example8"
+    url: "https://cookpad.com/recipe/example8",
+    prepMinutes: 5,
+    ingredients: 3,
+    steps: 3,
+    calories: 90,
+    visualScore: 70,
+    healthKeywords: ["蒸し野菜", "ヘルシー"],
+    clarityKeywords: ["時短", "簡単", "電子レンジ"]
   },
   {
     id: 9,
@@ -142,7 +199,14 @@ export const mockRecipes = [
     },
     catchphrase: "もちもち食感",
     catchphraseSource: "h2",
-    url: "https://delish-kitchen.tv/recipe/example9"
+    url: "https://delish-kitchen.tv/recipe/example9",
+    prepMinutes: 25,
+    ingredients: 7,
+    steps: 9,
+    calories: 290,
+    visualScore: 88,
+    healthKeywords: ["グルテンフリー"],
+    clarityKeywords: ["もちもち"]
   },
   {
     id: 10,
@@ -158,110 +222,177 @@ export const mockRecipes = [
     },
     catchphrase: "さっぱり味",
     catchphraseSource: "meta",
-    url: "https://kurashiru.com/recipe/example10"
+    url: "https://kurashiru.com/recipe/example10",
+    prepMinutes: 20,
+    ingredients: 6,
+    steps: 6,
+    calories: 220,
+    visualScore: 74,
+    healthKeywords: ["卵なし"],
+    clarityKeywords: ["さっぱり"]
   }
 ];
 
-// Alternative recipe sets with different scoring priorities
-export const alternativeRecipeSets = {
-  safety_first: [
+// Context-specific alternative recipes for axis shifting
+export const contextAlternativeRecipes = {
+  time_optimized: [
     {
-      id: 11,
-      title: "超安心！無添加離乳食カレー",
-      source: "babyfood.jp",
-      image: "https://images.unsplash.com/photo-1455619452474-8dc6f8dd9ee2?w=400&h=225&fit=crop",
-      anshinScore: 95,
-      scoreBreakdown: {
-        safety: 98,
-        trust: 92,
-        context: 94,
-        popularity: 90
-      },
-      catchphrase: "完全無添加",
+      id: 21,
+      title: "超時短！3分レンジ蒸しパン",
+      source: "quick-recipes.com",
+      image: "https://images.unsplash.com/photo-1571115764595-644a1f56a55c?w=400&h=225&fit=crop",
+      anshinScore: 88,
+      scoreBreakdown: { safety: 85, trust: 88, context: 92, popularity: 87 },
+      catchphrase: "3分完成",
       catchphraseSource: "title",
-      url: "https://babyfood.jp/recipe/example11"
+      url: "https://quick-recipes.com/recipe/example21",
+      prepMinutes: 3,
+      ingredients: 2,
+      steps: 2,
+      calories: 150,
+      visualScore: 78,
+      healthKeywords: [],
+      clarityKeywords: ["超時短", "簡単", "レンジ"],
+      axisShift: "quick:ultra_short_time"
     },
     {
-      id: 12,
-      title: "オーガニック野菜のスムージー",
-      source: "organic-life.com",
-      image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=225&fit=crop",
-      anshinScore: 93,
-      scoreBreakdown: {
-        safety: 97,
-        trust: 89,
-        context: 92,
-        popularity: 88
-      },
-      catchphrase: "農薬不使用",
-      catchphraseSource: "meta",
-      url: "https://organic-life.com/recipe/example12"
-    },
-    {
-      id: 13,
-      title: "アレルゲン28品目完全除去クッキー",
-      source: "allergen-free.jp",
+      id: 22,
+      title: "1工程！混ぜるだけプロテインボール",
+      source: "time-saver.jp",
       image: "https://images.unsplash.com/photo-1499636136210-6f4ee915583e?w=400&h=225&fit=crop",
-      anshinScore: 91,
-      scoreBreakdown: {
-        safety: 96,
-        trust: 87,
-        context: 90,
-        popularity: 85
-      },
-      catchphrase: "28品目不使用",
+      anshinScore: 86,
+      scoreBreakdown: { safety: 82, trust: 85, context: 90, popularity: 85 },
+      catchphrase: "混ぜるだけ",
       catchphraseSource: "title",
-      url: "https://allergen-free.jp/recipe/example13"
+      url: "https://time-saver.jp/recipe/example22",
+      prepMinutes: 2,
+      ingredients: 3,
+      steps: 1,
+      calories: 120,
+      visualScore: 72,
+      healthKeywords: ["プロテイン"],
+      clarityKeywords: ["混ぜるだけ", "1工程"],
+      axisShift: "quick:minimal_steps"
     }
   ],
-  popularity_first: [
+  visual_optimized: [
     {
-      id: 14,
-      title: "バズり中！韓国風チーズハットグ",
-      source: "trendy-foods.com",
-      image: "https://images.unsplash.com/photo-1565299507177-b0ac66763828?w=400&h=225&fit=crop",
-      anshinScore: 78,
-      scoreBreakdown: {
-        safety: 72,
-        trust: 75,
-        context: 76,
-        popularity: 98
-      },
-      catchphrase: "SNSで話題",
-      catchphraseSource: "meta",
-      url: "https://trendy-foods.com/recipe/example14"
-    },
-    {
-      id: 15,
-      title: "今月の人気No.1！生チョコケーキ",
-      source: "viral-recipes.jp",
-      image: "https://images.unsplash.com/photo-1571115764595-644a1f56a55c?w=400&h=225&fit=crop",
-      anshinScore: 76,
-      scoreBreakdown: {
-        safety: 70,
-        trust: 74,
-        context: 74,
-        popularity: 96
-      },
-      catchphrase: "月間1位",
-      catchphraseSource: "title",
-      url: "https://viral-recipes.jp/recipe/example15"
-    },
-    {
-      id: 16,
-      title: "インスタ映え抜群！レインボーケーキ",
-      source: "instagram-food.com",
+      id: 31,
+      title: "インスタ映え！レインボーマカロン",
+      source: "visual-treats.com",
       image: "https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?w=400&h=225&fit=crop",
-      anshinScore: 74,
-      scoreBreakdown: {
-        safety: 68,
-        trust: 72,
-        context: 72,
-        popularity: 94
-      },
-      catchphrase: "映え度MAX",
+      anshinScore: 84,
+      scoreBreakdown: { safety: 78, trust: 82, context: 88, popularity: 90 },
+      catchphrase: "色鮮やか",
+      catchphraseSource: "meta",
+      url: "https://visual-treats.com/recipe/example31",
+      prepMinutes: 60,
+      ingredients: 8,
+      steps: 18,
+      calories: 380,
+      visualScore: 98,
+      healthKeywords: [],
+      clarityKeywords: ["色鮮やか"],
+      axisShift: "event:high_visual_impact"
+    },
+    {
+      id: 32,
+      title: "華やか！フラワーケーキ",
+      source: "party-desserts.jp",
+      image: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&h=225&fit=crop",
+      anshinScore: 82,
+      scoreBreakdown: { safety: 80, trust: 79, context: 85, popularity: 85 },
+      catchphrase: "お祝いに最適",
       catchphraseSource: "h2",
-      url: "https://instagram-food.com/recipe/example16"
+      url: "https://party-desserts.jp/recipe/example32",
+      prepMinutes: 90,
+      ingredients: 12,
+      steps: 20,
+      calories: 420,
+      visualScore: 96,
+      healthKeywords: [],
+      clarityKeywords: ["華やか", "お祝い"],
+      axisShift: "event:decoration_focused"
+    }
+  ],
+  health_optimized: [
+    {
+      id: 41,
+      title: "超低カロリー！こんにゃく麺パスタ",
+      source: "healthy-living.com",
+      image: "https://images.unsplash.com/photo-1551892374-ecf8985c7343?w=400&h=225&fit=crop",
+      anshinScore: 90,
+      scoreBreakdown: { safety: 88, trust: 87, context: 95, popularity: 82 },
+      catchphrase: "カロリー90%オフ",
+      catchphraseSource: "meta",
+      url: "https://healthy-living.com/recipe/example41",
+      prepMinutes: 15,
+      ingredients: 5,
+      steps: 6,
+      calories: 85,
+      visualScore: 75,
+      healthKeywords: ["超低カロリー", "こんにゃく", "ダイエット"],
+      clarityKeywords: [],
+      axisShift: "health:ultra_low_calorie"
+    },
+    {
+      id: 42,
+      title: "スーパーフード満載！アサイーボウル",
+      source: "superfood-cafe.jp",
+      image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=225&fit=crop",
+      anshinScore: 87,
+      scoreBreakdown: { safety: 85, trust: 84, context: 92, popularity: 87 },
+      catchphrase: "栄養価最高",
+      catchphraseSource: "title",
+      url: "https://superfood-cafe.jp/recipe/example42",
+      prepMinutes: 10,
+      ingredients: 6,
+      steps: 4,
+      calories: 180,
+      visualScore: 90,
+      healthKeywords: ["スーパーフード", "アサイー", "栄養価最高", "抗酸化"],
+      clarityKeywords: [],
+      axisShift: "health:nutrient_dense"
+    }
+  ],
+  beginner_optimized: [
+    {
+      id: 51,
+      title: "失敗しない！基本の卵焼き",
+      source: "cooking-basics.jp",
+      image: "https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=400&h=225&fit=crop",
+      anshinScore: 85,
+      scoreBreakdown: { safety: 88, trust: 89, context: 88, popularity: 75 },
+      catchphrase: "初心者でも安心",
+      catchphraseSource: "meta",
+      url: "https://cooking-basics.jp/recipe/example51",
+      prepMinutes: 8,
+      ingredients: 3,
+      steps: 4,
+      calories: 160,
+      visualScore: 70,
+      healthKeywords: [],
+      clarityKeywords: ["失敗しない", "基本", "初心者でも安心", "簡単"],
+      axisShift: "beginner:foolproof_method"
+    },
+    {
+      id: 52,
+      title: "写真付き解説！はじめてのおにぎり",
+      source: "step-by-step.com",
+      image: "https://images.unsplash.com/photo-1520072959219-c595dc870360?w=400&h=225&fit=crop",
+      anshinScore: 83,
+      scoreBreakdown: { safety: 90, trust: 85, context: 85, popularity: 72 },
+      catchphrase: "写真で分かりやすい",
+      catchphraseSource: "title",
+      url: "https://step-by-step.com/recipe/example52",
+      prepMinutes: 10,
+      ingredients: 2,
+      steps: 3,
+      calories: 200,
+      visualScore: 68,
+      healthKeywords: [],
+      clarityKeywords: ["写真付き", "はじめて", "分かりやすい", "丁寧"],
+      axisShift: "beginner:detailed_guidance"
     }
   ]
 };
