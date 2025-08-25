@@ -420,7 +420,7 @@ async def get_quality_metrics_api(
     metrics = await calculate_quality_metrics(days)
     return JSONResponse(content=metrics)
 
-@admin_router.get("/api/admin", response_class=HTMLResponse)
+@admin_router.get("/api/admin/dashboard", response_class=HTMLResponse)
 async def admin_dashboard(current_user: str = Depends(verify_admin_credentials)):
     """Admin dashboard with Basic Auth protection"""
     
