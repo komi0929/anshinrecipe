@@ -2037,6 +2037,324 @@ async def admin_dashboard(current_user: str = Depends(verify_admin_credentials))
                 });
             }
 
+            async function loadFunnelData() {
+                document.getElementById('funnel-loading-indicator').style.display = 'block';
+                document.getElementById('funnel-content').style.display = 'none';
+
+                try {
+                    const response = await new Promise((resolve, reject) => {
+                        const xhr = new XMLHttpRequest();
+                        xhr.open('GET', `/api/admin/funnel-metrics?days=${currentDateRange}`, true);
+                        xhr.withCredentials = true;
+                        xhr.onreadystatechange = function() {
+                            if (xhr.readyState === 4) {
+                                if (xhr.status === 200) {
+                                    resolve(JSON.parse(xhr.responseText));
+                                } else {
+                                    reject(new Error(`HTTP ${xhr.status}: ${xhr.statusText}`));
+                                }
+                            }
+                        };
+                        xhr.send();
+                    });
+                    
+                    updateFunnelDisplay(response);
+                    
+                    document.getElementById('funnel-loading-indicator').style.display = 'none';
+                    document.getElementById('funnel-content').style.display = 'block';
+                    
+                } catch (error) {
+                    console.error('Error loading funnel data:', error);
+                    document.getElementById('funnel-loading-indicator').innerHTML = '<div class="text-red-600">ファネルデータの読み込みに失敗しました: ' + error.message + '</div>';
+                }
+            }
+
+            function updateFunnelDisplay(data) {
+                // Update summary cards
+                document.getElementById('funnel-total-searches').textContent = data.summary.total_searches.toLocaleString();
+                document.getElementById('funnel-conversions').textContent = data.summary.successful_conversions.toLocaleString();
+                document.getElementById('funnel-conversion-rate').textContent = data.summary.conversion_rate + '%';
+                
+                // Update funnel stages
+                const stages = data.funnel_stages;
+                
+                document.getElementById('search-count').textContent = stages.search_submitted.count.toLocaleString();
+                
+                document.getElementById('impression-count').textContent = stages.top3_impression.count.toLocaleString();
+                document.getElementById('impression-rate').textContent = stages.top3_impression.percentage + '%';
+                
+                document.getElementById('click-count').textContent = stages.top3_click.count.toLocaleString();
+                document.getElementById('click-rate').textContent = stages.top3_click.percentage + '%';
+                
+                document.getElementById('dwell-count').textContent = stages.dwell_5s_plus.count.toLocaleString();
+                document.getElementById('dwell-rate').textContent = stages.dwell_5s_plus.percentage + '%';
+            }
+
+            async function loadExtractData() {
+                document.getElementById('extract-loading-indicator').style.display = 'block';
+                document.getElementById('extract-content').style.display = 'none';
+
+                try {
+                    const response = await new Promise((resolve, reject) => {
+                        const xhr = new XMLHttpRequest();
+                        xhr.open('GET', '/api/admin/extract-metrics', true);
+                        xhr.withCredentials = true;
+                        xhr.onreadystatechange = function() {
+                            if (xhr.readyState === 4) {
+                                if (xhr.status === 200) {
+                                    resolve(JSON.parse(xhr.responseText));
+                                } else {
+                                    reject(new Error(`HTTP ${xhr.status}: ${xhr.statusText}`));
+                                }
+                            }
+                        };
+                        xhr.send();
+                    });
+                    
+                    updateExtractDisplay(response);
+                    
+                    document.getElementById('extract-loading-indicator').style.display = 'none';
+                    document.getElementById('extract-content').style.display = 'block';
+                    
+                } catch (error) {
+                    console.error('Error loading extract data:', error);
+                    document.getElementById('extract-loading-indicator').innerHTML = '<div class="text-red-600">抽出データの読み込みに失敗しました: ' + error.message + '</div>';
+                }
+            }
+
+            function updateExtractDisplay(data) {
+                // Update catchphrase coverage
+                document.getElementById('total-recipes').textContent = data.catchphrase_coverage.total_recipes.toLocaleString();
+                document.getElementById('with-catchphrase').textContent = data.catchphrase_coverage.with_catchphrase.toLocaleString();
+                document.getElementById('coverage-rate').textContent = data.catchphrase_coverage.coverage_rate + '%';
+                
+                // Update extraction sources
+                const sources = data.extraction_sources;
+                document.getElementById('title-percentage').textContent = sources.title + '%';
+                document.getElementById('title-bar').style.width = sources.title + '%';
+                
+                document.getElementById('meta-percentage').textContent = sources.meta + '%';
+                document.getElementById('meta-bar').style.width = sources.meta + '%';
+                
+                document.getElementById('h2-percentage').textContent = sources.h2 + '%';
+                document.getElementById('h2-bar').style.width = sources.h2 + '%';
+                
+                document.getElementById('strong-percentage').textContent = sources.strong + '%';
+                document.getElementById('strong-bar').style.width = sources.strong + '%';
+                
+                // Update quality indicators
+                document.getElementById('avg-confidence').textContent = data.quality_indicators.avg_extraction_confidence + '%';
+                document.getElementById('failed-extractions').textContent = data.quality_indicators.failed_extractions + '%';
+                document.getElementById('manual-review').textContent = data.quality_indicators.manual_review_required + '%';
+                
+                // Create parse source chart
+                createParseSourceChart(data.parse_source_distribution);
+                
+                // Set default export dates (last 30 days)
+                const today = new Date();
+                const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+                document.getElementById('export-end-date').value = today.toISOString().split('T')[0];
+                document.getElementById('export-start-date').value = thirtyDaysAgo.toISOString().split('T')[0];
+            }
+
+            function createParseSourceChart(data) {
+                const ctx = document.getElementById('parseSourceChart');
+                
+                // Destroy existing chart
+                if (chartInstances.parseSource) {
+                    chartInstances.parseSource.destroy();
+                }
+                
+                chartInstances.parseSource = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['JSON-LD', 'Microdata', 'HTML'],
+                        datasets: [{
+                            data: [data.jsonld, data.microdata, data.html],
+                            backgroundColor: [
+                                'rgba(34, 197, 94, 0.8)',  // Green
+                                'rgba(59, 130, 246, 0.8)',  // Blue
+                                'rgba(245, 158, 11, 0.8)'   // Yellow
+                            ],
+                            borderColor: [
+                                'rgb(34, 197, 94)',
+                                'rgb(59, 130, 246)',
+                                'rgb(245, 158, 11)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return context.label + ': ' + context.parsed + '%';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            async function loadDomainsData() {
+                document.getElementById('domains-loading-indicator').style.display = 'block';
+                document.getElementById('domains-content').style.display = 'none';
+
+                try {
+                    const response = await new Promise((resolve, reject) => {
+                        const xhr = new XMLHttpRequest();
+                        xhr.open('GET', '/api/admin/domains-metrics', true);
+                        xhr.withCredentials = true;
+                        xhr.onreadystatechange = function() {
+                            if (xhr.readyState === 4) {
+                                if (xhr.status === 200) {
+                                    resolve(JSON.parse(xhr.responseText));
+                                } else {
+                                    reject(new Error(`HTTP ${xhr.status}: ${xhr.statusText}`));
+                                }
+                            }
+                        };
+                        xhr.send();
+                    });
+                    
+                    updateDomainsDisplay(response);
+                    
+                    document.getElementById('domains-loading-indicator').style.display = 'none';
+                    document.getElementById('domains-content').style.display = 'block';
+                    
+                } catch (error) {
+                    console.error('Error loading domains data:', error);
+                    document.getElementById('domains-loading-indicator').innerHTML = '<div class="text-red-600">ドメインデータの読み込みに失敗しました: ' + error.message + '</div>';
+                }
+            }
+
+            let domainsData = [];
+            let currentSort = { column: 'ctr', direction: 'desc' };
+
+            function updateDomainsDisplay(data) {
+                domainsData = data.top_domains;
+                
+                // Update summary cards
+                document.getElementById('total-domains').textContent = data.summary.total_domains;
+                document.getElementById('domains-violations').textContent = data.summary.domains_with_violations;
+                document.getElementById('avg-domain-ctr').textContent = data.summary.avg_ctr + '%';
+                document.getElementById('avg-domain-score').textContent = data.summary.avg_anshin_score;
+                
+                // Show violations alert if any
+                if (data.violations.length > 0) {
+                    const violationsList = data.violations.map(v => `${v.domain} (${v.violation_flag})`).join(', ');
+                    document.getElementById('violations-list').textContent = violationsList;
+                    document.getElementById('violations-alert').style.display = 'block';
+                } else {
+                    document.getElementById('violations-alert').style.display = 'none';
+                }
+                
+                // Render domains table
+                renderDomainsTable();
+            }
+
+            function renderDomainsTable() {
+                const tableBody = document.getElementById('domains-table-body');
+                let tableHTML = '';
+                
+                domainsData.forEach(domain => {
+                    const statusClass = domain.violation_flag ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800';
+                    const statusText = domain.violation_flag ? domain.violation_flag : '正常';
+                    
+                    tableHTML += `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${domain.domain}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${domain.impressions.toLocaleString()}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${domain.clicks.toLocaleString()}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <span class="font-semibold ${domain.ctr >= 60 ? 'text-green-600' : domain.ctr >= 50 ? 'text-yellow-600' : 'text-red-600'}">${domain.ctr}%</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <span class="font-semibold ${domain.avg_anshin_score >= 80 ? 'text-green-600' : domain.avg_anshin_score >= 75 ? 'text-yellow-600' : 'text-red-600'}">${domain.avg_anshin_score}</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClass}">
+                                    ${statusText}
+                                </span>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                tableBody.innerHTML = tableHTML;
+            }
+
+            function sortDomainsTable(column) {
+                // Update sort indicators
+                document.querySelectorAll('.sort-indicator').forEach(el => el.textContent = '↕');
+                
+                if (currentSort.column === column) {
+                    currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+                } else {
+                    currentSort.column = column;
+                    currentSort.direction = 'desc';
+                }
+                
+                document.getElementById(`sort-${column}`).textContent = currentSort.direction === 'asc' ? '↑' : '↓';
+                
+                // Sort data
+                domainsData.sort((a, b) => {
+                    let valueA, valueB;
+                    
+                    switch(column) {
+                        case 'domain':
+                            valueA = a.domain;
+                            valueB = b.domain;
+                            break;
+                        case 'impressions':
+                            valueA = a.impressions;
+                            valueB = b.impressions;
+                            break;
+                        case 'clicks':
+                            valueA = a.clicks;
+                            valueB = b.clicks;
+                            break;
+                        case 'ctr':
+                            valueA = a.ctr;
+                            valueB = b.ctr;
+                            break;
+                        case 'score':
+                            valueA = a.avg_anshin_score;
+                            valueB = b.avg_anshin_score;
+                            break;
+                        default:
+                            return 0;
+                    }
+                    
+                    if (currentSort.direction === 'asc') {
+                        return valueA > valueB ? 1 : -1;
+                    } else {
+                        return valueA < valueB ? 1 : -1;
+                    }
+                });
+                
+                renderDomainsTable();
+            }
+
+            function exportCSV() {
+                const startDate = document.getElementById('export-start-date').value;
+                const endDate = document.getElementById('export-end-date').value;
+                
+                if (!startDate || !endDate) {
+                    alert('開始日と終了日を選択してください');
+                    return;
+                }
+                
+                const url = `/api/admin/export-csv?start_date=${startDate}&end_date=${endDate}`;
+                window.open(url, '_blank');
+            }
+
             // Initialize on page load
             document.addEventListener('DOMContentLoaded', function() {
                 loadOverviewData();
