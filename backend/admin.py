@@ -630,6 +630,8 @@ async def admin_dashboard(current_user: str = Depends(verify_admin_credentials))
                 
                 if (section === 'overview') {
                     loadOverviewData();
+                } else if (section === 'context') {
+                    loadContextData();
                 }
             }
 
