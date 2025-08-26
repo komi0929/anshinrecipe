@@ -35,12 +35,12 @@ function App() {
   const [showFeedback, setShowFeedback] = useState(false);
   const [anonId] = useState(() => getOrCreateAnonId());
 
-  // Idle detection
-  const { isIdle, resetIdleTimer } = useIdleDetection(IDLE_THRESHOLD_MS);
-
-  // State for search loading
+  // State for search loading and errors
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState(null);
+
+  // Idle detection
+  const { isIdle, resetIdleTimer } = useIdleDetection(IDLE_THRESHOLD_MS);
 
   // Check for debug mode
   const isDebugMode = new URLSearchParams(window.location.search).get('debug') === '1';
@@ -56,33 +56,27 @@ function App() {
   // Mandatory allergens (always visible)
   const mandatoryAllergens = ["卵", "乳", "小麦", "そば", "落花生", "えび", "かに", "くるみ"];
   
-  // Additional 20 allergens (collapsible)
-  const additionalAllergens = [
-    "あわび", "いか", "いくら", "オレンジ", "カシューナッツ", "キウイフルーツ", 
-    "牛肉", "ごま", "さけ", "さば", "大豆", "鶏肉", "バナナ", "豚肉", 
-    "まつたけ", "もも", "やまいも", "りんご", "ゼラチン", "アーモンド"
+  // Collapsible allergens (show when expanded)
+  const collapsibleAllergens = [
+    "あわび", "いか", "いくら", "オレンジ", "カシューナッツ", "キウイフルーツ",
+    "牛肉", "ごま", "さけ", "さば", "大豆", "鶏肉", "バナナ", "豚肉",
+    "まつたけ", "もも", "やまいも", "りんご", "ゼラチン", "魚介類（えび・かに以外）"
   ];
 
-  // Context options
-  const contextOptions = ["時短", "イベント", "健康", "初心者"];
-
-  const toggleAllergen = (allergen) => {
+  const handleAllergenToggle = (allergen) => {
     setSelectedAllergens(prev => 
       prev.includes(allergen) 
-        ? prev.filter(item => item !== allergen)
+        ? prev.filter(a => a !== allergen)
         : [...prev, allergen]
     );
-    resetIdleTimer(); // Reset idle on user interaction
   };
 
-  const removeAllergen = (allergen) => {
-    setSelectedAllergens(prev => prev.filter(item => item !== allergen));
-    resetIdleTimer();
+  const handleAllergenRemove = (allergen) => {
+    setSelectedAllergens(prev => prev.filter(a => a !== allergen));
   };
 
-  const handleContextSelect = (context) => {
+  const handleContextToggle = (context) => {
     setSelectedContext(prev => prev === context ? "" : context);
-    resetIdleTimer();
   };
 
   const handleSearch = async () => {
@@ -177,42 +171,6 @@ function App() {
     resetIdleTimer();
   };
 
-    // Combine reranked results with alternatives
-    const combinedResults = [...rerankedResults, ...validAlternatives]
-      .sort((a, b) => b.anshinScore - a.anshinScore);
-
-    setSearchResults(combinedResults);
-    setShowTop10(false);
-    setHasUsedAlternative(true);
-    resetIdleTimer();
-  };
-
-  const getAlternativeButtonText = () => {
-    if (!selectedContext) return "";
-    
-    const contextLabels = {
-      "時短": "時短をさらに優先",
-      "イベント": "見栄えを重視", 
-      "健康": "より健康的を優先",
-      "初心者": "やさしさを優先"
-    };
-
-    return `別の候補を試す（${contextLabels[selectedContext]}）`;
-  };
-
-  const getSetDescription = () => {
-    if (hasUsedAlternative) {
-      const descriptions = {
-        "時短": "軸変更：調理時間と工程数を最優先",
-        "イベント": "軸変更：見た目と装飾性を最優先",
-        "健康": "軸変更：カロリーと栄養価を最優先", 
-        "初心者": "軸変更：手順の簡単さを最優先"
-      };
-      return descriptions[selectedContext] || "";
-    }
-    return "";
-  };
-
   const handleFeedbackClose = () => {
     setShowFeedback(false);
   };
@@ -229,7 +187,7 @@ function App() {
     <div className="min-h-screen bg-[#FAFAF9] pb-20">
       <div className="container mx-auto p-4 max-w-md">
         {/* Header */}
-        <div className="flex items-center justify-start pt-8 mb-8">
+        <div className="flex flex-col items-center justify-center pt-8 mb-8">
           <h1 className="text-2xl font-bold text-[#111827] mb-2">
             あんしんレシピ
           </h1>
@@ -247,236 +205,214 @@ function App() {
           )}
         </div>
 
-        {!hasSearched ? (
-          <>
-            {/* Selected Allergen Badges */}
-            {selectedAllergens.length > 0 && (
-              <div className="mb-4">
-                <div className="flex flex-wrap gap-2">
-                  {selectedAllergens.map((allergen) => (
-                    <div
-                      key={allergen}
-                      className="bg-[#10B981] text-white rounded-full px-3 py-1 text-sm flex items-center gap-1"
-                    >
-                      {allergen}
-                      <button
-                        onClick={() => removeAllergen(allergen)}
-                        className="hover:opacity-70"
-                      >
-                        <X size={14} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Allergen Picker */}
-            <div className="mb-6">
-              <h3 className="text-[#111827] font-medium mb-3">避けたい食材</h3>
-              
-              {/* Mandatory allergens */}
-              <div className="flex flex-wrap gap-2 mb-3">
-                {mandatoryAllergens.map((allergen) => (
-                  <button
-                    key={allergen}
-                    onClick={() => toggleAllergen(allergen)}
-                    className={`rounded-lg border px-3 py-1 text-sm transition-colors ${
-                      selectedAllergens.includes(allergen)
-                        ? "bg-[#10B981] text-white border-[#10B981]"
-                        : "bg-white text-[#111827] border-gray-300 hover:border-[#10B981]"
-                    }`}
-                  >
-                    {allergen}
-                  </button>
-                ))}
-              </div>
-
-              {/* Expand button */}
+        {/* Allergen Selection */}
+        <div className="mb-6">
+          <h3 className="text-sm font-medium text-[#374151] mb-3">
+            使わない食材を選んでください（任意）
+          </h3>
+          
+          {/* Mandatory allergens */}
+          <div className="flex flex-wrap gap-2 mb-3">
+            {mandatoryAllergens.map(allergen => (
               <button
-                onClick={() => {
-                  setShowAllAllergens(!showAllAllergens);
-                  resetIdleTimer();
-                }}
-                className="flex items-center gap-2 text-[#10B981] text-sm hover:text-[#047857] transition-colors mb-3"
+                key={allergen}
+                onClick={() => handleAllergenToggle(allergen)}
+                className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                  selectedAllergens.includes(allergen)
+                    ? 'bg-[#10B981] text-white border-[#10B981]'
+                    : 'bg-white text-[#374151] border-[#D1D5DB] hover:border-[#10B981]'
+                }`}
               >
-                <Plus size={16} />
-                {showAllAllergens ? "20品目を非表示" : "＋さらに20品目を表示"}
+                {allergen}
               </button>
-
-              {/* Additional allergens (collapsible) */}
-              {showAllAllergens && (
-                <div className="flex flex-wrap gap-2">
-                  {additionalAllergens.map((allergen) => (
-                    <button
-                      key={allergen}
-                      onClick={() => toggleAllergen(allergen)}
-                      className={`rounded-lg border px-3 py-1 text-sm transition-colors ${
-                        selectedAllergens.includes(allergen)
-                          ? "bg-[#10B981] text-white border-[#10B981]"
-                          : "bg-white text-[#111827] border-gray-300 hover:border-[#10B981]"
-                      }`}
-                    >
-                      {allergen}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Context Chips */}
-            <div className="mb-6">
-              <h3 className="text-[#111827] font-medium mb-3">今日の気分</h3>
-              <div className="flex gap-2 overflow-x-auto pb-2">
-                {contextOptions.map((context) => (
-                  <button
-                    key={context}
-                    onClick={() => handleContextSelect(context)}
-                    className={`rounded-full px-3 py-1 text-sm border whitespace-nowrap transition-colors ${
-                      selectedContext === context
-                        ? "bg-[#10B981] text-white border-[#10B981]"
-                        : "bg-white text-[#111827] border-gray-300 hover:border-[#10B981]"
-                    }`}
-                  >
-                    {context}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Free-text Search */}
-            <div className="mb-6">
-              <h3 className="text-[#111827] font-medium mb-3">フリーワード検索</h3>
-              <input
-                type="text"
-                value={searchText}
-                onChange={(e) => {
-                  setSearchText(e.target.value);
-                  resetIdleTimer();
-                }}
-                placeholder="例：ケーキ、カレー、パスタ"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#10B981] focus:border-[#10B981] transition-colors"
-              />
-            </div>
-          </>
-        ) : (
-          <>
-            {/* Search Results Header */}
-            <div className="mb-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-bold text-[#111827]">
-                    あんしんレシピ {showTop10 ? 'Top10' : 'Top3'}
-                  </h3>
-                  {getSetDescription() && (
-                    <div className="text-sm text-[#0EA5E9] mt-1">
-                      {getSetDescription()}
-                    </div>
-                  )}
-                </div>
+            ))}
+          </div>
+          
+          {/* Collapsible allergens */}
+          {showAllAllergens && (
+            <div className="flex flex-wrap gap-2 mb-3">
+              {collapsibleAllergens.map(allergen => (
                 <button
-                  onClick={() => {
-                    setHasSearched(false);
-                    setSearchResults([]);
-                    setShowTop10(false);
-                    setHasUsedAlternative(false);
-                    setShowFeedback(false);
-                    resetIdleTimer();
-                  }}
-                  className="text-[#10B981] text-sm hover:text-[#047857] transition-colors"
+                  key={allergen}
+                  onClick={() => handleAllergenToggle(allergen)}
+                  className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                    selectedAllergens.includes(allergen)
+                      ? 'bg-[#10B981] text-white border-[#10B981]'
+                      : 'bg-white text-[#374151] border-[#D1D5DB] hover:border-[#10B981]'
+                  }`}
                 >
-                  検索に戻る
+                  {allergen}
                 </button>
-              </div>
-              {isDebugMode && (
-                <div className="mt-2 text-xs text-[#6B7280]">
-                  デバッグモード: スコア詳細とキャッチフレーズ出典を表示
-                </div>
-              )}
+              ))}
             </div>
-
-            {/* Top3 Recipe Cards */}
-            <div className="space-y-4 mb-6">
-              {top3Results.map((recipe, index) => (
-                <div key={recipe.id}>
-                  <div className="text-sm font-medium text-[#6B7280] mb-2">
-                    #{index + 1}
-                  </div>
-                  <RecipeCard recipe={recipe} showDebug={isDebugMode} />
+          )}
+          
+          {/* Show more/less button */}
+          <button
+            onClick={() => setShowAllAllergens(!showAllAllergens)}
+            className="flex items-center space-x-1 text-sm text-[#10B981] hover:text-[#047857]"
+          >
+            <span>{showAllAllergens ? "戻す" : "他のアレルゲンも見る"}</span>
+            <ChevronDown className={`w-4 h-4 transition-transform ${showAllAllergens ? 'rotate-180' : ''}`} />
+          </button>
+          
+          {/* Selected allergens chips */}
+          {selectedAllergens.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-[#E5E7EB]">
+              {selectedAllergens.map(allergen => (
+                <div
+                  key={allergen}
+                  className="flex items-center space-x-1 bg-[#10B981] text-white px-2 py-1 rounded-full text-sm"
+                >
+                  <span>{allergen}</span>
+                  <button
+                    onClick={() => handleAllergenRemove(allergen)}
+                    className="hover:bg-[#047857] rounded-full p-0.5"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
                 </div>
               ))}
             </div>
+          )}
+        </div>
 
-            {/* Top10 Expansion Button */}
+        {/* Context Selection */}
+        <div className="mb-6">
+          <h3 className="text-sm font-medium text-[#374151] mb-3">
+            今日の気分は？（任意）
+          </h3>
+          <div className="flex space-x-2 overflow-x-auto pb-2">
+            {["時短", "イベント", "健康", "初心者"].map(context => (
+              <button
+                key={context}
+                onClick={() => handleContextToggle(context)}
+                className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
+                  selectedContext === context
+                    ? 'bg-[#0EA5E9] text-white border-[#0EA5E9]'
+                    : 'bg-white text-[#374151] border-[#D1D5DB] hover:border-[#0EA5E9]'
+                }`}
+              >
+                {context}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Search Input */}
+        <div className="mb-6">
+          <h3 className="text-sm font-medium text-[#374151] mb-3">
+            作りたいレシピは？
+          </h3>
+          <input
+            type="text"
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            placeholder="例：卵を使わないケーキ"
+            className="w-full px-4 py-3 border border-[#D1D5DB] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#10B981] focus:border-transparent"
+            onKeyPress={(e) => {
+              if (e.key === 'Enter') {
+                handleSearch();
+              }
+            }}
+          />
+        </div>
+
+        {/* Search Error Display */}
+        {searchError && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="text-red-800 font-medium mb-2">
+              {searchError.message}
+            </div>
+            {isDebugMode && searchError.details && (
+              <pre className="text-xs text-red-600 bg-red-100 p-2 rounded overflow-x-auto">
+                {JSON.stringify(searchError.details, null, 2)}
+              </pre>
+            )}
+            <button 
+              onClick={() => setSearchError(null)}
+              className="mt-2 text-sm text-red-600 hover:text-red-800"
+            >
+              ✕ 閉じる
+            </button>
+          </div>
+        )}
+
+        {/* Search Results */}
+        {hasSearched && searchResults.length > 0 && (
+          <div className="space-y-6">
+            {/* Top 3 Results */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-[#111827]">
+                あんしんTop3
+              </h3>
+              {top3Results.map((recipe, index) => (
+                <RecipeCard
+                  key={recipe.id}
+                  recipe={recipe}
+                  rank={index + 1}
+                  isDebugMode={isDebugMode}
+                />
+              ))}
+            </div>
+
+            {/* Top10 Button or Results */}
             {!showTop10 && top10Results.length > 0 && (
-              <div className="mb-6">
+              <div className="text-center">
                 <button
                   onClick={handleShowTop10}
-                  className="w-full bg-white border border-[#10B981] text-[#10B981] py-3 rounded-lg font-medium hover:bg-[#10B981] hover:text-white focus:outline-none focus:ring-2 focus:ring-[#10B981] focus:ring-offset-2 transition-colors flex items-center justify-center gap-2"
+                  className="bg-white border border-[#D1D5DB] text-[#374151] px-6 py-3 rounded-xl hover:bg-[#F9FAFB] focus:outline-none focus:ring-2 focus:ring-[#10B981] focus:ring-offset-2 transition-colors"
                 >
-                  <ChevronDown size={20} />
+                  <Plus className="w-4 h-4 inline-block mr-2" />
                   Top10を表示
                 </button>
               </div>
             )}
 
-            {/* Top10 Results (4-10) */}
-            {showTop10 && (
-              <div className="space-y-4 mb-6">
-                <div className="text-center py-2">
-                  <div className="text-sm font-medium text-[#6B7280]">
-                    残りの結果 (4位〜10位)
-                  </div>
-                </div>
+            {/* Top10 Results */}
+            {showTop10 && top10Results.length > 0 && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-[#111827]">
+                  Top10
+                </h3>
                 {top10Results.map((recipe, index) => (
-                  <div key={recipe.id}>
-                    <div className="text-sm font-medium text-[#6B7280] mb-2">
-                      #{index + 4}
-                    </div>
-                    <RecipeCard recipe={recipe} showDebug={isDebugMode} />
-                  </div>
+                  <RecipeCard
+                    key={recipe.id}
+                    recipe={recipe}
+                    rank={index + 4}
+                    isDebugMode={isDebugMode}
+                  />
                 ))}
               </div>
             )}
 
-            {/* Context-Tied Alternative Set Button */}
+            {/* Alternative Context Set Button */}
             {selectedContext && !hasUsedAlternative && (
-              <div className="mb-6">
+              <div className="text-center pt-4 border-t border-[#E5E7EB]">
                 <button
                   onClick={handleContextAlternative}
-                  className="w-full bg-[#0EA5E9] text-white py-3 rounded-lg font-medium hover:bg-[#0284C7] focus:outline-none focus:ring-2 focus:ring-[#0EA5E9] focus:ring-offset-2 transition-colors flex items-center justify-center gap-2"
+                  className="bg-white border border-[#D1D5DB] text-[#374151] px-6 py-3 rounded-xl hover:bg-[#F9FAFB] focus:outline-none focus:ring-2 focus:ring-[#10B981] focus:ring-offset-2 transition-colors"
                 >
-                  <RefreshCw size={20} />
-                  {getAlternativeButtonText()}
+                  <RefreshCw className="w-4 h-4 inline-block mr-2" />
+                  別の候補を試す
                 </button>
-                <div className="text-xs text-[#6B7280] text-center mt-2">
-                  選択したコンテキストに特化した軸で再検索します
-                </div>
               </div>
             )}
-          </>
+          </div>
+        )}
+
+        {/* No Results Message */}
+        {hasSearched && searchResults.length === 0 && !searchError && (
+          <div className="text-center py-8">
+            <div className="text-[#6B7280] text-lg mb-2">
+              レシピが見つかりませんでした
+            </div>
+            <div className="text-[#9CA3AF] text-sm">
+              検索条件を変更してお試しください
+            </div>
+          </div>
         )}
       </div>
-
-      {/* Search Error Display */}
-      {searchError && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <div className="text-red-800 font-medium mb-2">
-            {searchError.message}
-          </div>
-          {isDebugMode && searchError.details && (
-            <pre className="text-xs text-red-600 bg-red-100 p-2 rounded overflow-x-auto">
-              {JSON.stringify(searchError.details, null, 2)}
-            </pre>
-          )}
-          <button 
-            onClick={() => setSearchError(null)}
-            className="mt-2 text-sm text-red-600 hover:text-red-800"
-          >
-            ✕ 閉じる
-          </button>
-        </div>
-      )}
 
       {/* Bottom-fixed Search Button - only show when not showing results */}
       {!hasSearched && (
