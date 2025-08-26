@@ -198,55 +198,15 @@ function App() {
     resetIdleTimer();
   };
 
-  const handleContextAlternative = () => {
+  const handleContextAlternative = async () => {
     if (!selectedContext || hasUsedAlternative) return;
 
-    let alternativeRecipes;
-    let contextKey;
-
-    // Map context to alternative recipe set
-    switch (selectedContext) {
-      case "時短":
-        alternativeRecipes = contextAlternativeRecipes.time_optimized;
-        contextKey = "time_optimized";
-        break;
-      case "イベント":
-        alternativeRecipes = contextAlternativeRecipes.visual_optimized;
-        contextKey = "visual_optimized";
-        break;
-      case "健康":
-        alternativeRecipes = contextAlternativeRecipes.health_optimized;
-        contextKey = "health_optimized";
-        break;
-      case "初心者":
-        alternativeRecipes = contextAlternativeRecipes.beginner_optimized;
-        contextKey = "beginner_optimized";
-        break;
-      default:
-        return;
-    }
-
-    // Apply MMR-like reranking to existing results
-    const currentIds = searchResults.map(r => r.id);
-    const rerankedResults = searchResults.map(recipe => {
-      const baseScore = recipe.anshinScore;
-      const differenceScore = calculateDifferenceScore(recipe, selectedContext);
-      const newScore = 0.7 * baseScore + 0.3 * differenceScore;
-      
-      return {
-        ...recipe,
-        anshinScore: Math.round(newScore),
-        axisShift: `${selectedContext.toLowerCase()}:reranked`,
-        originalScore: baseScore,
-        differenceScore: Math.round(differenceScore)
-      };
-    });
-
-    // Add alternative recipes, excluding same domains and already shown IDs
-    const usedDomains = new Set(searchResults.map(r => r.source));
-    const validAlternatives = alternativeRecipes.filter(recipe => 
-      !currentIds.includes(recipe.id) && !usedDomains.has(recipe.source)
-    );
+    // For now, re-run the search with context emphasis
+    // This could be enhanced to call a specific reranking endpoint
+    await handleSearch();
+    setHasUsedAlternative(true);
+    resetIdleTimer();
+  };
 
     // Combine reranked results with alternatives
     const combinedResults = [...rerankedResults, ...validAlternatives]
