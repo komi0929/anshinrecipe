@@ -85,37 +85,6 @@ function App() {
     resetIdleTimer();
   };
 
-  const calculateDifferenceScore = (recipe, context) => {
-    switch (context) {
-      case "時短":
-        // Prioritize shorter prepMinutes and fewer ingredients
-        const timeScore = Math.max(0, 100 - recipe.prepMinutes * 2); // Max 50 points for time
-        const ingredientScore = Math.max(0, 100 - recipe.ingredients * 8); // Max 20 points for ingredients
-        return (timeScore + ingredientScore) / 2;
-      
-      case "イベント":
-        // Prioritize visual score and ratings
-        const visualScore = recipe.visualScore || 50;
-        const ratingBonus = recipe.scoreBreakdown.popularity || 50;
-        return (visualScore + ratingBonus) / 2;
-      
-      case "健康":
-        // Prioritize lower calories and health keywords
-        const calorieScore = Math.max(0, 100 - recipe.calories / 5); // Lower calories = higher score
-        const healthKeywordScore = recipe.healthKeywords.length * 15; // Bonus for health keywords
-        return Math.min(100, (calorieScore + healthKeywordScore) / 2);
-      
-      case "初心者":
-        // Prioritize fewer steps and clarity keywords
-        const stepScore = Math.max(0, 100 - recipe.steps * 6); // Fewer steps = higher score
-        const clarityScore = recipe.clarityKeywords.length * 12; // Bonus for clarity keywords
-        return Math.min(100, (stepScore + clarityScore) / 2);
-      
-      default:
-        return 0;
-    }
-  };
-
   const handleSearch = async () => {
     if (!searchText.trim()) return;
     
