@@ -3,12 +3,12 @@ import "./App.css";
 import { X, Plus, ChevronDown, RefreshCw } from "lucide-react";
 import RecipeCard from "./components/RecipeCard";
 import SessionFeedback from "./components/SessionFeedback";
-import { mockRecipes, contextAlternativeRecipes } from "./mockData";
 import useIdleDetection from "./hooks/useIdleDetection";
 import { getOrCreateAnonId, canShowFeedbackToday, markFeedbackShownToday, getSessionData } from "./utils/sessionUtils";
 
 // Environment constant for idle threshold
 const IDLE_THRESHOLD_MS = process.env.REACT_APP_IDLE_THRESHOLD_MS || 30000;
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 function App() {
   // State for allergens
