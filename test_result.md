@@ -102,9 +102,69 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Wire Funnel, Extract, and Domains sections in the /api/admin/dashboard to real MongoDB data. Implement conversion funnel, parseSource distribution, top 10 recipe domains, and CSV export functionality."
+user_problem_statement: "Test the newly implemented search datasource functionality for the Anshin Recipe app. Verify health endpoint shows correct datasource configuration, search endpoint works in production mode with Google CSE, mock mode fallback works, error handling for CSE failures, and debug mode functionality."
 
 backend:
+  - task: "Health Endpoint Testing"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "backend_testing"
+        comment: "Health endpoint (/api/v1/health) testing completed successfully. Endpoint returns correct datasource configuration: 'cse' when MOCK_MODE=0 and CSE keys are present, 'mock' when credentials missing. All required fields present: status, datasource, envFlags, gitSha, timestamp. Environment flags correctly show MOCK_MODE, CSE_KEY_PRESENT, and CSE_CX_PRESENT status."
+
+  - task: "Search Endpoint Production Mode Testing"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "backend_testing"
+        comment: "Search endpoint (/api/v1/search) production mode testing completed successfully. With MOCK_MODE=0 and valid CSE credentials, endpoint uses Google CSE and returns real recipe results from domains like www.takakibakeryshop.jp, cookpad.com, cake.jp, etc. Response structure correct with results, count, query fields. Real URLs and domain names confirmed (not mock data patterns)."
+
+  - task: "Search Endpoint Mock Mode Testing"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "backend_testing"
+        comment: "Search endpoint mock mode testing completed successfully. When MOCK_MODE=1, endpoint correctly returns mock data with 3 predefined recipes (卵・乳不使用 チョコレートケーキ, グルテンフリー バナナマフィン, 卵なし パンケーキ). Debug mode shows datasource:'mock', parseSource:'mock', fallbackReason:'mock_mode_enabled'."
+
+  - task: "Search Endpoint Debug Mode Testing"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "backend_testing"
+        comment: "Debug mode functionality testing completed successfully. When debug=1 parameter is added, response includes debug object with datasource, parseSource, mockMode, timestamp fields. In production mode shows datasource:'cse', parseSource:'cse', mockMode:'0'. Debug information correctly reflects current configuration."
+
+  - task: "CSE Error Handling Testing"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "backend_testing"
+        comment: "CSE error handling testing completed successfully. When CSE credentials are missing in production mode (MOCK_MODE=0), search endpoint correctly returns 502 status with proper error structure: {detail: {error:'cse_failed', reason:'missing_credentials', requestEcho:{cx, q, params}}}. No silent fallback to mock data in production mode as required. Health endpoint correctly shows datasource:'mock' when credentials missing."
+
   - task: "Quality Metrics API Endpoint"
     implemented: true
     working: true
