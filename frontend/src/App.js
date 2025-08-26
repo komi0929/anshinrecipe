@@ -116,53 +116,81 @@ function App() {
     }
   };
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
+    if (!searchText.trim()) return;
+    
     console.log("Search clicked:", { selectedAllergens, selectedContext, searchText });
     
-    // Filter recipes based on selected allergens and add context matching
-    let filteredRecipes = mockRecipes.filter(recipe => {
-      // Check if recipe contains any selected allergens (for demo, we'll assume none do)
-      const hasSelectedAllergens = selectedAllergens.some(allergen => 
-        recipe.title.includes(allergen)
-      );
-      return !hasSelectedAllergens;
-    });
-
-    // Apply context filtering and boost scores
-    if (selectedContext) {
-      filteredRecipes = filteredRecipes.map(recipe => {
-        let boostedScore = recipe.anshinScore;
-        let updatedCatchphrase = recipe.catchphrase;
-        
-        // Context matching logic
-        if (selectedContext === "時短" && recipe.title.includes("時短")) {
-          boostedScore += 2;
-          updatedCatchphrase = "時短レシピ";
-        } else if (selectedContext === "健康" && recipe.title.includes("野菜")) {
-          boostedScore += 1;
-          updatedCatchphrase = "栄養満点";
-        } else if (selectedContext === "初心者" && recipe.title.includes("簡単")) {
-          boostedScore += 1;
-          updatedCatchphrase = "初心者OK";
-        }
-        
-        return {
-          ...recipe,
-          anshinScore: Math.min(boostedScore, 100),
-          catchphrase: updatedCatchphrase
-        };
+    setIsSearching(true);
+    setSearchError(null);
+    
+    try {
+      // Build search query
+      const queryParams = new URLSearchParams({
+        q: searchText
       });
+      
+      if (selectedContext) {
+        queryParams.append('context', selectedContext);
+      }
+      
+      if (selectedAllergens.length > 0) {
+        queryParams.append('allergens', selectedAllergens.join(','));
+      }
+      
+      if (isDebugMode) {
+        queryParams.append('debug', '1');
+      }
+      
+      const searchUrl = `${BACKEND_URL}/api/v1/search?${queryParams.toString()}`;
+      console.log('Calling search API:', searchUrl);
+      
+      const response = await fetch(searchUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Search API error:', errorData);
+        
+        if (response.status === 502 && errorData.error === 'cse_failed') {
+          setSearchError({
+            type: 'cse_failed',
+            message: 'Search service is temporarily unavailable',
+            details: isDebugMode ? errorData : null
+          });
+        } else {
+          setSearchError({
+            type: 'general_error',
+            message: 'Search failed. Please try again.',
+            details: isDebugMode ? errorData : null
+          });
+        }
+        return;
+      }
+      
+      const searchData = await response.json();
+      console.log('Search results:', searchData);
+      
+      setSearchResults(searchData.results || []);
+      setHasSearched(true);
+      setShowTop10(false);
+      setHasUsedAlternative(false);
+      resetIdleTimer(); // Reset idle timer on search
+      
+    } catch (error) {
+      console.error('Search error:', error);
+      setSearchError({
+        type: 'network_error',
+        message: 'Network error. Please check your connection and try again.',
+        details: isDebugMode ? error.message : null
+      });
+    } finally {
+      setIsSearching(false);
     }
-
-    // Sort by score and take all recipes
-    const sortedResults = filteredRecipes
-      .sort((a, b) => b.anshinScore - a.anshinScore);
-
-    setSearchResults(sortedResults);
-    setHasSearched(true);
-    setShowTop10(false);
-    setHasUsedAlternative(false);
-    resetIdleTimer(); // Reset idle timer on search
   };
 
   const handleShowTop10 = () => {
