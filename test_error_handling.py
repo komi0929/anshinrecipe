@@ -86,20 +86,23 @@ def test_cse_error_handling():
                 error_data = response.json()
                 print(f"   Error response: {json.dumps(error_data, indent=2, ensure_ascii=False)}")
                 
-                # Check error structure
-                if "error" in error_data and error_data["error"] == "cse_failed":
+                # Check error structure (FastAPI wraps in 'detail')
+                detail = error_data.get("detail", {})
+                
+                if "error" in detail and detail["error"] == "cse_failed":
                     print("✅ Error response has correct 'error' field")
                 else:
-                    print(f"❌ Expected error='cse_failed', got {error_data.get('error')}")
+                    print(f"❌ Expected error='cse_failed', got {detail.get('error')}")
                 
-                if "reason" in error_data:
+                if "reason" in detail:
                     print("✅ Error response has 'reason' field")
+                    print(f"   Reason: {detail['reason']}")
                 else:
                     print("❌ Error response missing 'reason' field")
                 
-                if "requestEcho" in error_data:
+                if "requestEcho" in detail:
                     print("✅ Error response has 'requestEcho' field")
-                    request_echo = error_data["requestEcho"]
+                    request_echo = detail["requestEcho"]
                     if "q" in request_echo and request_echo["q"] == test_query:
                         print("✅ RequestEcho contains original query")
                     else:
