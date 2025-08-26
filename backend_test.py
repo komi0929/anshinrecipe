@@ -897,6 +897,8 @@ def main():
     print("=" * 80)
     
     all_results = {
+        "health": health_results,
+        "search": search_results,
         "funnel": funnel_results,
         "extract": extract_results,
         "domains": domains_results,
@@ -916,6 +918,31 @@ def main():
     print(f"\n📊 Test Breakdown:")
     for endpoint, result in all_results.items():
         print(f"\n{endpoint.upper()}:")
+        if 'endpoint_tests' in result:
+            endpoint_pass = len([t for t in result['endpoint_tests'] if t['status'] == 'PASS'])
+            endpoint_total = len(result['endpoint_tests'])
+            print(f"  Endpoint Tests: {endpoint_pass}/{endpoint_total} passed")
+        
+        if 'datasource_tests' in result:
+            datasource_pass = len([t for t in result['datasource_tests'] if t['status'] == 'PASS'])
+            datasource_total = len(result['datasource_tests'])
+            print(f"  Datasource Tests: {datasource_pass}/{datasource_total} passed")
+        
+        if 'search_tests' in result:
+            search_pass = len([t for t in result['search_tests'] if t['status'] == 'PASS'])
+            search_total = len(result['search_tests'])
+            print(f"  Search Tests: {search_pass}/{search_total} passed")
+        
+        if 'debug_tests' in result:
+            debug_pass = len([t for t in result['debug_tests'] if t['status'] == 'PASS'])
+            debug_total = len(result['debug_tests'])
+            print(f"  Debug Tests: {debug_pass}/{debug_total} passed")
+        
+        if 'error_tests' in result:
+            error_pass = len([t for t in result['error_tests'] if t['status'] == 'PASS'])
+            error_total = len(result['error_tests'])
+            print(f"  Error Tests: {error_pass}/{error_total} passed")
+        
         if 'auth_tests' in result:
             auth_pass = len([t for t in result['auth_tests'] if t['status'] == 'PASS'])
             auth_total = len(result['auth_tests'])
