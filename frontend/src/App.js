@@ -38,12 +38,12 @@ function App() {
   // Idle detection
   const { isIdle, resetIdleTimer } = useIdleDetection(IDLE_THRESHOLD_MS);
 
-  // Check for demo mode to show results immediately
-  const isDemoMode = new URLSearchParams(window.location.search).get('demo') === '1';
+  // State for search loading
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState(null);
+
+  // Check for debug mode
   const isDebugMode = new URLSearchParams(window.location.search).get('debug') === '1';
-  const showExpanded = new URLSearchParams(window.location.search).get('expanded') === '1';
-  const demoContext = new URLSearchParams(window.location.search).get('context');
-  const showFeedbackDemo = new URLSearchParams(window.location.search).get('feedback') === '1';
 
   // Show demo results if demo mode is enabled
   useEffect(() => {
