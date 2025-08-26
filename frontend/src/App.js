@@ -45,36 +45,13 @@ function App() {
   // Check for debug mode
   const isDebugMode = new URLSearchParams(window.location.search).get('debug') === '1';
 
-  // Show demo results if demo mode is enabled
-  useEffect(() => {
-    if (isDemoMode) {
-      setSearchResults(mockRecipes);
-      setHasSearched(true);
-      
-      // Set context from URL parameter
-      if (demoContext) {
-        setSelectedContext(demoContext);
-      }
-      
-      // Auto-expand Top10 for demo or if expanded param is set
-      if (showExpanded) {
-        const expandTimer = setTimeout(() => {
-          setShowTop10(true);
-        }, 1000);
-        return () => clearTimeout(expandTimer);
-      }
-    }
-  }, [isDemoMode, showExpanded, demoContext]);
-
   // Handle idle detection for feedback banner
   useEffect(() => {
-    if ((isIdle && hasSearched && !showFeedback && canShowFeedbackToday(anonId)) || showFeedbackDemo) {
+    if (isIdle && hasSearched && !showFeedback && canShowFeedbackToday(anonId)) {
       setShowFeedback(true);
-      if (!showFeedbackDemo) {
-        markFeedbackShownToday(anonId);
-      }
+      markFeedbackShownToday(anonId);
     }
-  }, [isIdle, hasSearched, showFeedback, anonId, showFeedbackDemo]);
+  }, [isIdle, hasSearched, showFeedback, anonId]);
 
   // Mandatory allergens (always visible)
   const mandatoryAllergens = ["卵", "乳", "小麦", "そば", "落花生", "えび", "かに", "くるみ"];
