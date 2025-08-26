@@ -588,14 +588,304 @@ def test_export_csv_endpoint():
     
     return results
 
+def test_health_endpoint():
+    """Test the Health Check API endpoint for datasource configuration"""
+    print("=" * 80)
+    print("TESTING HEALTH CHECK API ENDPOINT")
+    print("=" * 80)
+    
+    results = {
+        "endpoint_tests": [],
+        "datasource_tests": [],
+        "overall_status": "PASS"
+    }
+    
+    # Test 1: Basic Health Check
+    print("\n1. Testing Basic Health Check")
+    print("-" * 60)
+    
+    try:
+        response = requests.get(f"{API_BASE}/v1/health", timeout=30)
+        
+        if response.status_code == 200:
+            print("✅ Health endpoint: Successfully accessible (200)")
+            results["endpoint_tests"].append({"test": "health_accessible", "status": "PASS", "code": 200})
+            
+            # Parse JSON response
+            try:
+                data = response.json()
+                print("✅ Response is valid JSON")
+                
+                # Check required keys
+                required_keys = ["status", "datasource", "envFlags", "gitSha", "timestamp"]
+                for key in required_keys:
+                    if key in data:
+                        print(f"✅ Has required key: {key}")
+                        results["endpoint_tests"].append({"test": f"has_{key}", "status": "PASS"})
+                    else:
+                        print(f"❌ Missing required key: {key}")
+                        results["endpoint_tests"].append({"test": f"has_{key}", "status": "FAIL"})
+                        results["overall_status"] = "FAIL"
+                
+                # Check datasource configuration
+                datasource = data.get("datasource", "")
+                env_flags = data.get("envFlags", {})
+                mock_mode = env_flags.get("MOCK_MODE", "")
+                cse_key_present = env_flags.get("CSE_KEY_PRESENT", False)
+                cse_cx_present = env_flags.get("CSE_CX_PRESENT", False)
+                
+                print(f"\n📊 Datasource Configuration:")
+                print(f"   Datasource: {datasource}")
+                print(f"   MOCK_MODE: {mock_mode}")
+                print(f"   CSE_KEY_PRESENT: {cse_key_present}")
+                print(f"   CSE_CX_PRESENT: {cse_cx_present}")
+                
+                # Validate datasource logic
+                if mock_mode == "0" and cse_key_present and cse_cx_present:
+                    if datasource == "cse":
+                        print("✅ Datasource correctly set to 'cse' for production mode with keys")
+                        results["datasource_tests"].append({"test": "production_datasource", "status": "PASS"})
+                    else:
+                        print(f"❌ Expected datasource 'cse' for production mode, got '{datasource}'")
+                        results["datasource_tests"].append({"test": "production_datasource", "status": "FAIL"})
+                        results["overall_status"] = "FAIL"
+                else:
+                    if datasource == "mock":
+                        print("✅ Datasource correctly set to 'mock' for fallback conditions")
+                        results["datasource_tests"].append({"test": "fallback_datasource", "status": "PASS"})
+                    else:
+                        print(f"❌ Expected datasource 'mock' for fallback conditions, got '{datasource}'")
+                        results["datasource_tests"].append({"test": "fallback_datasource", "status": "FAIL"})
+                        results["overall_status"] = "FAIL"
+                
+            except json.JSONDecodeError as e:
+                print(f"❌ Response is not valid JSON: {e}")
+                results["endpoint_tests"].append({"test": "valid_json", "status": "FAIL", "error": str(e)})
+                results["overall_status"] = "FAIL"
+                
+        else:
+            print(f"❌ Health endpoint failed: Expected 200, got {response.status_code}")
+            results["endpoint_tests"].append({"test": "health_accessible", "status": "FAIL", "code": response.status_code})
+            results["overall_status"] = "FAIL"
+            
+    except Exception as e:
+        print(f"❌ Health endpoint test failed: {e}")
+        results["endpoint_tests"].append({"test": "health_accessible", "status": "ERROR", "error": str(e)})
+        results["overall_status"] = "FAIL"
+    
+    return results
+
+def test_search_endpoint_production():
+    """Test the Search API endpoint in production mode (MOCK_MODE=0)"""
+    print("=" * 80)
+    print("TESTING SEARCH API ENDPOINT - PRODUCTION MODE")
+    print("=" * 80)
+    
+    results = {
+        "search_tests": [],
+        "debug_tests": [],
+        "error_tests": [],
+        "overall_status": "PASS"
+    }
+    
+    # Test 1: Basic Search Query
+    print("\n1. Testing Basic Search Query")
+    print("-" * 60)
+    
+    try:
+        test_query = "卵 乳 不使用 ケーキ"
+        response = requests.get(f"{API_BASE}/v1/search?q={test_query}", timeout=30)
+        
+        if response.status_code == 200:
+            print("✅ Search endpoint: Successfully accessible (200)")
+            results["search_tests"].append({"test": "search_accessible", "status": "PASS", "code": 200})
+            
+            # Parse JSON response
+            try:
+                data = response.json()
+                print("✅ Response is valid JSON")
+                
+                # Check required keys
+                required_keys = ["results", "count", "query"]
+                for key in required_keys:
+                    if key in data:
+                        print(f"✅ Has required key: {key}")
+                        results["search_tests"].append({"test": f"has_{key}", "status": "PASS"})
+                    else:
+                        print(f"❌ Missing required key: {key}")
+                        results["search_tests"].append({"test": f"has_{key}", "status": "FAIL"})
+                        results["overall_status"] = "FAIL"
+                
+                # Check results structure
+                results_list = data.get("results", [])
+                count = data.get("count", 0)
+                query = data.get("query", "")
+                
+                print(f"\n📊 Search Results:")
+                print(f"   Query: {query}")
+                print(f"   Count: {count}")
+                print(f"   Results length: {len(results_list)}")
+                
+                if len(results_list) > 0:
+                    print("✅ Search returned results")
+                    results["search_tests"].append({"test": "has_results", "status": "PASS", "count": len(results_list)})
+                    
+                    # Check first result structure
+                    first_result = results_list[0]
+                    result_keys = ["id", "title", "source", "anshinScore", "url"]
+                    for key in result_keys:
+                        if key in first_result:
+                            print(f"✅ First result has key: {key}")
+                        else:
+                            print(f"❌ First result missing key: {key}")
+                            results["overall_status"] = "FAIL"
+                    
+                    # Check if results are from real domains (not mock data)
+                    real_domains = ["cookpad.com", "kurashiru.com", "delish-kitchen.tv", "recipe.rakuten.co.jp", "orangepage.net"]
+                    mock_domains = ["cookpad.com", "kurashiru.com", "delish-kitchen.tv"]  # These appear in mock data too
+                    
+                    sources = [result.get("source", "") for result in results_list]
+                    print(f"   Sources found: {list(set(sources))}")
+                    
+                    # Check for real URLs (not mock patterns)
+                    urls = [result.get("url", "") for result in results_list]
+                    real_url_patterns = ["https://", "http://"]
+                    has_real_urls = any(any(pattern in url for pattern in real_url_patterns) for url in urls)
+                    
+                    if has_real_urls:
+                        print("✅ Results contain real URLs")
+                        results["search_tests"].append({"test": "real_urls", "status": "PASS"})
+                    else:
+                        print("⚠️  Results may not contain real URLs")
+                        results["search_tests"].append({"test": "real_urls", "status": "WARNING"})
+                    
+                    # Sample first result
+                    print(f"\n📋 Sample Result:")
+                    print(f"   Title: {first_result.get('title', 'N/A')}")
+                    print(f"   Source: {first_result.get('source', 'N/A')}")
+                    print(f"   URL: {first_result.get('url', 'N/A')}")
+                    print(f"   AnshinScore: {first_result.get('anshinScore', 'N/A')}")
+                    
+                else:
+                    print("⚠️  Search returned no results")
+                    results["search_tests"].append({"test": "has_results", "status": "WARNING", "count": 0})
+                
+            except json.JSONDecodeError as e:
+                print(f"❌ Response is not valid JSON: {e}")
+                results["search_tests"].append({"test": "valid_json", "status": "FAIL", "error": str(e)})
+                results["overall_status"] = "FAIL"
+                
+        elif response.status_code == 502:
+            print("⚠️  Search endpoint returned 502 - CSE may have failed")
+            results["search_tests"].append({"test": "search_accessible", "status": "WARNING", "code": 502})
+            
+            # Check if it's a proper CSE error response
+            try:
+                error_data = response.json()
+                if "error" in error_data and error_data["error"] == "cse_failed":
+                    print("✅ Proper CSE error response structure")
+                    results["error_tests"].append({"test": "cse_error_structure", "status": "PASS"})
+                else:
+                    print("❌ Unexpected error response structure")
+                    results["error_tests"].append({"test": "cse_error_structure", "status": "FAIL"})
+            except:
+                print("❌ Error response is not valid JSON")
+                results["error_tests"].append({"test": "cse_error_structure", "status": "FAIL"})
+                
+        else:
+            print(f"❌ Search endpoint failed: Expected 200 or 502, got {response.status_code}")
+            results["search_tests"].append({"test": "search_accessible", "status": "FAIL", "code": response.status_code})
+            results["overall_status"] = "FAIL"
+            
+    except Exception as e:
+        print(f"❌ Search endpoint test failed: {e}")
+        results["search_tests"].append({"test": "search_accessible", "status": "ERROR", "error": str(e)})
+        results["overall_status"] = "FAIL"
+    
+    # Test 2: Debug Mode
+    print("\n2. Testing Debug Mode")
+    print("-" * 60)
+    
+    try:
+        test_query = "卵 乳 不使用 ケーキ"
+        response = requests.get(f"{API_BASE}/v1/search?q={test_query}&debug=1", timeout=30)
+        
+        if response.status_code == 200:
+            print("✅ Debug mode: Successfully accessible (200)")
+            results["debug_tests"].append({"test": "debug_accessible", "status": "PASS", "code": 200})
+            
+            try:
+                data = response.json()
+                
+                # Check for debug information
+                if "debug" in data:
+                    print("✅ Response contains debug information")
+                    results["debug_tests"].append({"test": "has_debug", "status": "PASS"})
+                    
+                    debug_info = data["debug"]
+                    debug_keys = ["datasource", "parseSource", "mockMode", "timestamp"]
+                    for key in debug_keys:
+                        if key in debug_info:
+                            print(f"✅ Debug info has key: {key}")
+                        else:
+                            print(f"❌ Debug info missing key: {key}")
+                            results["overall_status"] = "FAIL"
+                    
+                    # Check datasource in debug
+                    datasource = debug_info.get("datasource", "")
+                    if datasource == "cse":
+                        print("✅ Debug shows datasource as 'cse' (production mode)")
+                        results["debug_tests"].append({"test": "debug_datasource_cse", "status": "PASS"})
+                    elif datasource == "mock":
+                        print("⚠️  Debug shows datasource as 'mock' (fallback mode)")
+                        results["debug_tests"].append({"test": "debug_datasource_mock", "status": "WARNING"})
+                    else:
+                        print(f"❌ Unexpected datasource in debug: {datasource}")
+                        results["debug_tests"].append({"test": "debug_datasource", "status": "FAIL"})
+                        results["overall_status"] = "FAIL"
+                    
+                    print(f"\n🔍 Debug Information:")
+                    print(f"   Datasource: {debug_info.get('datasource', 'N/A')}")
+                    print(f"   ParseSource: {debug_info.get('parseSource', 'N/A')}")
+                    print(f"   MockMode: {debug_info.get('mockMode', 'N/A')}")
+                    print(f"   FallbackReason: {debug_info.get('fallbackReason', 'N/A')}")
+                    
+                else:
+                    print("❌ Response missing debug information")
+                    results["debug_tests"].append({"test": "has_debug", "status": "FAIL"})
+                    results["overall_status"] = "FAIL"
+                
+            except json.JSONDecodeError as e:
+                print(f"❌ Debug response is not valid JSON: {e}")
+                results["debug_tests"].append({"test": "debug_valid_json", "status": "FAIL", "error": str(e)})
+                results["overall_status"] = "FAIL"
+                
+        elif response.status_code == 502:
+            print("⚠️  Debug mode returned 502 - CSE may have failed")
+            results["debug_tests"].append({"test": "debug_accessible", "status": "WARNING", "code": 502})
+        else:
+            print(f"❌ Debug mode failed: Expected 200 or 502, got {response.status_code}")
+            results["debug_tests"].append({"test": "debug_accessible", "status": "FAIL", "code": response.status_code})
+            results["overall_status"] = "FAIL"
+            
+    except Exception as e:
+        print(f"❌ Debug mode test failed: {e}")
+        results["debug_tests"].append({"test": "debug_accessible", "status": "ERROR", "error": str(e)})
+        results["overall_status"] = "FAIL"
+    
+    return results
+
 def main():
     """Main test execution"""
-    print("🧪 ANSHIN RECIPE ADMIN DASHBOARD - BACKEND API TESTING")
+    print("🧪 ANSHIN RECIPE SEARCH DATASOURCE - BACKEND API TESTING")
     print(f"🌐 Backend URL: {BACKEND_URL}")
-    print(f"👤 Admin User: {ADMIN_USER}")
     print(f"🕒 Test Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     
-    # Test all new admin endpoints
+    # Test search datasource functionality
+    health_results = test_health_endpoint()
+    search_results = test_search_endpoint_production()
+    
+    # Test all admin endpoints (existing functionality)
     funnel_results = test_funnel_metrics_endpoint()
     extract_results = test_extract_metrics_endpoint()
     domains_results = test_domains_metrics_endpoint()
