@@ -489,14 +489,46 @@ function App() {
         )}
       </div>
 
+      {/* Search Error Display */}
+      {searchError && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="text-red-800 font-medium mb-2">
+            {searchError.message}
+          </div>
+          {isDebugMode && searchError.details && (
+            <pre className="text-xs text-red-600 bg-red-100 p-2 rounded overflow-x-auto">
+              {JSON.stringify(searchError.details, null, 2)}
+            </pre>
+          )}
+          <button 
+            onClick={() => setSearchError(null)}
+            className="mt-2 text-sm text-red-600 hover:text-red-800"
+          >
+            ✕ 閉じる
+          </button>
+        </div>
+      )}
+
       {/* Bottom-fixed Search Button - only show when not showing results */}
       {!hasSearched && (
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-[#FAFAF9] border-t border-gray-200">
           <button
             onClick={handleSearch}
-            className="w-full bg-[#10B981] text-white py-3 rounded-xl font-medium hover:bg-[#047857] focus:outline-none focus:ring-2 focus:ring-[#10B981] focus:ring-offset-2 transition-colors"
+            disabled={isSearching || !searchText.trim()}
+            className={`w-full py-3 rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-[#10B981] focus:ring-offset-2 transition-colors ${
+              isSearching || !searchText.trim()
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-[#10B981] text-white hover:bg-[#047857]'
+            }`}
           >
-            レシピを検索
+            {isSearching ? (
+              <div className="flex items-center justify-center space-x-2">
+                <RefreshCw className="w-4 h-4 animate-spin" />
+                <span>検索中...</span>
+              </div>
+            ) : (
+              'レシピを検索'
+            )}
           </button>
         </div>
       )}
