@@ -369,8 +369,8 @@ class StepwiseRetrieval:
                 # Import here to avoid circular imports
                 from context_mmr import context_scorer, evidence_chip_generator
                 
-                # Score recipe with context awareness
-                final_score, score_breakdown, context_features = context_scorer.score_recipe_with_context(
+                # Score recipe with enhanced context awareness and gates
+                final_score, score_breakdown, context_features, gate_result = context_scorer.score_recipe_with_context(
                     recipe_data=recipe,
                     context=context,
                     domain_policy=domain_manager
