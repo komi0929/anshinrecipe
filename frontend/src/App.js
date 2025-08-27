@@ -466,11 +466,58 @@ function App() {
             <div className="text-red-800 font-medium mb-2">
               {searchError.message}
             </div>
+            
+            {/* Enhanced error details for debug mode */}
             {isDebugMode && searchError.details && (
-              <pre className="text-xs text-red-600 bg-red-100 p-2 rounded overflow-x-auto">
-                {JSON.stringify(searchError.details, null, 2)}
-              </pre>
+              <div className="mt-3 p-3 bg-red-100 rounded text-xs space-y-2">
+                <div className="font-semibold text-red-700">Debug Information:</div>
+                
+                {searchError.details.reason && (
+                  <div>
+                    <span className="font-medium">Reason:</span> 
+                    <span className="text-red-600 ml-1">{searchError.details.reason}</span>
+                  </div>
+                )}
+                
+                {searchError.details.retryCount && (
+                  <div>
+                    <span className="font-medium">Retry Count:</span> 
+                    <span className="text-red-600 ml-1">{searchError.details.retryCount}</span>
+                  </div>
+                )}
+                
+                {searchError.details.upstreamStatus && (
+                  <div>
+                    <span className="font-medium">Upstream Status:</span> 
+                    <span className="text-red-600 ml-1">{searchError.details.upstreamStatus}</span>
+                  </div>
+                )}
+                
+                {searchError.details.retry_after && (
+                  <div>
+                    <span className="font-medium">Retry After:</span> 
+                    <span className="text-red-600 ml-1">{searchError.details.retry_after}s</span>
+                  </div>
+                )}
+                
+                {searchError.details.duration_ms && (
+                  <div>
+                    <span className="font-medium">Duration:</span> 
+                    <span className="text-red-600 ml-1">{searchError.details.duration_ms}ms</span>
+                  </div>
+                )}
+                
+                {searchError.details.requestEcho && (
+                  <div className="mt-2">
+                    <div className="font-medium">Request Echo:</div>
+                    <pre className="text-xs bg-red-50 p-2 rounded overflow-x-auto mt-1">
+                      {JSON.stringify(searchError.details.requestEcho, null, 2)}
+                    </pre>
+                  </div>
+                )}
+              </div>
             )}
+            
             <button 
               onClick={() => setSearchError(null)}
               className="mt-2 text-sm text-red-600 hover:text-red-800"
