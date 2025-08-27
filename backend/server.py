@@ -491,8 +491,10 @@ async def parse_cse_results(cse_response: dict, query: str, include_non_recipes:
 
 async def call_google_cse(query: str) -> dict:
     """
-    Call Google Custom Search Engine API
+    Call Google Custom Search Engine API with exponential backoff and proper error handling
     """
+    global cse_quota_status
+    
     cse_key = os.environ.get('GOOGLE_CSE_KEY')
     cse_cx = os.environ.get('GOOGLE_CSE_CX')
     
@@ -513,28 +515,148 @@ async def call_google_cse(query: str) -> dict:
         'num': 10          # Number of results
     }
     
-    try:
-        response = requests.get(
-            'https://www.googleapis.com/customsearch/v1',
-            params=params,
-            timeout=10
-        )
-        
-        if response.status_code != 200:
-            raise HTTPException(status_code=502, detail={
-                "error": "cse_failed", 
-                "reason": f"api_error_{response.status_code}",
-                "requestEcho": {"cx": cse_cx, "q": query, "params": params}
-            })
+    # Exponential backoff: 0.8s, 1.6s, 3.2s
+    backoff_delays = [0.8, 1.6, 3.2]
+    max_retries = 3
+    
+    start_time = time.time()
+    
+    for attempt in range(max_retries):
+        try:
+            # Log search attempt
+            logger.info(f"CSE search attempt {attempt + 1}/{max_retries} for query: {query}")
             
-        return response.json()
-        
-    except requests.exceptions.RequestException as e:
-        raise HTTPException(status_code=502, detail={
-            "error": "cse_failed",
-            "reason": f"network_error: {str(e)}",
-            "requestEcho": {"cx": cse_cx, "q": query, "params": params}
-        })
+            response = requests.get(
+                'https://www.googleapis.com/customsearch/v1',
+                params=params,
+                timeout=15  # 15 second timeout per request
+            )
+            
+            response_time_ms = int((time.time() - start_time) * 1000)
+            
+            # Handle different response codes
+            if response.status_code == 200:
+                # Success
+                cse_quota_status["status"] = "ok"
+                cse_quota_status["error_count"] = 0
+                
+                # Log successful response
+                logger.info(f"search_response_ok: query={query}, response_ms={response_time_ms}")
+                
+                return response.json()
+                
+            elif response.status_code == 429:
+                # Rate limit exceeded
+                cse_quota_status["status"] = "limited"
+                cse_quota_status["error_count"] += 1
+                
+                # Extract retry_after header if present
+                retry_after = response.headers.get('Retry-After', '60')  # Default 60 seconds
+                
+                logger.warning(f"CSE rate limit hit on attempt {attempt + 1}, retry_after={retry_after}")
+                
+                if attempt < max_retries - 1:
+                    # Wait exponential backoff time before retry
+                    delay = backoff_delays[attempt]
+                    logger.info(f"Backing off for {delay}s before retry")
+                    await asyncio.sleep(delay)
+                    continue
+                else:
+                    # Final failure
+                    logger.error(f"search_response_error: query={query}, reason=CSE_429_RATE_LIMIT, response_ms={response_time_ms}")
+                    raise HTTPException(status_code=502, detail={
+                        "error": "cse_failed",
+                        "reason": "CSE_429_RATE_LIMIT",
+                        "retry_after": retry_after,
+                        "retryCount": attempt + 1,
+                        "requestEcho": {"cx": cse_cx, "q": query, "params": params}
+                    })
+                    
+            elif 500 <= response.status_code < 600:
+                # Upstream 5xx error
+                cse_quota_status["status"] = "error"
+                cse_quota_status["error_count"] += 1
+                
+                logger.warning(f"CSE upstream error {response.status_code} on attempt {attempt + 1}")
+                
+                if attempt < max_retries - 1:
+                    delay = backoff_delays[attempt]
+                    logger.info(f"Backing off for {delay}s before retry")
+                    await asyncio.sleep(delay)
+                    continue
+                else:
+                    # Final failure
+                    logger.error(f"search_response_error: query={query}, reason=CSE_UPSTREAM_5XX, response_ms={response_time_ms}")
+                    raise HTTPException(status_code=502, detail={
+                        "error": "cse_failed",
+                        "reason": "CSE_UPSTREAM_5XX",
+                        "upstreamStatus": response.status_code,
+                        "retryCount": attempt + 1,
+                        "requestEcho": {"cx": cse_cx, "q": query, "params": params}
+                    })
+            else:
+                # Other HTTP errors
+                logger.error(f"search_response_error: query={query}, reason=api_error_{response.status_code}, response_ms={response_time_ms}")
+                raise HTTPException(status_code=502, detail={
+                    "error": "cse_failed", 
+                    "reason": f"api_error_{response.status_code}",
+                    "retryCount": attempt + 1,
+                    "requestEcho": {"cx": cse_cx, "q": query, "params": params}
+                })
+                
+        except requests.exceptions.Timeout:
+            # Timeout error
+            response_time_ms = int((time.time() - start_time) * 1000)
+            cse_quota_status["status"] = "error"
+            cse_quota_status["error_count"] += 1
+            
+            logger.warning(f"CSE timeout on attempt {attempt + 1}")
+            
+            if attempt < max_retries - 1:
+                delay = backoff_delays[attempt]
+                logger.info(f"Backing off for {delay}s after timeout")
+                await asyncio.sleep(delay)
+                continue
+            else:
+                # Final timeout failure
+                logger.error(f"search_response_error: query={query}, reason=CSE_TIMEOUT, response_ms={response_time_ms}")
+                raise HTTPException(status_code=502, detail={
+                    "error": "cse_failed",
+                    "reason": "CSE_TIMEOUT",
+                    "retryCount": attempt + 1,
+                    "requestEcho": {"cx": cse_cx, "q": query, "params": params}
+                })
+                
+        except requests.exceptions.RequestException as e:
+            # Network or other request errors
+            response_time_ms = int((time.time() - start_time) * 1000)
+            cse_quota_status["status"] = "error"
+            cse_quota_status["error_count"] += 1
+            
+            logger.warning(f"CSE network error on attempt {attempt + 1}: {str(e)}")
+            
+            if attempt < max_retries - 1:
+                delay = backoff_delays[attempt]
+                logger.info(f"Backing off for {delay}s after network error")
+                await asyncio.sleep(delay)
+                continue
+            else:
+                # Final network failure
+                logger.error(f"search_response_error: query={query}, reason=network_error, response_ms={response_time_ms}")
+                raise HTTPException(status_code=502, detail={
+                    "error": "cse_failed",
+                    "reason": f"network_error: {str(e)}",
+                    "retryCount": attempt + 1,
+                    "requestEcho": {"cx": cse_cx, "q": query, "params": params}
+                })
+    
+    # This should never be reached, but just in case
+    raise HTTPException(status_code=502, detail={
+        "error": "cse_failed",
+        "reason": "max_retries_exceeded",
+        "retryCount": max_retries,
+        "requestEcho": {"cx": cse_cx, "q": query, "params": params}
+    })
 
 @api_router.get("/v1/search")
 async def search_recipes(
