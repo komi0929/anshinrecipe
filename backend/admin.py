@@ -1182,6 +1182,15 @@ async def admin_dashboard(current_user: str = Depends(verify_admin_credentials))
                                 </div>
                             </div>
 
+                            <!-- Daily Exclusion Reasons Chart -->
+                            <div class="mb-6">
+                                <div class="bg-white p-6 rounded-lg shadow">
+                                    <h3 class="text-lg font-semibold text-gray-900 mb-4">日別除外理由推移</h3>
+                                    <p class="text-sm text-gray-600 mb-4">レシピタイプフィルタリングによる除外分析</p>
+                                    <canvas id="exclusionReasonsChart" width="400" height="200"></canvas>
+                                </div>
+                            </div>
+
                             <!-- Daily Allergen Verdict Chart -->
                             <div class="mb-6">
                                 <div class="bg-white p-6 rounded-lg shadow">
