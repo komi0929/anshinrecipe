@@ -304,7 +304,8 @@ class StepwiseRetrieval:
                 # No allergens selected - default safe
                 candidate['safety'] = {
                     "status": "ok",
-                    "allergens": [],
+                    "checked_allergens": [],
+                    "hit_allergens": [],
                     "reasons": [],
                     "hits": []
                 }
