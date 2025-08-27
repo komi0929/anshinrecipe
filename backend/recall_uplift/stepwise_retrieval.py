@@ -95,7 +95,7 @@ class StepwiseRetrieval:
         
         # Pass 1: Broad search
         pass1_results = await self._execute_retrieval_pass(
-            user_query, "pass_1_broad", cse_search_func, metrics
+            user_query, "pass_1_broad", cse_search_func, metrics, context
         )
         all_candidates.extend(pass1_results)
         
@@ -110,7 +110,7 @@ class StepwiseRetrieval:
             
             # Pass 2: Prefer-list boost
             pass2_results = await self._execute_retrieval_pass(
-                user_query, "pass_2_prefer", cse_search_func, metrics
+                user_query, "pass_2_prefer", cse_search_func, metrics, context
             )
             
             # Filter out duplicates
@@ -126,7 +126,7 @@ class StepwiseRetrieval:
         if len(safe_results) < self.result_targets["min_safe_results"]:
             
             pass3_results = await self._execute_retrieval_pass(
-                user_query, "pass_3_exclude", cse_search_func, metrics
+                user_query, "pass_3_exclude", cse_search_func, metrics, context
             )
             
             new_candidates = self._filter_duplicate_urls(pass3_results, all_candidates)
@@ -141,7 +141,7 @@ class StepwiseRetrieval:
         if len(safe_results) < self.result_targets["min_safe_results"]:
             
             pass4_results = await self._execute_retrieval_pass(
-                user_query, "pass_4_whitelist", cse_search_func, metrics
+                user_query, "pass_4_whitelist", cse_search_func, metrics, context
             )
             
             new_candidates = self._filter_duplicate_urls(pass4_results, all_candidates)
