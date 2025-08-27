@@ -147,6 +147,18 @@ async def submit_feedback(feedback_data: dict):
 async def health_check():
     """
     Health check endpoint with datasource information and CSE quota status
+    Returns:
+    {
+        "datasource": "cse|mock",
+        "envFlags": {
+            "MOCK_MODE": 0|1,
+            "CSE_KEY_PRESENT": true|false,
+            "CSE_CX_PRESENT": true|false
+        },
+        "gitSha": "<short-sha>",
+        "timestamp": "<ISO8601>",
+        "cseQuota": "ok|limited|error"
+    }
     """
     mock_mode = os.environ.get('MOCK_MODE', '1')
     cse_key = os.environ.get('GOOGLE_CSE_KEY', '')
@@ -170,16 +182,15 @@ async def health_check():
         quota_status = "ok"  # Mock mode doesn't have quota issues
     
     return {
-        "status": "healthy",
         "datasource": datasource,
-        "cseQuota": quota_status,
         "envFlags": {
-            "MOCK_MODE": mock_mode,
+            "MOCK_MODE": int(mock_mode),
             "CSE_KEY_PRESENT": bool(cse_key),
             "CSE_CX_PRESENT": bool(cse_cx)
         },
-        "gitSha": "local-dev",  # Would be set during deployment
-        "timestamp": datetime.utcnow().isoformat()
+        "gitSha": get_git_sha(),
+        "timestamp": datetime.utcnow().isoformat(),
+        "cseQuota": quota_status
     }
 
 def get_mock_search_results(query: str, context: str = None) -> List[Dict[str, Any]]:
