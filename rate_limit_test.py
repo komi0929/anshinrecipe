@@ -13,7 +13,7 @@ from datetime import datetime
 import base64
 
 # Configuration
-BACKEND_URL = "https://anshin-recipe-admin.preview.emergentagent.com"
+BACKEND_URL = "https://recipe-dashboard.preview.emergentagent.com"
 API_BASE = f"{BACKEND_URL}/api"
 
 def test_health_endpoint_cse_quota():
