@@ -830,10 +830,11 @@ async def search_recipes(
     context: Optional[str] = Query(None, description="Context filter"),
     allergens: Optional[str] = Query(None, description="Comma-separated allergen list"),
     debug: Optional[str] = Query(None, description="Enable debug mode"),
-    include_non_recipes: Optional[str] = Query(None, description="Include non-recipe results for testing")
+    include_non_recipes: Optional[str] = Query(None, description="Include non-recipe results for testing"),
+    use_stepwise: Optional[str] = Query("1", description="Use stepwise retrieval (default: 1)")
 ):
     """
-    Search for recipes using Google CSE or mock data based on MOCK_MODE
+    Search for recipes using Recall Uplift v1 stepwise retrieval or legacy CSE
     Includes Safety Gate 2.0 for strict allergen exclusion
     """
     search_start_time = time.time()
@@ -844,6 +845,7 @@ async def search_recipes(
     mock_mode = os.environ.get('MOCK_MODE', '1')
     is_debug = debug == '1'
     include_non_recipes_flag = include_non_recipes == '1'
+    use_stepwise_flag = use_stepwise == '1'
     
     # Parse selected allergens for Safety Gate
     selected_allergens = parse_allergen_filter(allergens or "")
@@ -854,28 +856,60 @@ async def search_recipes(
     if mock_mode == '0':
         # Production mode - force CSE
         try:
-            cse_response = await call_google_cse(q)
-            recipes, exclusion_stats = await parse_cse_results(
-                cse_response, q, selected_allergens, include_non_recipes_flag
-            )
-            datasource = "cse"
-            fallback_reason = None
+            if use_stepwise_flag:
+                # Use Recall Uplift v1 stepwise retrieval
+                stepwise_result = await stepwise_retrieval.execute_stepwise_search(
+                    user_query=q,
+                    selected_allergens=selected_allergens,
+                    cse_search_func=call_google_cse,
+                    safety_analyze_func=safety_engine.analyze_recipe_safety,
+                    context=context
+                )
+                
+                recipes = stepwise_result["results"]
+                metrics = stepwise_result["metrics"]
+                
+                # Extract exclusion stats from metrics
+                exclusion_stats = {
+                    "total_processed": metrics["counts"]["retrieval_total"],
+                    "recipe_type_pass": metrics["counts"]["recipe_type_pass"],
+                    "safety_allergen": metrics["counts"]["safety_ng_count"],
+                    "safety_ambiguous": metrics["counts"]["safety_ambiguous_count"],
+                    "non_recipe_filtered": metrics["counts"]["non_recipe_filtered"],
+                    "safety_ok_count": metrics["counts"]["safety_ok_count"]
+                }
+                
+                datasource = "cse_stepwise_v1"
+                fallback_reason = None
+                
+                # Log successful stepwise search
+                response_time_ms = metrics["performance"]["total_ms"]
+                logger.info(f"search_response_ok: query={q}, response_ms={response_time_ms}, results_count={len(recipes)}, stepwise_passes={len(metrics['retrieval_passes'])}, safety_exclusions={exclusion_stats.get('safety_allergen', 0) + exclusion_stats.get('safety_ambiguous', 0)}")
+                
+            else:
+                # Use legacy CSE parsing
+                cse_response = await call_google_cse(q)
+                recipes, exclusion_stats = await parse_cse_results(
+                    cse_response, q, selected_allergens, include_non_recipes_flag
+                )
+                datasource = "cse"
+                fallback_reason = None
+                
+                # Log successful search
+                response_time_ms = int((time.time() - search_start_time) * 1000)
+                logger.info(f"search_response_ok: query={q}, response_ms={response_time_ms}, results_count={len(recipes)}, safety_exclusions={exclusion_stats.get('safety_allergen', 0) + exclusion_stats.get('safety_ambiguous', 0)}")
             
             # Store exclusion statistics in MongoDB for admin dashboard
-            if exclusion_stats["total_processed"] > 0:
+            if exclusion_stats.get("total_processed", 0) > 0:
                 exclusion_entry = {
                     "type": "exclusion_stats",
                     "query": q,
                     "stats": exclusion_stats,
                     "selected_allergens": selected_allergens,
-                    "created_at": datetime.utcnow(),
-                    "datasource": "cse"
+                    "datasource": datasource,
+                    "created_at": datetime.utcnow()
                 }
                 await db.search_quality.insert_one(exclusion_entry)
-            
-            # Log successful search
-            response_time_ms = int((time.time() - search_start_time) * 1000)
-            logger.info(f"search_response_ok: query={q}, response_ms={response_time_ms}, results_count={len(recipes)}, safety_exclusions={exclusion_stats.get('safety_allergen', 0) + exclusion_stats.get('safety_ambiguous', 0)}")
             
         except HTTPException as e:
             # Log search error and re-raise CSE failures in production - no fallback to mock
@@ -896,14 +930,16 @@ async def search_recipes(
                 # Mock safety analysis - assume safe for demo purposes
                 recipe["safety"] = {
                     "status": "ok",
-                    "allergens": selected_allergens,
+                    "checked_allergens": selected_allergens,
+                    "hit_allergens": [],
                     "reasons": ["mock_data"],
                     "hits": []
                 }
             else:
                 recipe["safety"] = {
                     "status": "ok",
-                    "allergens": [],
+                    "checked_allergens": [],
+                    "hit_allergens": [],
                     "reasons": [],
                     "hits": []
                 }
@@ -915,6 +951,12 @@ async def search_recipes(
         # Log mock response
         response_time_ms = int((time.time() - search_start_time) * 1000)
         logger.info(f"search_response_ok: query={q}, response_ms={response_time_ms}, datasource=mock")
+    
+    # Normalize AnshinScore to 0-100 range for all recipes
+    for recipe in recipes:
+        current_score = recipe.get('anshinScore', 75)
+        normalized_score = max(0, min(100, current_score))
+        recipe['anshinScore'] = normalized_score
     
     # Build response
     response_data = {
@@ -930,6 +972,7 @@ async def search_recipes(
             "fallbackReason": fallback_reason,
             "mockMode": mock_mode,
             "selectedAllergens": selected_allergens,
+            "useStepwise": use_stepwise_flag,
             "timestamp": datetime.utcnow().isoformat(),
             "responseTimeMs": int((time.time() - search_start_time) * 1000)
         }
@@ -937,6 +980,13 @@ async def search_recipes(
         # Add exclusion stats in debug mode
         if exclusion_stats:
             debug_info["exclusionStats"] = exclusion_stats
+        
+        # Add stepwise metrics if available
+        if use_stepwise_flag and mock_mode == '0':
+            try:
+                debug_info["stepwiseMetrics"] = metrics
+            except:
+                pass
             
         response_data["debug"] = debug_info
     
