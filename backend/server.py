@@ -22,8 +22,18 @@ from admin import admin_router
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# CSE quota tracking
-cse_quota_status = {"status": "ok", "last_error": None, "error_count": 0}
+def get_git_sha():
+    """
+    Get current git commit SHA for version tracking
+    """
+    try:
+        result = subprocess.run(['git', 'rev-parse', '--short', 'HEAD'], 
+                               capture_output=True, text=True, cwd=ROOT_DIR)
+        if result.returncode == 0:
+            return result.stdout.strip()
+    except Exception:
+        pass
+    return "local-dev"
 
 
 ROOT_DIR = Path(__file__).parent
