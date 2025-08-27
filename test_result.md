@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Test the Rate-Limit & Slow-Path Hardening implementation for the Anshin Recipe backend. Verify Health Endpoint CSE Quota Status, Search Endpoint Error Handling with 502 responses, Telemetry Logging with response timing, Exponential Backoff with retry logic, and Debug Information Enhancement with responseTimeMs."
+user_problem_statement: "11.1 — CSE Enforcement (No Silent Fallback) + Debug parseSource Correction: Enforce CSE-only path in production with no silent fallback to mock, fix debug fields so datasource and parseSource are correctly separated, enhance health endpoint with gitSha and proper cseQuota status, provide evidence through screenshots and testing."
 
 backend:
   - task: "Recipe Type Gate Search Filtering"
