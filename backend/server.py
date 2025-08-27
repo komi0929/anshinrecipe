@@ -18,6 +18,9 @@ import uuid
 from datetime import datetime
 from admin import admin_router
 
+# Import Safety Gate 2.0
+from safety_gate import SafetyEngine
+
 ROOT_DIR = Path(__file__).parent
 
 # Configure logging
