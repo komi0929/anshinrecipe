@@ -38,6 +38,8 @@ function App() {
   // State for search loading and errors
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState(null);
+  const [searchAbortController, setSearchAbortController] = useState(null);
+  const [searchTimeoutId, setSearchTimeoutId] = useState(null);
 
   // Idle detection
   const { isIdle, resetIdleTimer } = useIdleDetection(IDLE_THRESHOLD_MS);
