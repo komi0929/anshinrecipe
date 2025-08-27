@@ -291,26 +291,30 @@ async def calculate_quality_metrics(days: int = 7):
                 stats = exclusion_results[0]
                 daily_exclusions.append({
                     "date": date.strftime('%m/%d'),
-                    "non_recipe_schema": stats.get("non_recipe_schema", 0),
-                    "non_recipe_layout": stats.get("non_recipe_layout", 0),
-                    "safety_allergen": stats.get("safety_allergen", 0),
-                    "safety_ambiguous": stats.get("safety_ambiguous", 0),
-                    "fetch_error": stats.get("fetch_error", 0),
-                    "parse_failed": stats.get("parse_failed", 0),
-                    "ambiguous_layout": stats.get("ambiguous_layout", 0),
+                    "exclusion_reasons": {
+                        "non_recipe_schema": stats.get("non_recipe_schema", 0),
+                        "non_recipe_layout": stats.get("non_recipe_layout", 0),
+                        "safety_allergen": stats.get("safety_allergen", 0),
+                        "safety_ambiguous": stats.get("safety_ambiguous", 0),
+                        "fetch_error": stats.get("fetch_error", 0),
+                        "parse_failed": stats.get("parse_failed", 0),
+                        "ambiguous_layout": stats.get("ambiguous_layout", 0)
+                    },
                     "total": stats.get("total_processed", 0)
                 })
             else:
                 # No data for this day - create empty entry
                 daily_exclusions.append({
                     "date": date.strftime('%m/%d'),
-                    "non_recipe_schema": 0,
-                    "non_recipe_layout": 0,
-                    "safety_allergen": 0,
-                    "safety_ambiguous": 0,
-                    "fetch_error": 0,
-                    "parse_failed": 0,
-                    "ambiguous_layout": 0,
+                    "exclusion_reasons": {
+                        "non_recipe_schema": 0,
+                        "non_recipe_layout": 0,
+                        "safety_allergen": 0,
+                        "safety_ambiguous": 0,
+                        "fetch_error": 0,
+                        "parse_failed": 0,
+                        "ambiguous_layout": 0
+                    },
                     "total": 0
                 })
         
