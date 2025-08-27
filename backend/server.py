@@ -131,7 +131,7 @@ async def submit_feedback(feedback_data: dict):
 @api_router.get("/v1/health")
 async def health_check():
     """
-    Health check endpoint with datasource information
+    Health check endpoint with datasource information and CSE quota status
     """
     mock_mode = os.environ.get('MOCK_MODE', '1')
     cse_key = os.environ.get('GOOGLE_CSE_KEY', '')
@@ -143,9 +143,21 @@ async def health_check():
     else:
         datasource = "mock"
     
+    # Determine CSE quota status
+    if mock_mode == '0' and cse_key and cse_cx:
+        if cse_quota_status["error_count"] >= 5:
+            quota_status = "error"
+        elif cse_quota_status["status"] in ["limited", "rate_limit"]:
+            quota_status = "limited"
+        else:
+            quota_status = "ok"
+    else:
+        quota_status = "ok"  # Mock mode doesn't have quota issues
+    
     return {
         "status": "healthy",
         "datasource": datasource,
+        "cseQuota": quota_status,
         "envFlags": {
             "MOCK_MODE": mock_mode,
             "CSE_KEY_PRESENT": bool(cse_key),
