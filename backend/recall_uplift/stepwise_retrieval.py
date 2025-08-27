@@ -347,72 +347,110 @@ class StepwiseRetrieval:
         
         return filtered
     
-    def _apply_diversity_and_scoring(self, safe_results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """Apply diversity filtering and final scoring"""
+    def _apply_diversity_and_scoring(
+        self, 
+        safe_results: List[Dict[str, Any]], 
+        context: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
+        """Apply diversity filtering and context-aware scoring with MMR"""
         
-        # Sort by boosted AnshinScore first
-        safe_results.sort(key=lambda x: x.get('base_anshin_score', 0), reverse=True)
+        if not safe_results:
+            return []
         
-        # Apply diversity filtering
-        top3_results = []
-        top10_results = []
-        domain_counts = defaultdict(int)
+        # Context-aware scoring for each recipe
+        scoring_start = time.time()
+        scored_recipes = []
         
-        # Select Top3 with 1 domain per slot
-        for result in safe_results:
-            domain_key = domain_manager.get_domain_diversity_key(result.get('link', ''))
-            
-            if len(top3_results) < 3 and domain_counts[domain_key] == 0:
-                top3_results.append(result)
-                domain_counts[domain_key] += 1
-        
-        # Select remaining for Top10 with max 2 per domain
-        for result in safe_results:
-            domain_key = domain_manager.get_domain_diversity_key(result.get('link', ''))
-            
-            if result in top3_results:
-                continue  # Already in top3
+        for recipe in safe_results:
+            try:
+                # Import here to avoid circular imports
+                from context_mmr import context_scorer, evidence_chip_generator
                 
-            if len(top3_results) + len(top10_results) < 10 and domain_counts[domain_key] < 2:
-                top10_results.append(result)
-                domain_counts[domain_key] += 1
+                # Score recipe with context awareness
+                final_score, score_breakdown, context_features = context_scorer.score_recipe_with_context(
+                    recipe_data=recipe,
+                    context=context,
+                    domain_policy=domain_manager
+                )
+                
+                # Generate evidence chips
+                evidence_chips = evidence_chip_generator.generate_chips(
+                    features=context_features,
+                    context=context,
+                    score_breakdown=score_breakdown.__dict__
+                )
+                
+                # Update recipe with new scoring data
+                recipe.update({
+                    "anshinScore": max(0, min(100, final_score)),  # Ensure 0-100 range
+                    "score_breakdown": {
+                        "safety": score_breakdown.safety,
+                        "trust": score_breakdown.trust,
+                        "context": score_breakdown.context,
+                        "popularity": score_breakdown.popularity,
+                        "total": score_breakdown.total
+                    },
+                    "context_features": {
+                        "prep_time_minutes": context_features.prep_time_minutes,
+                        "ingredients_count": context_features.ingredients_count,
+                        "steps_count": context_features.steps_count,
+                        "calories_per_serving": context_features.calories_per_serving,
+                        "health_keywords": context_features.health_keywords or [],
+                        "beginner_keywords": context_features.beginner_keywords or [],
+                        "event_keywords": context_features.event_keywords or [],
+                        "visual_score": context_features.visual_score,
+                        "completion_score": context_features.completion_score,
+                        "extraction_sources": context_features.extraction_sources or []
+                    },
+                    "evidence_chips": evidence_chip_generator.chips_to_dict(evidence_chips)
+                })
+                
+                scored_recipes.append((recipe, final_score))
+                
+            except Exception as e:
+                self.logger.error(f"Context scoring failed for recipe {recipe.get('title', 'unknown')}: {e}")
+                # Fallback to legacy scoring
+                legacy_score = recipe.get('base_anshin_score', 75)
+                recipe['anshinScore'] = max(0, min(100, legacy_score))
+                scored_recipes.append((recipe, legacy_score))
         
-        # Combine and finalize
-        final_results = top3_results + top10_results
-        
-        # Normalize AnshinScore to 0-100 range
-        for i, result in enumerate(final_results):
-            # Calculate final AnshinScore with safety bonus
-            base_score = result.get('base_anshin_score', 75)
+        # Apply MMR re-ranking with diversity controls
+        try:
+            from context_mmr import mmr_reranker
             
-            # Safety component: ok→40, ambiguous→0, ng→-∞
-            safety_status = result.get('safety', {}).get('status', 'ok')
-            if safety_status == "ok":
-                safety_bonus = 40
-            else:
-                safety_bonus = 0  # Should not reach here due to filtering
+            mmr_result = mmr_reranker.rerank_with_mmr(scored_recipes, target_count=10)
+            final_recipes = mmr_result.reranked_recipes
             
-            # Position penalty
-            position_penalty = i * 2
+            # Add MMR metadata to recipes
+            for i, recipe in enumerate(final_recipes):
+                recipe.update({
+                    "id": f"context_mmr_{i+1}",
+                    "datasource": "cse",
+                    "parseSource": "html",  # Will be determined by actual parsing
+                    "prepMinutes": recipe.get('context_features', {}).get('prep_time_minutes') or (25 + i * 5),
+                    "calories": recipe.get('context_features', {}).get('calories_per_serving') or (200 + i * 30),
+                    "mmr_rank": i + 1,
+                    "diversity_stats": mmr_result.diversity_stats if i == 0 else None  # Only on first recipe
+                })
             
-            # Calculate final score
-            final_score = base_score + safety_bonus - position_penalty
+            self.logger.info(f"MMR re-ranking completed: {len(final_recipes)} recipes, lambda={mmr_result.mmr_lambda_used}")
             
-            # Normalize to 0-100 range
-            normalized_score = max(0, min(100, final_score))
+            return final_recipes
             
-            result['anshinScore'] = normalized_score
+        except Exception as e:
+            self.logger.error(f"MMR re-ranking failed: {e}")
+            # Fallback to simple sorting by score
+            scored_recipes.sort(key=lambda x: x[1], reverse=True)
+            fallback_recipes = [recipe for recipe, score in scored_recipes[:10]]
             
-            # Add additional metadata for debug
-            result.update({
-                "id": f"recall_v1_{i+1}",
-                "datasource": "cse",
-                "parseSource": "html",  # Will be determined by actual parsing
-                "prepMinutes": 25 + (i * 5),
-                "calories": 200 + (i * 30)
-            })
-        
-        return final_results
+            for i, recipe in enumerate(fallback_recipes):
+                recipe.update({
+                    "id": f"fallback_{i+1}",
+                    "datasource": "cse",
+                    "parseSource": "html"
+                })
+            
+            return fallback_recipes
 
 # Global stepwise retrieval instance
 stepwise_retrieval = StepwiseRetrieval()
