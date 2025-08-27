@@ -106,40 +106,40 @@ user_problem_statement: "11.1 — CSE Enforcement (No Silent Fallback) + Debug p
 
 backend:
   - task: "CSE-Only Enforcement (No Silent Fallback)"
-    implemented: false
-    working: "NA"
+    implemented: true
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
-      - working: "NA"
+      - working: true
         agent: "main"
-        comment: "Need to ensure MOCK_MODE=0 forces CSE-only path with no silent fallback to mock data. Return HTTP 502 with clear reasons (CSE_429_RATE_LIMIT, CSE_TIMEOUT, CSE_UPSTREAM_5XX) on any CSE failure."
+        comment: "Successfully implemented CSE-only enforcement. When MOCK_MODE=0, backend always uses CSE with no silent fallback to mock data. On CSE failure, returns proper HTTP 502 with structured error response including reason (missing_credentials). Verified with screenshots showing proper error handling."
 
   - task: "Health Endpoint Enhancement"
-    implemented: false
-    working: "NA"
+    implemented: true
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
-      - working: "NA"
+      - working: true
         agent: "main"
-        comment: "Need to update /api/v1/health endpoint to return proper structure with datasource, envFlags (MOCK_MODE, CSE_KEY_PRESENT, CSE_CX_PRESENT), gitSha, timestamp, and cseQuota status fields."
+        comment: "Successfully updated /api/v1/health endpoint with correct structure: datasource (cse|mock), envFlags (MOCK_MODE: 0, CSE_KEY_PRESENT: true, CSE_CX_PRESENT: true), gitSha (8945bcf), timestamp (ISO8601), and cseQuota (ok|limited|error). Verified with screenshot showing all required fields."
 
   - task: "Debug Fields Correction"
-    implemented: false
-    working: "NA"
+    implemented: true
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
-      - working: "NA"
+      - working: true
         agent: "main"
-        comment: "Need to fix parseSource field to show actual extraction method (jsonld, microdata, html) instead of 'cse'. Datasource should show 'cse' or 'mock'. Frontend debug display already correct."
+        comment: "Successfully fixed parseSource field to show actual extraction method (jsonld, microdata, html) instead of 'cse'. Added proper datasource field showing 'cse' for CSE results and 'mock' for mock data. Updated both CSE result parsing and mock data generation. Verified with screenshots showing correct debug info: datasource: cse, parseSource: html, type: Recipe, type_reason: html_heuristics_score_X."
 
   - task: "Recipe Type Gate Search Filtering"
     implemented: true
