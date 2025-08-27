@@ -831,6 +831,7 @@ async def search_recipes(
 ):
     """
     Search for recipes using Google CSE or mock data based on MOCK_MODE
+    Includes Safety Gate 2.0 for strict allergen exclusion
     """
     search_start_time = time.time()
     
@@ -841,6 +842,9 @@ async def search_recipes(
     is_debug = debug == '1'
     include_non_recipes_flag = include_non_recipes == '1'
     
+    # Parse selected allergens for Safety Gate
+    selected_allergens = parse_allergen_filter(allergens or "")
+    
     exclusion_stats = {}
     
     # Determine datasource
@@ -848,7 +852,9 @@ async def search_recipes(
         # Production mode - force CSE
         try:
             cse_response = await call_google_cse(q)
-            recipes, exclusion_stats = await parse_cse_results(cse_response, q, include_non_recipes_flag)
+            recipes, exclusion_stats = await parse_cse_results(
+                cse_response, q, selected_allergens, include_non_recipes_flag
+            )
             datasource = "cse"
             fallback_reason = None
             
@@ -858,6 +864,7 @@ async def search_recipes(
                     "type": "exclusion_stats",
                     "query": q,
                     "stats": exclusion_stats,
+                    "selected_allergens": selected_allergens,
                     "created_at": datetime.utcnow(),
                     "datasource": "cse"
                 }
@@ -865,7 +872,7 @@ async def search_recipes(
             
             # Log successful search
             response_time_ms = int((time.time() - search_start_time) * 1000)
-            logger.info(f"search_response_ok: query={q}, response_ms={response_time_ms}, results_count={len(recipes)}")
+            logger.info(f"search_response_ok: query={q}, response_ms={response_time_ms}, results_count={len(recipes)}, safety_exclusions={exclusion_stats.get('safety_allergen', 0) + exclusion_stats.get('safety_ambiguous', 0)}")
             
         except HTTPException as e:
             # Log search error and re-raise CSE failures in production - no fallback to mock
@@ -876,8 +883,29 @@ async def search_recipes(
             raise
             
     else:
-        # Mock mode allowed
-        recipes = get_mock_search_results(q, context)
+        # Mock mode allowed - update mock recipes to include safety analysis
+        base_recipes = get_mock_search_results(q, context)
+        recipes = []
+        
+        for recipe in base_recipes:
+            # Add safety analysis for mock recipes if allergens selected
+            if selected_allergens:
+                # Mock safety analysis - assume safe for demo purposes
+                recipe["safety"] = {
+                    "status": "ok",
+                    "allergens": selected_allergens,
+                    "reasons": ["mock_data"],
+                    "hits": []
+                }
+            else:
+                recipe["safety"] = {
+                    "status": "ok",
+                    "allergens": [],
+                    "reasons": [],
+                    "hits": []
+                }
+            recipes.append(recipe)
+        
         datasource = "mock"
         fallback_reason = "mock_mode_enabled"
         
@@ -898,6 +926,7 @@ async def search_recipes(
             "datasource": datasource,
             "fallbackReason": fallback_reason,
             "mockMode": mock_mode,
+            "selectedAllergens": selected_allergens,
             "timestamp": datetime.utcnow().isoformat(),
             "responseTimeMs": int((time.time() - search_start_time) * 1000)
         }
