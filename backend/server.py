@@ -669,7 +669,10 @@ async def search_recipes(
     """
     Search for recipes using Google CSE or mock data based on MOCK_MODE
     """
-    logger.info(f"Search request: q={q}, context={context}, allergens={allergens}, debug={debug}")
+    search_start_time = time.time()
+    
+    # Log search submitted
+    logger.info(f"search_submitted: query={q}, context={context}, allergens={allergens}")
     
     mock_mode = os.environ.get('MOCK_MODE', '1')
     is_debug = debug == '1'
@@ -697,8 +700,16 @@ async def search_recipes(
                 }
                 await db.search_quality.insert_one(exclusion_entry)
             
-        except HTTPException:
-            # Re-raise CSE failures in production - no fallback to mock
+            # Log successful search
+            response_time_ms = int((time.time() - search_start_time) * 1000)
+            logger.info(f"search_response_ok: query={q}, response_ms={response_time_ms}, results_count={len(recipes)}")
+            
+        except HTTPException as e:
+            # Log search error and re-raise CSE failures in production - no fallback to mock
+            response_time_ms = int((time.time() - search_start_time) * 1000)
+            error_detail = e.detail if hasattr(e, 'detail') else str(e)
+            reason = error_detail.get('reason', 'unknown') if isinstance(error_detail, dict) else 'unknown'
+            logger.error(f"search_response_error: query={q}, reason={reason}, response_ms={response_time_ms}")
             raise
             
     else:
@@ -706,6 +717,10 @@ async def search_recipes(
         recipes = get_mock_search_results(q, context)
         datasource = "mock"
         fallback_reason = "mock_mode_enabled"
+        
+        # Log mock response
+        response_time_ms = int((time.time() - search_start_time) * 1000)
+        logger.info(f"search_response_ok: query={q}, response_ms={response_time_ms}, datasource=mock")
     
     # Build response
     response_data = {
@@ -721,7 +736,8 @@ async def search_recipes(
             "parseSource": "cse" if datasource == "cse" else "mock",
             "fallbackReason": fallback_reason,
             "mockMode": mock_mode,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.utcnow().isoformat(),
+            "responseTimeMs": int((time.time() - search_start_time) * 1000)
         }
         
         # Add exclusion stats in debug mode
