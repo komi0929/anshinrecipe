@@ -492,6 +492,16 @@ async def parse_cse_results(cse_response: dict, query: str, include_non_recipes:
         snippet = item.get('snippet', '')
         catchphrase = snippet[:20] + "..." if len(snippet) > 20 else snippet
         
+        # Determine parseSource based on type_reason
+        if "jsonld" in type_reason:
+            parse_source = "jsonld"
+        elif "microdata" in type_reason:
+            parse_source = "microdata"
+        elif "html_heuristics" in type_reason or "heuristics" in type_reason:
+            parse_source = "html"
+        else:
+            parse_source = "html"  # Default fallback
+        
         recipe = {
             "id": f"cse_{exclusion_stats['total_processed']}",
             "title": title,
@@ -503,7 +513,8 @@ async def parse_cse_results(cse_response: dict, query: str, include_non_recipes:
                 f"https://images.unsplash.com/photo-{1570000000000 + i}?w=300&h=200&fit=crop"),
             "prepMinutes": 25 + (len(recipes) * 5),  # Estimated prep time
             "calories": 200 + (len(recipes) * 30),    # Estimated calories
-            "parseSource": "cse",
+            "datasource": "cse",
+            "parseSource": parse_source,
             "type": recipe_type,
             "type_reason": type_reason
         }
