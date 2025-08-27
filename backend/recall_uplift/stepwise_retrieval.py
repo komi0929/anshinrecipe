@@ -182,14 +182,15 @@ class StepwiseRetrieval:
         user_query: str, 
         pass_type: str, 
         cse_search_func, 
-        metrics: Dict[str, Any]
+        metrics: Dict[str, Any],
+        context: Optional[str] = None
     ) -> List[Dict[str, Any]]:
-        """Execute a single retrieval pass"""
+        """Execute a single retrieval pass with context awareness"""
         
         pass_start = time.time()
         
-        # Shape query for this pass
-        query_config = query_shaper.shape_query_for_cse(user_query, pass_type)
+        # Shape query for this pass with context hints
+        query_config = query_shaper.shape_query_for_cse(user_query, pass_type, context)
         
         try:
             # Call CSE API
@@ -202,6 +203,7 @@ class StepwiseRetrieval:
             for item in items:
                 item['retrieval_pass'] = pass_type
                 item['shaped_query'] = query_config["shaped_query"]
+                item['context_used'] = context
             
             pass_ms = int((time.time() - pass_start) * 1000)
             
@@ -209,13 +211,14 @@ class StepwiseRetrieval:
             pass_metrics = {
                 "pass_type": pass_type,
                 "shaped_query": query_config["shaped_query"],
+                "context": context,
                 "results_count": len(items),
                 "pass_ms": pass_ms
             }
             metrics["retrieval_passes"].append(pass_metrics)
             metrics["counts"]["retrieval_total"] += len(items)
             
-            self.logger.info(f"{pass_type}: {len(items)} results in {pass_ms}ms")
+            self.logger.info(f"{pass_type} (context: {context}): {len(items)} results in {pass_ms}ms")
             
             return items
             
