@@ -233,52 +233,68 @@ class MMRReranker:
         self, 
         recipes: List[Dict[str, Any]]
     ) -> Tuple[List[Dict[str, Any]], List[str]]:
-        """Apply final diversity controls (domain limits, duplicate detection)"""
+        """Apply hard diversity controls with unique domain enforcement for Top3"""
         
-        final_recipes = []
         violations = []
-        domain_counts = defaultdict(int)
-        seen_titles = []
         
-        for i, recipe in enumerate(recipes):
-            
-            # Get domain
+        # HARD TOP3 DIVERSITY: Enforce unique domains (post-ranking, pre-surface)
+        top3_candidates = []
+        used_domains = set()
+        
+        # First pass: Select Top3 with unique domains only
+        for recipe in recipes:
             domain = self._get_domain(recipe.get("url", ""))
             
-            # Check domain diversity limits
-            position_group = "top3" if i < 3 else "top10"
-            max_per_domain = (
-                self.diversity_limits["top3_max_per_domain"] 
-                if position_group == "top3" 
-                else self.diversity_limits["top10_max_per_domain"]
-            )
-            
-            if domain_counts[domain] >= max_per_domain:
-                violations.append(f"domain_limit_exceeded_{domain}_{position_group}")
-                continue
-            
-            # Check for near-duplicate titles
+            if domain not in used_domains:
+                top3_candidates.append(recipe)
+                used_domains.add(domain)
+                
+                if len(top3_candidates) == 3:
+                    break
+        
+        # Check for near-duplicates in Top3
+        final_top3 = []
+        seen_titles = []
+        
+        for recipe in top3_candidates:
             title = recipe.get("title", "")
-            is_duplicate = False
             
+            # Check title similarity (cosine ≥ 0.92)
+            is_duplicate = False
             for seen_title in seen_titles:
                 similarity = self._calculate_text_similarity(title, seen_title)
-                if similarity >= self.diversity_limits["min_title_similarity"]:
-                    violations.append(f"duplicate_title_similarity_{similarity:.2f}")
+                if similarity >= 0.92:
+                    violations.append(f"near_duplicate_title_top3_{similarity:.2f}")
                     is_duplicate = True
                     break
             
-            if is_duplicate:
-                continue
+            if not is_duplicate:
+                final_top3.append(recipe)
+                seen_titles.append(title)
+        
+        # Second pass: Select remaining recipes for positions 4-10
+        remaining_candidates = []
+        domain_counts = {domain: 1 for domain in used_domains}  # Top3 domains used once
+        
+        for recipe in recipes:
+            if recipe in final_top3:
+                continue  # Already in top3
+                
+            domain = self._get_domain(recipe.get("url", ""))
             
-            # Recipe passes all diversity checks
-            final_recipes.append(recipe)
-            domain_counts[domain] += 1
-            seen_titles.append(title)
-            
-            # Stop at target count
-            if len(final_recipes) >= 10:
-                break
+            # Max 2 per domain in top10 total
+            if domain_counts.get(domain, 0) < 2:
+                remaining_candidates.append(recipe)
+                domain_counts[domain] = domain_counts.get(domain, 0) + 1
+                
+                if len(final_top3) + len(remaining_candidates) >= 10:
+                    break
+        
+        # Combine final results
+        final_recipes = final_top3 + remaining_candidates
+        
+        # Log diversity enforcement results
+        self.logger.info(f"Hard diversity enforcement: Top3={len(final_top3)} unique domains, Total={len(final_recipes)}")
         
         return final_recipes, violations
     
