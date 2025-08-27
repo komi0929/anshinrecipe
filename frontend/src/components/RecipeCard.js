@@ -82,6 +82,27 @@ const RecipeCard = ({ recipe, showDebug }) => {
         >
           レシピを見る
         </button>
+        
+        {/* Recipe Type Gate Debug Information */}
+        {showDebug && (
+          <div className="mt-3 p-3 bg-gray-50 rounded-lg text-xs space-y-1">
+            <div className="font-semibold text-gray-700">Debug Info:</div>
+            <div>
+              <span className="font-medium">type:</span> <span className="text-blue-600">{recipe.type || 'N/A'}</span>
+            </div>
+            <div>
+              <span className="font-medium">type_reason:</span> <span className="text-green-600">{recipe.type_reason || 'N/A'}</span>
+            </div>
+            <div>
+              <span className="font-medium">parseSource:</span> <span className="text-purple-600">{recipe.parseSource || 'N/A'}</span>
+            </div>
+            {recipe.anshinScore && (
+              <div>
+                <span className="font-medium">anshinScore:</span> <span className="text-orange-600">{recipe.anshinScore}</span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
