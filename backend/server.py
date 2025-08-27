@@ -24,6 +24,9 @@ from safety_gate import SafetyEngine
 # Import Recall Uplift v1
 from recall_uplift import stepwise_retrieval, domain_manager
 
+# Import Context Scoring & MMR Uplift v1
+from context_mmr import context_scorer, mmr_reranker, evidence_chip_generator
+
 ROOT_DIR = Path(__file__).parent
 
 # Configure logging
