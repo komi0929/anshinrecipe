@@ -776,7 +776,6 @@ async def search_recipes(
     if is_debug:
         debug_info = {
             "datasource": datasource,
-            "parseSource": "cse" if datasource == "cse" else "mock",
             "fallbackReason": fallback_reason,
             "mockMode": mock_mode,
             "timestamp": datetime.utcnow().isoformat(),
