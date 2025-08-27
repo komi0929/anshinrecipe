@@ -8,12 +8,21 @@ import logging
 import requests
 import json
 import re
+import asyncio
+import time
 from pathlib import Path
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any, Tuple
 import uuid
 from datetime import datetime
 from admin import admin_router
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# CSE quota tracking
+cse_quota_status = {"status": "ok", "last_error": None, "error_count": 0}
 
 
 ROOT_DIR = Path(__file__).parent
