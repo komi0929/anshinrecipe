@@ -1981,6 +1981,111 @@ async def admin_dashboard(current_user: str = Depends(verify_admin_credentials))
                 });
             }
 
+            function updateExclusionReasonsChart(dailyExclusions) {
+                const ctx = document.getElementById('exclusionReasonsChart');
+                
+                // Destroy existing chart
+                if (chartInstances.exclusionReasons) {
+                    chartInstances.exclusionReasons.destroy();
+                }
+                
+                const labels = dailyExclusions.map(d => d.date);
+                const nonRecipeSchemaData = dailyExclusions.map(d => d.non_recipe_schema || 0);
+                const nonRecipeLayoutData = dailyExclusions.map(d => d.non_recipe_layout || 0);
+                const safetyAllergenData = dailyExclusions.map(d => d.safety_allergen || 0);
+                const safetyAmbiguousData = dailyExclusions.map(d => d.safety_ambiguous || 0);
+                const fetchErrorData = dailyExclusions.map(d => d.fetch_error || 0);
+                const parseFailedData = dailyExclusions.map(d => d.parse_failed || 0);
+                const ambiguousLayoutData = dailyExclusions.map(d => d.ambiguous_layout || 0);
+                
+                chartInstances.exclusionReasons = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Non-Recipe Schema',
+                                data: nonRecipeSchemaData,
+                                backgroundColor: 'rgba(239, 68, 68, 0.8)',
+                                borderColor: 'rgb(239, 68, 68)',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'Non-Recipe Layout',
+                                data: nonRecipeLayoutData,
+                                backgroundColor: 'rgba(251, 146, 60, 0.8)',
+                                borderColor: 'rgb(251, 146, 60)',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'Safety Allergen',
+                                data: safetyAllergenData,
+                                backgroundColor: 'rgba(168, 85, 247, 0.8)',
+                                borderColor: 'rgb(168, 85, 247)',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'Safety Ambiguous',
+                                data: safetyAmbiguousData,
+                                backgroundColor: 'rgba(236, 72, 153, 0.8)',
+                                borderColor: 'rgb(236, 72, 153)',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'Fetch Error',
+                                data: fetchErrorData,
+                                backgroundColor: 'rgba(156, 163, 175, 0.8)',
+                                borderColor: 'rgb(156, 163, 175)',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'Parse Failed',
+                                data: parseFailedData,
+                                backgroundColor: 'rgba(75, 85, 99, 0.8)',
+                                borderColor: 'rgb(75, 85, 99)',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'Ambiguous Layout',
+                                data: ambiguousLayoutData,
+                                backgroundColor: 'rgba(245, 158, 11, 0.8)',
+                                borderColor: 'rgb(245, 158, 11)',
+                                borderWidth: 1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'top'
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false
+                            }
+                        },
+                        scales: {
+                            x: {
+                                stacked: true,
+                                title: {
+                                    display: true,
+                                    text: '日付'
+                                }
+                            },
+                            y: {
+                                stacked: true,
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: '除外数'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
             function updateMismatchReportsTable(reports) {
                 const tableBody = document.getElementById('mismatch-reports-table');
                 
