@@ -1997,13 +1997,13 @@ async def admin_dashboard(current_user: str = Depends(verify_admin_credentials))
                 }
                 
                 const labels = dailyExclusions.map(d => d.date);
-                const nonRecipeSchemaData = dailyExclusions.map(d => d.non_recipe_schema || 0);
-                const nonRecipeLayoutData = dailyExclusions.map(d => d.non_recipe_layout || 0);
-                const safetyAllergenData = dailyExclusions.map(d => d.safety_allergen || 0);
-                const safetyAmbiguousData = dailyExclusions.map(d => d.safety_ambiguous || 0);
-                const fetchErrorData = dailyExclusions.map(d => d.fetch_error || 0);
-                const parseFailedData = dailyExclusions.map(d => d.parse_failed || 0);
-                const ambiguousLayoutData = dailyExclusions.map(d => d.ambiguous_layout || 0);
+                const nonRecipeSchemaData = dailyExclusions.map(d => d.exclusion_reasons?.non_recipe_schema || 0);
+                const nonRecipeLayoutData = dailyExclusions.map(d => d.exclusion_reasons?.non_recipe_layout || 0);
+                const safetyAllergenData = dailyExclusions.map(d => d.exclusion_reasons?.safety_allergen || 0);
+                const safetyAmbiguousData = dailyExclusions.map(d => d.exclusion_reasons?.safety_ambiguous || 0);
+                const fetchErrorData = dailyExclusions.map(d => d.exclusion_reasons?.fetch_error || 0);
+                const parseFailedData = dailyExclusions.map(d => d.exclusion_reasons?.parse_failed || 0);
+                const ambiguousLayoutData = dailyExclusions.map(d => d.exclusion_reasons?.ambiguous_layout || 0);
                 
                 chartInstances.exclusionReasons = new Chart(ctx, {
                     type: 'bar',
