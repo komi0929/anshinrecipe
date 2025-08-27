@@ -55,6 +55,18 @@ function App() {
     }
   }, [isIdle, hasSearched, showFeedback, anonId]);
 
+  // Cleanup abort controller on unmount
+  useEffect(() => {
+    return () => {
+      if (searchAbortController) {
+        searchAbortController.abort();
+      }
+      if (searchTimeoutId) {
+        clearTimeout(searchTimeoutId);
+      }
+    };
+  }, [searchAbortController, searchTimeoutId]);
+
   // Mandatory allergens (always visible)
   const mandatoryAllergens = ["卵", "乳", "小麦", "そば", "落花生", "えび", "かに", "くるみ"];
   
