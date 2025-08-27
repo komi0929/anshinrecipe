@@ -44,6 +44,9 @@ def get_git_sha():
 # CSE quota tracking
 cse_quota_status = {"status": "ok", "last_error": None, "error_count": 0}
 
+# Initialize Safety Gate 2.0
+safety_engine = SafetyEngine()
+
 load_dotenv(ROOT_DIR / '.env')
 
 # MongoDB connection
