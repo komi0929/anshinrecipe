@@ -365,17 +365,57 @@ async def detect_recipe_type(url: str, title: str = "") -> Tuple[str, str]:
     
     return heuristic_type, heuristic_reason
 
-def parse_cse_results(cse_response: dict, query: str) -> List[Dict[str, Any]]:
+async def parse_cse_results(cse_response: dict, query: str, include_non_recipes: bool = False) -> Tuple[List[Dict[str, Any]], Dict[str, int]]:
     """
-    Parse Google CSE response into recipe format
+    Parse Google CSE response into recipe format with type filtering
+    Returns (recipes, exclusion_stats)
     """
     recipes = []
+    exclusion_stats = {
+        "non_recipe_schema": 0,
+        "non_recipe_layout": 0,
+        "safety_allergen": 0,
+        "safety_ambiguous": 0,
+        "fetch_error": 0,
+        "parse_failed": 0,
+        "ambiguous_layout": 0,
+        "total_processed": 0
+    }
+    
     items = cse_response.get('items', [])
     
-    for i, item in enumerate(items[:10]):  # Limit to 10 results
-        # Extract domain from URL
+    for i, item in enumerate(items):
+        exclusion_stats["total_processed"] += 1
+        
+        # Extract basic info
         url = item.get('link', '')
+        title = item.get('title', '')
         domain = url.split('/')[2] if len(url.split('/')) > 2 else 'unknown'
+        
+        # Detect recipe type
+        recipe_type, type_reason = await detect_recipe_type(url, title)
+        
+        # Track exclusion reasons
+        if recipe_type == "NonRecipe":
+            if "schema" in type_reason:
+                exclusion_stats["non_recipe_schema"] += 1
+            elif "layout" in type_reason:
+                exclusion_stats["non_recipe_layout"] += 1
+            continue  # Skip non-recipes
+        
+        elif recipe_type == "Unknown":
+            if "fetch_error" in type_reason:
+                exclusion_stats["fetch_error"] += 1
+            elif "parse_failed" in type_reason:
+                exclusion_stats["parse_failed"] += 1
+            
+            if not include_non_recipes:
+                continue  # Skip unknown types in production
+        
+        elif recipe_type == "Ambiguous":
+            exclusion_stats["ambiguous_layout"] += 1
+            if not include_non_recipes:
+                continue  # Skip ambiguous types in production
         
         # Generate realistic AnshinScore based on domain and position
         domain_scores = {
@@ -383,32 +423,50 @@ def parse_cse_results(cse_response: dict, query: str) -> List[Dict[str, Any]]:
             'kurashiru.com': 82,
             'delish-kitchen.tv': 79,
             'recipe.rakuten.co.jp': 77,
-            'orangepage.net': 80
+            'orangepage.net': 80,
+            'kyounoryouri.jp': 83,
+            'lettuceclub.net': 78
         }
         base_score = domain_scores.get(domain, 75)
-        position_penalty = i * 2  # Slight penalty for lower positions
-        anshin_score = max(base_score - position_penalty, 60)
+        
+        # Adjust score based on type confidence
+        if recipe_type == "Recipe":
+            if "jsonld" in type_reason or "microdata" in type_reason:
+                confidence_bonus = 5  # Higher confidence for structured data
+            else:
+                confidence_bonus = 0  # HTML heuristics
+        else:
+            confidence_bonus = -10  # Lower score for uncertain types
+        
+        position_penalty = len(recipes) * 2  # Penalty based on position in filtered results
+        anshin_score = max(base_score + confidence_bonus - position_penalty, 60)
         
         # Extract snippet for catchphrase
         snippet = item.get('snippet', '')
         catchphrase = snippet[:20] + "..." if len(snippet) > 20 else snippet
         
         recipe = {
-            "id": f"cse_{i+1}",
-            "title": item.get('title', ''),
+            "id": f"cse_{exclusion_stats['total_processed']}",
+            "title": title,
             "source": domain,
             "anshinScore": anshin_score,
             "catchphrase": catchphrase,
             "url": url,
             "image": item.get('pagemap', {}).get('cse_image', [{}])[0].get('src', 
                 f"https://images.unsplash.com/photo-{1570000000000 + i}?w=300&h=200&fit=crop"),
-            "prepMinutes": 25 + (i * 5),  # Estimated prep time
-            "calories": 200 + (i * 30),    # Estimated calories
-            "parseSource": "cse"
+            "prepMinutes": 25 + (len(recipes) * 5),  # Estimated prep time
+            "calories": 200 + (len(recipes) * 30),    # Estimated calories
+            "parseSource": "cse",
+            "type": recipe_type,
+            "type_reason": type_reason
         }
         recipes.append(recipe)
+        
+        # Stop at 10 valid recipes
+        if len(recipes) >= 10:
+            break
     
-    return recipes
+    return recipes, exclusion_stats
 
 async def call_google_cse(query: str) -> dict:
     """
