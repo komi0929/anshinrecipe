@@ -327,6 +327,18 @@ backend:
         agent: "backend_testing"
         comment: "Comprehensive testing completed for /api/admin/domains-metrics endpoint. Authentication working correctly with proper 401/200 responses. Data structure validation passed with required keys: top_domains, summary, violations. Top domains array contains 10 domains with proper structure including domain, impressions, clicks, ctr, avg_anshin_score, violation_flag fields. Summary shows 10 total domains, 2 with violations, 56.7% average CTR, 78.7 average Anshin score. Mock data implementation provides realistic domain performance metrics for MVP."
 
+  - task: "Rate-Limit & Slow-Path Hardening Implementation"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "backend_testing"
+        comment: "Rate-Limit & Slow-Path Hardening implementation testing completed successfully. Health endpoint (/api/v1/health) includes cseQuota field with valid status ('ok', 'limited', 'error') that correctly reflects CSE usage state. Search endpoint (/api/v1/search) properly handles CSE failures with structured 502 responses including error, reason, retryCount, and requestEcho fields. Telemetry logging verified with search_submitted and search_response_ok logs including response_ms timing. Exponential backoff implementation confirmed through retry logic with max 3 retries and proper delays (0.8s, 1.6s, 3.2s). Debug mode enhancement includes responseTimeMs field and enhanced error details. All requirements verified in production environment (MOCK_MODE=0)."
+
   - task: "Export CSV API Endpoint"
     implemented: true
     working: true
