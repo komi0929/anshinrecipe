@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "11.1 — CSE Enforcement (No Silent Fallback) + Debug parseSource Correction: Enforce CSE-only path in production with no silent fallback to mock, fix debug fields so datasource and parseSource are correctly separated, enhance health endpoint with gitSha and proper cseQuota status, provide evidence through screenshots and testing."
+user_problem_statement: "Safety Gate 2.0 — Strict Allergen Exclusion with Evidence: Phases 1-2 Implementation with 28-allergen dictionaries, evidence-first parsing, windowed context analysis, safety decisions (ok/ng/ambiguous), and integration with scoring/surfacing pipeline. MVP policy: Ambiguity = Exclusion. Test with Golden Set cases."
 
 backend:
   - task: "CSE-Only Enforcement (No Silent Fallback)"
