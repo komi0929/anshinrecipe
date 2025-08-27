@@ -391,10 +391,10 @@ async def calculate_quality_metrics(days: int = 7):
         # Calculate overall exclusion metrics
         total_exclusions = sum(day['total'] for day in daily_exclusions)
         total_excluded = sum(
-            day.get('non_recipe_schema', 0) + day.get('non_recipe_layout', 0) + 
-            day.get('safety_allergen', 0) + day.get('safety_ambiguous', 0) + 
-            day.get('fetch_error', 0) + day.get('parse_failed', 0) + 
-            day.get('ambiguous_layout', 0) 
+            day['exclusion_reasons'].get('non_recipe_schema', 0) + day['exclusion_reasons'].get('non_recipe_layout', 0) + 
+            day['exclusion_reasons'].get('safety_allergen', 0) + day['exclusion_reasons'].get('safety_ambiguous', 0) + 
+            day['exclusion_reasons'].get('fetch_error', 0) + day['exclusion_reasons'].get('parse_failed', 0) + 
+            day['exclusion_reasons'].get('ambiguous_layout', 0) 
             for day in daily_exclusions
         )
         
