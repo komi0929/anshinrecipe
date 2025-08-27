@@ -102,9 +102,57 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Test the newly implemented search datasource functionality for the Anshin Recipe app. Verify health endpoint shows correct datasource configuration, search endpoint works in production mode with Google CSE, mock mode fallback works, error handling for CSE failures, and debug mode functionality."
+user_problem_statement: "Test the newly implemented Recipe Type Gate & Debug Surface functionality for the Anshin Recipe app. Verify search endpoint with recipe filtering, recipe type detection, quality metrics with exclusions, debug mode enhancement, and admin dashboard integration."
 
 backend:
+  - task: "Recipe Type Gate Search Filtering"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "backend_testing"
+        comment: "Recipe Type Gate functionality testing completed successfully. Search endpoint (/api/v1/search) with query='卵 乳 不使用 ケーキ' and debug=1 verified: All returned results have type:'Recipe' as expected, all results include type_reason field showing detection method (jsonld_recipe_schema found), recipe filtering working correctly to exclude non-recipe content."
+
+  - task: "Recipe Type Detection System"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "backend_testing"
+        comment: "Recipe type detection system testing completed successfully. Type detection methods verified including jsonld_recipe_schema, microdata_recipe_schema, and html_heuristics_score_X. All recipe results include proper type_reason field showing detection confidence and method used. Type classification working correctly to identify Recipe vs NonRecipe vs Ambiguous content."
+
+  - task: "Debug Surface with Exclusion Statistics"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "backend_testing"
+        comment: "Debug surface functionality testing completed successfully. When debug=1 parameter is used, response includes exclusionStats with all required fields: non_recipe_schema, non_recipe_layout, safety_allergen, safety_ambiguous, fetch_error, parse_failed, ambiguous_layout, total_processed. Exclusion statistics show real filtering data (e.g., 1 non_recipe_schema, 3 non_recipe_layout, 3 ambiguous_layout, 2 fetch_error out of 10 total processed)."
+
+  - task: "Quality Metrics API with Exclusion Data"
+    implemented: true
+    working: true
+    file: "/app/backend/admin.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "backend_testing"
+        comment: "Quality Metrics API endpoint (/api/admin/quality-metrics) testing completed successfully. API returns daily_exclusions array with proper structure including date and exclusion_reasons nested object. Exclusion reasons include all required fields: non_recipe_schema, non_recipe_layout, safety_allergen, safety_ambiguous, fetch_error, parse_failed, ambiguous_layout. Basic Auth protection working correctly. Integration with existing quality metrics (daily_verdicts, mismatch_reports, expansion_candidates, summary) verified."
+
   - task: "Health Endpoint Testing"
     implemented: true
     working: true
