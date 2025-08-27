@@ -503,7 +503,7 @@ async def parse_cse_results(cse_response: dict, query: str, selected_allergens: 
         # Detect recipe type
         recipe_type, type_reason = await detect_recipe_type(url, title)
         
-        # Track exclusion reasons
+        # Track exclusion reasons for non-recipes
         if recipe_type == "NonRecipe":
             if "schema" in type_reason:
                 exclusion_stats["non_recipe_schema"] += 1
@@ -525,7 +525,30 @@ async def parse_cse_results(cse_response: dict, query: str, selected_allergens: 
             if not include_non_recipes:
                 continue  # Skip ambiguous types in production
         
-        # Generate realistic AnshinScore based on domain and position
+        # SAFETY GATE 2.0 - Run safety analysis before scoring/ranking
+        safety_result = None
+        if selected_allergens:
+            # Fetch page content for safety analysis
+            html_content, fetch_error = await fetch_page_content(url)
+            
+            if fetch_error:
+                # Could not fetch content for safety analysis - exclude for safety
+                exclusion_stats["safety_allergen"] += 1
+                continue
+            
+            # Run safety analysis
+            recipe_data = {"html_content": html_content, "title": title, "url": url}
+            safety_result = safety_engine.analyze_recipe_safety(recipe_data, selected_allergens)
+            
+            # Safety Gate: Only safety.status === "ok" may surface
+            if safety_result.status == "ng":
+                exclusion_stats["safety_allergen"] += 1
+                continue  # Hard exclude
+            elif safety_result.status == "ambiguous":
+                exclusion_stats["safety_ambiguous"] += 1
+                continue  # MVP: ambiguity = exclusion
+        
+        # Generate realistic AnshinScore with Safety Gate integration
         domain_scores = {
             'cookpad.com': 85,
             'kurashiru.com': 82,
@@ -546,8 +569,23 @@ async def parse_cse_results(cse_response: dict, query: str, selected_allergens: 
         else:
             confidence_bonus = -10  # Lower score for uncertain types
         
+        # Safety component: ok→40, ambiguous→0, ng→-∞
+        if safety_result:
+            if safety_result.status == "ok":
+                safety_bonus = 40
+            elif safety_result.status == "ambiguous":
+                safety_bonus = 0  # Already filtered out above, but for clarity
+            else:  # ng
+                safety_bonus = float('-inf')  # Already filtered out above
+        else:
+            safety_bonus = 0  # No allergens selected, no safety penalty
+        
         position_penalty = len(recipes) * 2  # Penalty based on position in filtered results
-        anshin_score = max(base_score + confidence_bonus - position_penalty, 60)
+        anshin_score = max(base_score + confidence_bonus + safety_bonus - position_penalty, 60)
+        
+        # Ensure infinite scores don't surface (safety check)
+        if anshin_score == float('-inf') or anshin_score < 0:
+            continue
         
         # Extract snippet for catchphrase
         snippet = item.get('snippet', '')
@@ -579,6 +617,33 @@ async def parse_cse_results(cse_response: dict, query: str, selected_allergens: 
             "type": recipe_type,
             "type_reason": type_reason
         }
+        
+        # Add safety information if analysis was performed
+        if safety_result:
+            recipe["safety"] = {
+                "status": safety_result.status,
+                "allergens": safety_result.allergens,
+                "reasons": safety_result.reasons,
+                "hits": [
+                    {
+                        "allergen": hit.allergen,
+                        "token": hit.token,
+                        "source": hit.source,
+                        "pos": hit.position,
+                        "snippet": hit.snippet
+                    }
+                    for hit in safety_result.hits
+                ]
+            }
+        else:
+            # No allergens selected - default safe status
+            recipe["safety"] = {
+                "status": "ok",
+                "allergens": [],
+                "reasons": [],
+                "hits": []
+            }
+        
         recipes.append(recipe)
         
         # Stop at 10 valid recipes
