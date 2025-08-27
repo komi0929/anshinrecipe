@@ -1883,6 +1883,9 @@ async def admin_dashboard(current_user: str = Depends(verify_admin_credentials))
                     // Update quality summary cards
                     updateQualitySummary(qualityResponse.summary);
                     
+                    // Update exclusion reasons chart
+                    updateExclusionReasonsChart(qualityResponse.daily_exclusions || []);
+                    
                     // Update allergen verdict chart
                     updateAllergenVerdictChart(qualityResponse.daily_verdicts);
                     
