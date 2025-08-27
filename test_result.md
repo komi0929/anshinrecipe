@@ -105,6 +105,42 @@
 user_problem_statement: "11.1 — CSE Enforcement (No Silent Fallback) + Debug parseSource Correction: Enforce CSE-only path in production with no silent fallback to mock, fix debug fields so datasource and parseSource are correctly separated, enhance health endpoint with gitSha and proper cseQuota status, provide evidence through screenshots and testing."
 
 backend:
+  - task: "CSE-Only Enforcement (No Silent Fallback)"
+    implemented: false
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Need to ensure MOCK_MODE=0 forces CSE-only path with no silent fallback to mock data. Return HTTP 502 with clear reasons (CSE_429_RATE_LIMIT, CSE_TIMEOUT, CSE_UPSTREAM_5XX) on any CSE failure."
+
+  - task: "Health Endpoint Enhancement"
+    implemented: false
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Need to update /api/v1/health endpoint to return proper structure with datasource, envFlags (MOCK_MODE, CSE_KEY_PRESENT, CSE_CX_PRESENT), gitSha, timestamp, and cseQuota status fields."
+
+  - task: "Debug Fields Correction"
+    implemented: false
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Need to fix parseSource field to show actual extraction method (jsonld, microdata, html) instead of 'cse'. Datasource should show 'cse' or 'mock'. Frontend debug display already correct."
+
   - task: "Recipe Type Gate Search Filtering"
     implemented: true
     working: true
