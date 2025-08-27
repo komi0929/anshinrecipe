@@ -58,9 +58,9 @@ class ContextScorer:
         recipe_data: Dict[str, Any], 
         context: Optional[str] = None,
         domain_policy = None
-    ) -> Tuple[float, ScoreBreakdown, ContextFeatures]:
+    ) -> Tuple[float, ScoreBreakdown, ContextFeatures, Dict[str, Any]]:
         """
-        Score recipe with context awareness
+        Score recipe with enhanced context awareness and gates
         
         Args:
             recipe_data: Recipe data with safety, url, etc.
@@ -68,11 +68,15 @@ class ContextScorer:
             domain_policy: Domain policy object for trust scoring
             
         Returns:
-            Tuple of (final_score, score_breakdown, context_features)
+            Tuple of (final_score, score_breakdown, context_features, gate_result)
         """
         
         # Extract context-specific features
         features = feature_extractor.extract_all_features(recipe_data)
+        
+        # Apply context gates AFTER safety and BEFORE weighted scoring
+        from .context_gates import context_gates
+        gate_result = context_gates.evaluate_context_gates(features, context, recipe_data)
         
         # Initialize score breakdown
         breakdown = ScoreBreakdown()
@@ -80,22 +84,183 @@ class ContextScorer:
         # Safety Score (40 points max)
         breakdown.safety = self._calculate_safety_score(recipe_data)
         
-        # Trust Score (30 points max)
-        breakdown.trust = self._calculate_trust_score(recipe_data, features, domain_policy)
+        # Trust Score (30 points max, clipped to 24)
+        trust_score = self._calculate_trust_score(recipe_data, features, domain_policy)
+        breakdown.trust = min(24.0, trust_score)  # Clip Trust to ≤24
         
-        # Context Score (20 points max)
-        breakdown.context = self._calculate_context_score(features, context)
+        # Context Score (20 points max) - Enhanced weighting
+        breakdown.context = self._calculate_enhanced_context_score(features, context)
         
         # Popularity Score (10 points max)
         breakdown.popularity = self._calculate_popularity_score(features)
         
-        # Total score
+        # Apply context gate penalties/bonuses
+        gate_penalty = gate_result.penalty
+        gate_bonus = gate_result.bonus_points
+        
+        # Total score before normalization
         breakdown.total = breakdown.safety + breakdown.trust + breakdown.context + breakdown.popularity
         
-        # Normalize to 0-100 range (should already be within range)
-        final_score = max(0, min(100, breakdown.total))
+        # Apply gate adjustments on the final 0-100 scale
+        final_score = breakdown.total + gate_bonus - gate_penalty
         
-        return final_score, breakdown, features
+        # Normalize to 0-100 range
+        final_score = max(0, min(100, final_score))
+        
+        # Update total in breakdown to reflect final score
+        breakdown.total = final_score
+        
+        return final_score, breakdown, features, gate_result.__dict__
+    
+    def _calculate_enhanced_context_score(
+        self, 
+        features: ContextFeatures, 
+        context: Optional[str]
+    ) -> float:
+        """Calculate enhanced context-specific score with piecewise normals"""
+        
+        if not context:
+            return self._score_general_quality(features)
+        
+        # Enhanced context scoring with specific weightings
+        if context == "時短":
+            return self._score_time_saving_enhanced(features)
+        elif context == "健康":
+            return self._score_health_enhanced(features)
+        elif context == "初心者":
+            return self._score_beginner_enhanced(features)
+        elif context == "イベント":
+            return self._score_event_enhanced(features)
+        else:
+            return self._score_general_quality(features)
+    
+    def _score_time_saving_enhanced(self, features: ContextFeatures) -> float:
+        """Enhanced time-saving scoring: 0.65*time + 0.25*ingredients + 0.10*steps"""
+        
+        # Time score with piecewise normals: ≤10→1.0; 11–20→0.8; 21–30→0.4; >30/missing→0.1
+        prep_time = features.prep_time_minutes or features.total_time_minutes or 999
+        if prep_time <= 10:
+            time_score = 1.0
+        elif prep_time <= 20:
+            time_score = 0.8
+        elif prep_time <= 30:
+            time_score = 0.4
+        else:
+            time_score = 0.1
+        
+        # Ingredients score: ≤5→1.0; 6–9→0.8; 10–12→0.4; >12→0.1
+        ingredients_count = features.ingredients_count or 999
+        if ingredients_count <= 5:
+            ingredients_score = 1.0
+        elif ingredients_count <= 9:
+            ingredients_score = 0.8
+        elif ingredients_count <= 12:
+            ingredients_score = 0.4
+        else:
+            ingredients_score = 0.1
+        
+        # Steps score: ≤4→1.0; 5–6→0.8; 7–9→0.4; ≥10/missing→0.1
+        steps_count = features.steps_count or 999
+        if steps_count <= 4:
+            steps_score = 1.0
+        elif steps_count <= 6:
+            steps_score = 0.8
+        elif steps_count <= 9:
+            steps_score = 0.4
+        else:
+            steps_score = 0.1
+        
+        # Weighted combination
+        context_score = (0.65 * time_score + 0.25 * ingredients_score + 0.10 * steps_score) * 20.0
+        
+        return min(20.0, context_score)
+    
+    def _score_beginner_enhanced(self, features: ContextFeatures) -> float:
+        """Enhanced beginner scoring: 0.50*steps + 0.35*clarity + 0.15*ingredients"""
+        
+        # Steps score: ≤4→1.0; 5–6→0.8; 7–9→0.4; ≥10/missing→0.1
+        steps_count = features.steps_count or 999
+        if steps_count <= 4:
+            steps_score = 1.0
+        elif steps_count <= 6:
+            steps_score = 0.8
+        elif steps_count <= 9:
+            steps_score = 0.4
+        else:
+            steps_score = 0.1
+        
+        # Clarity tokens score (beginner keywords)
+        beginner_keywords = features.beginner_keywords or []
+        clarity_score = min(1.0, len(beginner_keywords) * 0.3)  # Each keyword adds 0.3, max 1.0
+        
+        # Ingredients score (fewer is better for beginners)
+        ingredients_count = features.ingredients_count or 999
+        if ingredients_count <= 5:
+            ingredients_score = 1.0
+        elif ingredients_count <= 9:
+            ingredients_score = 0.8
+        elif ingredients_count <= 12:
+            ingredients_score = 0.4
+        else:
+            ingredients_score = 0.1
+        
+        # Weighted combination
+        context_score = (0.50 * steps_score + 0.35 * clarity_score + 0.15 * ingredients_score) * 20.0
+        
+        return min(20.0, context_score)
+    
+    def _score_health_enhanced(self, features: ContextFeatures) -> float:
+        """Enhanced health scoring: 0.45*calorie + 0.35*macro + 0.20*health_tokens"""
+        
+        # Calorie score: ≤200→1.0; 201–350→0.75; 351–500→0.35; >500→0.1; missing→0.4
+        calories = features.calories_per_serving
+        if calories is None:
+            calorie_score = 0.4  # Missing calories
+        elif calories <= 200:
+            calorie_score = 1.0
+        elif calories <= 350:
+            calorie_score = 0.75
+        elif calories <= 500:
+            calorie_score = 0.35
+        else:
+            calorie_score = 0.1
+        
+        # Macro presence: any of protein/fiber/sugar/salt → 0.8 else 0.3
+        macro_score = 0.8 if features.macros_present else 0.3
+        
+        # Health tokens score
+        health_keywords = features.health_keywords or []
+        health_tokens_score = min(1.0, len(health_keywords) * 0.25)  # Each keyword adds 0.25
+        
+        # Weighted combination
+        context_score = (0.45 * calorie_score + 0.35 * macro_score + 0.20 * health_tokens_score) * 20.0
+        
+        return min(20.0, context_score)
+    
+    def _score_event_enhanced(self, features: ContextFeatures) -> float:
+        """Enhanced event scoring: 0.50*visual + 0.30*event_tokens + 0.20*popularity"""
+        
+        # Visual score: ≥1200×800→1.0; ≥800×600→0.7; else→0.3; missing→0.5
+        visual_score = features.visual_score or 0.5
+        if visual_score >= 0.8:  # Proxy for high resolution
+            visual_normalized = 1.0
+        elif visual_score >= 0.6:  # Proxy for medium resolution
+            visual_normalized = 0.7
+        else:
+            visual_normalized = 0.3
+        
+        # Event tokens score
+        event_keywords = features.event_keywords or []
+        event_tokens_score = min(1.0, len(event_keywords) * 0.3)  # Each keyword adds 0.3
+        
+        # Popularity score (normalized)
+        popularity = features.popularity_score or 0.5
+        popularity_normalized = min(1.0, popularity / 5.0)  # Normalize to 0-1 range
+        
+        # Weighted combination
+        context_score = (0.50 * visual_normalized + 0.30 * event_tokens_score + 0.20 * popularity_normalized) * 20.0
+        
+        return min(20.0, context_score)
     
     def _calculate_safety_score(self, recipe_data: Dict[str, Any]) -> float:
         """Calculate safety component score (0-40)"""
