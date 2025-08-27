@@ -10,6 +10,7 @@ import json
 import re
 import asyncio
 import time
+import subprocess
 from pathlib import Path
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any, Tuple
