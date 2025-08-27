@@ -473,7 +473,7 @@ async def detect_recipe_type(url: str, title: str = "") -> Tuple[str, str]:
     
     return heuristic_type, heuristic_reason
 
-async def parse_cse_results(cse_response: dict, query: str, include_non_recipes: bool = False) -> Tuple[List[Dict[str, Any]], Dict[str, int]]:
+async def parse_cse_results(cse_response: dict, query: str, selected_allergens: List[str] = None, include_non_recipes: bool = False) -> Tuple[List[Dict[str, Any]], Dict[str, int]]:
     """
     Parse Google CSE response into recipe format with type filtering
     Returns (recipes, exclusion_stats)
