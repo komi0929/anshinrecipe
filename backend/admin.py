@@ -384,10 +384,21 @@ async def calculate_quality_metrics(days: int = 7):
         total_ng = sum(day['ng'] for day in daily_verdicts) 
         total_unknown = sum(day['unknown'] for day in daily_verdicts)
         
+        # Calculate overall exclusion metrics
+        total_exclusions = sum(day['total'] for day in daily_exclusions)
+        total_excluded = sum(
+            day.get('non_recipe_schema', 0) + day.get('non_recipe_layout', 0) + 
+            day.get('safety_allergen', 0) + day.get('safety_ambiguous', 0) + 
+            day.get('fetch_error', 0) + day.get('parse_failed', 0) + 
+            day.get('ambiguous_layout', 0) 
+            for day in daily_exclusions
+        )
+        
         quality_score = (total_ok / total_verdicts * 100) if total_verdicts > 0 else 0
         
         return {
             "daily_verdicts": daily_verdicts,
+            "daily_exclusions": daily_exclusions,
             "mismatch_reports": processed_reports,
             "expansion_candidates": expansion_candidates,
             "summary": {
@@ -396,7 +407,10 @@ async def calculate_quality_metrics(days: int = 7):
                 "ng_rate": round((total_ng / total_verdicts * 100) if total_verdicts > 0 else 0, 1),
                 "unknown_rate": round((total_unknown / total_verdicts * 100) if total_verdicts > 0 else 0, 1),
                 "quality_score": round(quality_score, 1),
-                "mismatch_count": len(processed_reports)
+                "mismatch_count": len(processed_reports),
+                "total_processed": total_exclusions,
+                "total_excluded": total_excluded,
+                "exclusion_rate": round((total_excluded / total_exclusions * 100) if total_exclusions > 0 else 0, 1)
             }
         }
         
@@ -404,6 +418,7 @@ async def calculate_quality_metrics(days: int = 7):
         print(f"Error calculating quality metrics: {e}")
         return {
             "daily_verdicts": [],
+            "daily_exclusions": [],
             "mismatch_reports": [],
             "expansion_candidates": [],
             "summary": {
@@ -412,7 +427,10 @@ async def calculate_quality_metrics(days: int = 7):
                 "ng_rate": 0,
                 "unknown_rate": 0,
                 "quality_score": 0,
-                "mismatch_count": 0
+                "mismatch_count": 0,
+                "total_processed": 0,
+                "total_excluded": 0,
+                "exclusion_rate": 0
             }
         }
 
