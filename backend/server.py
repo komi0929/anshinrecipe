@@ -520,7 +520,8 @@ async def search_recipes(
     q: str = Query(..., description="Search query"),
     context: Optional[str] = Query(None, description="Context filter"),
     allergens: Optional[str] = Query(None, description="Comma-separated allergen list"),
-    debug: Optional[str] = Query(None, description="Enable debug mode")
+    debug: Optional[str] = Query(None, description="Enable debug mode"),
+    include_non_recipes: Optional[str] = Query(None, description="Include non-recipe results for testing")
 ):
     """
     Search for recipes using Google CSE or mock data based on MOCK_MODE
@@ -529,15 +530,29 @@ async def search_recipes(
     
     mock_mode = os.environ.get('MOCK_MODE', '1')
     is_debug = debug == '1'
+    include_non_recipes_flag = include_non_recipes == '1'
+    
+    exclusion_stats = {}
     
     # Determine datasource
     if mock_mode == '0':
         # Production mode - force CSE
         try:
             cse_response = await call_google_cse(q)
-            recipes = parse_cse_results(cse_response, q)
+            recipes, exclusion_stats = await parse_cse_results(cse_response, q, include_non_recipes_flag)
             datasource = "cse"
             fallback_reason = None
+            
+            # Store exclusion statistics in MongoDB for admin dashboard
+            if exclusion_stats["total_processed"] > 0:
+                exclusion_entry = {
+                    "type": "exclusion_stats",
+                    "query": q,
+                    "stats": exclusion_stats,
+                    "created_at": datetime.utcnow(),
+                    "datasource": "cse"
+                }
+                await db.search_quality.insert_one(exclusion_entry)
             
         except HTTPException:
             # Re-raise CSE failures in production - no fallback to mock
@@ -558,13 +573,19 @@ async def search_recipes(
     
     # Add debug information if requested
     if is_debug:
-        response_data["debug"] = {
+        debug_info = {
             "datasource": datasource,
             "parseSource": "cse" if datasource == "cse" else "mock",
             "fallbackReason": fallback_reason,
             "mockMode": mock_mode,
             "timestamp": datetime.utcnow().isoformat()
         }
+        
+        # Add exclusion stats in debug mode
+        if exclusion_stats:
+            debug_info["exclusionStats"] = exclusion_stats
+            
+        response_data["debug"] = debug_info
     
     return response_data
 
