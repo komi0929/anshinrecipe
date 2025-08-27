@@ -383,7 +383,7 @@ class StepwiseRetrieval:
                     score_breakdown=score_breakdown.__dict__
                 )
                 
-                # Update recipe with new scoring data
+                # Update recipe with enhanced scoring data
                 recipe.update({
                     "anshinScore": max(0, min(100, final_score)),  # Ensure 0-100 range
                     "score_breakdown": {
@@ -393,6 +393,7 @@ class StepwiseRetrieval:
                         "popularity": score_breakdown.popularity,
                         "total": score_breakdown.total
                     },
+                    "context_gate": gate_result,  # Include gate results
                     "context_features": {
                         "prep_time_minutes": context_features.prep_time_minutes,
                         "ingredients_count": context_features.ingredients_count,
