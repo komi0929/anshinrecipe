@@ -14,7 +14,7 @@ import csv
 import io
 
 # Configuration
-BACKEND_URL = "https://recipe-dashboard.preview.emergentagent.com"
+BACKEND_URL = "https://recipe-shield.preview.emergentagent.com"
 API_BASE = f"{BACKEND_URL}/api"
 
 # Admin credentials from environment

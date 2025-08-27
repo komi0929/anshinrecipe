@@ -10,7 +10,7 @@ import time
 from typing import List, Dict
 
 # Test configuration
-BACKEND_URL = "https://recipe-dashboard.preview.emergentagent.com"
+BACKEND_URL = "https://recipe-shield.preview.emergentagent.com"
 API_BASE = f"{BACKEND_URL}/api"
 
 # Golden Set queries for comparison
