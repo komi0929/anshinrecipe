@@ -623,9 +623,13 @@ async def parse_cse_results(cse_response: dict, query: str, selected_allergens: 
         
         # Add safety information if analysis was performed
         if safety_result:
+            # Extract hit allergens from the hits
+            hit_allergens = list(set(hit.allergen for hit in safety_result.hits))
+            
             recipe["safety"] = {
                 "status": safety_result.status,
-                "allergens": safety_result.allergens,
+                "checked_allergens": safety_result.allergens,  # User selected allergens
+                "hit_allergens": hit_allergens,  # Actually detected allergens
                 "reasons": safety_result.reasons,
                 "hits": [
                     {
@@ -642,7 +646,8 @@ async def parse_cse_results(cse_response: dict, query: str, selected_allergens: 
             # No allergens selected - default safe status
             recipe["safety"] = {
                 "status": "ok",
-                "allergens": [],
+                "checked_allergens": [],
+                "hit_allergens": [],
                 "reasons": [],
                 "hits": []
             }
