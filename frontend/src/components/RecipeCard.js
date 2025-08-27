@@ -88,19 +88,26 @@ const RecipeCard = ({ recipe, showDebug }) => {
           <div className="mt-3 p-3 bg-gray-50 rounded-lg text-xs space-y-1">
             <div className="font-semibold text-gray-700">Debug Info:</div>
             <div>
-              <span className="font-medium">type:</span> <span className="text-blue-600">{recipe.type || 'N/A'}</span>
-            </div>
-            <div>
-              <span className="font-medium">type_reason:</span> <span className="text-green-600">{recipe.type_reason || 'N/A'}</span>
+              <span className="font-medium">datasource:</span> <span className="text-blue-600">{recipe.datasource || 'cse'}</span>
             </div>
             <div>
               <span className="font-medium">parseSource:</span> <span className="text-purple-600">{recipe.parseSource || 'N/A'}</span>
             </div>
+            <div>
+              <span className="font-medium">type:</span> <span className="text-green-600">{recipe.type || 'N/A'}</span>
+            </div>
+            <div>
+              <span className="font-medium">type_reason:</span> <span className="text-orange-600">{recipe.type_reason || 'N/A'}</span>
+            </div>
             {recipe.anshinScore && (
               <div>
-                <span className="font-medium">anshinScore:</span> <span className="text-orange-600">{recipe.anshinScore}</span>
+                <span className="font-medium">anshinScore:</span> <span className="text-red-600">{recipe.anshinScore}</span>
               </div>
             )}
+            {/* Placeholder for safety information */}
+            <div>
+              <span className="font-medium">safety:</span> <span className="text-gray-500">{JSON.stringify(recipe.safety || {status: 'pending', reasons: []})}</span>
+            </div>
           </div>
         )}
       </div>
