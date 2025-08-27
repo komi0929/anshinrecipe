@@ -208,6 +208,8 @@ def get_mock_search_results(query: str, context: str = None) -> List[Dict[str, A
             "image": "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=300&h=200&fit=crop",
             "prepMinutes": 45,
             "calories": 280,
+            "datasource": "mock",
+            "parseSource": "mock",
             "type": "Recipe",
             "type_reason": "mock_data"
         },
@@ -221,6 +223,8 @@ def get_mock_search_results(query: str, context: str = None) -> List[Dict[str, A
             "image": "https://images.unsplash.com/photo-1587668178277-295251f900ce?w=300&h=200&fit=crop",
             "prepMinutes": 30,
             "calories": 220,
+            "datasource": "mock",
+            "parseSource": "mock",
             "type": "Recipe",
             "type_reason": "mock_data"
         },
@@ -234,6 +238,8 @@ def get_mock_search_results(query: str, context: str = None) -> List[Dict[str, A
             "image": "https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=300&h=200&fit=crop",
             "prepMinutes": 20,
             "calories": 180,
+            "datasource": "mock",
+            "parseSource": "mock",
             "type": "Recipe",
             "type_reason": "mock_data"
         }
