@@ -37,13 +37,14 @@ class QueryShaper:
             "recipe", "レシピ", "cooking", "料理", "作り方"
         ]
     
-    def shape_query_for_cse(self, user_query: str, retrieval_pass: str = "pass_1_broad") -> Dict[str, str]:
+    def shape_query_for_cse(self, user_query: str, retrieval_pass: str = "pass_1_broad", context: str = None) -> Dict[str, str]:
         """
-        Shape user query for CSE retrieval based on pass type
+        Shape user query for CSE retrieval based on pass type and context
         
         Args:
             user_query: Original user search query
             retrieval_pass: Type of retrieval pass (pass_1_broad, pass_2_prefer, etc.)
+            context: Selected context for context-aware hints
             
         Returns:
             Dict with shaped query and CSE parameters
@@ -54,6 +55,13 @@ class QueryShaper:
         # Base shaping - always include recipe terms
         if not any(term in shaped_query.lower() for term in ["レシピ", "recipe"]):
             shaped_query += " (レシピ OR recipe)"
+        
+        # Add context-aware retrieval hints (retrieval-only; Safety is authoritative)
+        context_hints = self._get_context_hints(context)
+        if context_hints and retrieval_pass == "pass_2_prefer":
+            # Add context hints in prefer pass for better recall
+            hint_string = " (" + " OR ".join(context_hints) + ")"
+            shaped_query += hint_string
         
         # Add exclusion terms (always applied)
         exclusion_string = " -" + " -".join(self.exclude_terms)
@@ -87,14 +95,27 @@ class QueryShaper:
             "num": "10"       # Start with 10 results, expand if needed
         }
         
-        self.logger.info(f"Query shaped for {retrieval_pass}: '{user_query}' -> '{final_query}'")
+        self.logger.info(f"Query shaped for {retrieval_pass} (context: {context}): '{user_query}' -> '{final_query}'")
         
         return {
             "original_query": user_query,
             "shaped_query": final_query,
             "retrieval_pass": retrieval_pass,
+            "context": context,
             "cse_params": cse_params
         }
+    
+    def _get_context_hints(self, context: str) -> List[str]:
+        """Get context-specific retrieval hints"""
+        
+        context_hints = {
+            "時短": ["簡単", "基本", "失敗しない", "混ぜるだけ", "時短", "5分", "10分", "フライパン1つ", "レンジ"],
+            "初心者": ["簡単", "基本", "失敗しない", "混ぜるだけ"],
+            "イベント": ["映え", "デコレーション", "ホール", "誕生日", "パーティ"],
+            "健康": ["高たんぱく", "低糖質", "低カロリー", "食物繊維", "オートミール", "豆腐"]
+        }
+        
+        return context_hints.get(context, [])
     
     def expand_search_num(self, current_num: int, max_expansion: int = 50) -> int:
         """Expand search results count for stepwise retrieval"""
