@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Test the newly implemented Recipe Type Gate & Debug Surface functionality for the Anshin Recipe app. Verify search endpoint with recipe filtering, recipe type detection, quality metrics with exclusions, debug mode enhancement, and admin dashboard integration."
+user_problem_statement: "Test the Rate-Limit & Slow-Path Hardening implementation for the Anshin Recipe backend. Verify Health Endpoint CSE Quota Status, Search Endpoint Error Handling with 502 responses, Telemetry Logging with response timing, Exponential Backoff with retry logic, and Debug Information Enhancement with responseTimeMs."
 
 backend:
   - task: "Recipe Type Gate Search Filtering"
