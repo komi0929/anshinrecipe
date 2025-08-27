@@ -311,7 +311,7 @@ class StepwiseRetrieval:
                 }
                 metrics["counts"]["safety_ok_count"] += 1
             
-            # Apply domain boost
+            # Apply domain boost (legacy scoring for now)
             base_score = 75  # Base AnshinScore
             boosted_score, boost_reason = domain_manager.apply_domain_boost(
                 base_score, url, pass_type
