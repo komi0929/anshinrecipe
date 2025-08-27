@@ -18,6 +18,8 @@ import uuid
 from datetime import datetime
 from admin import admin_router
 
+ROOT_DIR = Path(__file__).parent
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
