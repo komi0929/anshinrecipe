@@ -21,6 +21,9 @@ from admin import admin_router
 # Import Safety Gate 2.0
 from safety_gate import SafetyEngine
 
+# Import Recall Uplift v1
+from recall_uplift import stepwise_retrieval, domain_manager
+
 ROOT_DIR = Path(__file__).parent
 
 # Configure logging
