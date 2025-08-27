@@ -82,12 +82,38 @@ function App() {
   };
 
   const handleSearch = async () => {
-    if (!searchText.trim()) return;
+    if (!searchText.trim() || isSearching) return;
+    
+    // Cancel any existing search
+    if (searchAbortController) {
+      searchAbortController.abort();
+    }
+    
+    // Create new abort controller
+    const abortController = new AbortController();
+    setSearchAbortController(abortController);
     
     console.log("Search clicked:", { selectedAllergens, selectedContext, searchText });
     
+    const searchStartTime = Date.now();
     setIsSearching(true);
     setSearchError(null);
+    
+    // Set up timeout guards
+    const delayedTimeoutId = setTimeout(() => {
+      if (isSearching) {
+        console.log("Search taking longer than expected...");
+      }
+    }, 10000); // 10s delayed warning
+    
+    const abortTimeoutId = setTimeout(() => {
+      if (!abortController.signal.aborted) {
+        abortController.abort();
+        console.log("Search aborted due to 20s timeout");
+      }
+    }, 20000); // 20s abort timeout
+    
+    setSearchTimeoutId(abortTimeoutId);
     
     try {
       // Build search query
@@ -115,17 +141,66 @@ function App() {
         headers: {
           'Accept': 'application/json',
         },
+        signal: abortController.signal
       });
+      
+      const duration_ms = Date.now() - searchStartTime;
+      
+      clearTimeout(delayedTimeoutId);
+      clearTimeout(abortTimeoutId);
       
       if (!response.ok) {
         const errorData = await response.json();
         console.error('Search API error:', errorData);
         
+        // Send telemetry for search error
+        const telemetryPayload = {
+          type: 'search_error',
+          reason: errorData.reason || 'api_error',
+          duration_ms: duration_ms,
+          status_code: response.status,
+          query: searchText,
+          context: selectedContext,
+          anonId: anonId,
+          ts: new Date().toISOString()
+        };
+        
+        try {
+          await fetch(`${BACKEND_URL}/api/v1/telemetry`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(telemetryPayload)
+          });
+        } catch (telemetryError) {
+          console.warn('Failed to send search error telemetry:', telemetryError);
+        }
+        
         if (response.status === 502 && errorData.error === 'cse_failed') {
+          // Handle specific CSE failures
+          let errorMessage = 'Search service is temporarily unavailable';
+          let errorType = 'cse_failed';
+          
+          if (errorData.reason === 'CSE_429_RATE_LIMIT') {
+            errorMessage = 'Search rate limit exceeded. Please try again later.';
+            errorType = 'rate_limit';
+          } else if (errorData.reason === 'CSE_TIMEOUT') {
+            errorMessage = 'Search service timed out. Please try again.';
+            errorType = 'timeout';
+          } else if (errorData.reason === 'CSE_UPSTREAM_5XX') {
+            errorMessage = 'Search service is experiencing issues. Please try again.';
+            errorType = 'upstream_error';
+          }
+          
           setSearchError({
-            type: 'cse_failed',
-            message: 'Search service is temporarily unavailable',
-            details: isDebugMode ? errorData : null
+            type: errorType,
+            message: errorMessage,
+            details: isDebugMode ? {
+              reason: errorData.reason,
+              retryCount: errorData.retryCount,
+              upstreamStatus: errorData.upstreamStatus,
+              retry_after: errorData.retry_after,
+              requestEcho: errorData.requestEcho
+            } : null
           });
         } else {
           setSearchError({
@@ -147,14 +222,79 @@ function App() {
       resetIdleTimer(); // Reset idle timer on search
       
     } catch (error) {
-      console.error('Search error:', error);
-      setSearchError({
-        type: 'network_error',
-        message: 'Network error. Please check your connection and try again.',
-        details: isDebugMode ? error.message : null
-      });
+      clearTimeout(delayedTimeoutId);
+      clearTimeout(abortTimeoutId);
+      
+      const duration_ms = Date.now() - searchStartTime;
+      
+      if (error.name === 'AbortError') {
+        console.log('Search was aborted');
+        
+        // Send telemetry for aborted search
+        try {
+          const telemetryPayload = {
+            type: 'search_error',
+            reason: 'aborted',
+            duration_ms: duration_ms,
+            query: searchText,
+            context: selectedContext,
+            anonId: anonId,
+            ts: new Date().toISOString()
+          };
+          
+          await fetch(`${BACKEND_URL}/api/v1/telemetry`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(telemetryPayload)
+          });
+        } catch (telemetryError) {
+          console.warn('Failed to send abort telemetry:', telemetryError);
+        }
+        
+        setSearchError({
+          type: 'timeout',
+          message: 'Search timed out. Please try again with a different query.',
+          details: isDebugMode ? { reason: 'aborted', duration_ms } : null
+        });
+      } else {
+        console.error('Search error:', error);
+        
+        // Send telemetry for network error
+        try {
+          const telemetryPayload = {
+            type: 'search_error',
+            reason: 'network_error',
+            duration_ms: duration_ms,
+            error_message: error.message,
+            query: searchText,
+            context: selectedContext,
+            anonId: anonId,
+            ts: new Date().toISOString()
+          };
+          
+          await fetch(`${BACKEND_URL}/api/v1/telemetry`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(telemetryPayload)
+          });
+        } catch (telemetryError) {
+          console.warn('Failed to send network error telemetry:', telemetryError);
+        }
+        
+        setSearchError({
+          type: 'network_error',
+          message: 'Network error. Please check your connection and try again.',
+          details: isDebugMode ? { error: error.message, duration_ms } : null
+        });
+      }
     } finally {
       setIsSearching(false);
+      setSearchAbortController(null);
+      clearTimeout(delayedTimeoutId);
+      if (searchTimeoutId) {
+        clearTimeout(searchTimeoutId);
+        setSearchTimeoutId(null);
+      }
     }
   };
 
