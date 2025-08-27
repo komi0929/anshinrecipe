@@ -675,6 +675,287 @@ def test_health_endpoint():
     
     return results
 
+def test_recipe_type_gate_functionality():
+    """Test the Recipe Type Gate & Debug Surface functionality"""
+    print("=" * 80)
+    print("TESTING RECIPE TYPE GATE & DEBUG SURFACE FUNCTIONALITY")
+    print("=" * 80)
+    
+    results = {
+        "recipe_filtering_tests": [],
+        "type_detection_tests": [],
+        "debug_surface_tests": [],
+        "exclusion_stats_tests": [],
+        "overall_status": "PASS"
+    }
+    
+    # Test 1: Search with Recipe Filtering
+    print("\n1. Testing Search Endpoint with Recipe Filtering")
+    print("-" * 60)
+    
+    try:
+        test_query = "卵 乳 不使用 ケーキ"
+        response = requests.get(f"{API_BASE}/v1/search?q={test_query}&debug=1", timeout=30)
+        
+        if response.status_code == 200:
+            print("✅ Search endpoint with debug: Successfully accessible (200)")
+            results["recipe_filtering_tests"].append({"test": "search_accessible", "status": "PASS", "code": 200})
+            
+            try:
+                data = response.json()
+                print("✅ Response is valid JSON")
+                
+                # Check that all results have type:"Recipe"
+                results_list = data.get("results", [])
+                if len(results_list) > 0:
+                    all_recipes = True
+                    type_reasons_found = []
+                    
+                    for i, result in enumerate(results_list):
+                        result_type = result.get("type", "")
+                        type_reason = result.get("type_reason", "")
+                        
+                        if result_type != "Recipe":
+                            print(f"❌ Result {i+1} has type '{result_type}', expected 'Recipe'")
+                            all_recipes = False
+                            results["overall_status"] = "FAIL"
+                        else:
+                            print(f"✅ Result {i+1} has type 'Recipe'")
+                        
+                        if type_reason:
+                            print(f"✅ Result {i+1} has type_reason: {type_reason}")
+                            type_reasons_found.append(type_reason)
+                        else:
+                            print(f"❌ Result {i+1} missing type_reason field")
+                            results["overall_status"] = "FAIL"
+                    
+                    if all_recipes:
+                        print("✅ All results have type:'Recipe' as expected")
+                        results["recipe_filtering_tests"].append({"test": "all_results_recipe_type", "status": "PASS"})
+                    else:
+                        print("❌ Some results do not have type:'Recipe'")
+                        results["recipe_filtering_tests"].append({"test": "all_results_recipe_type", "status": "FAIL"})
+                    
+                    if type_reasons_found:
+                        print("✅ All results have type_reason field")
+                        results["type_detection_tests"].append({"test": "type_reason_present", "status": "PASS"})
+                        print(f"📊 Type detection methods found: {list(set(type_reasons_found))}")
+                    else:
+                        print("❌ No type_reason fields found")
+                        results["type_detection_tests"].append({"test": "type_reason_present", "status": "FAIL"})
+                        results["overall_status"] = "FAIL"
+                    
+                else:
+                    print("⚠️  No results returned to test recipe filtering")
+                    results["recipe_filtering_tests"].append({"test": "has_results", "status": "WARNING"})
+                
+                # Test 2: Debug Surface with Exclusion Stats
+                print("\n2. Testing Debug Surface with Exclusion Statistics")
+                print("-" * 60)
+                
+                if "debug" in data:
+                    print("✅ Response contains debug information")
+                    results["debug_surface_tests"].append({"test": "has_debug", "status": "PASS"})
+                    
+                    debug_info = data["debug"]
+                    
+                    # Check for exclusionStats in debug
+                    if "exclusionStats" in debug_info:
+                        print("✅ Debug contains exclusionStats")
+                        results["exclusion_stats_tests"].append({"test": "has_exclusion_stats", "status": "PASS"})
+                        
+                        exclusion_stats = debug_info["exclusionStats"]
+                        expected_stats = [
+                            "non_recipe_schema", "non_recipe_layout", "safety_allergen", 
+                            "safety_ambiguous", "fetch_error", "parse_failed", 
+                            "ambiguous_layout", "total_processed"
+                        ]
+                        
+                        for stat in expected_stats:
+                            if stat in exclusion_stats:
+                                print(f"✅ exclusionStats has {stat}: {exclusion_stats[stat]}")
+                            else:
+                                print(f"❌ exclusionStats missing {stat}")
+                                results["overall_status"] = "FAIL"
+                        
+                        print(f"\n📊 Exclusion Statistics:")
+                        print(f"   Total processed: {exclusion_stats.get('total_processed', 0)}")
+                        print(f"   Non-recipe schema: {exclusion_stats.get('non_recipe_schema', 0)}")
+                        print(f"   Non-recipe layout: {exclusion_stats.get('non_recipe_layout', 0)}")
+                        print(f"   Ambiguous layout: {exclusion_stats.get('ambiguous_layout', 0)}")
+                        print(f"   Fetch errors: {exclusion_stats.get('fetch_error', 0)}")
+                        
+                        results["exclusion_stats_tests"].append({"test": "exclusion_stats_structure", "status": "PASS"})
+                        
+                    else:
+                        print("❌ Debug missing exclusionStats")
+                        results["exclusion_stats_tests"].append({"test": "has_exclusion_stats", "status": "FAIL"})
+                        results["overall_status"] = "FAIL"
+                    
+                    # Check other debug fields
+                    debug_keys = ["datasource", "parseSource", "mockMode", "timestamp"]
+                    for key in debug_keys:
+                        if key in debug_info:
+                            print(f"✅ Debug has {key}: {debug_info[key]}")
+                        else:
+                            print(f"❌ Debug missing {key}")
+                            results["overall_status"] = "FAIL"
+                    
+                else:
+                    print("❌ Response missing debug information")
+                    results["debug_surface_tests"].append({"test": "has_debug", "status": "FAIL"})
+                    results["overall_status"] = "FAIL"
+                
+            except json.JSONDecodeError as e:
+                print(f"❌ Response is not valid JSON: {e}")
+                results["recipe_filtering_tests"].append({"test": "valid_json", "status": "FAIL", "error": str(e)})
+                results["overall_status"] = "FAIL"
+                
+        elif response.status_code == 502:
+            print("⚠️  Search endpoint returned 502 - CSE may have failed")
+            results["recipe_filtering_tests"].append({"test": "search_accessible", "status": "WARNING", "code": 502})
+        else:
+            print(f"❌ Search endpoint failed: Expected 200 or 502, got {response.status_code}")
+            results["recipe_filtering_tests"].append({"test": "search_accessible", "status": "FAIL", "code": response.status_code})
+            results["overall_status"] = "FAIL"
+            
+    except Exception as e:
+        print(f"❌ Recipe type gate test failed: {e}")
+        results["recipe_filtering_tests"].append({"test": "search_accessible", "status": "ERROR", "error": str(e)})
+        results["overall_status"] = "FAIL"
+    
+    return results
+
+def test_quality_metrics_with_exclusions():
+    """Test Quality Metrics API endpoint with daily exclusions data"""
+    print("=" * 80)
+    print("TESTING QUALITY METRICS API WITH EXCLUSION DATA")
+    print("=" * 80)
+    
+    results = {
+        "auth_tests": [],
+        "exclusion_data_tests": [],
+        "overall_status": "PASS"
+    }
+    
+    # Test 1: Basic Auth Protection
+    print("\n1. Testing Basic Auth Protection")
+    print("-" * 60)
+    
+    try:
+        # Test with no auth
+        response = requests.get(f"{API_BASE}/admin/quality-metrics", timeout=30)
+        if response.status_code == 401:
+            print("✅ No auth: Correctly rejected (401)")
+            results["auth_tests"].append({"test": "no_auth", "status": "PASS", "code": 401})
+        else:
+            print(f"❌ No auth: Expected 401, got {response.status_code}")
+            results["auth_tests"].append({"test": "no_auth", "status": "FAIL", "code": response.status_code})
+            results["overall_status"] = "FAIL"
+    except Exception as e:
+        print(f"❌ No auth test failed: {e}")
+        results["auth_tests"].append({"test": "no_auth", "status": "ERROR", "error": str(e)})
+        results["overall_status"] = "FAIL"
+    
+    # Test 2: Valid Authentication and Exclusion Data
+    print("\n2. Testing Valid Authentication and Exclusion Data")
+    print("-" * 60)
+    
+    try:
+        auth_header = create_auth_header(ADMIN_USER, ADMIN_PASS)
+        response = requests.get(f"{API_BASE}/admin/quality-metrics", headers=auth_header, timeout=30)
+        
+        if response.status_code == 200:
+            print("✅ Valid auth: Successfully authenticated (200)")
+            results["auth_tests"].append({"test": "valid_auth", "status": "PASS", "code": 200})
+            
+            try:
+                data = response.json()
+                print("✅ Response is valid JSON")
+                
+                # Check for daily_exclusions in response
+                if "daily_exclusions" in data:
+                    print("✅ Response contains daily_exclusions data")
+                    results["exclusion_data_tests"].append({"test": "has_daily_exclusions", "status": "PASS"})
+                    
+                    daily_exclusions = data["daily_exclusions"]
+                    if isinstance(daily_exclusions, list):
+                        print("✅ daily_exclusions is an array")
+                        results["exclusion_data_tests"].append({"test": "daily_exclusions_array", "status": "PASS"})
+                        
+                        if len(daily_exclusions) > 0:
+                            print(f"✅ daily_exclusions contains {len(daily_exclusions)} entries")
+                            
+                            # Check structure of first exclusion entry
+                            first_entry = daily_exclusions[0]
+                            expected_keys = ["date", "exclusion_reasons"]
+                            for key in expected_keys:
+                                if key in first_entry:
+                                    print(f"✅ daily_exclusions entry has {key}")
+                                else:
+                                    print(f"❌ daily_exclusions entry missing {key}")
+                                    results["overall_status"] = "FAIL"
+                            
+                            # Check exclusion reasons structure
+                            if "exclusion_reasons" in first_entry:
+                                exclusion_reasons = first_entry["exclusion_reasons"]
+                                expected_reasons = [
+                                    "non_recipe_schema", "non_recipe_layout", 
+                                    "safety_allergen", "safety_ambiguous", 
+                                    "fetch_error", "parse_failed", "ambiguous_layout"
+                                ]
+                                
+                                for reason in expected_reasons:
+                                    if reason in exclusion_reasons:
+                                        print(f"✅ exclusion_reasons has {reason}: {exclusion_reasons[reason]}")
+                                    else:
+                                        print(f"⚠️  exclusion_reasons missing {reason} (may be 0)")
+                                
+                                print(f"\n📊 Sample Exclusion Data:")
+                                print(f"   Date: {first_entry.get('date', 'N/A')}")
+                                print(f"   Non-recipe schema: {exclusion_reasons.get('non_recipe_schema', 0)}")
+                                print(f"   Non-recipe layout: {exclusion_reasons.get('non_recipe_layout', 0)}")
+                                print(f"   Fetch errors: {exclusion_reasons.get('fetch_error', 0)}")
+                                
+                                results["exclusion_data_tests"].append({"test": "exclusion_reasons_structure", "status": "PASS"})
+                            
+                        else:
+                            print("⚠️  daily_exclusions array is empty")
+                            results["exclusion_data_tests"].append({"test": "daily_exclusions_data", "status": "WARNING"})
+                    else:
+                        print("❌ daily_exclusions is not an array")
+                        results["exclusion_data_tests"].append({"test": "daily_exclusions_array", "status": "FAIL"})
+                        results["overall_status"] = "FAIL"
+                else:
+                    print("❌ Response missing daily_exclusions data")
+                    results["exclusion_data_tests"].append({"test": "has_daily_exclusions", "status": "FAIL"})
+                    results["overall_status"] = "FAIL"
+                
+                # Check other expected quality metrics fields
+                expected_fields = ["daily_verdicts", "mismatch_reports", "expansion_candidates", "summary"]
+                for field in expected_fields:
+                    if field in data:
+                        print(f"✅ Response has {field}")
+                    else:
+                        print(f"⚠️  Response missing {field}")
+                
+            except json.JSONDecodeError as e:
+                print(f"❌ Response is not valid JSON: {e}")
+                results["exclusion_data_tests"].append({"test": "valid_json", "status": "FAIL", "error": str(e)})
+                results["overall_status"] = "FAIL"
+                
+        else:
+            print(f"❌ Valid auth failed: Expected 200, got {response.status_code}")
+            results["auth_tests"].append({"test": "valid_auth", "status": "FAIL", "code": response.status_code})
+            results["overall_status"] = "FAIL"
+            
+    except Exception as e:
+        print(f"❌ Valid auth test failed: {e}")
+        results["auth_tests"].append({"test": "valid_auth", "status": "ERROR", "error": str(e)})
+        results["overall_status"] = "FAIL"
+    
+    return results
+
 def test_search_endpoint_production():
     """Test the Search API endpoint in production mode (MOCK_MODE=0)"""
     print("=" * 80)
