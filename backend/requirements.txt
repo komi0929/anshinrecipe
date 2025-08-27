@@ -24,3 +24,4 @@ python-multipart>=0.0.9
 pytz>=2024.1
 typer>=0.9.0
 PyYAML>=6.0.2
+scikit-learn>=1.7.1
