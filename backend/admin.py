@@ -257,10 +257,66 @@ async def calculate_quality_metrics(days: int = 7):
     end_utc = end_date.astimezone(pytz.UTC)
     
     try:
+        # Calculate daily exclusion statistics from search_quality collection
+        daily_exclusions = []
+        tokyo_tz = pytz.timezone('Asia/Tokyo')
+        
+        for i in range(days):
+            date = start_date + timedelta(days=i)
+            date_start_utc = date.astimezone(pytz.UTC)
+            date_end_utc = (date + timedelta(days=1)).astimezone(pytz.UTC)
+            
+            # Get exclusion stats for this day
+            exclusion_pipeline = [
+                {"$match": {
+                    "type": "exclusion_stats",
+                    "created_at": {"$gte": date_start_utc, "$lt": date_end_utc}
+                }},
+                {"$group": {
+                    "_id": None,
+                    "non_recipe_schema": {"$sum": "$stats.non_recipe_schema"},
+                    "non_recipe_layout": {"$sum": "$stats.non_recipe_layout"},
+                    "safety_allergen": {"$sum": "$stats.safety_allergen"},
+                    "safety_ambiguous": {"$sum": "$stats.safety_ambiguous"},
+                    "fetch_error": {"$sum": "$stats.fetch_error"},
+                    "parse_failed": {"$sum": "$stats.parse_failed"},
+                    "ambiguous_layout": {"$sum": "$stats.ambiguous_layout"},
+                    "total_processed": {"$sum": "$stats.total_processed"}
+                }}
+            ]
+            
+            exclusion_results = await db.search_quality.aggregate(exclusion_pipeline).to_list(1)
+            
+            if exclusion_results:
+                stats = exclusion_results[0]
+                daily_exclusions.append({
+                    "date": date.strftime('%m/%d'),
+                    "non_recipe_schema": stats.get("non_recipe_schema", 0),
+                    "non_recipe_layout": stats.get("non_recipe_layout", 0),
+                    "safety_allergen": stats.get("safety_allergen", 0),
+                    "safety_ambiguous": stats.get("safety_ambiguous", 0),
+                    "fetch_error": stats.get("fetch_error", 0),
+                    "parse_failed": stats.get("parse_failed", 0),
+                    "ambiguous_layout": stats.get("ambiguous_layout", 0),
+                    "total": stats.get("total_processed", 0)
+                })
+            else:
+                # No data for this day - create empty entry
+                daily_exclusions.append({
+                    "date": date.strftime('%m/%d'),
+                    "non_recipe_schema": 0,
+                    "non_recipe_layout": 0,
+                    "safety_allergen": 0,
+                    "safety_ambiguous": 0,
+                    "fetch_error": 0,
+                    "parse_failed": 0,
+                    "ambiguous_layout": 0,
+                    "total": 0
+                })
+        
         # Generate daily allergen verdict data (mock implementation)
         # In real implementation, this would come from recipe analysis pipeline
         daily_verdicts = []
-        tokyo_tz = pytz.timezone('Asia/Tokyo')
         
         for i in range(days):
             date = start_date + timedelta(days=i)
