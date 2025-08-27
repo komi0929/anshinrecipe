@@ -282,7 +282,8 @@ class StepwiseRetrieval:
                     # Add safety info to candidate
                     candidate['safety'] = {
                         "status": safety_result.status,
-                        "allergens": safety_result.allergens,
+                        "checked_allergens": safety_result.allergens,  # User selected
+                        "hit_allergens": list(set(hit.allergen for hit in safety_result.hits)),  # Detected
                         "reasons": safety_result.reasons,
                         "hits": [
                             {
