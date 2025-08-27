@@ -6,9 +6,18 @@ Implements windowed context analysis and safety decisions for allergen detection
 
 import re
 import json
+import sys
+import os
 from typing import Dict, List, Set, Any, Tuple, Optional
 from dataclasses import dataclass
-from .allergen_dictionaries import AllergenDictionaries
+
+# Add the parent directory to path for imports
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+try:
+    from .allergen_dictionaries import AllergenDictionaries
+except ImportError:
+    from allergen_dictionaries import AllergenDictionaries
 
 @dataclass
 class AllergenHit:
