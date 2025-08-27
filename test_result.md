@@ -105,6 +105,42 @@
 user_problem_statement: "Safety Gate 2.0 — Strict Allergen Exclusion with Evidence: Phases 1-2 Implementation with 28-allergen dictionaries, evidence-first parsing, windowed context analysis, safety decisions (ok/ng/ambiguous), and integration with scoring/surfacing pipeline. MVP policy: Ambiguity = Exclusion. Test with Golden Set cases."
 
 backend:
+  - task: "Safety Gate 2.0 - Core Safety Engine (Phase 1)"
+    implemented: true
+    working: true
+    file: "/app/backend/safety_gate/safety_engine.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Successfully implemented core Safety Engine with 28-allergen dictionaries, evidence-first parsing (JSON-LD → Microdata → HTML), windowed context analysis (±30 chars), and safety decision logic (ok/ng/ambiguous). Unit tests pass for safe/unsafe/ambiguous cases."
+
+  - task: "Safety Gate 2.0 - Pipeline Integration (Phase 2)"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Successfully integrated Safety Gate into search pipeline. Safety runs BEFORE scoring/ranking. AnshinScore mapping: ok→40, ambiguous→0, ng→-∞. Only safety.status === 'ok' recipes surface in Top10. Allergen parsing from query params working correctly."
+
+  - task: "Safety Gate 2.0 - Golden Set Validation"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Golden Set validation successful! Test Case 1 (パンケーキ with 卵,乳,小麦): 1 safe result with safety.status:'ok'. Test Case 2 (バターケーキ with 乳): ALL results filtered out (0 violations surfaced). MVP policy 'Ambiguity = Exclusion' working correctly. Backend logs show safety_exclusions tracking."
+
   - task: "CSE-Only Enforcement (No Silent Fallback)"
     implemented: true
     working: true
