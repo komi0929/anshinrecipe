@@ -252,6 +252,55 @@ def get_mock_search_results(query: str, context: str = None) -> List[Dict[str, A
     ]
     return mock_recipes
 
+def parse_allergen_filter(allergen_str: str) -> List[str]:
+    """Parse allergen filter string and map to allergen keys"""
+    if not allergen_str:
+        return []
+    
+    # Map Japanese allergen names to allergen keys
+    allergen_mapping = {
+        "卵": "egg",
+        "乳": "milk", 
+        "小麦": "wheat",
+        "そば": "buckwheat",
+        "落花生": "peanut",
+        "ピーナッツ": "peanut",
+        "えび": "shrimp",
+        "海老": "shrimp",
+        "かに": "crab",
+        "蟹": "crab",
+        "くるみ": "walnut",
+        "ごま": "sesame",
+        "胡麻": "sesame",
+        "大豆": "soy",
+        "鶏肉": "chicken",
+        "鶏": "chicken",
+        "豚肉": "pork",
+        "豚": "pork",
+        "牛肉": "beef",
+        "牛": "beef",
+        "いくら": "salmon_roe",
+        "たらこ": "cod_roe",
+        "数の子": "herring_roe",
+        "ゼラチン": "gelatin",
+        "アーモンド": "almond",
+        "カシューナッツ": "cashew",
+        "ピスタチオ": "pistachio",
+        "ヘーゼルナッツ": "hazelnut",
+        "マカダミアナッツ": "macadamia",
+        "ピーカンナッツ": "pecan",
+        "松の実": "pine_nut"
+    }
+    
+    allergen_keys = []
+    allergen_names = [name.strip() for name in allergen_str.split(',')]
+    
+    for allergen_name in allergen_names:
+        if allergen_name in allergen_mapping:
+            allergen_keys.append(allergen_mapping[allergen_name])
+    
+    return allergen_keys
+
 async def fetch_page_content(url: str) -> Tuple[str, str]:
     """
     Fetch page content for recipe type detection
