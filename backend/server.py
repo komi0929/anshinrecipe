@@ -160,7 +160,9 @@ def get_mock_search_results(query: str, context: str = None) -> List[Dict[str, A
             "url": "https://cookpad.com/recipe/example1",
             "image": "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=300&h=200&fit=crop",
             "prepMinutes": 45,
-            "calories": 280
+            "calories": 280,
+            "type": "Recipe",
+            "type_reason": "mock_data"
         },
         {
             "id": "recipe_002", 
@@ -171,7 +173,9 @@ def get_mock_search_results(query: str, context: str = None) -> List[Dict[str, A
             "url": "https://kurashiru.com/recipe/example2",
             "image": "https://images.unsplash.com/photo-1587668178277-295251f900ce?w=300&h=200&fit=crop",
             "prepMinutes": 30,
-            "calories": 220
+            "calories": 220,
+            "type": "Recipe",
+            "type_reason": "mock_data"
         },
         {
             "id": "recipe_003",
@@ -182,10 +186,184 @@ def get_mock_search_results(query: str, context: str = None) -> List[Dict[str, A
             "url": "https://delish-kitchen.tv/recipe/example3", 
             "image": "https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=300&h=200&fit=crop",
             "prepMinutes": 20,
-            "calories": 180
+            "calories": 180,
+            "type": "Recipe",
+            "type_reason": "mock_data"
         }
     ]
     return mock_recipes
+
+async def fetch_page_content(url: str) -> Tuple[str, str]:
+    """
+    Fetch page content for recipe type detection
+    Returns (content, error_reason)
+    """
+    try:
+        response = requests.get(url, timeout=10, headers={
+            'User-Agent': 'Mozilla/5.0 (compatible; AnshinRecipe/1.0; +https://anshinrecipe.com/bot)'
+        })
+        
+        if response.status_code != 200:
+            return "", f"fetch_error_http_{response.status_code}"
+            
+        return response.text, ""
+        
+    except requests.exceptions.Timeout:
+        return "", "fetch_error_timeout"
+    except requests.exceptions.RequestException as e:
+        return "", f"fetch_error_network"
+    except Exception as e:
+        return "", "fetch_error_unknown"
+
+def detect_recipe_type_from_structured_data(html_content: str) -> Tuple[str, str]:
+    """
+    Detect recipe type from JSON-LD and Microdata
+    Returns (type, reason)
+    """
+    try:
+        # Look for JSON-LD structured data
+        jsonld_pattern = r'<script[^>]*type=["\']application/ld\+json["\'][^>]*>(.*?)</script>'
+        jsonld_matches = re.findall(jsonld_pattern, html_content, re.DOTALL | re.IGNORECASE)
+        
+        for match in jsonld_matches:
+            try:
+                data = json.loads(match.strip())
+                
+                # Handle both single objects and arrays
+                items = data if isinstance(data, list) else [data]
+                
+                for item in items:
+                    if isinstance(item, dict):
+                        # Check for Recipe type
+                        item_type = item.get('@type', '').lower()
+                        if 'recipe' in item_type:
+                            # Verify required recipe fields
+                            required_fields = ['name', 'recipeIngredient', 'recipeInstructions']
+                            if all(field in item for field in required_fields):
+                                return "Recipe", "jsonld_recipe_schema"
+                        
+                        # Check for non-recipe types that should be rejected
+                        non_recipe_types = ['product', 'localbusiness', 'newsarticle', 'collectionpage', 'webpage', 'article']
+                        if any(nrt in item_type for nrt in non_recipe_types):
+                            return "NonRecipe", f"non_recipe_schema_{item_type}"
+                            
+            except json.JSONDecodeError:
+                continue
+        
+        # Look for Microdata
+        microdata_recipe = re.search(r'itemtype=["\'][^"\']*Recipe[^"\']*["\']', html_content, re.IGNORECASE)
+        if microdata_recipe:
+            # Check for required microdata properties
+            has_ingredients = bool(re.search(r'itemprop=["\']recipeIngredient["\']', html_content, re.IGNORECASE))
+            has_instructions = bool(re.search(r'itemprop=["\']recipeInstructions["\']', html_content, re.IGNORECASE))
+            has_name = bool(re.search(r'itemprop=["\']name["\']', html_content, re.IGNORECASE))
+            
+            if has_ingredients and has_instructions and has_name:
+                return "Recipe", "microdata_recipe_schema"
+        
+        # Check for non-recipe microdata
+        non_recipe_microdata = ['Product', 'LocalBusiness', 'NewsArticle', 'CollectionPage']
+        for nrt in non_recipe_microdata:
+            if re.search(rf'itemtype=["\'][^"\']*{nrt}[^"\']*["\']', html_content, re.IGNORECASE):
+                return "NonRecipe", f"non_recipe_schema_{nrt.lower()}"
+        
+        return "Unknown", "no_structured_data"
+        
+    except Exception as e:
+        return "Unknown", "parse_failed"
+
+def detect_recipe_type_from_html_heuristics(html_content: str, title: str = "") -> Tuple[str, str]:
+    """
+    Fallback HTML heuristics for recipe detection
+    Returns (type, reason)
+    """
+    try:
+        # Japanese recipe indicators
+        recipe_indicators = [
+            r'材料[:：\s]*[0-9]*人分',  # Ingredients for X servings
+            r'作り方',                    # Instructions/How to make
+            r'レシピ',                    # Recipe
+            r'調理時間',                  # Cooking time
+            r'カロリー',                  # Calories
+            r'分量',                      # Portions
+            r'手順',                      # Steps
+            r'工程',                      # Process
+        ]
+        
+        recipe_score = 0
+        found_indicators = []
+        
+        # Check title first
+        for indicator in recipe_indicators[:3]:  # Check main indicators in title
+            if re.search(indicator, title, re.IGNORECASE):
+                recipe_score += 2
+                found_indicators.append(indicator)
+        
+        # Check HTML content
+        for indicator in recipe_indicators:
+            if re.search(indicator, html_content, re.IGNORECASE):
+                recipe_score += 1
+                found_indicators.append(indicator)
+        
+        # Check for specific recipe page patterns
+        recipe_page_patterns = [
+            r'<h[1-6][^>]*>.*?材料.*?</h[1-6]>',   # Materials heading
+            r'<h[1-6][^>]*>.*?作り方.*?</h[1-6]>', # Instructions heading
+            r'class=["\'][^"\']*recipe[^"\']*["\']', # Recipe CSS classes
+            r'id=["\'][^"\']*recipe[^"\']*["\']',    # Recipe IDs
+        ]
+        
+        for pattern in recipe_page_patterns:
+            if re.search(pattern, html_content, re.IGNORECASE):
+                recipe_score += 1
+        
+        # Non-recipe page indicators
+        non_recipe_indicators = [
+            r'商品.*?購入',               # Product purchase
+            r'ニュース',                  # News
+            r'記事一覧',                  # Article list
+            r'カテゴリ.*?一覧',          # Category list
+            r'検索結果',                  # Search results
+            r'ログイン',                  # Login
+            r'会員.*?登録',              # Member registration
+        ]
+        
+        for indicator in non_recipe_indicators:
+            if re.search(indicator, html_content, re.IGNORECASE):
+                recipe_score -= 2
+        
+        # Determine type based on score
+        if recipe_score >= 3:
+            return "Recipe", f"html_heuristics_score_{recipe_score}"
+        elif recipe_score <= -2:
+            return "NonRecipe", f"non_recipe_layout_score_{recipe_score}"
+        else:
+            return "Ambiguous", f"ambiguous_layout_score_{recipe_score}"
+            
+    except Exception as e:
+        return "Unknown", "heuristics_parse_failed"
+
+async def detect_recipe_type(url: str, title: str = "") -> Tuple[str, str]:
+    """
+    Main recipe type detection function
+    Returns (type, reason)
+    """
+    # First try to fetch the page content
+    html_content, fetch_error = await fetch_page_content(url)
+    
+    if fetch_error:
+        return "Unknown", fetch_error
+    
+    # Try structured data first (higher confidence)
+    structured_type, structured_reason = detect_recipe_type_from_structured_data(html_content)
+    
+    if structured_type in ["Recipe", "NonRecipe"]:
+        return structured_type, structured_reason
+    
+    # Fall back to HTML heuristics (lower confidence)
+    heuristic_type, heuristic_reason = detect_recipe_type_from_html_heuristics(html_content, title)
+    
+    return heuristic_type, heuristic_reason
 
 def parse_cse_results(cse_response: dict, query: str) -> List[Dict[str, Any]]:
     """
