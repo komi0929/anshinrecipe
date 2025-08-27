@@ -351,7 +351,7 @@ function App() {
                   key={recipe.id}
                   recipe={recipe}
                   rank={index + 1}
-                  isDebugMode={isDebugMode}
+                  showDebug={isDebugMode}
                 />
               ))}
             </div>
