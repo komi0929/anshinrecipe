@@ -1162,6 +1162,10 @@ def main():
     print(f"🌐 Backend URL: {BACKEND_URL}")
     print(f"🕒 Test Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     
+    # Test NEW Recipe Type Gate & Debug Surface functionality
+    recipe_gate_results = test_recipe_type_gate_functionality()
+    quality_exclusions_results = test_quality_metrics_with_exclusions()
+    
     # Test search datasource functionality
     health_results = test_health_endpoint()
     search_results = test_search_endpoint_production()
@@ -1178,6 +1182,8 @@ def main():
     print("=" * 80)
     
     all_results = {
+        "recipe_gate": recipe_gate_results,
+        "quality_exclusions": quality_exclusions_results,
         "health": health_results,
         "search": search_results,
         "funnel": funnel_results,
@@ -1199,6 +1205,34 @@ def main():
     print(f"\n📊 Test Breakdown:")
     for endpoint, result in all_results.items():
         print(f"\n{endpoint.upper()}:")
+        
+        # Recipe Gate specific tests
+        if 'recipe_filtering_tests' in result:
+            filtering_pass = len([t for t in result['recipe_filtering_tests'] if t['status'] == 'PASS'])
+            filtering_total = len(result['recipe_filtering_tests'])
+            print(f"  Recipe Filtering Tests: {filtering_pass}/{filtering_total} passed")
+        
+        if 'type_detection_tests' in result:
+            detection_pass = len([t for t in result['type_detection_tests'] if t['status'] == 'PASS'])
+            detection_total = len(result['type_detection_tests'])
+            print(f"  Type Detection Tests: {detection_pass}/{detection_total} passed")
+        
+        if 'debug_surface_tests' in result:
+            debug_surface_pass = len([t for t in result['debug_surface_tests'] if t['status'] == 'PASS'])
+            debug_surface_total = len(result['debug_surface_tests'])
+            print(f"  Debug Surface Tests: {debug_surface_pass}/{debug_surface_total} passed")
+        
+        if 'exclusion_stats_tests' in result:
+            exclusion_pass = len([t for t in result['exclusion_stats_tests'] if t['status'] == 'PASS'])
+            exclusion_total = len(result['exclusion_stats_tests'])
+            print(f"  Exclusion Stats Tests: {exclusion_pass}/{exclusion_total} passed")
+        
+        if 'exclusion_data_tests' in result:
+            exclusion_data_pass = len([t for t in result['exclusion_data_tests'] if t['status'] == 'PASS'])
+            exclusion_data_total = len(result['exclusion_data_tests'])
+            print(f"  Exclusion Data Tests: {exclusion_data_pass}/{exclusion_data_total} passed")
+        
+        # Existing test categories
         if 'endpoint_tests' in result:
             endpoint_pass = len([t for t in result['endpoint_tests'] if t['status'] == 'PASS'])
             endpoint_total = len(result['endpoint_tests'])
