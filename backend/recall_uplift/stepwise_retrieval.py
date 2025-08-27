@@ -157,7 +157,7 @@ class StepwiseRetrieval:
         # Apply diversity filtering and final scoring
         scoring_start = time.time()
         
-        final_results = self._apply_diversity_and_scoring(safe_results)
+        final_results = self._apply_diversity_and_scoring(safe_results, context)
         
         metrics["performance"]["scoring_ms"] = int((time.time() - scoring_start) * 1000)
         metrics["performance"]["total_ms"] = int((time.time() - start_time) * 1000)
