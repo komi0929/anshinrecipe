@@ -377,9 +377,10 @@ export const RecipeForm = ({
                         ))}
                     </div>
                 </div>
-            </div>
-    )
-}
+                    </div>
+                </div >
+            </div >
+        )}
 
 {/* Allergen Selection (Transparency) */ }
 <div className="form-section">

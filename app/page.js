@@ -410,42 +410,41 @@ const RecipeListPage = () => {
                     Array.from({ length: 4 }).map((_, i) => (
                         <RecipeCardSkeleton key={i} />
                     ))
-                ) : (
-                ): filteredRecipes.length > 0 ? (
+                ) : filteredRecipes.length > 0 ? (
                     filteredRecipes.map(recipe => (
-                <RecipeCard
-                    key={recipe.id}
-                    recipe={recipe}
-                    profile={profile}
-                    isSaved={savedRecipeIds?.includes(recipe.id)}
-                    onToggleSave={() => toggleSave(recipe.id)}
-                    isLiked={likedRecipeIds?.includes(recipe.id)}
-                    onToggleLike={() => toggleLike(recipe.id)}
-                />
-                ))
+                        <RecipeCard
+                            key={recipe.id}
+                            recipe={recipe}
+                            profile={profile}
+                            isSaved={savedRecipeIds?.includes(recipe.id)}
+                            onToggleSave={() => toggleSave(recipe.id)}
+                            isLiked={likedRecipeIds?.includes(recipe.id)}
+                            onToggleLike={() => toggleLike(recipe.id)}
+                        />
+                    ))
                 ) : (
-                <div className="col-span-full py-10 text-center">
-                    <div className="mb-4 text-6xl opacity-20 filter grayscale">
-                        {activeTab === 'saved' ? '🔖' : activeTab === 'mine' ? '🍳' : '🔍'}
+                    <div className="col-span-full py-10 text-center">
+                        <div className="mb-4 text-6xl opacity-20 filter grayscale">
+                            {activeTab === 'saved' ? '🔖' : activeTab === 'mine' ? '🍳' : '🔍'}
+                        </div>
+                        <h3 className="text-lg font-bold text-slate-700 mb-2">
+                            {activeTab === 'saved' ? '保存したレシピはありません' :
+                                activeTab === 'mine' ? 'まだ投稿がありません' :
+                                    'レシピが見つかりませんでした'}
+                        </h3>
+                        <p className="text-slate-500 text-sm mb-6">
+                            {activeTab === 'saved' ? '気に入ったレシピを保存して、\nあなただけのレシピブックを作りましょう！' :
+                                activeTab === 'mine' ? 'お子様のために作った工夫レシピを\n記録してみませんか？' :
+                                    '検索条件を変えて試してみてください'}
+                        </p>
+                        {activeTab === 'mine' && (
+                            <Link href="/recipe/new">
+                                <Button className="bg-orange-500 text-white shadow-lg shadow-orange-200">
+                                    最初のレシピを投稿する
+                                </Button>
+                            </Link>
+                        )}
                     </div>
-                    <h3 className="text-lg font-bold text-slate-700 mb-2">
-                        {activeTab === 'saved' ? '保存したレシピはありません' :
-                            activeTab === 'mine' ? 'まだ投稿がありません' :
-                                'レシピが見つかりませんでした'}
-                    </h3>
-                    <p className="text-slate-500 text-sm mb-6">
-                        {activeTab === 'saved' ? '気に入ったレシピを保存して、\nあなただけのレシピブックを作りましょう！' :
-                            activeTab === 'mine' ? 'お子様のために作った工夫レシピを\n記録してみませんか？' :
-                                '検索条件を変えて試してみてください'}
-                    </p>
-                    {activeTab === 'mine' && (
-                        <Link href="/recipe/new">
-                            <Button className="bg-orange-500 text-white shadow-lg shadow-orange-200">
-                                最初のレシピを投稿する
-                            </Button>
-                        </Link>
-                    )}
-                </div>
                 )}
             </div>
 
