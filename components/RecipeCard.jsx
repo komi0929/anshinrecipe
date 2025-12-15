@@ -67,13 +67,18 @@ export const RecipeCard = ({ recipe, isSaved, onToggleSave, isLiked, onToggleLik
 
                 <div className="action-overlay">
                     {user && recipe.userId === user.id && (
-                        <Link
-                            href={`/recipe/edit/${recipe.id}`}
+                        <button
                             className="action-btn edit"
-                            onClick={(e) => e.stopPropagation()}
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                window.location.href = `/recipe/edit/${recipe.id}`;
+                            }}
+                            type="button"
+                            aria-label="編集"
                         >
                             <Pencil size={18} />
-                        </Link>
+                        </button>
                     )}
                     <button
                         className={`action-btn like ${likedState ? 'active' : ''}`}
