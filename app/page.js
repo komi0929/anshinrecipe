@@ -163,10 +163,10 @@ const RecipeListPage = () => {
                             <Image
                                 src="/logo.png"
                                 alt="あんしんレシピ"
-                                width={240}
-                                height={60}
+                                width={360}
+                                height={90}
                                 priority
-                                className="w-[180px] h-auto object-contain"
+                                className="w-[270px] h-auto object-contain"
                             />
                         </div>
                         <p className="text-gray-500 text-base leading-relaxed">
@@ -181,21 +181,9 @@ const RecipeListPage = () => {
                                 <Search size={24} />
                             </div>
                             <div className="flex-1">
-                                <h3 className="text-base font-bold text-slate-700 mb-1">アレルギー除去検索</h3>
+                                <h3 className="text-base font-bold text-slate-700 mb-1">簡単メモ</h3>
                                 <p className="text-[13px] text-slate-500 leading-normal">
-                                    お子様のアレルギー情報を登録して、食べられるレシピを簡単検索
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="flex items-start gap-4 bg-white p-4 rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
-                            <div className="bg-orange-50 text-primary p-3 rounded-xl flex items-center justify-center shrink-0">
-                                <Baby size={24} />
-                            </div>
-                            <div className="flex-1">
-                                <h3 className="text-base font-bold text-slate-700 mb-1">家族設定</h3>
-                                <p className="text-[13px] text-slate-500 leading-normal">
-                                    お子様ごとのアレルギー品目を登録して、ぴったりのレシピをご提案
+                                    子どものアレルギー情報や、食べられる食材をサッと記録
                                 </p>
                             </div>
                         </div>
@@ -205,9 +193,21 @@ const RecipeListPage = () => {
                                 <BookHeart size={24} />
                             </div>
                             <div className="flex-1">
-                                <h3 className="text-base font-bold text-slate-700 mb-1">レシピ管理</h3>
+                                <h3 className="text-base font-bold text-slate-700 mb-1">レシピを共有</h3>
                                 <p className="text-[13px] text-slate-500 leading-normal">
-                                    お気に入りのレシピを保存したり、自分のレシピを投稿して共有
+                                    工夫したレシピを投稿して、同じ悩みを持つパパ・ママにシェア
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-start gap-4 bg-white p-4 rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+                            <div className="bg-orange-50 text-primary p-3 rounded-xl flex items-center justify-center shrink-0">
+                                <Heart size={24} />
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="text-base font-bold text-slate-700 mb-1">感謝を伝えられる</h3>
+                                <p className="text-[13px] text-slate-500 leading-normal">
+                                    「助かった！」「美味しかった！」の気持ちをスタンプで気軽に送信
                                 </p>
                             </div>
                         </div>
@@ -220,16 +220,12 @@ const RecipeListPage = () => {
                                 今すぐ始めましょう
                             </p>
 
-                            <div className="w-full">
+                            <div className="w-full flex justify-center">
                                 <LineLoginButton />
                             </div>
 
                             <p className="text-center text-slate-400 text-xs leading-relaxed">
-                                ログインすることで、<br className="md:hidden" />
-                                <Link href="/terms" className="text-blue-500 underline font-medium mx-1 hover:text-blue-600">利用規約</Link>
-                                と
-                                <Link href="/privacy" className="text-blue-500 underline font-medium mx-1 hover:text-blue-600">プライバシーポリシー</Link>
-                                に<br className="md:hidden" />同意したものとみなされます
+                                ログインをもって <Link href="/terms" className="text-blue-500 underline">利用規約</Link>・<Link href="/privacy" className="text-blue-500 underline">プライバシーポリシー</Link> に同意とみなします
                             </p>
                         </div>
                     </div>
