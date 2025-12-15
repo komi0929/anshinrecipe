@@ -1,6 +1,8 @@
+/* Masonry Optimization */
 .recipe-card {
     background: white;
-    border-radius: 16px;
+    border-radius: 12px;
+    /* Slightly smaller radius for tighter fit */
     overflow: hidden;
     box-shadow: var(--shadow-sm);
     transition: transform 0.2s, box-shadow 0.2s;
@@ -11,11 +13,11 @@
     /* Masonry essential: prevent break inside */
     break-inside: avoid;
     page-break-inside: avoid;
-    margin-bottom: 16px;
-    /* Spacing for masonry items */
+    margin-bottom: 12px;
+    /* Match spacing */
     position: relative;
-    /* Fix for some browsers in masonry */
     transform: translateZ(0);
+    width: 100%;
 }
 
 .recipe-card:hover {
@@ -23,23 +25,18 @@
     box-shadow: var(--shadow-md);
 }
 
-/* Image Wrapper - Natural Aspect Ratio */
+/* Image Wrapper */
 .recipe-image-wrapper {
     position: relative;
     width: 100%;
-    /* Removed aspect-ratio to allow natural height */
     overflow: hidden;
     background-color: #f3f4f6;
-    /* Placeholder color before load */
 }
 
-/* Image Styles */
 .recipe-image {
     width: 100%;
     height: auto;
-    /* Natural height */
     display: block;
-    /* Remove bottom space */
     transition: transform 0.5s ease;
 }
 
@@ -47,102 +44,114 @@
     transform: scale(1.03);
 }
 
-/* Safety Badges */
+/* Safety Badges - Compact for mobile */
 .safety-badges-overlay {
     position: absolute;
-    bottom: 8px;
-    left: 8px;
+    bottom: 6px;
+    left: 6px;
     display: flex;
     flex-wrap: wrap;
-    gap: 4px;
+    gap: 2px;
     z-index: 2;
 }
 
 .mini-child-badge {
     background: rgba(255, 255, 255, 0.95);
-    width: 28px;
-    height: 28px;
+    width: 22px;
+    /* Smaller badge */
+    height: 22px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 16px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    font-size: 12px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
     backdrop-filter: blur(4px);
 }
 
-/* Content Area */
+/* Content Area - Compact padding */
 .recipe-content {
-    padding: 12px 16px 16px;
-    /* Slightly more padding */
+    padding: 10px 12px 12px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 8px;
+    /* Tighter gap */
 }
 
+/* Title - optimized for narrow columns */
 .recipe-title {
-    font-size: 15px;
-    /* Refined size */
+    font-size: 14px;
+    /* Readability on mobile */
     font-weight: 700;
     margin: 0;
-    line-height: 1.5;
+    line-height: 1.4;
     color: #1f2937;
-    /* Optional: Limit lines if needed, but for masonry full titles are often nice */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    /* Force 2 lines max */
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 2.8em;
+    /* Ensure height alignment roughly */
 }
 
-/* Meta Info (Author) */
+/* Meta Info */
 .recipe-footer-meta {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.recipe-author {
     display: flex;
     align-items: center;
     gap: 6px;
 }
 
+.recipe-author {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+    min-width: 0;
+    /* Allow flex shrinkage */
+}
+
 .author-avatar {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
     object-fit: cover;
     border: 1px solid #e5e7eb;
+    flex-shrink: 0;
 }
 
 .author-avatar-placeholder {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
     background: #E2E8F0;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
+    flex-shrink: 0;
 }
 
 .author-name {
-    font-size: 12px;
+    font-size: 11px;
     color: #6b7280;
     font-weight: 500;
-    max-width: 120px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-/* New Actions Row */
+/* Actions Row - Compact */
 .card-actions-row {
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    /* Right align actions */
-    gap: 8px;
+    gap: 4px;
+    /* Tight gap */
     margin-top: 4px;
-    padding-top: 12px;
+    padding-top: 8px;
     border-top: 1px solid #f3f4f6;
-    /* Subtle separator */
 }
 
 /* New Action Buttons */
