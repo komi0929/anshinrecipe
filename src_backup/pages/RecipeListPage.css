@@ -1,0 +1,275 @@
+/* 8px Grid System Applied Throughout */
+.recipe-list-page {
+    padding-bottom: 80px;
+}
+
+/* 1. Header Area - Reduced spacing */
+.page-header {
+    padding: 16px 0 16px 0;
+    /* Reduced from 24px to 16px top, consistent bottom */
+}
+
+.page-title {
+    font-size: 22px;
+    /* Reduced from 24px to 22px */
+    font-weight: bold;
+    color: var(--color-text-main);
+}
+
+/* Filter Section */
+.filter-section {
+    position: sticky;
+    top: 0;
+    background: var(--color-background);
+    padding: 16px 0;
+    /* Consistent 16px */
+    z-index: 10;
+    border-bottom: 1px solid var(--color-border);
+    margin-bottom: 24px;
+    /* Increased from 16px to 24px for better separation */
+}
+
+/* 2. Search Bar - Optimized dimensions */
+.search-container {
+    position: relative;
+    margin-bottom: 16px;
+    /* Increased from 8px to 16px */
+}
+
+.search-bar {
+    width: 100%;
+    height: 48px;
+    /* Fixed height for consistent tap target */
+    padding: 12px 40px 12px 16px;
+    /* Adjusted for 48px height */
+    border-radius: var(--radius-full);
+    border: 1px solid var(--color-border);
+    background: white;
+    font-size: 15px;
+    /* 14-16px range */
+    line-height: 24px;
+}
+
+.search-icon {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-text-sub);
+    pointer-events: none;
+}
+
+/* 3. Category Tags - Enhanced visibility */
+.child-filter {
+    display: flex;
+    gap: 10px;
+    /* 8-12px range, using 10px */
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    /* Smooth scrolling on iOS */
+}
+
+.child-filter::-webkit-scrollbar {
+    display: none;
+}
+
+.filter-chip {
+    flex: 0 0 auto;
+    padding: 8px 16px;
+    /* Slightly increased for better tap target */
+    border-radius: var(--radius-full);
+    background: white;
+    border: 1px solid #E0E0E0;
+    /* Gray border for inactive */
+    font-size: var(--font-size-sm);
+    color: var(--color-text-sub);
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.filter-chip.active {
+    background: #FF8C42;
+    /* Darker orange for active state */
+    color: white;
+    border-color: #FF8C42;
+    font-weight: bold;
+}
+
+.filter-child-icon {
+    font-size: 16px;
+    line-height: 1;
+}
+
+/* 4. Masonry Grid Layout - Optimized spacing */
+.masonry-grid {
+    column-count: 2;
+    column-gap: 16px;
+    /* Horizontal gap */
+}
+
+/* 5. Recipe Card - Improved hierarchy */
+.recipe-card {
+    break-inside: avoid;
+    background: white;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 20px;
+    /* Vertical gap between cards */
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    transition: transform 0.2s;
+    animation: fadeIn 0.5s ease-out;
+}
+
+.recipe-card:active {
+    transform: scale(0.98);
+}
+
+.recipe-image-wrapper {
+    position: relative;
+}
+
+.recipe-image {
+    width: 100%;
+    height: auto;
+    display: block;
+    background-color: #eee;
+}
+
+.safety-badges-overlay {
+    position: absolute;
+    top: 8px;
+    /* Moved to top-right for external link icons */
+    right: 8px;
+    display: flex;
+    gap: 4px;
+}
+
+.mini-child-badge {
+    width: 24px;
+    height: 24px;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.recipe-content {
+    padding: 12px 16px 16px;
+    /* 12-16px internal padding */
+}
+
+.recipe-title {
+    font-size: 16px;
+    /* Specified 16px */
+    font-weight: 600;
+    /* Specified 600 */
+    margin-bottom: 8px;
+    /* 8px spacing */
+    line-height: 1.4;
+}
+
+.recipe-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 8px;
+    /* Consistent 8px */
+}
+
+.tag {
+    font-size: 12px;
+    /* Specified 12px */
+    padding: 4px 12px;
+    /* Specified 4px 12px */
+    border-radius: 4px;
+    background: #F1F2F6;
+    color: #636E72;
+}
+
+.recipe-source {
+    font-size: 10px;
+    color: var(--color-text-sub);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+.recipe-source svg {
+    width: 12px;
+    /* Smaller icon for source */
+    height: 12px;
+}
+
+/* 6. FAB Button - Adjusted position and enhanced shadow */
+.fab {
+    position: fixed;
+    bottom: 88px;
+    /* 80-90px range, avoiding bottom nav */
+    right: 20px;
+    width: 56px;
+    /* Material Design standard */
+    height: 56px;
+    border-radius: 50%;
+    background-color: var(--color-primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    /* Enhanced shadow */
+    z-index: 50;
+    transition: transform 0.2s;
+}
+
+.fab:active {
+    transform: scale(0.95);
+}
+
+/* Empty States */
+.empty-state {
+    text-align: center;
+    padding: 32px 16px;
+    /* 8px grid: 32px, 16px */
+    margin-top: 32px;
+}
+
+.empty-icon {
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: center;
+}
+
+.empty-state h3 {
+    font-size: var(--font-size-xl);
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: var(--color-text-main);
+}
+
+.empty-state p {
+    color: var(--color-text-sub);
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

@@ -1,0 +1,24 @@
+.line-login-button {
+    background-color: #06C755;
+    /* LINE brand green */
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+}
+
+.line-login-button:hover {
+    background-color: #05B04A;
+}
+
+.line-login-button .line-icon {
+    fill: currentColor;
+}
+
+.line-login-button span {
+    white-space: nowrap;
+    /* prevent line break */
+}

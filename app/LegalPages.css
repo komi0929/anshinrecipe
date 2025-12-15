@@ -1,0 +1,127 @@
+/* Legal Pages CSS */
+.legal-page-wrapper {
+    min-height: 100vh;
+    padding-bottom: 6rem;
+    background-color: var(--color-background);
+}
+
+.legal-nav-link {
+    display: inline-flex;
+    align-items: center;
+    color: var(--color-primary);
+    /* Use primary or emerald? Code used emerald-600 (#059669). Let's stick to theme or emerald. Theme is orange. Code used emerald. Let's use emerald for consistency with previous text? Or switch to theme? Terms usually neutral. Let's use standard text color or primary. */
+    color: #059669;
+    /* emerald-600 */
+    margin-bottom: 1.5rem;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.legal-nav-link:hover {
+    text-decoration: underline;
+}
+
+.legal-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1f2937;
+    /* gray-800 */
+    margin-bottom: 2rem;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 1rem;
+}
+
+.legal-card {
+    background-color: white;
+    padding: 2rem;
+    /* p-8 */
+    border-radius: 0.5rem;
+    /* rounded-lg */
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    /* shadow-sm */
+    color: #374151;
+    /* gray-700 */
+    max-width: 100%;
+}
+
+@media (max-width: 640px) {
+    .legal-card {
+        padding: 1.5rem;
+    }
+}
+
+.legal-date {
+    text-align: right;
+    font-size: 0.875rem;
+    /* text-sm */
+    color: #6b7280;
+    /* gray-500 */
+    margin-bottom: 2rem;
+}
+
+.legal-section {
+    margin-bottom: 2rem;
+}
+
+.legal-h2 {
+    font-size: 1.25rem;
+    /* text-xl */
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: #1f2937;
+}
+
+.legal-text {
+    line-height: 1.75;
+}
+
+.legal-list {
+    list-style-type: disc;
+    padding-left: 2rem;
+    /* pl-8 */
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+
+.legal-list li {
+    margin-bottom: 0.5rem;
+}
+
+/* Alert Box Styles */
+.legal-alert {
+    padding: 1rem;
+    background-color: #fef2f2;
+    /* red-50 */
+    border-left: 4px solid #ef4444;
+    /* red-500 */
+    margin-bottom: 2rem;
+}
+
+.legal-alert-title {
+    color: #b91c1c;
+    /* red-700 */
+}
+
+.legal-alert-list {
+    color: #991b1b;
+    /* red-800 */
+    font-weight: 500;
+}
+
+/* Privacy specific */
+.privacy-alert {
+    padding: 1rem;
+    background-color: #fefce8;
+    /* yellow-50 */
+    border-left: 4px solid #facc15;
+    /* yellow-400 */
+    margin-bottom: 2rem;
+}
+
+.contact-box {
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: #f9fafb;
+    /* gray-50 */
+    border-radius: 0.25rem;
+}

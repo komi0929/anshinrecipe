@@ -1,0 +1,94 @@
+.legal-page {
+    padding-bottom: 24px;
+    max-width: 800px;
+    margin: 0 auto;
+    text-align: left;
+    /* Ensure left alignment */
+}
+
+.legal-header {
+    margin-bottom: 32px;
+}
+
+.back-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    padding: 0;
+    /* Reset button padding */
+    margin-bottom: 16px;
+    font-size: 1rem;
+}
+
+.back-text {
+    text-decoration: underline;
+}
+
+.legal-title {
+    font-size: 1.8rem;
+    color: #333;
+    margin-bottom: 8px;
+    font-weight: bold;
+}
+
+.legal-date {
+    color: #888;
+    font-size: 0.9rem;
+    margin-bottom: 24px;
+}
+
+.legal-section {
+    margin-bottom: 40px;
+}
+
+.legal-section h2 {
+    font-size: 1.25rem;
+    color: #2c3e50;
+    margin-bottom: 16px;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 8px;
+}
+
+.legal-section p {
+    line-height: 1.8;
+    color: #444;
+    margin-bottom: 16px;
+}
+
+/* FIX: Bullet points sticking out */
+.legal-list {
+    list-style-type: disc;
+    /* Ensure bullets are shown */
+    padding-left: 1.5em;
+    /* Add padding to container */
+    margin-left: 0.5em;
+    /* Slight margin for balance */
+    line-height: 1.8;
+    color: #444;
+}
+
+.legal-list li {
+    margin-bottom: 12px;
+    padding-left: 0.5em;
+    /* Space between bullet and text */
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+    .legal-title {
+        font-size: 1.5rem;
+    }
+
+    .legal-section h2 {
+        font-size: 1.1rem;
+    }
+
+    .legal-list {
+        padding-left: 1.2em;
+        /* Slightly less padding on mobile but still ensuring visibility */
+    }
+}

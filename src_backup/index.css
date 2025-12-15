@@ -1,0 +1,265 @@
+:root {
+  /* Brand Colors - Anshin Recipe Design System */
+  /* Base & Background */
+  --color-background: #FFF8F5;
+  /* Warm Seashell */
+  --color-surface: #FFFFFF;
+
+  /* Primary - Energetic Orange */
+  --color-primary: #FB923C;
+  /* orange-400 */
+  --color-primary-light: #FFEDD5;
+  /* orange-100 */
+  --color-primary-border: #FDBA74;
+  /* orange-300 */
+
+  /* Accent - Appetizing Amber */
+  --color-accent: #FBBF24;
+  /* amber-400 */
+
+  /* Text - Soft Gray */
+  --color-text-main: #334155;
+  /* slate-700 */
+  --color-text-sub: #94A3B8;
+  /* slate-400 */
+
+  /* Alert - Gentle Rose */
+  --color-alert: #FB7185;
+  /* rose-400 */
+  --color-alert-bg: #FFF1F2;
+  /* rose-50 */
+
+  /* Border */
+  --color-border: #E2E8F0;
+  /* slate-200 */
+
+  /* Typography */
+  --font-main: "Zen Maru Gothic", "Hiragino Maru Gothic Pro", "Yu Gothic", sans-serif;
+  --font-size-sm: 0.875rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.5rem;
+  --font-size-2xl: 1.75rem;
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+
+  /* Radius - Super Rounded */
+  --radius-sm: 12px;
+  --radius-md: 20px;
+  --radius-lg: 32px;
+  /* Card default */
+  --radius-full: 9999px;
+  /* Buttons/Inputs */
+
+  /* Shadows */
+  --shadow-sm: 0 2px 8px rgba(251, 146, 60, 0.05);
+  --shadow-md: 0 4px 16px rgba(251, 146, 60, 0.1);
+  --shadow-lg: 0 8px 24px rgba(251, 146, 60, 0.15);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: var(--font-main);
+  background-color: var(--color-background);
+  color: var(--color-text-main);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+  background: none;
+}
+
+input,
+select,
+textarea {
+  font-family: inherit;
+  font-size: var(--font-size-md);
+  color: var(--color-text-main);
+}
+
+/* Mobile First Container */
+#root {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background-color: var(--color-background);
+  /* Changed from surface to background for floating effect */
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.05);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Utility Classes */
+.container {
+  padding: var(--spacing-md);
+}
+
+/* Buttons - Tactile Feedback */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 24px;
+  border-radius: var(--radius-full);
+  font-weight: 700;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  gap: 8px;
+}
+
+.btn:active {
+  transform: scale(0.95);
+}
+
+.btn-primary {
+  background-color: var(--color-primary);
+  color: white;
+  box-shadow: 0 4px 12px rgba(251, 146, 60, 0.3);
+}
+
+.btn-primary:hover {
+  background-color: #F97316;
+  /* orange-500 */
+}
+
+.btn-secondary {
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.btn-outline {
+  background: transparent;
+  border: 2px solid var(--color-border);
+  color: var(--color-text-sub);
+}
+
+/* Cards - Floating Island */
+.card {
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-sm);
+  border: none;
+  /* Removed border for cleaner look */
+  margin-bottom: var(--spacing-md);
+}
+
+/* Inputs - Neon Glow */
+input[type="text"],
+input[type="url"],
+input[type="email"],
+input[type="password"],
+textarea,
+select {
+  width: 100%;
+  padding: 14px 20px;
+  border-radius: var(--radius-full);
+  border: 2px solid transparent;
+  background-color: white;
+  transition: all 0.3s ease;
+  outline: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  background-color: white;
+  border-color: var(--color-primary-border);
+  box-shadow: 0 0 0 4px var(--color-primary-light);
+}
+
+textarea {
+  border-radius: var(--radius-md);
+  /* Textarea needs less rounding */
+  resize: vertical;
+}
+
+/* Typography Utilities */
+.text-xl {
+  font-size: var(--font-size-xl);
+}
+
+.text-lg {
+  font-size: var(--font-size-lg);
+}
+
+.text-md {
+  font-size: var(--font-size-md);
+}
+
+.text-sm {
+  font-size: var(--font-size-sm);
+}
+
+.font-bold {
+  font-weight: 700;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-primary {
+  color: var(--color-primary);
+}
+
+.text-sub {
+  color: var(--color-text-sub);
+}
+
+/* Layout Utilities */
+.flex {
+  display: flex;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.gap-2 {
+  gap: 8px;
+}
+
+.gap-4 {
+  gap: 16px;
+}
+
+.mt-4 {
+  margin-top: 16px;
+}
+
+.mb-4 {
+  margin-bottom: 16px;
+}
+
+.w-full {
+  width: 100%;
+}

@@ -1,0 +1,45 @@
+.app-footer {
+    padding: 24px 16px 80px 16px;
+    /* 80px bottom padding to account for fixed BottomNav */
+    text-align: center;
+    background-color: #f9f9f9;
+    border-top: 1px solid #eee;
+    margin-top: 40px;
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.footer-links {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.footer-link {
+    color: #666;
+    /* Standard gray text */
+    text-decoration: underline;
+    /* Underline as per screenshot style */
+    text-decoration-color: #999;
+}
+
+.separator {
+    color: #ccc;
+    font-size: 0.8rem;
+}
+
+.footer-disclaimer {
+    margin-top: 12px;
+    color: #888;
+    font-size: 0.75rem;
+    line-height: 1.4;
+}
+
+.copyright {
+    margin-top: 16px;
+    color: #aaa;
+    font-size: 0.7rem;
+}

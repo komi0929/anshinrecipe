@@ -1,0 +1,373 @@
+.profile-page {
+    padding-bottom: 100px;
+}
+
+.page-title {
+    font-size: var(--font-size-xl);
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: var(--spacing-lg);
+    color: var(--color-text-main);
+}
+
+.section-title {
+    font-size: var(--font-size-lg);
+    font-weight: bold;
+    margin-bottom: var(--spacing-md);
+    color: var(--color-text-main);
+    padding-left: var(--spacing-xs);
+}
+
+/* Child Card */
+.child-card {
+    background: white;
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.2s;
+}
+
+.child-card:active {
+    transform: scale(0.98);
+}
+
+.child-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.child-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background-color: var(--color-primary-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.child-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.child-icon-emoji {
+    font-size: 28px;
+    line-height: 1;
+}
+
+.child-info h4 {
+    font-size: var(--font-size-lg);
+    font-weight: bold;
+    color: var(--color-text-main);
+    margin-bottom: 4px;
+}
+
+.child-allergies {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.allergy-tag {
+    font-size: 11px;
+    background-color: var(--color-alert-bg);
+    color: var(--color-alert);
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+    font-weight: 500;
+}
+
+.icon-btn {
+    padding: 8px;
+    color: var(--color-text-sub);
+    border-radius: 50%;
+    transition: background-color 0.2s;
+}
+
+.icon-btn:hover {
+    background-color: #F1F5F9;
+    color: var(--color-primary);
+}
+
+.text-alert:hover {
+    color: var(--color-alert);
+    background-color: var(--color-alert-bg);
+}
+
+.btn-add-child {
+    width: 100%;
+    padding: var(--spacing-md);
+    background-color: white;
+    border: 2px dashed var(--color-border);
+    border-radius: var(--radius-lg);
+    color: var(--color-text-sub);
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    transition: all 0.2s;
+}
+
+.btn-add-child:active {
+    background-color: #F8FAFC;
+    border-color: var(--color-primary-border);
+    color: var(--color-primary);
+}
+
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 248, 245, 0.95);
+    /* Warm overlay */
+    display: flex;
+    align-items: flex-end;
+    /* Bottom sheet on mobile */
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    padding: var(--spacing-lg);
+    width: 100%;
+    max-width: 600px;
+    height: 95vh;
+    overflow-y: auto;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+    animation: slideUp 0.3s ease-out;
+}
+
+@media (min-width: 600px) {
+    .modal-overlay {
+        align-items: center;
+    }
+
+    .modal-content {
+        border-radius: var(--radius-lg);
+        height: auto;
+        max-height: 90vh;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+    }
+
+    to {
+        transform: translateY(0);
+    }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    margin-bottom: var(--spacing-lg);
+}
+
+.modal-title {
+    font-size: var(--font-size-lg);
+    font-weight: bold;
+    color: var(--color-text-main);
+}
+
+.close-btn {
+    position: absolute;
+    left: 0;
+    padding: 8px;
+    color: var(--color-text-sub);
+    background: #F1F5F9;
+    border-radius: 50%;
+}
+
+/* Photo Upload Section */
+.photo-upload-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: var(--spacing-xl);
+}
+
+.photo-preview-circle {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 4px solid white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    background-color: #E0F2FE;
+    /* Light Blue bg */
+    overflow: hidden;
+    position: relative;
+    margin-bottom: var(--spacing-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.preview-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.photo-change-text {
+    font-size: var(--font-size-sm);
+    color: var(--color-primary);
+    font-weight: bold;
+    cursor: pointer;
+}
+
+/* Form Styles */
+.form-label-sm {
+    display: block;
+    font-size: var(--font-size-sm);
+    font-weight: bold;
+    color: var(--color-text-sub);
+    margin-bottom: var(--spacing-xs);
+}
+
+.form-label-mini {
+    display: block;
+    font-size: 12px;
+    color: var(--color-text-sub);
+    margin-bottom: var(--spacing-xs);
+}
+
+.form-input-lg {
+    font-size: var(--font-size-xl);
+    padding: 16px;
+    text-align: center;
+    font-weight: bold;
+    color: var(--color-text-main);
+    width: 100%;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-full);
+    background: #F8FAFC;
+}
+
+.form-input-lg:focus {
+    background: white;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 4px var(--color-primary-light);
+    outline: none;
+}
+
+.form-input-lg::placeholder {
+    color: #CBD5E1;
+}
+
+/* Allergen Chips */
+.allergen-grid {
+    background-color: #FAFAFA;
+    padding: var(--spacing-md);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--spacing-sm);
+}
+
+.allergen-label-mini {
+    font-size: 10px;
+    color: var(--color-text-sub);
+    background: #F1F5F9;
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-bottom: var(--spacing-sm);
+}
+
+.allergen-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.allergen-chip {
+    padding: 8px 16px;
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-sm);
+    font-weight: bold;
+    color: var(--color-text-sub);
+    background: white;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s;
+    border: 1px solid var(--color-border);
+}
+
+.allergen-chip.active {
+    background-color: #E0F2FE;
+    /* Light Blue */
+    color: #0284C7;
+    /* Blue-600 */
+    border-color: #0284C7;
+    box-shadow: 0 2px 4px rgba(2, 132, 199, 0.2);
+}
+
+.accordion-toggle {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    color: var(--color-primary);
+    font-size: var(--font-size-sm);
+    font-weight: bold;
+    padding: var(--spacing-sm) 0;
+}
+
+.form-textarea {
+    width: 100%;
+    padding: 12px;
+    border-radius: var(--radius-md);
+    background-color: #F8FAFC;
+    border: 1px solid var(--color-border);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-main);
+}
+
+.form-textarea:focus {
+    background: white;
+    border-color: var(--color-primary);
+    outline: none;
+}
+
+.modal-footer {
+    margin-top: var(--spacing-xl);
+    padding-bottom: var(--spacing-lg);
+}
+
+.btn-block {
+    width: 100%;
+    padding: 16px;
+    font-size: var(--font-size-lg);
+    background-color: #FDBA74;
+    /* Soft Orange */
+    color: white;
+    border-radius: var(--radius-full);
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(253, 186, 116, 0.4);
+}
+
+.btn-lg {
+    height: 56px;
+}
+
+.icon-save {
+    margin-right: 8px;
+}

@@ -1,0 +1,447 @@
+'use client'
+
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
+import { useRecipes } from '@/hooks/useRecipes';
+import { useProfile } from '@/hooks/useProfile';
+import { supabase } from '@/lib/supabaseClient';
+
+import { Search, Plus, User as UserIcon, Grid, Bookmark, Heart, Baby, BookHeart } from 'lucide-react';
+import { RecipeCardSkeleton } from '@/components/Skeleton';
+import { RecipeCard } from '../components/RecipeCard';
+import { MEAL_SCENES } from '@/lib/constants';
+import { Footer } from '@/components/Footer';
+import LineLoginButton from '@/components/LineLoginButton';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+
+const RecipeListPage = () => {
+    const { recipes, loading, refreshRecipes } = useRecipes();
+    const { profile, user, loading: profileLoading, savedRecipeIds, toggleSave, likedRecipeIds, toggleLike } = useProfile();
+    const [searchTerm, setSearchTerm] = useState('');
+    const [selectedChildId, setSelectedChildId] = useState(null);
+    const [selectedScene, setSelectedScene] = useState(null);
+    const [imagesLoaded, setImagesLoaded] = useState(false);
+    const [showTooltip, setShowTooltip] = useState(false);
+
+    // New Tab State
+    const [activeTab, setActiveTab] = useState('recommend'); // 'recommend', 'saved', 'mine'
+    const [tabRecipes, setTabRecipes] = useState([]);
+    const [tabLoading, setTabLoading] = useState(false);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setImagesLoaded(true);
+        }, 500);
+
+        // Show tooltip if not seen
+        const hasSeen = localStorage.getItem('hasSeenPostTooltip');
+        if (!hasSeen) {
+            setTimeout(() => setShowTooltip(true), 2000);
+        }
+
+        return () => clearTimeout(timer);
+    }, []);
+
+    // Fetch Logic based on Tab
+    useEffect(() => {
+        const fetchTabData = async () => {
+            if (!user) {
+                setTabRecipes([]);
+                return;
+            }
+
+            setTabLoading(true);
+            try {
+                if (activeTab === 'recommend') {
+                    // Use the data from useRecipes hook (already fetched)
+                    setTabRecipes(recipes);
+                } else if (activeTab === 'saved') {
+                    const { data } = await supabase
+                        .from('saved_recipes')
+                        .select(`
+                            recipe:recipes (
+                                *,
+                                profiles:user_id(username, avatar_url)
+                            )
+                        `)
+                        .eq('user_id', user.id)
+                        .order('created_at', { ascending: false });
+
+                    if (data) {
+                        const formatted = data.map(item => ({
+                            id: item.recipe.id,
+                            title: item.recipe.title,
+                            image: item.recipe.image_url,
+                            tags: item.recipe.tags,
+                            scenes: item.recipe.scenes,
+                            free_from_allergens: item.recipe.free_from_allergens,
+                            author: item.recipe.profiles,
+                        }));
+                        setTabRecipes(formatted);
+                    }
+                } else if (activeTab === 'mine') {
+                    const { data } = await supabase
+                        .from('recipes')
+                        .select('*, profiles:user_id(username, avatar_url)')
+                        .eq('user_id', user.id)
+                        .order('created_at', { ascending: false });
+
+                    if (data) {
+                        const formatted = data.map(r => ({
+                            id: r.id,
+                            title: r.title,
+                            image: r.image_url,
+                            tags: r.tags,
+                            scenes: r.scenes,
+                            freeFromAllergens: r.free_from_allergens,
+                            author: r.profiles,
+                            sourceUrl: r.source_url
+                        }));
+                        setTabRecipes(formatted);
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching tab data:', error);
+            } finally {
+                setTabLoading(false);
+            }
+        };
+
+        fetchTabData();
+    }, [activeTab, user, recipes]);
+
+    // Unified Safety Check & Filter Logic
+    const processedRecipes = tabRecipes.map(recipe => {
+        if (!profile?.children) return { ...recipe, safeFor: [] };
+
+        const safeFor = profile.children.filter(child => {
+            if (!child.allergens || child.allergens.length === 0) return true;
+            if (!recipe.free_from_allergens || recipe.free_from_allergens.length === 0) return false;
+            return child.allergens.every(allergen =>
+                recipe.free_from_allergens.includes(allergen)
+            );
+        });
+
+        return { ...recipe, safeFor };
+    });
+
+    const filteredRecipes = processedRecipes.filter(recipe => {
+        const matchesSearch = recipe.title.includes(searchTerm) ||
+            (recipe.tags && recipe.tags.some(t => t.includes(searchTerm)));
+
+        if (!matchesSearch) return false;
+
+        if (selectedChildId) {
+            if (!recipe.safeFor.some(c => c.id === selectedChildId)) return false;
+        }
+
+        if (selectedScene) {
+            if (!recipe.scenes || !recipe.scenes.includes(selectedScene)) return false;
+        }
+
+        return true;
+    });
+
+    // Sort by safety match first, then new
+    filteredRecipes.sort((a, b) => {
+        const aSafe = a.safeFor.length > 0;
+        const bSafe = b.safeFor.length > 0;
+        if (aSafe && !bSafe) return -1;
+        if (!aSafe && bSafe) return 1;
+        return new Date(b.created_at || b.createdAt) - new Date(a.created_at || a.createdAt);
+    });
+
+    // Show LP for non-logged-in users
+    if (!profileLoading && !user && !loading) {
+        return (
+            <div className="min-h-screen flex flex-col items-center bg-[#fcfcfc]">
+                <div className="flex-1 flex flex-col items-center justify-center p-6 max-w-[480px] mx-auto w-full">
+                    <div className="text-center mb-10 w-full">
+                        <div className="flex justify-center mb-6">
+                            <Image
+                                src="/logo.png"
+                                alt="あんしんレシピ"
+                                width={240}
+                                height={60}
+                                priority
+                                className="w-[180px] h-auto object-contain"
+                            />
+                        </div>
+                        <p className="text-gray-500 text-base leading-relaxed">
+                            食物アレルギーがあっても、<br />
+                            家族みんなで同じ食事を楽しみたい。
+                        </p>
+                    </div>
+
+                    <div className="w-full flex flex-col gap-5 mb-12 px-2">
+                        <div className="flex items-start gap-4 bg-white p-4 rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+                            <div className="bg-orange-50 text-primary p-3 rounded-xl flex items-center justify-center shrink-0">
+                                <Search size={24} />
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="text-base font-bold text-slate-700 mb-1">アレルギー除去検索</h3>
+                                <p className="text-[13px] text-slate-500 leading-normal">
+                                    お子様のアレルギー情報を登録して、食べられるレシピを簡単検索
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-start gap-4 bg-white p-4 rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+                            <div className="bg-orange-50 text-primary p-3 rounded-xl flex items-center justify-center shrink-0">
+                                <Baby size={24} />
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="text-base font-bold text-slate-700 mb-1">家族設定</h3>
+                                <p className="text-[13px] text-slate-500 leading-normal">
+                                    お子様ごとのアレルギー品目を登録して、ぴったりのレシピをご提案
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-start gap-4 bg-white p-4 rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+                            <div className="bg-orange-50 text-primary p-3 rounded-xl flex items-center justify-center shrink-0">
+                                <BookHeart size={24} />
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="text-base font-bold text-slate-700 mb-1">レシピ管理</h3>
+                                <p className="text-[13px] text-slate-500 leading-normal">
+                                    お気に入りのレシピを保存したり、自分のレシピを投稿して共有
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="w-full bg-white rounded-3xl p-8 shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+                        <div className="flex flex-col items-center gap-6">
+                            <p className="text-center text-slate-700 font-bold text-base leading-relaxed">
+                                LINEアカウントでログインして<br />
+                                今すぐ始めましょう
+                            </p>
+
+                            <div className="w-full">
+                                <LineLoginButton />
+                            </div>
+
+                            <p className="text-center text-slate-400 text-xs leading-relaxed">
+                                ログインすることで、<br className="md:hidden" />
+                                <Link href="/terms" className="text-blue-500 underline font-medium mx-1 hover:text-blue-600">利用規約</Link>
+                                と
+                                <Link href="/privacy" className="text-blue-500 underline font-medium mx-1 hover:text-blue-600">プライバシーポリシー</Link>
+                                に<br className="md:hidden" />同意したものとみなされます
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <Footer showLinks={false} />
+            </div>
+        );
+    }
+
+    // Show empty state for logged-in users without children
+    if (!profileLoading && user && profile?.children?.length === 0 && !loading) {
+        return (
+            <div className="container max-w-md mx-auto min-h-screen bg-background pb-20">
+                <div className="pt-6 pb-4 px-4 text-center">
+                    <h1 className="flex justify-center">
+                        <Image
+                            src="/logo.png"
+                            alt="あんしんレシピ"
+                            width={360}
+                            height={90}
+                            priority
+                            className="h-[60px] w-auto"
+                        />
+                    </h1>
+                </div>
+
+                <div className="text-center py-20 px-6 max-w-md mx-auto">
+                    <div className="mb-8 flex justify-center">
+                        <UserIcon size={64} className="text-primary/50" />
+                    </div>
+                    <h2 className="text-2xl font-bold mb-3 text-text-main">お子様を登録しましょう</h2>
+                    <p className="text-text-sub mb-8 leading-relaxed">
+                        アレルギー情報を登録すると、<br />
+                        レシピの安全性をチェックできます
+                    </p>
+                    <Link href="/profile">
+                        <Button>プロフィールを設定</Button>
+                    </Link>
+                </div>
+            </div>
+        );
+    }
+
+    // Main feed for logged-in users with children
+    return (
+        <div className="container max-w-md mx-auto min-h-screen bg-background pb-24">
+            <div className="pt-6 pb-4 px-4 text-center">
+                <h1 className="flex justify-center">
+                    <Image
+                        src="/logo.png"
+                        alt="あんしんレシピ"
+                        width={360}
+                        height={90}
+                        priority
+                        className="h-[60px] w-auto"
+                    />
+                </h1>
+            </div>
+
+            {user && (
+                <>
+                    {/* Tab Switcher */}
+                    <div className="flex bg-slate-100 p-1 rounded-2xl mb-4 mx-4 space-x-1">
+                        {['recommend', 'saved', 'mine'].map((tab) => {
+                            const labels = { recommend: 'みんな', saved: '保存済み', mine: '自分の投稿' };
+                            const isActive = activeTab === tab;
+                            return (
+                                <button
+                                    key={tab}
+                                    onClick={() => setActiveTab(tab)}
+                                    className={`
+                                        flex-1 py-2.5 text-sm font-bold rounded-xl transition-all duration-200
+                                        ${isActive
+                                            ? 'bg-white text-primary shadow-sm'
+                                            : 'text-text-sub hover:text-text-main hover:bg-white/50'
+                                        }
+                                    `}
+                                >
+                                    {labels[tab]}
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    <div className="px-4 mb-4">
+                        <Input
+                            placeholder="レシピを検索..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            icon={Search}
+                        />
+                    </div>
+
+                    {/* Child Selection Row */}
+                    {profile?.children?.length > 0 && (
+                        <div className="flex gap-2 px-4 mb-4 overflow-x-auto pb-2 scrollbar-hide">
+                            <button
+                                className={`
+                                    px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap
+                                    ${selectedChildId === null
+                                        ? 'bg-primary text-white shadow-md shadow-orange-200'
+                                        : 'bg-white text-text-sub border border-slate-100 hover:bg-slate-50'
+                                    }
+                                `}
+                                onClick={() => setSelectedChildId(null)}
+                            >
+                                全員
+                            </button>
+                            {profile.children.map(child => (
+                                <button
+                                    key={child.id}
+                                    className={`
+                                        px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap flex items-center gap-2
+                                        ${selectedChildId === child.id
+                                            ? 'bg-primary text-white shadow-md shadow-orange-200'
+                                            : 'bg-white text-text-sub border border-slate-100 hover:bg-slate-50'
+                                        }
+                                    `}
+                                    onClick={() => setSelectedChildId(child.id)}
+                                >
+                                    <span>{child.icon || '👶'}</span>
+                                    {child.name}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Scene Selection Row */}
+                    <div className="flex gap-2 px-4 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+                        <button
+                            className={`
+                                px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap
+                                ${selectedScene === null
+                                    ? 'bg-primary text-white shadow-md shadow-orange-200'
+                                    : 'bg-white text-text-sub border border-slate-100 hover:bg-slate-50'
+                                }
+                            `}
+                            onClick={() => setSelectedScene(null)}
+                        >
+                            すべてのシーン
+                        </button>
+                        {MEAL_SCENES.map(scene => (
+                            <button
+                                key={scene}
+                                className={`
+                                    px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap
+                                    ${selectedScene === scene
+                                        ? 'bg-primary text-white shadow-md shadow-orange-200'
+                                        : 'bg-white text-text-sub border border-slate-100 hover:bg-slate-50'
+                                    }
+                                `}
+                                onClick={() => setSelectedScene(scene)}
+                            >
+                                {scene}
+                            </button>
+                        ))}
+                    </div>
+                </>
+            )}
+
+            {/* Recipe Grid */}
+            <div className="px-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {loading || tabLoading || !imagesLoaded ? (
+                    Array.from({ length: 4 }).map((_, i) => (
+                        <RecipeCardSkeleton key={i} />
+                    ))
+                ) : (
+                    filteredRecipes.map(recipe => (
+                        <RecipeCard
+                            key={recipe.id}
+                            recipe={recipe}
+                            profile={profile}
+                            isSaved={savedRecipeIds?.includes(recipe.id)}
+                            onToggleSave={() => toggleSave(recipe.id)}
+                            isLiked={likedRecipeIds?.includes(recipe.id)}
+                            onToggleLike={() => toggleLike(recipe.id)}
+                        />
+                    ))
+                )}
+            </div>
+
+            {user && (
+                <div className="fixed bottom-20 right-5 z-50">
+                    {showTooltip && (
+                        <div className="absolute bottom-full right-0 mb-2 w-48 p-3 bg-orange-600 text-white text-sm rounded-xl shadow-lg animate-bounce-slow">
+                            <div className="absolute -bottom-1 right-6 w-3 h-3 bg-orange-600 rotate-45"></div>
+                            <p className="font-bold relative z-10">レシピを投稿してみよう！</p>
+                            <button
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    setShowTooltip(false);
+                                    localStorage.setItem('hasSeenPostTooltip', 'true');
+                                }}
+                                className="absolute -top-2 -left-2 bg-slate-800 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs border border-white"
+                            >
+                                ×
+                            </button>
+                        </div>
+                    )}
+                    <Link href="/recipe/new">
+                        <Button
+                            variant="primary"
+                            size="icon"
+                            className="w-14 h-14 rounded-full shadow-lg shadow-orange-300"
+                        >
+                            <Plus size={28} />
+                        </Button>
+                    </Link>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default RecipeListPage;

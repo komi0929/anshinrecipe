@@ -1,0 +1,313 @@
+.add-recipe-page {
+    padding-bottom: 100px;
+    background-color: var(--color-background);
+    min-height: 100vh;
+}
+
+.page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-lg);
+    padding: var(--spacing-sm) 0;
+}
+
+.page-title {
+    font-size: var(--font-size-lg);
+    font-weight: bold;
+    color: var(--color-text-main);
+}
+
+.close-button {
+    padding: 8px;
+    border-radius: 50%;
+    color: var(--color-text-sub);
+    background: white;
+    box-shadow: var(--shadow-sm);
+}
+
+.recipe-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.form-label-sm {
+    font-size: var(--font-size-sm);
+    font-weight: bold;
+    color: var(--color-text-sub);
+    margin-left: 4px;
+}
+
+.required {
+    color: var(--color-alert);
+}
+
+.form-input {
+    width: 100%;
+    padding: 14px 20px;
+    border-radius: var(--radius-full);
+    border: 1px solid transparent;
+    background-color: white;
+    box-shadow: var(--shadow-sm);
+    font-size: var(--font-size-md);
+    transition: all 0.2s;
+}
+
+.form-input:focus {
+    border-color: var(--color-primary-border);
+    box-shadow: 0 0 0 4px var(--color-primary-light);
+    outline: none;
+}
+
+.form-input-lg {
+    width: 100%;
+    padding: 16px 20px;
+    border-radius: var(--radius-lg);
+    border: 1px solid transparent;
+    background-color: white;
+    box-shadow: var(--shadow-sm);
+    font-size: var(--font-size-lg);
+    font-weight: bold;
+}
+
+.form-input-lg:focus {
+    border-color: var(--color-primary-border);
+    box-shadow: 0 0 0 4px var(--color-primary-light);
+    outline: none;
+}
+
+.status-text {
+    font-size: 12px;
+    color: var(--color-primary);
+    margin-left: 12px;
+}
+
+.error-text {
+    font-size: 12px;
+    color: var(--color-alert);
+    margin-left: 12px;
+}
+
+/* Photo Upload Area */
+.photo-upload-area {
+    width: 100%;
+    aspect-ratio: 16/9;
+    background-color: white;
+    border: 2px dashed var(--color-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    position: relative;
+}
+
+.upload-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    background-color: #F8FAFC;
+    transition: background-color 0.2s;
+}
+
+.upload-placeholder:active {
+    background-color: #F1F5F9;
+}
+
+.icon-circle {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background-color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+    box-shadow: var(--shadow-sm);
+}
+
+.upload-text {
+    font-size: var(--font-size-sm);
+    color: #94A3B8;
+    /* Slate-400 */
+    font-weight: bold;
+}
+
+.image-preview-wrapper {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.image-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.remove-image-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+}
+
+/* Scene Chips */
+.scene-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.scene-chip {
+    padding: 8px 16px;
+    border-radius: var(--radius-full);
+    background-color: white;
+    color: var(--color-text-sub);
+    font-size: var(--font-size-sm);
+    font-weight: bold;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.2s;
+}
+
+.scene-chip.active {
+    background-color: var(--color-primary-light);
+    color: var(--color-primary);
+    box-shadow: 0 2px 8px rgba(251, 146, 60, 0.2);
+}
+
+/* Child Toggles */
+.child-selector-container {
+    background-color: white;
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    box-shadow: var(--shadow-sm);
+}
+
+.child-toggles {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-lg);
+}
+
+.child-toggle {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    opacity: 0.5;
+    transition: all 0.2s;
+}
+
+.child-toggle.active {
+    opacity: 1;
+    transform: scale(1.05);
+}
+
+.child-toggle-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background-color: #E0F2FE;
+    /* Light Blue */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    position: relative;
+    border: 3px solid transparent;
+}
+
+.child-toggle.active .child-toggle-avatar {
+    border-color: var(--color-secondary);
+    /* Teal border for active */
+}
+
+.child-toggle-avatar img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.check-badge {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 20px;
+    height: 20px;
+    background-color: var(--color-secondary);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid white;
+}
+
+.child-toggle-name {
+    font-size: 12px;
+    font-weight: bold;
+    color: var(--color-text-main);
+}
+
+/* Memo Textarea */
+.form-textarea {
+    width: 100%;
+    padding: 16px;
+    border-radius: var(--radius-lg);
+    border: none;
+    background-color: white;
+    box-shadow: var(--shadow-sm);
+    font-size: var(--font-size-md);
+    resize: none;
+}
+
+.form-textarea:focus {
+    box-shadow: 0 0 0 4px var(--color-primary-light);
+    outline: none;
+}
+
+.form-footer {
+    margin-top: var(--spacing-md);
+    padding-bottom: var(--spacing-xl);
+}
+
+.btn-block {
+    width: 100%;
+    padding: 16px;
+    font-size: var(--font-size-lg);
+    background-color: #FDBA74;
+    /* Soft Orange */
+    color: white;
+    border-radius: var(--radius-full);
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(253, 186, 116, 0.4);
+}
+
+.btn-lg {
+    height: 56px;
+}
+
+.icon-save {
+    margin-right: 8px;
+}
