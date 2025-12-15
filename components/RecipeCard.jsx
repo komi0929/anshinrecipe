@@ -5,8 +5,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ExternalLink, User as UserIcon, Heart, Bookmark, Pencil } from 'lucide-react';
 import './RecipeCard.css';
-import { useRecipes } from '@/hooks/useRecipes';
-import { useProfile } from '@/hooks/useProfile';
+import { useRecipes } from '../hooks/useRecipes';
+import { useProfile } from '../hooks/useProfile';
 
 export const RecipeCard = ({ recipe, isSaved, onToggleSave, isLiked, onToggleLike }) => {
     const [localIsSaved, setLocalIsSaved] = useState(false);
@@ -56,47 +56,13 @@ export const RecipeCard = ({ recipe, isSaved, onToggleSave, isLiked, onToggleLik
     return (
         <Link href={`/recipe/${recipe.id}`} className="recipe-card fade-in">
             <div className="recipe-image-wrapper">
-                <Image
+                {/* Use standard img tag for Masonry compatibility (Next.js Image with fill needs fixed container) */}
+                <img
                     src={recipe.image || '/images/placeholder-recipe.png'}
                     alt={recipe.title}
-                    fill
                     className="recipe-image"
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                    style={{ objectFit: 'cover' }}
+                    loading="lazy"
                 />
-
-                <div className="action-overlay">
-                    {user && recipe.userId === user.id && (
-                        <button
-                            className="action-btn edit"
-                            onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                window.location.href = `/recipe/edit/${recipe.id}`;
-                            }}
-                            type="button"
-                            aria-label="編集"
-                        >
-                            <Pencil size={18} />
-                        </button>
-                    )}
-                    <button
-                        className={`action-btn like ${likedState ? 'active' : ''}`}
-                        onClick={handleLike}
-                        type="button"
-                        aria-label={likedState ? "いいねを取り消す" : "いいね"}
-                    >
-                        <Heart size={18} fill={likedState ? "currentColor" : "none"} />
-                    </button>
-                    <button
-                        className={`action-btn save ${savedState ? 'active' : ''}`}
-                        onClick={handleSave}
-                        type="button"
-                        aria-label={savedState ? "保存を取り消す" : "保存する"}
-                    >
-                        <Bookmark size={18} fill={savedState ? "currentColor" : "none"} />
-                    </button>
-                </div>
 
                 {safeFor.length > 0 && (
                     <div className="safety-badges-overlay">
@@ -108,16 +74,11 @@ export const RecipeCard = ({ recipe, isSaved, onToggleSave, isLiked, onToggleLik
                     </div>
                 )}
             </div>
+
             <div className="recipe-content">
                 <h3 className="recipe-title">{recipe.title}</h3>
 
-                <div className="recipe-tags">
-                    {recipe.tags && recipe.tags.map(tag => (
-                        <span key={tag} className="tag">#{tag}</span>
-                    ))}
-                </div>
-
-                <div className="recipe-footer">
+                <div className="recipe-footer-meta">
                     {recipe.author && (
                         <div className="recipe-author">
                             {recipe.author.avatar_url ? (
@@ -130,10 +91,41 @@ export const RecipeCard = ({ recipe, isSaved, onToggleSave, isLiked, onToggleLik
                             <span className="author-name">{recipe.author.username || 'ゲスト'}</span>
                         </div>
                     )}
-                    {recipe.sourceUrl && (
-                        <div className="recipe-source">
-                            <ExternalLink size={12} />
-                        </div>
+                </div>
+
+                {/* Actions Row - Now separated from image */}
+                <div className="card-actions-row">
+                    <button
+                        className={`action-btn-new like ${likedState ? 'active' : ''}`}
+                        onClick={handleLike}
+                        type="button"
+                        aria-label={likedState ? "いいねを取り消す" : "いいね"}
+                    >
+                        <Heart size={20} fill={likedState ? "currentColor" : "none"} />
+                    </button>
+
+                    <button
+                        className={`action-btn-new save ${savedState ? 'active' : ''}`}
+                        onClick={handleSave}
+                        type="button"
+                        aria-label={savedState ? "保存を取り消す" : "保存する"}
+                    >
+                        <Bookmark size={20} fill={savedState ? "currentColor" : "none"} />
+                    </button>
+
+                    {user && recipe.userId === user.id && (
+                        <button
+                            className="action-btn-new edit"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                window.location.href = `/recipe/edit/${recipe.id}`;
+                            }}
+                            type="button"
+                            aria-label="編集"
+                        >
+                            <Pencil size={20} />
+                        </button>
                     )}
                 </div>
             </div>

@@ -148,11 +148,11 @@
 
 .heart-button {
     position: relative;
-    width: 64px;
-    height: 64px;
+    width: 56px;
+    height: 56px;
     border-radius: 50%;
     background: white;
-    border: 3px solid #FFE4E6;
+    border: 2px solid #FFE4E6;
     /* Soft pink border */
     color: #FDA4AF;
     /* Soft pink icon */

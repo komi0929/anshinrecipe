@@ -288,7 +288,12 @@ export const RecipeForm = ({
                 {/* Image Section - Always visible */}
                 <div className="form-group">
                     <label>レシピ画像</label>
-                    {image ? (
+                    {isFetchingOgp ? (
+                        <div className="image-upload-area loading">
+                            <Loader2 className="animate-spin upload-icon" />
+                            <span className="upload-text">画像を取得中...</span>
+                        </div>
+                    ) : image ? (
                         <div className="image-preview-container">
                             <div className="image-preview">
                                 <img src={image} alt="Recipe" onError={(e) => e.target.style.display = 'none'} />

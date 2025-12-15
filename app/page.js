@@ -242,7 +242,7 @@ const RecipeListPage = () => {
                                 <LineLoginButton />
                             </div>
 
-                            <p className="text-center text-slate-400 text-xs leading-relaxed">
+                            <p className="text-center text-slate-500 text-sm leading-relaxed">
                                 ログインをもって <Link href="/terms" className="text-blue-500 underline">利用規約</Link>・<Link href="/privacy" className="text-blue-500 underline">プライバシーポリシー</Link> に同意とみなします
                             </p>
                         </div>
@@ -404,11 +404,13 @@ const RecipeListPage = () => {
                 </>
             )}
 
-            {/* Recipe Grid */}
-            <div className="px-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Recipe Grid - Masonry Layout */}
+            <div className="px-4 columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4 pb-20">
                 {loading || tabLoading || !imagesLoaded ? (
-                    Array.from({ length: 4 }).map((_, i) => (
-                        <RecipeCardSkeleton key={i} />
+                    Array.from({ length: 6 }).map((_, i) => (
+                        <div key={i} className="break-inside-avoid mb-4">
+                            <RecipeCardSkeleton />
+                        </div>
                     ))
                 ) : filteredRecipes.length > 0 ? (
                     filteredRecipes.map(recipe => (
@@ -423,7 +425,7 @@ const RecipeListPage = () => {
                         />
                     ))
                 ) : (
-                    <div className="col-span-full py-10 text-center">
+                    <div className="col-span-full py-10 text-center break-inside-avoid">
                         <div className="mb-4 text-6xl opacity-20 filter grayscale">
                             {activeTab === 'saved' ? '🔖' : activeTab === 'mine' ? '🍳' : '🔍'}
                         </div>

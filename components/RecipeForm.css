@@ -265,6 +265,19 @@
     transition: all 0.2s;
 }
 
+.image-upload-area.loading {
+    border-color: #FDBA74;
+    background: linear-gradient(135deg, #FFF7ED 0%, #FEF3C7 100%);
+    color: #EA580C;
+    cursor: default;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
 .image-upload-area:hover {
     border-color: #FDBA74;
     background: #FFF7ED;

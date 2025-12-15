@@ -237,7 +237,7 @@ const RecipeDetailPage = () => {
                         onClick={() => handleReaction('like')}
                         className={`heart-button ${userReaction === 'like' ? 'active animate-pop' : ''}`}
                     >
-                        <Heart size={32} fill={userReaction === 'like' ? "currentColor" : "none"} />
+                        <Heart size={26} fill={userReaction === 'like' ? "currentColor" : "none"} />
                     </button>
                     {totalReactions > 0 && (
                         <span className="like-count">{totalReactions}</span>

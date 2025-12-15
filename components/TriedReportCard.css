@@ -95,3 +95,19 @@
     white-space: pre-wrap;
     word-break: break-word;
 }
+
+/* Comment-only report indicator */
+.report-comment-only-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 12px;
+}
+
+.report-comment-only-indicator .comment-icon {
+    font-size: 24px;
+    opacity: 0.6;
+}

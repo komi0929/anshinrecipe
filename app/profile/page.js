@@ -24,7 +24,7 @@ export default function ProfilePage() {
         addChild, updateChild, deleteChild,
         deleteAccount
     } = useProfile();
-    const { notifications, markAsRead } = useNotifications(user?.id);
+    const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications(user?.id);
     const router = useRouter();
     const fileInputRef = useRef(null);
 
@@ -141,6 +141,8 @@ export default function ProfilePage() {
                 <NotificationList
                     notifications={notifications}
                     onRead={markAsRead}
+                    onMarkAllRead={markAllAsRead}
+                    unreadCount={unreadCount}
                 />
 
                 {/* 1. Profile Card */}
@@ -226,18 +228,26 @@ export default function ProfilePage() {
                             <span className="text-xs font-bold text-text-main">はじめまして</span>
                         </div>
 
-                        <div className="flex flex-col items-center min-w-[80px] opacity-40 grayscale">
-                            <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center border-2 border-slate-100 mb-2">
-                                <span className="text-3xl">🍳</span>
+                        <div className="flex flex-col items-center min-w-[80px]">
+                            <div className="relative w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center border-2 border-slate-200 mb-2">
+                                <span className="text-3xl grayscale opacity-40">🍳</span>
+                                <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-slate-400 rounded-full flex items-center justify-center">
+                                    <span className="text-[10px] text-white">🔒</span>
+                                </div>
                             </div>
-                            <span className="text-xs font-bold text-text-sub">初投稿</span>
+                            <span className="text-xs font-bold text-slate-400">初投稿</span>
+                            <span className="text-[10px] text-slate-300">未獲得</span>
                         </div>
 
-                        <div className="flex flex-col items-center min-w-[80px] opacity-40 grayscale">
-                            <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center border-2 border-slate-100 mb-2">
-                                <span className="text-3xl">💬</span>
+                        <div className="flex flex-col items-center min-w-[80px]">
+                            <div className="relative w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center border-2 border-slate-200 mb-2">
+                                <span className="text-3xl grayscale opacity-40">💬</span>
+                                <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-slate-400 rounded-full flex items-center justify-center">
+                                    <span className="text-[10px] text-white">🔒</span>
+                                </div>
                             </div>
-                            <span className="text-xs font-bold text-text-sub">初レポート</span>
+                            <span className="text-xs font-bold text-slate-400">初レポート</span>
+                            <span className="text-[10px] text-slate-300">未獲得</span>
                         </div>
                     </div>
                 </div>

@@ -59,8 +59,56 @@ export const useNotifications = (userId) => {
     useEffect(() => {
         fetchNotifications();
 
-        // Optional: Realtime subscription could go here
-    }, [fetchNotifications]);
+        // Set up realtime subscription for notifications
+        if (!userId) return;
+
+        const channel = supabase
+            .channel(`notifications:${userId}`)
+            .on(
+                'postgres_changes',
+                {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: 'notifications',
+                    filter: `recipient_id=eq.${userId}`
+                },
+                (payload) => {
+                    // Fetch the new notification with joined data
+                    fetchNotifications();
+                }
+            )
+            .on(
+                'postgres_changes',
+                {
+                    event: 'UPDATE',
+                    schema: 'public',
+                    table: 'notifications',
+                    filter: `recipient_id=eq.${userId}`
+                },
+                (payload) => {
+                    // Update the notification in state
+                    if (payload.new) {
+                        setNotifications(prev =>
+                            prev.map(n => n.id === payload.new.id ? { ...n, ...payload.new } : n)
+                        );
+                        // Recalculate unread count
+                        setUnreadCount(prev => {
+                            const updated = payload.new;
+                            if (updated.is_read) {
+                                return Math.max(0, prev - 1);
+                            }
+                            return prev;
+                        });
+                    }
+                }
+            )
+            .subscribe();
+
+        // Cleanup subscription on unmount
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [fetchNotifications, userId]);
 
     const markAsRead = async (notificationId) => {
         try {

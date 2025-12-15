@@ -48,7 +48,7 @@ export const viewport = {
 export default function RootLayout({ children }) {
     return (
         <html lang="ja" className={zenMaruGothic.variable} suppressHydrationWarning>
-            <body>
+            <body suppressHydrationWarning>
                 <ToastProvider>
                     <div className="app-container flex flex-col min-h-screen">
                         <SafetyBanner />

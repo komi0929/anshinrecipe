@@ -57,9 +57,13 @@ const TriedReportCard = ({ report, currentUserId, onDelete }) => {
                 )}
             </div>
 
-            {report.image_url && (
+            {report.image_url ? (
                 <div className="report-image">
                     <img src={report.image_url} alt="レポート画像" />
+                </div>
+            ) : report.comment && (
+                <div className="report-comment-only-indicator">
+                    <span className="comment-icon">💬</span>
                 </div>
             )}
 

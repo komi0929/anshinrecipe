@@ -1,10 +1,10 @@
 'use client';
 
 import React from 'react';
-import { Heart, Bookmark, MessageCircle, Clock } from 'lucide-react';
+import { Heart, Bookmark, MessageCircle, Clock, CheckCheck } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
-const NotificationList = ({ notifications, onRead }) => {
+const NotificationList = ({ notifications, onRead, onMarkAllRead, unreadCount = 0 }) => {
     const router = useRouter();
 
     if (!notifications || notifications.length === 0) {
@@ -78,6 +78,26 @@ const NotificationList = ({ notifications, onRead }) => {
 
     return (
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+            {/* Header with title and mark all read button */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+                <h3 className="text-sm font-bold text-text-sub">
+                    通知
+                    {unreadCount > 0 && (
+                        <span className="ml-2 text-xs bg-orange-500 text-white px-2 py-0.5 rounded-full">
+                            {unreadCount}
+                        </span>
+                    )}
+                </h3>
+                {unreadCount > 0 && onMarkAllRead && (
+                    <button
+                        onClick={onMarkAllRead}
+                        className="flex items-center gap-1 text-xs text-primary hover:text-primary-dark font-medium transition-colors"
+                    >
+                        <CheckCheck size={14} />
+                        すべて既読
+                    </button>
+                )}
+            </div>
             {notifications.map((n) => (
                 <div
                     key={n.id}
