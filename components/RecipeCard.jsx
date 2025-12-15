@@ -3,14 +3,17 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ExternalLink, User as UserIcon, Heart, Bookmark } from 'lucide-react';
+import { ExternalLink, User as UserIcon, Heart, Bookmark, Pencil } from 'lucide-react';
 import './RecipeCard.css';
 import { useRecipes } from '@/hooks/useRecipes';
+import { useProfile } from '@/hooks/useProfile';
 
-export const RecipeCard = ({ recipe, profile, isSaved, onToggleSave, isLiked, onToggleLike }) => {
+export const RecipeCard = ({ recipe, isSaved, onToggleSave, isLiked, onToggleLike }) => {
     const [localIsSaved, setLocalIsSaved] = useState(false);
     const [localIsLiked, setLocalIsLiked] = useState(false);
     const { previewImage } = useRecipes();
+    const { user, profile } = useProfile(); // Get current user
+
 
     // Use prop if available, otherwise local state
     const savedState = isSaved !== undefined ? isSaved : localIsSaved;
@@ -63,6 +66,15 @@ export const RecipeCard = ({ recipe, profile, isSaved, onToggleSave, isLiked, on
                 />
 
                 <div className="action-overlay">
+                    {user && recipe.userId === user.id && (
+                        <Link
+                            href={`/recipe/edit/${recipe.id}`}
+                            className="action-btn edit"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <Pencil size={18} />
+                        </Link>
+                    )}
                     <button
                         className={`action-btn like ${likedState ? 'active' : ''}`}
                         onClick={handleLike}

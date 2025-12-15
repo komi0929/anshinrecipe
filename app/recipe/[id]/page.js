@@ -164,13 +164,33 @@ const RecipeDetailPage = () => {
                         <Bookmark size={24} fill={isSaved ? "currentColor" : "none"} />
                     </button>
                     <button
-                        onClick={() => {
-                            const url = window.location.href;
-                            const text = `【あんしんレシピ】${recipe.title} #アレルギー対応`;
-                            window.open(`https://line.me/R/msg/text/?${encodeURIComponent(text + ' ' + url)}`, '_blank');
+                        onClick={async () => {
+                            const shareData = {
+                                title: `【あんしんレシピ】${recipe.title}`,
+                                text: `${recipe.title} #アレルギー対応 #あんしんレシピ`,
+                                url: window.location.href,
+                            };
+
+                            if (navigator.share) {
+                                try {
+                                    await navigator.share(shareData);
+                                } catch (err) {
+                                    // User cancelled or failed
+                                    console.log('Share skipped', err);
+                                }
+                            } else {
+                                // Fallback for desktop: Copy link
+                                try {
+                                    await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
+                                    addToast('リンクをコピーしました', 'success');
+                                } catch (err) {
+                                    // Fallback to LINE if copy fails?
+                                    window.open(`https://line.me/R/msg/text/?${encodeURIComponent(shareData.text + ' ' + shareData.url)}`, '_blank');
+                                }
+                            }
                         }}
                         className="action-btn"
-                        aria-label="LINEでシェア"
+                        aria-label="シェア"
                     >
                         <Share2 size={24} />
                     </button>
@@ -215,7 +235,7 @@ const RecipeDetailPage = () => {
                     <button
                         type="button"
                         onClick={() => handleReaction('like')}
-                        className={`heart-button ${userReaction === 'like' ? 'active' : ''}`}
+                        className={`heart-button ${userReaction === 'like' ? 'active animate-pop' : ''}`}
                     >
                         <Heart size={32} fill={userReaction === 'like' ? "currentColor" : "none"} />
                     </button>

@@ -61,6 +61,10 @@
     color: #FB923C;
 }
 
+.action-btn.edit:hover {
+    color: #3B82F6;
+}
+
 .action-btn.like.active {
     background: #FFF1F2;
     color: #F43F5E;

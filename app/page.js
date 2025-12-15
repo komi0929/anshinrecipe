@@ -129,7 +129,8 @@ const RecipeListPage = () => {
 
     const filteredRecipes = processedRecipes.filter(recipe => {
         const matchesSearch = recipe.title.includes(searchTerm) ||
-            (recipe.tags && recipe.tags.some(t => t.includes(searchTerm)));
+            (recipe.tags && recipe.tags.some(t => t.includes(searchTerm))) ||
+            (recipe.positiveIngredients && recipe.positiveIngredients.some(pi => pi.includes(searchTerm)));
 
         if (!matchesSearch) return false;
 
@@ -158,7 +159,7 @@ const RecipeListPage = () => {
         return (
             <div className="min-h-screen flex flex-col items-center bg-[#fcfcfc]">
                 <div className="flex-1 flex flex-col items-center justify-center p-6 max-w-[480px] mx-auto w-full">
-                    <div className="text-center mb-10 w-full">
+                    <div className="text-center mb-8 w-full">
                         <div className="flex justify-center mb-6">
                             <Image
                                 src="/logo.png"
@@ -166,16 +167,33 @@ const RecipeListPage = () => {
                                 width={360}
                                 height={90}
                                 priority
-                                className="w-[270px] h-auto object-contain"
+                                className="w-[200px] h-auto object-contain"
                             />
                         </div>
-                        <p className="text-gray-500 text-base leading-relaxed">
-                            食物アレルギーがあっても、<br />
-                            家族みんなで同じ食事を楽しみたい。
+
+                        {/* New Hero Illustration */}
+                        <div className="flex justify-center mb-6">
+                            <div className="relative w-full max-w-[320px] aspect-[4/3]">
+                                <Image
+                                    src="/illustrations/happy_family.png"
+                                    alt="家族で楽しく料理"
+                                    fill
+                                    className="object-contain"
+                                    priority
+                                />
+                            </div>
+                        </div>
+
+                        <h2 className="text-xl font-bold text-slate-700 mb-2">
+                            「これなら食べられる！」を<br />もっと簡単に、家族みんなで。
+                        </h2>
+                        <p className="text-gray-500 text-sm leading-relaxed">
+                            アレルギーっ子のパパ・ママのための<br />
+                            安心レシピ共有＆記録アプリ
                         </p>
                     </div>
 
-                    <div className="w-full flex flex-col gap-5 mb-12 px-2">
+                    <div className="w-full flex flex-col gap-4 mb-10 px-2">
                         <div className="flex items-start gap-4 bg-white p-4 rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
                             <div className="bg-orange-50 text-primary p-3 rounded-xl flex items-center justify-center shrink-0">
                                 <Search size={24} />
@@ -393,17 +411,41 @@ const RecipeListPage = () => {
                         <RecipeCardSkeleton key={i} />
                     ))
                 ) : (
+                ): filteredRecipes.length > 0 ? (
                     filteredRecipes.map(recipe => (
-                        <RecipeCard
-                            key={recipe.id}
-                            recipe={recipe}
-                            profile={profile}
-                            isSaved={savedRecipeIds?.includes(recipe.id)}
-                            onToggleSave={() => toggleSave(recipe.id)}
-                            isLiked={likedRecipeIds?.includes(recipe.id)}
-                            onToggleLike={() => toggleLike(recipe.id)}
-                        />
-                    ))
+                <RecipeCard
+                    key={recipe.id}
+                    recipe={recipe}
+                    profile={profile}
+                    isSaved={savedRecipeIds?.includes(recipe.id)}
+                    onToggleSave={() => toggleSave(recipe.id)}
+                    isLiked={likedRecipeIds?.includes(recipe.id)}
+                    onToggleLike={() => toggleLike(recipe.id)}
+                />
+                ))
+                ) : (
+                <div className="col-span-full py-10 text-center">
+                    <div className="mb-4 text-6xl opacity-20 filter grayscale">
+                        {activeTab === 'saved' ? '🔖' : activeTab === 'mine' ? '🍳' : '🔍'}
+                    </div>
+                    <h3 className="text-lg font-bold text-slate-700 mb-2">
+                        {activeTab === 'saved' ? '保存したレシピはありません' :
+                            activeTab === 'mine' ? 'まだ投稿がありません' :
+                                'レシピが見つかりませんでした'}
+                    </h3>
+                    <p className="text-slate-500 text-sm mb-6">
+                        {activeTab === 'saved' ? '気に入ったレシピを保存して、\nあなただけのレシピブックを作りましょう！' :
+                            activeTab === 'mine' ? 'お子様のために作った工夫レシピを\n記録してみませんか？' :
+                                '検索条件を変えて試してみてください'}
+                    </p>
+                    {activeTab === 'mine' && (
+                        <Link href="/recipe/new">
+                            <Button className="bg-orange-500 text-white shadow-lg shadow-orange-200">
+                                最初のレシピを投稿する
+                            </Button>
+                        </Link>
+                    )}
+                </div>
                 )}
             </div>
 
