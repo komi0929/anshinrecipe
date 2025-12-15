@@ -377,132 +377,129 @@ export const RecipeForm = ({
                         ))}
                     </div>
                 </div>
-                    </div>
-                </div >
-            </div >
-        )}
+            )}
 
-{/* Allergen Selection (Transparency) */ }
-<div className="form-section">
-    <label className="section-label">
-        除去アレルギー情報 (自動判定)
-    </label>
-    <p className="section-help">このレシピに含まれていない（除去されている）アレルギーを選択してください。<br />お子様を選択すると自動で追加されますが、手動で修正も可能です。</p>
+            {/* Allergen Selection (Transparency) */}
+            <div className="form-section">
+                <label className="section-label">
+                    除去アレルギー情報 (自動判定)
+                </label>
+                <p className="section-help">このレシピに含まれていない（除去されている）アレルギーを選択してください。<br />お子様を選択すると自動で追加されますが、手動で修正も可能です。</p>
 
-    <div className="flex flex-wrap gap-2 mt-2">
-        {ALLERGEN_OPTIONS.map(allergen => (
-            <button
-                key={allergen}
-                type="button"
-                onClick={() => toggleAllergen(allergen)}
-                className={`
+                <div className="flex flex-wrap gap-2 mt-2">
+                    {ALLERGEN_OPTIONS.map(allergen => (
+                        <button
+                            key={allergen}
+                            type="button"
+                            onClick={() => toggleAllergen(allergen)}
+                            className={`
                             px-4 py-2 rounded-full text-sm font-bold transition-all border
                             ${freeFromAllergens.includes(allergen)
-                        ? 'bg-green-500 text-white border-green-500 shadow-md'
-                        : 'bg-white text-slate-400 border-slate-200 hover:border-green-300'
-                    }
+                                    ? 'bg-green-500 text-white border-green-500 shadow-md'
+                                    : 'bg-white text-slate-400 border-slate-200 hover:border-green-300'
+                                }
                         `}
-            >
-                {allergen}なし
-                {freeFromAllergens.includes(allergen) && <Check size={14} className="ml-1 inline" />}
-            </button>
-        ))}
-    </div>
-    {(freeFromAllergens.length === 0 && selectedChildren.length > 0) && (
-        <p className="text-xs text-orange-500 mt-2">
-            ※注意: アレルギー除去情報が設定されていません。本当にアレルギー物質を含まないか確認してください。
-        </p>
-    )}
-</div>
+                        >
+                            {allergen}なし
+                            {freeFromAllergens.includes(allergen) && <Check size={14} className="ml-1 inline" />}
+                        </button>
+                    ))}
+                </div>
+                {(freeFromAllergens.length === 0 && selectedChildren.length > 0) && (
+                    <p className="text-xs text-orange-500 mt-2">
+                        ※注意: アレルギー除去情報が設定されていません。本当にアレルギー物質を含まないか確認してください。
+                    </p>
+                )}
+            </div>
 
-{/* Meal Scenes */ }
-<div className="form-section">
-    <label className="section-label">おすすめシーン</label>
-    <p className="section-help">このレシピに合うシーンを選択してください (複数選択可)</p>
+            {/* Meal Scenes */}
+            <div className="form-section">
+                <label className="section-label">おすすめシーン</label>
+                <p className="section-help">このレシピに合うシーンを選択してください (複数選択可)</p>
 
-    <div className="scene-selection">
-        {MEAL_SCENES.map(scene => (
-            <button
-                type="button"
-                key={scene}
-                onClick={() => toggleScene(scene)}
-                className={`scene-chip ${selectedScenes.includes(scene) ? 'selected' : ''}`}
-            >
-                {scene}
-            </button>
-        ))}
+                <div className="scene-selection">
+                    {MEAL_SCENES.map(scene => (
+                        <button
+                            type="button"
+                            key={scene}
+                            onClick={() => toggleScene(scene)}
+                            className={`scene-chip ${selectedScenes.includes(scene) ? 'selected' : ''}`}
+                        >
+                            {scene}
+                        </button>
+                    ))}
 
-        {/* Display custom scenes as chips */}
-        {selectedScenes.filter(scene => !MEAL_SCENES.includes(scene)).map(scene => (
-            <span key={scene} className="scene-chip selected custom-scene">
-                {scene}
-                <button type="button" onClick={() => removeScene(scene)} className="remove-scene-btn">
-                    <X size={14} />
-                </button>
-            </span>
-        ))}
-    </div>
-
-    <div className="custom-scene-input">
-        <input
-            type="text"
-            value={customScene}
-            onChange={(e) => setCustomScene(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomScene())}
-            placeholder="その他のシーンを入力"
-            className="form-input"
-        />
-        <button type="button" onClick={addCustomScene} className="add-btn">
-            追加
-        </button>
-    </div>
-</div>
-
-{/* Memo */ }
-<div className="form-section">
-    <label className="section-label">メモ</label>
-    <textarea
-        value={memo}
-        onChange={(e) => setMemo(e.target.value)}
-        placeholder="レシピの特徴や工夫した点など、自由にメモできます"
-        className="form-textarea"
-        rows={4}
-    />
-</div>
-
-{/* Tags */ }
-        <div className="form-section">
-            <label className="section-label">タグ</label>
-            <p className="section-help">その他、このレシピの特徴をメモしましょう</p>
-            <div className="tags-container">
-                <div className="tags-list">
-                    {tags.map(tag => (
-                        <span key={tag} className="tag-chip">
-                            #{tag}
-                            <button type="button" onClick={() => removeTag(tag)}>&times;</button>
+                    {/* Display custom scenes as chips */}
+                    {selectedScenes.filter(scene => !MEAL_SCENES.includes(scene)).map(scene => (
+                        <span key={scene} className="scene-chip selected custom-scene">
+                            {scene}
+                            <button type="button" onClick={() => removeScene(scene)} className="remove-scene-btn">
+                                <X size={14} />
+                            </button>
                         </span>
                     ))}
                 </div>
-                <div className="tag-input-wrapper">
+
+                <div className="custom-scene-input">
                     <input
                         type="text"
-                        value={tagInput}
-                        onChange={(e) => setTagInput(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && handleAddTag(e)}
-                        placeholder="例: 時短、簡単、栄養満点"
+                        value={customScene}
+                        onChange={(e) => setCustomScene(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomScene())}
+                        placeholder="その他のシーンを入力"
                         className="form-input"
                     />
-                    <button type="button" onClick={handleAddTag} className="add-btn">
+                    <button type="button" onClick={addCustomScene} className="add-btn">
                         追加
                     </button>
                 </div>
             </div>
-        </div>
 
-        <button type="submit" className="submit-btn" disabled={isSubmitting}>
-            {isSubmitting ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
-            <span>{isEditMode ? '変更を保存' : 'レシピを保存'}</span>
-        </button>
-    </form >
-);
+            {/* Memo */}
+            <div className="form-section">
+                <label className="section-label">メモ</label>
+                <textarea
+                    value={memo}
+                    onChange={(e) => setMemo(e.target.value)}
+                    placeholder="レシピの特徴や工夫した点など、自由にメモできます"
+                    className="form-textarea"
+                    rows={4}
+                />
+            </div>
+
+            {/* Tags */}
+            <div className="form-section">
+                <label className="section-label">タグ</label>
+                <p className="section-help">その他、このレシピの特徴をメモしましょう</p>
+                <div className="tags-container">
+                    <div className="tags-list">
+                        {tags.map(tag => (
+                            <span key={tag} className="tag-chip">
+                                #{tag}
+                                <button type="button" onClick={() => removeTag(tag)}>&times;</button>
+                            </span>
+                        ))}
+                    </div>
+                    <div className="tag-input-wrapper">
+                        <input
+                            type="text"
+                            value={tagInput}
+                            onChange={(e) => setTagInput(e.target.value)}
+                            onKeyPress={(e) => e.key === 'Enter' && handleAddTag(e)}
+                            placeholder="例: 時短、簡単、栄養満点"
+                            className="form-input"
+                        />
+                        <button type="button" onClick={handleAddTag} className="add-btn">
+                            追加
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" className="submit-btn" disabled={isSubmitting}>
+                {isSubmitting ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
+                <span>{isEditMode ? '変更を保存' : 'レシピを保存'}</span>
+            </button>
+        </form >
+    );
 };
