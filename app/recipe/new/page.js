@@ -7,7 +7,6 @@ import { useProfile } from '@/hooks/useProfile';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { RecipeForm } from '@/components/RecipeForm';
-import './AddRecipePage.css';
 
 const AddRecipePage = () => {
     const router = useRouter();

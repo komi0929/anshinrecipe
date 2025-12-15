@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Loader2, Link as LinkIcon, Search, Check, X, ImagePlus, Save } from 'lucide-react';
 import { uploadImage } from '@/lib/imageUpload';
 import { MEAL_SCENES } from '@/lib/constants';
-import './AddRecipePage.css'; // Reuse existing styles or create RecipeForm.css
+import './RecipeForm.css';
 
 export const RecipeForm = ({
     initialData = {},
