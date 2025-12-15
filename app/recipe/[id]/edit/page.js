@@ -9,7 +9,6 @@ import Link from 'next/link';
 import { uploadImage } from '@/lib/imageUpload';
 import { MEAL_SCENES } from '@/lib/constants';
 import { supabase } from '@/lib/supabaseClient';
-import '../../new/AddRecipePage.css'; // Reusing styles
 
 const EditRecipePage = () => {
     const router = useRouter();
