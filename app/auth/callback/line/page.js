@@ -50,7 +50,10 @@ export default function LineCallbackPage() {
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ code }),
+                    body: JSON.stringify({
+                        code,
+                        redirectUri: window.location.origin + '/auth/callback/line'
+                    }),
                 });
 
                 if (!response.ok) {

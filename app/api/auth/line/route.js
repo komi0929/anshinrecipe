@@ -16,17 +16,19 @@ const LINE_CHANNEL_SECRET = process.env.LINE_CHANNEL_SECRET;
 
 export async function POST(request) {
     try {
-        const { code } = await request.json();
+        const { code, redirectUri } = await request.json();
 
         if (!code) {
             return Response.json({ error: 'Missing authorization code' }, { status: 400 });
         }
 
+        const validRedirectUri = redirectUri || `${request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/callback/line`;
+
         // Exchange code for access token
         const tokenParams = new URLSearchParams({
             grant_type: 'authorization_code',
             code: code,
-            redirect_uri: `${request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/callback/line`,
+            redirect_uri: validRedirectUri,
             client_id: LINE_CHANNEL_ID,
             client_secret: LINE_CHANNEL_SECRET,
         });
