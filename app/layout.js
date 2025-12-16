@@ -2,6 +2,7 @@ import { Zen_Maru_Gothic } from 'next/font/google'
 import { ToastProvider } from '../components/Toast'
 import BottomNav from '../components/BottomNav'
 import SafetyBanner from '../components/SafetyBanner'
+import GoogleAnalytics from '../components/GoogleAnalytics'
 import './globals.css'
 
 const zenMaruGothic = Zen_Maru_Gothic({
