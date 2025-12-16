@@ -50,13 +50,21 @@
 .recipe-hero {
     position: relative;
     width: 100%;
-    height: 300px;
+    /* height: 300px; Removed fixed height */
+    height: auto;
+    background: #f8f9fa;
+    /* minimal bg */
 }
 
 .hero-image {
     width: 100%;
-    height: 100%;
-    object-fit: cover;
+    /* height: 100%; Removed to prevent cropping */
+    height: auto;
+    object-fit: contain;
+    max-height: 400px;
+    /* details often look better with some max height, but 'auto' is key for full display */
+    display: block;
+    margin: 0 auto;
 }
 
 .hero-badges {
@@ -110,6 +118,12 @@
     display: flex;
     align-items: center;
     gap: 8px;
+}
+
+.author-name {
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: var(--color-text);
 }
 
 .author-avatar-small {

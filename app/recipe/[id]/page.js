@@ -283,7 +283,7 @@ const RecipeDetailPage = () => {
                 )}
 
                 <div className="detail-section">
-                    <h3>説明</h3>
+                    <h3>おすすめポイント</h3>
                     <p className="recipe-description">
                         {recipe.memo || recipe.description || '説明はありません'}
                     </p>
