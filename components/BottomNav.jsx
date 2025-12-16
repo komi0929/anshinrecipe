@@ -10,7 +10,7 @@ import './BottomNav.css';
 
 const BottomNav = () => {
     const pathname = usePathname();
-    const { user } = useProfile();
+    const { user, profile } = useProfile();
     const { unreadCount } = useNotifications(user?.id);
 
     // Don't show bottom nav if user is not logged in or on login/welcome pages
@@ -41,7 +41,7 @@ const BottomNav = () => {
                 className={`nav-item ${pathname === '/profile' ? 'active' : ''}`}
             >
                 <div className="relative">
-                    {profile.avatarUrl ? (
+                    {profile?.avatarUrl ? (
                         <div className="w-6 h-6 rounded-full overflow-hidden border border-slate-200">
                             <img src={profile.avatarUrl} alt="Profile" className="w-full h-full object-cover" />
                         </div>
