@@ -10,6 +10,7 @@ const AdminPage = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [pin, setPin] = useState('');
     const [reports, setReports] = useState([]);
+    const [triedReports, setTriedReports] = useState([]);
     const [loading, setLoading] = useState(false);
     const { addToast } = useToast();
 
@@ -37,24 +38,33 @@ const AdminPage = () => {
     const fetchReports = async () => {
         setLoading(true);
         try {
-            const { data, error } = await supabase
+            // Fetch Inappropriate Reports
+            const { data: reportData, error: reportError } = await supabase
                 .from('reports')
                 .select(`
                     *,
-                    recipe:recipes!recipe_id (
-                        id,
-                        title,
-                        image_url,
-                        user_id
-                    ),
-                    reporter:profiles!reporter_id (
-                        username
-                    )
+                    recipe:recipes!recipe_id (id, title, image_url, user_id),
+                    reporter:profiles!reporter_id (username)
                 `)
                 .order('created_at', { ascending: false });
 
-            if (error) throw error;
-            setReports(data || []);
+            if (reportError) throw reportError;
+            setReports(reportData || []);
+
+            // Fetch Tried Reports (Tsukurepo)
+            const { data: triedData, error: triedError } = await supabase
+                .from('tried_reports')
+                .select(`
+                    *,
+                    recipe:recipes!recipe_id (id, title),
+                    user:profiles!user_id (username)
+                `)
+                .order('created_at', { ascending: false })
+                .limit(20);
+
+            if (triedError) throw triedError;
+            setTriedReports(triedData || []);
+
         } catch (error) {
             console.error('Error fetching reports:', error);
             addToast('レポートの取得に失敗しました', 'error');
@@ -183,7 +193,7 @@ const AdminPage = () => {
                     {loading ? (
                         <div className="text-center py-10 text-slate-500">読み込み中...</div>
                     ) : reports.length === 0 ? (
-                        <div className="bg-white rounded-lg p-10 text-center text-slate-500 shadow-sm">
+                        <div className="bg-white rounded-lg p-10 text-center text-slate-500 shadow-sm border border-slate-100">
                             <CheckCircle size={48} className="mx-auto mb-4 text-emerald-500" />
                             <p>現在、未対応の通報はありません</p>
                         </div>
@@ -257,6 +267,68 @@ const AdminPage = () => {
                             ))}
                         </div>
                     )}
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-8">
+                    {/* Tried Reports Section */}
+                    <div>
+                        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                            <CheckCircle className="text-primary" />
+                            最近のつくレポ (最新20件)
+                        </h2>
+                        <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+                            {triedReports.length === 0 ? (
+                                <div className="p-8 text-center text-slate-400">まだつくレポはありません</div>
+                            ) : (
+                                <ul className="divide-y divide-slate-100">
+                                    {triedReports.map((report) => (
+                                        <li key={report.id} className="p-4 hover:bg-slate-50 transition-colors">
+                                            <div className="flex gap-3">
+                                                {report.image_url ? (
+                                                    <img src={report.image_url} className="w-12 h-12 rounded object-cover flex-shrink-0" />
+                                                ) : (
+                                                    <div className="w-12 h-12 rounded bg-slate-100 flex items-center justify-center text-xl">📄</div>
+                                                )}
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex justify-between items-start">
+                                                        <span className="text-sm font-bold text-slate-800 line-clamp-1">{report.user?.username || 'Unknown'}</span>
+                                                        <span className="text-xs text-slate-400 whitespace-nowrap">{new Date(report.created_at).toLocaleDateString()}</span>
+                                                    </div>
+                                                    <p className="text-xs text-slate-500 mb-1">to: {report.recipe?.title}</p>
+                                                    <p className="text-sm text-slate-700 line-clamp-2">"{report.comment || 'コメントなし'}"</p>
+                                                </div>
+                                            </div>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Analytics Section */}
+                    <div>
+                        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                            <ExternalLink className="text-blue-500" />
+                            アクセス解析
+                        </h2>
+                        <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+                            <p className="text-sm text-slate-600 mb-4">
+                                Google Analytics (GA4) を使用して、アプリの利用状況を確認できます。
+                                リアルタイムのユーザー数、人気のレシピ、流入元などを分析可能です。
+                            </p>
+                            <a
+                                href="https://analytics.google.com/"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="block w-full bg-blue-500 hover:bg-blue-600 text-white text-center font-bold py-3 rounded-xl transition-colors"
+                            >
+                                Google Analyticsを開く
+                            </a>
+                            <p className="text-xs text-slate-400 mt-4 text-center">
+                                ※GA4の計測ID: {process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || '未設定'}
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

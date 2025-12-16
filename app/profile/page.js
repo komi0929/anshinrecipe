@@ -15,9 +15,12 @@ import { Footer } from '@/components/Footer';
 import { useNotifications } from '@/hooks/useNotifications';
 import NotificationList from '@/components/NotificationList';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { uploadImage } from '@/lib/imageUpload';
+
+// ... imports
 
 export default function ProfilePage() {
+    // ... hook destructuring
     const {
         user, profile, loading,
         updateUserName, updateAvatar,
@@ -27,6 +30,7 @@ export default function ProfilePage() {
     const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications(user?.id);
     const router = useRouter();
     const fileInputRef = useRef(null);
+    const childFileInputRef = useRef(null); // New ref for child photo
 
     // Local state for editing
     const [isEditingName, setIsEditingName] = useState(false);
@@ -37,9 +41,20 @@ export default function ProfilePage() {
     // Modals for Child Edits
     const [childName, setChildName] = useState('');
     const [childIcon, setChildIcon] = useState('👶');
+    const [childPhoto, setChildPhoto] = useState(null); // URL string
+    const [childPhotoFile, setChildPhotoFile] = useState(null); // File object
     const [childAllergens, setChildAllergens] = useState([]);
+    const [customAllergen, setCustomAllergen] = useState(''); // Free text input
 
-    const ALLERGEN_OPTIONS = ['卵', '乳', '小麦', 'えび', 'かに', 'そば', '落花生'];
+    // Inquiry Modal
+    const [showInquiryModal, setShowInquiryModal] = useState(false);
+
+    const ALLERGEN_OPTIONS = [
+        '卵', '乳', '小麦', 'えび', 'かに', 'そば', '落花生', // 特定原材料7品目
+        'アーモンド', 'あわび', 'いか', 'いくら', 'オレンジ', 'カシューナッツ', 'キウイフルーツ',
+        '牛肉', 'くるみ', 'ごま', 'さけ', 'さば', '大豆', '鶏肉', 'バナナ',
+        '豚肉', 'まつたけ', 'もも', 'やまいも', 'りんご', 'ゼラチン' // 特定原材料に準ずる21品目
+    ];
 
     useEffect(() => {
         if (!loading && !user) {
@@ -77,9 +92,23 @@ export default function ProfilePage() {
     const handleSaveChild = async () => {
         if (!childName.trim()) return;
 
+        let photoUrl = childPhoto;
+
+        // Upload new photo if selected
+        if (childPhotoFile) {
+            try {
+                photoUrl = await uploadImage(childPhotoFile, 'child-photos'); // Use 'child-photos' bucket or Folder
+            } catch (error) {
+                console.error('Child photo upload failed:', error);
+                alert('写真のアップロードに失敗しました');
+                return;
+            }
+        }
+
         const childData = {
             name: childName,
             icon: childIcon,
+            photo: photoUrl,
             allergens: childAllergens
         };
 
@@ -96,13 +125,17 @@ export default function ProfilePage() {
             setEditingChild(child);
             setChildName(child.name);
             setChildIcon(child.icon || '👶');
+            setChildPhoto(child.photo || null);
             setChildAllergens(child.allergens || []);
         } else {
             setEditingChild(null);
             setChildName('');
             setChildIcon('👶');
+            setChildPhoto(null);
             setChildAllergens([]);
         }
+        setChildPhotoFile(null);
+        setCustomAllergen('');
         setShowChildModal(true);
     };
 
@@ -222,32 +255,36 @@ export default function ProfilePage() {
                     <h3 className="text-sm font-bold text-text-sub mb-3 ml-2">獲得バッジ</h3>
                     <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
                         <div className="flex flex-col items-center min-w-[80px]">
-                            <div className="w-16 h-16 rounded-full bg-yellow-50 flex items-center justify-center border-2 border-yellow-200 shadow-sm mb-2">
-                                <span className="text-3xl">🔰</span>
+                            <div className={`w-16 h-16 rounded-full flex items-center justify-center border-2 mb-2 ${profile.children?.length > 0 ? 'bg-yellow-50 border-yellow-200 shadow-sm' : 'bg-slate-100 border-slate-200'}`}>
+                                <span className={`text-3xl ${profile.children?.length > 0 ? '' : 'grayscale opacity-40'}`}>🔰</span>
                             </div>
-                            <span className="text-xs font-bold text-text-main">はじめまして</span>
+                            <span className={`text-xs font-bold ${profile.children?.length > 0 ? 'text-text-main' : 'text-slate-400'}`}>はじめまして</span>
                         </div>
 
                         <div className="flex flex-col items-center min-w-[80px]">
-                            <div className="relative w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center border-2 border-slate-200 mb-2">
-                                <span className="text-3xl grayscale opacity-40">🍳</span>
-                                <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-slate-400 rounded-full flex items-center justify-center">
-                                    <span className="text-[10px] text-white">🔒</span>
-                                </div>
+                            <div className={`relative w-16 h-16 rounded-full flex items-center justify-center border-2 mb-2 ${profile.stats?.recipeCount > 0 ? 'bg-orange-50 border-orange-200 shadow-sm' : 'bg-slate-100 border-slate-200'}`}>
+                                <span className={`text-3xl ${profile.stats?.recipeCount > 0 ? '' : 'grayscale opacity-40'}`}>🍳</span>
+                                {(!profile.stats?.recipeCount) && (
+                                    <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-slate-400 rounded-full flex items-center justify-center">
+                                        <span className="text-[10px] text-white">🔒</span>
+                                    </div>
+                                )}
                             </div>
-                            <span className="text-xs font-bold text-slate-400">初投稿</span>
-                            <span className="text-[10px] text-slate-300">未獲得</span>
+                            <span className={`text-xs font-bold ${profile.stats?.recipeCount > 0 ? 'text-text-main' : 'text-slate-400'}`}>初投稿</span>
+                            <span className={`text-[10px] ${profile.stats?.recipeCount > 0 ? 'text-orange-400' : 'text-slate-300'}`}>{profile.stats?.recipeCount > 0 ? '獲得済み' : '未獲得'}</span>
                         </div>
 
                         <div className="flex flex-col items-center min-w-[80px]">
-                            <div className="relative w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center border-2 border-slate-200 mb-2">
-                                <span className="text-3xl grayscale opacity-40">💬</span>
-                                <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-slate-400 rounded-full flex items-center justify-center">
-                                    <span className="text-[10px] text-white">🔒</span>
-                                </div>
+                            <div className={`relative w-16 h-16 rounded-full flex items-center justify-center border-2 mb-2 ${profile.stats?.reportCount > 0 ? 'bg-blue-50 border-blue-200 shadow-sm' : 'bg-slate-100 border-slate-200'}`}>
+                                <span className={`text-3xl ${profile.stats?.reportCount > 0 ? '' : 'grayscale opacity-40'}`}>💬</span>
+                                {(!profile.stats?.reportCount) && (
+                                    <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-slate-400 rounded-full flex items-center justify-center">
+                                        <span className="text-[10px] text-white">🔒</span>
+                                    </div>
+                                )}
                             </div>
-                            <span className="text-xs font-bold text-slate-400">初レポート</span>
-                            <span className="text-[10px] text-slate-300">未獲得</span>
+                            <span className={`text-xs font-bold ${profile.stats?.reportCount > 0 ? 'text-text-main' : 'text-slate-400'}`}>初レポート</span>
+                            <span className={`text-[10px] ${profile.stats?.reportCount > 0 ? 'text-blue-400' : 'text-slate-300'}`}>{profile.stats?.reportCount > 0 ? '獲得済み' : '未獲得'}</span>
                         </div>
                     </div>
                 </div>
@@ -313,13 +350,16 @@ export default function ProfilePage() {
                             </div>
                             <ChevronRight className="text-slate-300" size={20} />
                         </Link>
-                        <a href="mailto:support@anshin-recipe.com" className="p-4 flex items-center justify-between border-b border-slate-50 last:border-none hover:bg-slate-50 transition-colors">
+                        <button
+                            onClick={() => setShowInquiryModal(true)}
+                            className="w-full p-4 flex items-center justify-between border-b border-slate-50 last:border-none hover:bg-slate-50 transition-colors text-left"
+                        >
                             <div className="flex items-center gap-3 text-text-main">
                                 <Mail size={20} className="text-slate-400" />
                                 <span>お問い合わせ</span>
                             </div>
                             <ChevronRight className="text-slate-300" size={20} />
-                        </a>
+                        </button>
                     </div>
                 </div>
 
@@ -372,22 +412,39 @@ export default function ProfilePage() {
                             </button>
                         </div>
 
-                        <div className="space-y-6">
-                            {/* Icon Selection */}
-                            <div>
-                                <label className="text-sm font-bold text-text-sub mb-2 block">アイコン</label>
-                                <div className="flex gap-3 justify-center bg-slate-50 p-4 rounded-2xl">
+                        <div className="space-y-6 max-h-[70vh] overflow-y-auto px-1">
+                            {/* Photo / Icon Selection */}
+                            <div className="flex flex-col items-center gap-4">
+                                <div
+                                    className="relative w-24 h-24 rounded-full bg-slate-100 border-4 border-white shadow-lg flex items-center justify-center overflow-hidden cursor-pointer group"
+                                    onClick={() => childFileInputRef.current?.click()}
+                                >
+                                    {childPhotoFile ? (
+                                        <img src={URL.createObjectURL(childPhotoFile)} className="w-full h-full object-cover" />
+                                    ) : childPhoto ? (
+                                        <img src={childPhoto} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <span className="text-4xl">{childIcon}</span>
+                                    )}
+                                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <Camera className="text-white" size={24} />
+                                    </div>
+                                </div>
+                                <input
+                                    type="file"
+                                    ref={childFileInputRef}
+                                    className="hidden"
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                        if (e.target.files?.[0]) setChildPhotoFile(e.target.files[0]);
+                                    }}
+                                />
+                                <div className="flex gap-2">
                                     {['👶', '👧', '👦'].map(icon => (
                                         <button
                                             key={icon}
-                                            onClick={() => setChildIcon(icon)}
-                                            className={`
-                                                w-14 h-14 rounded-full text-3xl flex items-center justify-center transition-all
-                                                ${childIcon === icon
-                                                    ? 'bg-white shadow-md scale-110 border-2 border-primary'
-                                                    : 'hover:bg-white hover:shadow-sm opacity-50'
-                                                }
-                                            `}
+                                            onClick={() => { setChildIcon(icon); setChildPhoto(null); setChildPhotoFile(null); }}
+                                            className={`p-2 rounded-full text-xl hover:bg-slate-100 ${!childPhoto && !childPhotoFile && childIcon === icon ? 'bg-orange-100' : ''}`}
                                         >
                                             {icon}
                                         </button>
@@ -411,13 +468,22 @@ export default function ProfilePage() {
                                 <div className="flex justify-between items-center mb-2">
                                     <label className="text-sm font-bold text-text-sub block">アレルギー品目（除去）</label>
                                     <button
-                                        onClick={() => setChildAllergens(ALLERGEN_OPTIONS)}
+                                        onClick={() => {
+                                            // Toggle all 7 main
+                                            const main7 = ['卵', '乳', '小麦', 'えび', 'かに', 'そば', '落花生'];
+                                            const hasAll = main7.every(a => childAllergens.includes(a));
+                                            if (hasAll) {
+                                                setChildAllergens(prev => prev.filter(a => !main7.includes(a)));
+                                            } else {
+                                                setChildAllergens(prev => [...new Set([...prev, ...main7])]);
+                                            }
+                                        }}
                                         className="text-xs text-primary font-bold bg-orange-50 px-2 py-1 rounded hover:bg-orange-100 transition-colors"
                                     >
-                                        特定原材料7品目を全選択
+                                        特定原材料7品目を設定
                                     </button>
                                 </div>
-                                <div className="flex flex-wrap gap-2">
+                                <div className="flex flex-wrap gap-2 mb-4">
                                     {ALLERGEN_OPTIONS.map(allergen => (
                                         <button
                                             key={allergen}
@@ -429,7 +495,7 @@ export default function ProfilePage() {
                                                 }
                                             }}
                                             className={`
-                                                px-4 py-2 rounded-full text-sm font-bold transition-all border
+                                                px-3 py-1.5 rounded-full text-xs font-bold transition-all border
                                                 ${childAllergens.includes(allergen)
                                                     ? 'bg-rose-500 text-white border-rose-500 shadow-md shadow-rose-200'
                                                     : 'bg-white text-text-sub border-slate-200 hover:border-rose-200 hover:text-rose-400'
@@ -438,6 +504,36 @@ export default function ProfilePage() {
                                         >
                                             {allergen}
                                         </button>
+                                    ))}
+                                </div>
+
+                                <div className="flex gap-2">
+                                    <Input
+                                        type="text"
+                                        value={customAllergen}
+                                        onChange={(e) => setCustomAllergen(e.target.value)}
+                                        placeholder="その他（自由入力）"
+                                        className="text-xs h-8"
+                                    />
+                                    <button
+                                        onClick={() => {
+                                            if (customAllergen.trim() && !childAllergens.includes(customAllergen.trim())) {
+                                                setChildAllergens([...childAllergens, customAllergen.trim()]);
+                                                setCustomAllergen('');
+                                            }
+                                        }}
+                                        className="bg-slate-800 text-white text-xs font-bold px-3 rounded-lg"
+                                    >
+                                        追加
+                                    </button>
+                                </div>
+                                {/* Display Custom Labels */}
+                                <div className="flex flex-wrap gap-2 mt-2">
+                                    {childAllergens.filter(a => !ALLERGEN_OPTIONS.includes(a)).map(a => (
+                                        <span key={a} className="bg-rose-100 text-rose-600 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+                                            {a}
+                                            <button onClick={() => setChildAllergens(prev => prev.filter(item => item !== a))}>×</button>
+                                        </span>
                                     ))}
                                 </div>
                             </div>
@@ -464,6 +560,42 @@ export default function ProfilePage() {
                                 {editingChild ? '保存する' : '追加する'}
                             </Button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Inquiry Modal */}
+            {showInquiryModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div
+                        className="bg-white w-full max-w-sm rounded-[32px] p-6 shadow-2xl animate-in zoom-in-95 duration-200"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <h3 className="text-xl font-bold text-center mb-6 text-text-main">お問い合わせ</h3>
+                        <div className="space-y-4">
+                            <a
+                                href="https://line.me/R/ti/p/@anshin_recipe"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center justify-center gap-3 w-full py-4 bg-[#06C755] text-white rounded-2xl font-bold shadow-sm hover:shadow-md transition-all active:scale-95"
+                            >
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/LINE_logo.svg" alt="LINE" className="w-6 h-6 bg-white rounded-full p-0.5" />
+                                LINEで問い合わせる
+                            </a>
+                            <a
+                                href="mailto:support@anshin-recipe.com"
+                                className="flex items-center justify-center gap-3 w-full py-4 bg-slate-100 text-slate-700 rounded-2xl font-bold hover:bg-slate-200 transition-colors active:scale-95"
+                            >
+                                <Mail size={20} />
+                                メールで問い合わせる
+                            </a>
+                        </div>
+                        <button
+                            onClick={() => setShowInquiryModal(false)}
+                            className="mt-6 w-full py-3 text-sm font-bold text-slate-400 hover:text-slate-600"
+                        >
+                            キャンセル
+                        </button>
                     </div>
                 </div>
             )}

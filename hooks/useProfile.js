@@ -8,7 +8,8 @@ export const useProfile = () => {
         id: null,
         userName: '',
         avatarUrl: '',
-        children: []
+        children: [],
+        stats: { recipeCount: 0, reportCount: 0 }
     });
     const [savedRecipeIds, setSavedRecipeIds] = useState([]);
     const [likedRecipeIds, setLikedRecipeIds] = useState([]);
@@ -89,12 +90,28 @@ export const useProfile = () => {
                 setLikedRecipeIds(likedData.map(item => item.recipe_id));
             }
 
+            // Fetch stats (recipes count)
+            const { count: recipeCount, error: recipeCountError } = await supabase
+                .from('recipes')
+                .select('*', { count: 'exact', head: true })
+                .eq('user_id', userId);
+
+            // Fetch stats (tried reports count)
+            const { count: reportCount, error: reportCountError } = await supabase
+                .from('tried_reports')
+                .select('*', { count: 'exact', head: true })
+                .eq('user_id', userId);
+
             if (profileData) {
                 setProfile({
                     id: profileData.id,
                     userName: profileData.display_name || profileData.username || '',
                     avatarUrl: profileData.avatar_url || profileData.picture_url || '',
-                    children: childrenData || []
+                    children: childrenData || [],
+                    stats: {
+                        recipeCount: recipeCount || 0,
+                        reportCount: reportCount || 0
+                    }
                 });
             }
         } catch (error) {
@@ -149,6 +166,7 @@ export const useProfile = () => {
                 user_id: user.id,
                 name: child.name,
                 icon: child.icon,
+                photo: child.photo, // Add photo URL support
                 allergens: child.allergens || []
             };
 
@@ -178,6 +196,7 @@ export const useProfile = () => {
                 .update({
                     name: updatedChild.name,
                     icon: updatedChild.icon,
+                    photo: updatedChild.photo,
                     allergens: updatedChild.allergens
                 })
                 .eq('id', id);

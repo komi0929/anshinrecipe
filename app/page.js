@@ -23,7 +23,7 @@ const RecipeListPage = () => {
     const [selectedChildId, setSelectedChildId] = useState(null);
     const [selectedScene, setSelectedScene] = useState(null);
     const [imagesLoaded, setImagesLoaded] = useState(false);
-    const [showTooltip, setShowTooltip] = useState(false);
+
 
     // New Tab State
     const [activeTab, setActiveTab] = useState('recommend'); // 'recommend', 'saved', 'mine'
@@ -34,12 +34,6 @@ const RecipeListPage = () => {
         const timer = setTimeout(() => {
             setImagesLoaded(true);
         }, 500);
-
-        // Show tooltip if not seen
-        const hasSeen = localStorage.getItem('hasSeenPostTooltip');
-        if (!hasSeen) {
-            setTimeout(() => setShowTooltip(true), 2000);
-        }
 
         return () => clearTimeout(timer);
     }, []);
@@ -450,35 +444,7 @@ const RecipeListPage = () => {
                 )}
             </div>
 
-            {user && (
-                <div className="fixed bottom-20 right-5 z-50">
-                    {showTooltip && (
-                        <div className="absolute bottom-full right-0 mb-2 w-48 p-3 bg-orange-600 text-white text-sm rounded-xl shadow-lg animate-bounce-slow">
-                            <div className="absolute -bottom-1 right-6 w-3 h-3 bg-orange-600 rotate-45"></div>
-                            <p className="font-bold relative z-10">レシピを投稿してみよう！</p>
-                            <button
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    setShowTooltip(false);
-                                    localStorage.setItem('hasSeenPostTooltip', 'true');
-                                }}
-                                className="absolute -top-2 -left-2 bg-slate-800 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs border border-white"
-                            >
-                                ×
-                            </button>
-                        </div>
-                    )}
-                    <Link href="/recipe/new">
-                        <Button
-                            variant="primary"
-                            size="icon"
-                            className="w-14 h-14 rounded-full shadow-lg shadow-orange-300"
-                        >
-                            <Plus size={28} />
-                        </Button>
-                    </Link>
-                </div>
-            )}
+            {/* Removed FAB */}
         </div>
     );
 };
