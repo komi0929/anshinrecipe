@@ -404,8 +404,8 @@ const RecipeListPage = () => {
                 </>
             )}
 
-            {/* Recipe Grid - Masonry Layout */}
-            <div className="px-3 columns-2 md:columns-3 lg:columns-4 gap-3 space-y-3 pb-24">
+            {/* Recipe Grid - Masonry Layout (Strict Max 3 Columns) */}
+            <div className="px-3 columns-2 md:columns-3 gap-3 space-y-3 pb-24">
                 {loading || tabLoading || !imagesLoaded ? (
                     Array.from({ length: 6 }).map((_, i) => (
                         <div key={i} className="break-inside-avoid mb-3">
