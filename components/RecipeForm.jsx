@@ -487,42 +487,54 @@ export const RecipeForm = ({
                 )}
             </div>
 
-                        >
-            {scene}
-        </button>
-    ))
-}
+            {/* Meal Scenes */}
+            <div className="form-section">
+                <label className="section-label">おすすめシーン</label>
+                <p className="section-help">このレシピに合うシーンを選択してください (複数選択可)</p>
 
-{/* Display custom scenes as chips */ }
-{
-    selectedScenes.filter(scene => !MEAL_SCENES.includes(scene)).map(scene => (
-        <span key={scene} className="scene-chip selected custom-scene">
-            {scene}
-            <button type="button" onClick={() => removeScene(scene)} className="remove-scene-btn">
-                <X size={14} />
-            </button>
-        </span>
-    ))
-}
+                <div className="scene-selection">
+                    {MEAL_SCENES.map(scene => (
+                        <button
+                            type="button"
+                            key={scene}
+                            onClick={() => toggleScene(scene)}
+                            className={`scene-chip ${selectedScenes.includes(scene) ? 'selected' : ''}`}
+                        >
+                            {scene}
+                        </button>
+                    ))
+                    }
+
+                    {/* Display custom scenes as chips */}
+                    {
+                        selectedScenes.filter(scene => !MEAL_SCENES.includes(scene)).map(scene => (
+                            <span key={scene} className="scene-chip selected custom-scene">
+                                {scene}
+                                <button type="button" onClick={() => removeScene(scene)} className="remove-scene-btn">
+                                    <X size={14} />
+                                </button>
+                            </span>
+                        ))
+                    }
                 </div >
 
-    <div className="custom-scene-input">
-        <input
-            type="text"
-            value={customScene}
-            onChange={(e) => setCustomScene(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomScene())}
-            placeholder="その他のシーンを入力"
-            className="form-input"
-        />
-        <button type="button" onClick={addCustomScene} className="add-btn">
-            追加
-        </button>
-    </div>
+                <div className="custom-scene-input">
+                    <input
+                        type="text"
+                        value={customScene}
+                        onChange={(e) => setCustomScene(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomScene())}
+                        placeholder="その他のシーンを入力"
+                        className="form-input"
+                    />
+                    <button type="button" onClick={addCustomScene} className="add-btn">
+                        追加
+                    </button>
+                </div>
             </div >
 
-    {/* Memo */ }
-    < div className = "form-section" >
+            {/* Memo */}
+            < div className="form-section" >
                 <label className="section-label">おすすめポイント</label>
                 <textarea
                     value={memo}
@@ -533,8 +545,8 @@ export const RecipeForm = ({
                 />
             </div >
 
-    {/* Tags */ }
-    < div className = "form-section" >
+            {/* Tags */}
+            < div className="form-section" >
                 <label className="section-label">タグ</label>
                 <p className="section-help">その他、このレシピの特徴をメモしましょう</p>
                 <div className="tags-container">
@@ -564,8 +576,8 @@ export const RecipeForm = ({
 
 
 
-    {/* Public/Private Setting */ }
-    < div className = "form-section" >
+            {/* Public/Private Setting */}
+            < div className="form-section" >
                 <label className="section-label">公開設定</label>
                 <div className="flex gap-4 mt-2">
                     <button
@@ -589,10 +601,10 @@ export const RecipeForm = ({
                 </div>
             </div >
 
-    <button type="submit" className="submit-btn" disabled={isSubmitting}>
-        {isSubmitting ? <Loader2 className="animate-spin" size={20} /> : null}
-        <span>{isEditMode ? '変更を保存' : 'レシピを保存'}</span>
-    </button>
+            <button type="submit" className="submit-btn" disabled={isSubmitting}>
+                {isSubmitting ? <Loader2 className="animate-spin" size={20} /> : null}
+                <span>{isEditMode ? '変更を保存' : 'レシピを保存'}</span>
+            </button>
         </form >
     );
 };

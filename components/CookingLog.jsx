@@ -138,5 +138,4 @@ export const CookingLog = ({ logs = [], onAddLog, currentUserId }) => {
             </div>
         </div>
     );
-    );
 };
