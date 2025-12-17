@@ -32,10 +32,10 @@ export default function LineCallbackPage() {
                     return;
                 }
 
-                // Verify state (CSRF protection)
-                const storedState = sessionStorage.getItem('line_oauth_state');
-                sessionStorage.removeItem('line_oauth_state');
-                sessionStorage.removeItem('line_oauth_nonce');
+                // Verify state (CSRF protection) - use localStorage as sessionStorage doesn't persist across redirects
+                const storedState = localStorage.getItem('line_oauth_state');
+                localStorage.removeItem('line_oauth_state');
+                localStorage.removeItem('line_oauth_nonce');
 
                 if (state !== storedState) {
                     setError('無効なリクエストです');
