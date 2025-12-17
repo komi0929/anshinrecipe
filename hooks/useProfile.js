@@ -115,8 +115,11 @@ export const useProfile = () => {
                 });
             }
         } catch (error) {
-            console.error('Error fetching profile:', error);
-            addToast('プロフィールの取得に失敗しました', 'error');
+            // Only show error if it's not a "no rows" error (PGRST116)
+            if (error?.code !== 'PGRST116' && Object.keys(error || {}).length > 0) {
+                console.error('Error fetching profile:', error);
+                addToast('プロフィールの取得に失敗しました', 'error');
+            }
         } finally {
             setLoading(false);
         }
