@@ -1,5 +1,5 @@
 import React from 'react';
-import { CHILD_ICONS } from '../src/data/icons';
+import { CHILD_ICONS } from '@/data/icons';
 import './IconPicker.css';
 
 const IconPicker = ({ selected, onChange }) => {

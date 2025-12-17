@@ -293,6 +293,14 @@ export const RecipeForm = ({
 
     return (
         <form onSubmit={handleSubmit} className="recipe-form">
+            {/* OGP Loading Overlay */}
+            {isFetchingOgp && (
+                <div className="ogp-loading-overlay">
+                    <div className="loading-spinner"></div>
+                    <span className="loading-text">URLから情報を取得しています...</span>
+                </div>
+            )}
+
             {/* URL Input Section - Priority #1 */}
             <div className="form-section url-section">
                 <label className="section-label">
@@ -601,10 +609,12 @@ export const RecipeForm = ({
                 </div>
             </div >
 
-            <button type="submit" className="submit-btn" disabled={isSubmitting}>
-                {isSubmitting ? <Loader2 className="animate-spin" size={20} /> : null}
-                <span>{isEditMode ? '変更を保存' : 'レシピを保存'}</span>
-            </button>
+            <div className="floating-save-container">
+                <button type="submit" className="submit-btn" disabled={isSubmitting}>
+                    {isSubmitting ? <Loader2 className="animate-spin" size={20} /> : null}
+                    <span>{isEditMode ? '変更を保存' : 'レシピを保存'}</span>
+                </button>
+            </div>
         </form >
     );
 };

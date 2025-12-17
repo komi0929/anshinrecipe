@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ALLERGENS } from '../src/data/allergens';
+import { ALLERGENS } from '@/data/allergens';
 import { Plus, X } from 'lucide-react';
 import './AllergySelector.css';
 

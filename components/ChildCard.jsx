@@ -168,11 +168,13 @@ export const ChildCard = ({ child, onUpdate, onDelete, isNew = false, onSave, on
                 </div>
                 <h3 className="child-name">{child.name}</h3>
                 <div className="child-actions">
-                    <button onClick={() => setIsEditing(true)} className="btn-icon">
-                        <Edit2 size={18} />
+                    <button onClick={() => setIsEditing(true)} className="btn-icon-text">
+                        <Edit2 size={16} />
+                        <span>編集</span>
                     </button>
-                    <button onClick={onDelete} className="btn-icon btn-delete">
-                        <Trash2 size={18} />
+                    <button onClick={onDelete} className="btn-icon-text btn-delete">
+                        <Trash2 size={16} />
+                        <span>削除</span>
                     </button>
                 </div>
             </div>

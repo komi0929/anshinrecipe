@@ -60,6 +60,28 @@
     object-fit: cover;
 }
 
+.hero-placeholder {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #fed7aa 0%, #fdba74 50%, #fb923c 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: white;
+}
+
+.hero-placeholder svg {
+    opacity: 0.9;
+}
+
+.hero-placeholder span {
+    font-size: 14px;
+    font-weight: 600;
+    opacity: 0.85;
+}
+
 .hero-badges {
     position: absolute;
     bottom: 12px;
@@ -149,16 +171,26 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 10px;
     width: 100%;
-    padding: 12px;
-    background: #f8fafc;
-    color: #475569;
-    font-weight: bold;
-    font-size: 14px;
-    border-radius: 12px;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, #fb923c 0%, #f97316 100%);
+    color: white;
+    font-weight: 700;
+    font-size: 16px;
+    border-radius: 14px;
     margin-bottom: 24px;
-    transition: background 0.2s;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 14px rgba(249, 115, 22, 0.35);
+}
+
+.source-link-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(249, 115, 22, 0.45);
+}
+
+.source-link-btn:active {
+    transform: translateY(0);
 }
 
 .detail-section {
@@ -271,4 +303,70 @@
     color: #94a3b8;
     font-size: 13px;
     padding: 20px;
+}
+
+/* Empty State with CTA */
+.empty-state-with-cta {
+    text-align: center;
+    padding: 24px 16px;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 1px dashed #e2e8f0;
+}
+
+.empty-state-with-cta p {
+    color: #94a3b8;
+    font-size: 14px;
+    margin-bottom: 12px;
+}
+
+.cta-first-report {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #fb923c 0%, #f97316 100%);
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 24px;
+    transition: all 0.3s;
+    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+}
+
+.cta-first-report:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(249, 115, 22, 0.4);
+}
+
+/* Empty Recommendation Points */
+.empty-recommendation-points {
+    text-align: center;
+    padding: 20px 16px;
+    background: #fffbeb;
+    border-radius: 12px;
+    border: 1px dashed #fcd34d;
+}
+
+.empty-recommendation-points .text-muted {
+    color: #d97706;
+    font-size: 14px;
+    margin-bottom: 12px;
+}
+
+.add-points-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: #fef3c7;
+    color: #92400e;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 20px;
+    transition: all 0.2s;
+}
+
+.add-points-btn:hover {
+    background: #fde68a;
 }

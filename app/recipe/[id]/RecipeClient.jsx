@@ -7,7 +7,7 @@ import { supabase } from '../../../lib/supabaseClient';
 import { useProfile } from '../../../hooks/useProfile';
 import { useRecipes } from '../../../hooks/useRecipes';
 import { useToast } from '../../../components/Toast';
-import { ArrowLeft, Bookmark, Share2, ExternalLink, User as UserIcon, Clock, Smile, Heart, CheckCircle, MessageCircle, Pencil } from 'lucide-react';
+import { ArrowLeft, Bookmark, Share2, ExternalLink, User as UserIcon, Clock, Smile, Heart, CheckCircle, MessageCircle, Pencil, UtensilsCrossed } from 'lucide-react';
 import { getReactionCounts, getUserReaction, toggleReaction, getTriedReports, deleteTriedReport } from '../../../lib/actions/socialActions';
 import { getRecommendedRecipes } from '../../../lib/recommendations';
 import TriedReportForm from '../../../components/TriedReportForm';
@@ -251,7 +251,14 @@ const RecipeDetailPage = () => {
             </div>
 
             <div className="recipe-hero">
-                <img src={recipe.image_url} alt={recipe.title} className="hero-image" />
+                {recipe.image_url ? (
+                    <img src={recipe.image_url} alt={recipe.title} className="hero-image" />
+                ) : (
+                    <div className="hero-placeholder">
+                        <UtensilsCrossed size={48} />
+                        <span>画像が設定されていません</span>
+                    </div>
+                )}
                 {safeFor.length > 0 && (
                     <div className="hero-badges">
                         {safeFor.map(child => (
@@ -331,9 +338,20 @@ const RecipeDetailPage = () => {
 
                 <div className="detail-section">
                     <h3>おすすめポイント</h3>
-                    <p className="recipe-description">
-                        {recipe.memo || recipe.description || '説明はありません'}
-                    </p>
+                    {(recipe.memo || recipe.description) ? (
+                        <p className="recipe-description">
+                            {recipe.memo || recipe.description}
+                        </p>
+                    ) : (
+                        <div className="empty-recommendation-points">
+                            <p className="text-muted">まだおすすめポイントが設定されていません</p>
+                            {user && recipe.user_id === user.id && (
+                                <a href={`/recipe/${id}/edit`} className="add-points-btn">
+                                    ✨ ポイントを追加する
+                                </a>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 {/* Scenes Section */}
@@ -424,7 +442,14 @@ const RecipeDetailPage = () => {
                                 />
                             ))
                         ) : (
-                            <p className="empty-state">まだレポートはありません</p>
+                            <div className="empty-state-with-cta">
+                                <p>まだレポートはありません</p>
+                                {user && (
+                                    <button onClick={() => setShowReportForm(true)} className="cta-first-report">
+                                        🍳 最初のレポートを投稿してみませんか？
+                                    </button>
+                                )}
+                            </div>
                         )}
                     </div>
                 </div>

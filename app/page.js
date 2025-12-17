@@ -10,7 +10,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { Search, Plus, User as UserIcon, Grid, Bookmark, Heart, Baby, BookHeart } from 'lucide-react';
 import { RecipeCardSkeleton } from '@/components/Skeleton';
 import { RecipeCard } from '../components/RecipeCard';
-import { MEAL_SCENES } from '@/lib/constants';
+import { MEAL_SCENES, SCENE_ICONS } from '@/lib/constants';
 import { Footer } from '@/components/Footer';
 import LineLoginButton from '@/components/LineLoginButton';
 import { Button } from '@/components/ui/Button';
@@ -323,12 +323,16 @@ const RecipeListPage = () => {
                     </div>
 
                     <div className="px-4 mb-4">
-                        <Input
-                            placeholder="レシピを検索..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            icon={Search}
-                        />
+                        <div className="relative">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={22} />
+                            <input
+                                type="text"
+                                placeholder="レシピ名、食材、タグで検索..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full bg-white border-2 border-transparent rounded-full pl-12 pr-5 py-3 text-slate-700 placeholder-slate-400 transition-all outline-none focus:border-orange-300 focus:shadow-[0_0_0_4px_rgba(251,146,60,0.1)]"
+                            />
+                        </div>
                     </div>
 
                     {/* Child Selection Row */}
@@ -383,7 +387,7 @@ const RecipeListPage = () => {
                             <button
                                 key={scene}
                                 className={`
-                                    px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap
+                                    px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap flex items-center gap-1.5
                                     ${selectedScene === scene
                                         ? 'bg-primary text-white shadow-md shadow-orange-200'
                                         : 'bg-white text-text-sub border border-slate-100 hover:bg-slate-50'
@@ -391,6 +395,7 @@ const RecipeListPage = () => {
                                 `}
                                 onClick={() => setSelectedScene(scene)}
                             >
+                                <span>{SCENE_ICONS[scene] || '🍽️'}</span>
                                 {scene}
                             </button>
                         ))}

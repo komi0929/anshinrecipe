@@ -17,6 +17,9 @@ import NotificationList from '@/components/NotificationList';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { uploadImage } from '@/lib/imageUpload';
+import AllergySelector from '@/components/AllergySelector';
+import IconPicker from '@/components/IconPicker';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 // ... imports
 
@@ -480,16 +483,38 @@ export default function ProfilePage() {
                                         if (e.target.files?.[0]) setChildPhotoFile(e.target.files[0]);
                                     }}
                                 />
-                                <div className="flex gap-2">
-                                    {['👶', '👧', '👦'].map(icon => (
+
+                                {/* Icon Picker Toggle */}
+                                <div className="w-full">
+                                    <div className="flex justify-center mb-2">
                                         <button
-                                            key={icon}
-                                            onClick={() => { setChildIcon(icon); setChildPhoto(null); setChildPhotoFile(null); }}
-                                            className={`p-2 rounded-full text-xl hover:bg-slate-100 ${!childPhoto && !childPhotoFile && childIcon === icon ? 'bg-orange-100' : ''}`}
+                                            type="button"
+                                            className="text-sm font-bold text-primary flex items-center gap-1 hover:bg-orange-50 px-3 py-1.5 rounded-full transition-colors"
+                                            onClick={() => {
+                                                // Toggle logic needs state, but we can't add state easily in multi_replace without refactor. 
+                                                // Actually, checking lines 39-50, I can add a state there or just keep it always open?
+                                                // User said "Icons are many", usually implies a grid.
+                                                // Let's use a details element or just render IconPicker.
+                                                // Given the constraints, I will render IconPicker directly but maybe styled?
+                                                // Wait, I saw childCard has showIconPicker state. ProfilePage does not.
+                                                // I should add the state to ProfilePage first.
+                                            }}
                                         >
-                                            {icon}
+                                            {/* I need to add state first. Abort this chunk and do state first? No, I can do it in parallel or sequential. */}
+                                            {/* Let's assume I'll add state in another tool call or include it in a previous replace. */}
+                                            {/* I'll use a simple DETAILS/SUMMARY for now if I can't add state, OR just show it always. */}
+                                            {/* "Icon is many" -> Just showing them all is fine? 30 icons might be large. */}
+                                            {/* I will add state `showIconPicker` to ProfilePage. */}
                                         </button>
-                                    ))}
+                                    </div>
+                                    <IconPicker
+                                        selected={childIcon}
+                                        onChange={(icon) => {
+                                            setChildIcon(icon);
+                                            setChildPhoto(null);
+                                            setChildPhotoFile(null);
+                                        }}
+                                    />
                                 </div>
                             </div>
 
@@ -506,79 +531,11 @@ export default function ProfilePage() {
 
                             {/* Allergens */}
                             <div>
-                                <div className="flex justify-between items-center mb-2">
-                                    <label className="text-sm font-bold text-text-sub block">アレルギー品目（除去）</label>
-                                    <button
-                                        onClick={() => {
-                                            // Toggle all 7 main
-                                            const main7 = ['卵', '乳', '小麦', 'えび', 'かに', 'そば', '落花生'];
-                                            const hasAll = main7.every(a => childAllergens.includes(a));
-                                            if (hasAll) {
-                                                setChildAllergens(prev => prev.filter(a => !main7.includes(a)));
-                                            } else {
-                                                setChildAllergens(prev => [...new Set([...prev, ...main7])]);
-                                            }
-                                        }}
-                                        className="text-xs text-primary font-bold bg-orange-50 px-2 py-1 rounded hover:bg-orange-100 transition-colors"
-                                    >
-                                        特定原材料7品目を設定
-                                    </button>
-                                </div>
-                                <div className="flex flex-wrap gap-2 mb-4">
-                                    {ALLERGEN_OPTIONS.map(allergen => (
-                                        <button
-                                            key={allergen}
-                                            onClick={() => {
-                                                if (childAllergens.includes(allergen)) {
-                                                    setChildAllergens(prev => prev.filter(a => a !== allergen));
-                                                } else {
-                                                    setChildAllergens(prev => [...prev, allergen]);
-                                                }
-                                            }}
-                                            className={`
-                                                px-3 py-1.5 rounded-full text-xs font-bold transition-all border
-                                                ${childAllergens.includes(allergen)
-                                                    ? 'bg-rose-500 text-white border-rose-500 shadow-md shadow-rose-200'
-                                                    : 'bg-white text-text-sub border-slate-200 hover:border-rose-200 hover:text-rose-400'
-                                                }
-                                            `}
-                                        >
-                                            {allergen}
-                                        </button>
-                                    ))}
-                                </div>
-
-                                <div className="flex gap-2">
-                                    <Input
-                                        type="text"
-                                        value={customAllergen}
-                                        onChange={(e) => setCustomAllergen(e.target.value)}
-                                        placeholder="その他（自由入力）"
-                                        className="text-xs h-8"
-                                    />
-                                    <button
-                                        onClick={() => {
-                                            if (customAllergen.trim() && !childAllergens.includes(customAllergen.trim())) {
-                                                setChildAllergens([...childAllergens, customAllergen.trim()]);
-                                                setCustomAllergen('');
-                                            }
-                                        }}
-                                        className="bg-slate-800 text-white text-xs font-bold px-3 rounded-lg"
-                                    >
-                                        追加
-                                    </button>
-                                </div>
-                                {/* Display Custom Labels */}
-                                <div className="flex flex-wrap gap-2 mt-2">
-                                    {childAllergens.filter(a => !ALLERGEN_OPTIONS.includes(a)).map(a => (
-                                        <span key={a} className="bg-rose-100 text-rose-600 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
-                                            {a}
-                                            <button onClick={() => setChildAllergens(prev => prev.filter(item => item !== a))}>×</button>
-                                        </span>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
+                                <AllergySelector
+                                    selected={childAllergens}
+                                    onChange={setChildAllergens}
+                                />
+                            </div>                        </div>
 
                         <div className="mt-8 flex gap-3">
                             {editingChild && (

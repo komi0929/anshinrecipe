@@ -3,10 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ExternalLink, User as UserIcon, Heart, Bookmark, Pencil } from 'lucide-react';
+import { ExternalLink, User as UserIcon, Heart, Bookmark, Pencil, UtensilsCrossed } from 'lucide-react';
 import './RecipeCard.css';
 import { useRecipes } from '../hooks/useRecipes';
 import { useProfile } from '../hooks/useProfile';
+import { SCENE_ICONS } from '../lib/constants';
 
 export const RecipeCard = ({ recipe, isSaved, onToggleSave, isLiked, onToggleLike }) => {
     const [localIsSaved, setLocalIsSaved] = useState(false);
@@ -57,12 +58,19 @@ export const RecipeCard = ({ recipe, isSaved, onToggleSave, isLiked, onToggleLik
         <Link href={`/recipe/${recipe.id}`} className="recipe-card fade-in">
             <div className="recipe-image-wrapper">
                 {/* Use standard img tag for Masonry compatibility (Next.js Image with fill needs fixed container) */}
-                <img
-                    src={recipe.image || '/images/placeholder-recipe.png'}
-                    alt={recipe.title}
-                    className="recipe-image"
-                    loading="lazy"
-                />
+                {recipe.image ? (
+                    <img
+                        src={recipe.image}
+                        alt={recipe.title}
+                        className="recipe-image"
+                        loading="lazy"
+                    />
+                ) : (
+                    <div className="recipe-image-placeholder">
+                        <UtensilsCrossed size={32} />
+                        <span>タップで詳細を見る</span>
+                    </div>
+                )}
 
                 {safeFor.length > 0 && (
                     <div className="safety-badges-overlay">
@@ -92,6 +100,18 @@ export const RecipeCard = ({ recipe, isSaved, onToggleSave, isLiked, onToggleLik
                         </div>
                     )}
                 </div>
+
+                {/* Scene Tags - Show max 2 */}
+                {recipe.scenes && recipe.scenes.length > 0 && (
+                    <div className="recipe-scene-tags">
+                        {recipe.scenes.slice(0, 2).map(scene => (
+                            <span key={scene} className="recipe-scene-tag">
+                                <span className="tag-icon">{SCENE_ICONS[scene] || '🍽️'}</span>
+                                {scene}
+                            </span>
+                        ))}
+                    </div>
+                )}
 
                 {/* Actions Row - Now separated from image */}
                 <div className="card-actions-row">
