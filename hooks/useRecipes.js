@@ -60,7 +60,7 @@ export const useRecipes = () => {
         }
     }, [addToast]);
 
-    // Add Cooking Log
+    // Add Cooking Log (Private Memo)
     const addCookingLog = async (logData) => {
         try {
             const { error } = await supabase
@@ -69,12 +69,32 @@ export const useRecipes = () => {
 
             if (error) throw error;
 
-            addToast('調理ログを記録しました', 'success');
+            addToast('メモを保存しました', 'success');
             fetchRecipes();
             return true;
         } catch (error) {
             console.error('Error adding log:', error);
-            addToast('ログの保存に失敗しました', 'error');
+            addToast('メモの保存に失敗しました', 'error');
+            throw error;
+        }
+    };
+
+    // Delete Cooking Log (Private Memo)
+    const deleteCookingLog = async (logId) => {
+        try {
+            const { error } = await supabase
+                .from('cooking_logs')
+                .delete()
+                .eq('id', logId);
+
+            if (error) throw error;
+
+            addToast('メモを削除しました', 'success');
+            fetchRecipes();
+            return true;
+        } catch (error) {
+            console.error('Error deleting log:', error);
+            addToast('メモの削除に失敗しました', 'error');
             throw error;
         }
     };
@@ -286,6 +306,7 @@ export const useRecipes = () => {
         deleteRecipe,
         refreshRecipes: fetchRecipes,
         previewImage, // expose for UI components
-        addCookingLog // expose for UI components
+        addCookingLog, // expose for UI components
+        deleteCookingLog // expose for deleting memos
     };
 };

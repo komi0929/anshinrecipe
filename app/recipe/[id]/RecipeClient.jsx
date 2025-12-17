@@ -21,7 +21,7 @@ const RecipeDetailPage = () => {
     const { id } = useParams();
     const router = useRouter();
     const { profile, user } = useProfile();
-    const { recipes, addCookingLog } = useRecipes(); // Note: useRecipes normally returns { recipes, loading, addCookingLog } but trying to match existing usage if possible. 
+    const { recipes, addCookingLog, deleteCookingLog } = useRecipes(); // Note: useRecipes normally returns { recipes, loading, addCookingLog } but trying to match existing usage if possible. 
     // Wait, the existing code uses `useProfile` and `supabase` directly to fetch the SINGLE recipe.
     // It does NOT use `useRecipes` hook for fetching the single recipe details currently.
     // It fetches manually in `useEffect`.
@@ -157,22 +157,25 @@ const RecipeDetailPage = () => {
         if (!user || !recipe) return;
         try {
             await addCookingLog({
-                ...logData, // { content, rating, created_at }
+                ...logData,
                 recipe_id: recipe.id,
                 user_id: user.id
             });
-            // Ideally refetch logs here, but for MVP standard fetchRefresh might be needed?
-            // Since we manually fetch recipe in useEffect, we might need to manually update `recipe.cooking_logs`.
-            // The `useRecipes` hook updates its own list, but this component manages its own `recipe` state.
-            // I should update `recipe` state to include the new log.
-            // Simplified: Refresh page or re-fetch.
-            // Let's rely on standard re-fetch?
-            // Or better: manual state update.
-            const newLog = { ...logData, id: 'temp-' + Date.now(), user_id: user.id }; // Temp ID
-            // Ideally we get the real object back.
-            // But `addCookingLog` (in my hook) refetches `useRecipes` list, not this local state.
-            // So I should reload the page for now or re-trigger fetch.
+            // Refresh to show new memo
             window.location.reload();
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    const handleDeleteLog = async (logId) => {
+        try {
+            await deleteCookingLog(logId);
+            // Update local state to remove the deleted log
+            setRecipe(prev => ({
+                ...prev,
+                cooking_logs: prev.cooking_logs.filter(log => log.id !== logId)
+            }));
         } catch (error) {
             console.error(error);
         }
@@ -391,6 +394,7 @@ const RecipeDetailPage = () => {
                     <CookingLog
                         logs={recipe.cooking_logs || []}
                         onAddLog={handleAddLog}
+                        onDeleteLog={handleDeleteLog}
                         currentUserId={user.id}
                     />
                 )}
