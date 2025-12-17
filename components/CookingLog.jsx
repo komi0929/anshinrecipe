@@ -33,7 +33,6 @@ export const CookingLog = ({ logs = [], onAddLog, currentUserId }) => {
     };
 
     return (
-    return (
         <div className="cooking-log-section mt-8 border-t-4 border-orange-100 pt-6">
             <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
                 <span className="text-2xl">🧪</span>

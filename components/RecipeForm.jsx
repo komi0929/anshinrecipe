@@ -534,7 +534,7 @@ export const RecipeForm = ({
             </div >
 
             {/* Memo */}
-            < div className="form-section" >
+            <div className="form-section">
                 <label className="section-label">おすすめポイント</label>
                 <textarea
                     value={memo}
@@ -546,7 +546,7 @@ export const RecipeForm = ({
             </div >
 
             {/* Tags */}
-            < div className="form-section" >
+            <div className="form-section">
                 <label className="section-label">タグ</label>
                 <p className="section-help">その他、このレシピの特徴をメモしましょう</p>
                 <div className="tags-container">
@@ -577,7 +577,7 @@ export const RecipeForm = ({
 
 
             {/* Public/Private Setting */}
-            < div className="form-section" >
+            <div className="form-section">
                 <label className="section-label">公開設定</label>
                 <div className="flex gap-4 mt-2">
                     <button
