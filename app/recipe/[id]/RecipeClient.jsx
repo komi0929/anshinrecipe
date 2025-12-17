@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '../../../lib/supabaseClient';
 import { useProfile } from '../../../hooks/useProfile';
+import { useRecipes } from '../../../hooks/useRecipes';
 import { useToast } from '../../../components/Toast';
 import { ArrowLeft, Bookmark, Share2, ExternalLink, User as UserIcon, Clock, Smile, Heart, CheckCircle, MessageCircle, Pencil } from 'lucide-react';
 import { getReactionCounts, getUserReaction, toggleReaction, getTriedReports, deleteTriedReport } from '../../../lib/actions/socialActions';
@@ -12,12 +13,27 @@ import { getRecommendedRecipes } from '../../../lib/recommendations';
 import TriedReportForm from '../../../components/TriedReportForm';
 import TriedReportCard from '../../../components/TriedReportCard';
 import { ReportButton } from '../../../components/ReportButton';
+import { SmartEmbed } from '../../../components/SmartEmbed';
+import { CookingLog } from '../../../components/CookingLog';
 import './RecipeDetailPage.css';
 
 const RecipeDetailPage = () => {
     const { id } = useParams();
     const router = useRouter();
     const { profile, user } = useProfile();
+    const { recipes, addCookingLog } = useRecipes(); // Note: useRecipes normally returns { recipes, loading, addCookingLog } but trying to match existing usage if possible. 
+    // Wait, the existing code uses `useProfile` and `supabase` directly to fetch the SINGLE recipe.
+    // It does NOT use `useRecipes` hook for fetching the single recipe details currently.
+    // It fetches manually in `useEffect`.
+    // I should check if I should use `useRecipes` or just keep the manual fetch.
+    // The existing code does: `const { addToast } = useToast(); ... useEffect(() => { ... fetch from supabase ... })`
+    // It does NOT import `useRecipes`.
+    // I need to import `useRecipes` to get `addCookingLog`.
+    // Re-reading file content...
+    // The top imports DO NOT include `useRecipes`.
+    // I need to add that import first.
+    // My previous 'Import SmartEmbed' step was fine.
+    // Now I need to add `import { useRecipes } from '../../../hooks/useRecipes';`
     const { addToast } = useToast();
 
     const [recipe, setRecipe] = useState(null);
@@ -42,7 +58,8 @@ const RecipeDetailPage = () => {
                         profiles:user_id (
                             username,
                             avatar_url
-                        )
+                        ),
+                        cooking_logs (id, content, rating, created_at, user_id)
                     `)
                     .eq('id', id)
                     .single();
@@ -133,6 +150,31 @@ const RecipeDetailPage = () => {
             }
         } catch (error) {
             console.error('Error toggling save:', error);
+        }
+    };
+
+    const handleAddLog = async (logData) => {
+        if (!user || !recipe) return;
+        try {
+            await addCookingLog({
+                ...logData, // { content, rating, created_at }
+                recipe_id: recipe.id,
+                user_id: user.id
+            });
+            // Ideally refetch logs here, but for MVP standard fetchRefresh might be needed?
+            // Since we manually fetch recipe in useEffect, we might need to manually update `recipe.cooking_logs`.
+            // The `useRecipes` hook updates its own list, but this component manages its own `recipe` state.
+            // I should update `recipe` state to include the new log.
+            // Simplified: Refresh page or re-fetch.
+            // Let's rely on standard re-fetch?
+            // Or better: manual state update.
+            const newLog = { ...logData, id: 'temp-' + Date.now(), user_id: user.id }; // Temp ID
+            // Ideally we get the real object back.
+            // But `addCookingLog` (in my hook) refetches `useRecipes` list, not this local state.
+            // So I should reload the page for now or re-trigger fetch.
+            window.location.reload();
+        } catch (error) {
+            console.error(error);
         }
     };
 
@@ -243,6 +285,12 @@ const RecipeDetailPage = () => {
 
                 {/* Heart Reaction moved to header */}
 
+                {/* --- NEW: Smart Embed (YouTube/TikTok) --- */}
+                {recipe.source_url && (
+                    <SmartEmbed url={recipe.source_url} />
+                )}
+                {/* ----------------------------------------- */}
+
                 {recipe.source_url && (
                     <a href={recipe.source_url} target="_blank" rel="noopener noreferrer" className="source-link-btn">
                         レシピを見る <ExternalLink size={16} />
@@ -320,6 +368,16 @@ const RecipeDetailPage = () => {
                     </div>
                 </div>
 
+                {/* --- NEW LOCATION: My Kitchen Lab (Cooking Log) --- */}
+                {user && (
+                    <CookingLog
+                        logs={recipe.cooking_logs || []}
+                        onAddLog={handleAddLog}
+                        currentUserId={user.id}
+                    />
+                )}
+                {/* -------------------------------------------------- */}
+
                 {/* Tried Reports Section */}
                 <div className="detail-section tried-reports-section">
                     <div className="section-header-with-action">
@@ -385,6 +443,7 @@ const RecipeDetailPage = () => {
                         </div>
                     </div>
                 )}
+
 
                 <ReportButton recipeId={id} userId={user?.id} />
             </div>

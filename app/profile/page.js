@@ -15,6 +15,7 @@ import { Footer } from '@/components/Footer';
 import { useNotifications } from '@/hooks/useNotifications';
 import NotificationList from '@/components/NotificationList';
 import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 import { uploadImage } from '@/lib/imageUpload';
 
 // ... imports
@@ -22,7 +23,7 @@ import { uploadImage } from '@/lib/imageUpload';
 export default function ProfilePage() {
     // ... hook destructuring
     const {
-        user, profile, loading,
+        user, profile, loading, likedRecipeIds,
         updateUserName, updateAvatar,
         addChild, updateChild, deleteChild,
         deleteAccount
@@ -229,7 +230,7 @@ export default function ProfilePage() {
                                 </Button>
                             </div>
                         ) : (
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1">
                                 <h2 className="text-xl font-bold text-text-main">{profile.userName || 'ユーザー'}</h2>
                                 <button
                                     onClick={() => {
@@ -285,6 +286,46 @@ export default function ProfilePage() {
                             </div>
                             <span className={`text-xs font-bold ${profile.stats?.reportCount > 0 ? 'text-text-main' : 'text-slate-400'}`}>初レポート</span>
                             <span className={`text-[10px] ${profile.stats?.reportCount > 0 ? 'text-blue-400' : 'text-slate-300'}`}>{profile.stats?.reportCount > 0 ? '獲得済み' : '未獲得'}</span>
+                        </div>
+
+                        {/* NEW BADGES */}
+                        <div className="flex flex-col items-center min-w-[80px]">
+                            <div className={`relative w-16 h-16 rounded-full flex items-center justify-center border-2 mb-2 ${likedRecipeIds?.length >= 10 ? 'bg-pink-50 border-pink-200 shadow-sm' : 'bg-slate-100 border-slate-200'}`}>
+                                <span className={`text-3xl ${likedRecipeIds?.length >= 10 ? '' : 'grayscale opacity-40'}`}>😋</span>
+                                {(likedRecipeIds?.length || 0) < 10 && (
+                                    <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-slate-400 rounded-full flex items-center justify-center">
+                                        <span className="text-[10px] text-white">🔒</span>
+                                    </div>
+                                )}
+                            </div>
+                            <span className={`text-xs font-bold ${likedRecipeIds?.length >= 10 ? 'text-text-main' : 'text-slate-400'}`}>食通</span>
+                            <span className={`text-[10px] ${likedRecipeIds?.length >= 10 ? 'text-pink-400' : 'text-slate-300'}`}>{likedRecipeIds?.length >= 10 ? '獲得済み' : 'あと' + (10 - (likedRecipeIds?.length || 0)) + '回'}</span>
+                        </div>
+
+                        <div className="flex flex-col items-center min-w-[80px]">
+                            <div className={`relative w-16 h-16 rounded-full flex items-center justify-center border-2 mb-2 ${profile.stats?.recipeCount >= 10 ? 'bg-purple-50 border-purple-200 shadow-sm' : 'bg-slate-100 border-slate-200'}`}>
+                                <span className={`text-3xl ${profile.stats?.recipeCount >= 10 ? '' : 'grayscale opacity-40'}`}>👨‍🍳</span>
+                                {(!profile.stats?.recipeCount || profile.stats.recipeCount < 10) && (
+                                    <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-slate-400 rounded-full flex items-center justify-center">
+                                        <span className="text-[10px] text-white">🔒</span>
+                                    </div>
+                                )}
+                            </div>
+                            <span className={`text-xs font-bold ${profile.stats?.recipeCount >= 10 ? 'text-text-main' : 'text-slate-400'}`}>シェフ</span>
+                            <span className={`text-[10px] ${profile.stats?.recipeCount >= 10 ? 'text-purple-400' : 'text-slate-300'}`}>{profile.stats?.recipeCount >= 10 ? '獲得済み' : 'あと' + (10 - (profile.stats?.recipeCount || 0)) + '投稿'}</span>
+                        </div>
+
+                        <div className="flex flex-col items-center min-w-[80px]">
+                            <div className={`relative w-16 h-16 rounded-full flex items-center justify-center border-2 mb-2 ${profile.stats?.reportCount >= 5 ? 'bg-teal-50 border-teal-200 shadow-sm' : 'bg-slate-100 border-slate-200'}`}>
+                                <span className={`text-3xl ${profile.stats?.reportCount >= 5 ? '' : 'grayscale opacity-40'}`}>📝</span>
+                                {(!profile.stats?.reportCount || profile.stats.reportCount < 5) && (
+                                    <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-slate-400 rounded-full flex items-center justify-center">
+                                        <span className="text-[10px] text-white">🔒</span>
+                                    </div>
+                                )}
+                            </div>
+                            <span className={`text-xs font-bold ${profile.stats?.reportCount >= 5 ? 'text-text-main' : 'text-slate-400'}`}>レポーター</span>
+                            <span className={`text-[10px] ${profile.stats?.reportCount >= 5 ? 'text-teal-400' : 'text-slate-300'}`}>{profile.stats?.reportCount >= 5 ? '獲得済み' : 'あと' + (5 - (profile.stats?.reportCount || 0)) + '回'}</span>
                         </div>
                     </div>
                 </div>

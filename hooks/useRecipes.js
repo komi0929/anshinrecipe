@@ -21,7 +21,9 @@ export const useRecipes = () => {
                         avatar_url,
                         display_name,
                         picture_url
-                    )
+                    ),
+                    cooking_logs (id, content, rating, created_at, user_id),
+                    recipe_images (id, image_url)
                 `)
                 .order('created_at', { ascending: false });
 
@@ -40,9 +42,13 @@ export const useRecipes = () => {
                 childIds: recipe.child_ids || [],
                 scenes: recipe.scenes || [],
                 memo: recipe.memo || '',
+                isPublic: recipe.is_public,
                 author: recipe.profiles,
                 userId: recipe.user_id,
-                createdAt: recipe.created_at
+                createdAt: recipe.created_at,
+                // New fields
+                logs: recipe.cooking_logs || [],
+                memoImages: recipe.recipe_images || []
             }));
 
             setRecipes(formattedRecipes);
@@ -53,6 +59,25 @@ export const useRecipes = () => {
             setLoading(false);
         }
     }, [addToast]);
+
+    // Add Cooking Log
+    const addCookingLog = async (logData) => {
+        try {
+            const { error } = await supabase
+                .from('cooking_logs')
+                .insert([logData]);
+
+            if (error) throw error;
+
+            addToast('調理ログを記録しました', 'success');
+            fetchRecipes();
+            return true;
+        } catch (error) {
+            console.error('Error adding log:', error);
+            addToast('ログの保存に失敗しました', 'error');
+            throw error;
+        }
+    };
 
     useEffect(() => {
         fetchRecipes();
@@ -141,7 +166,7 @@ export const useRecipes = () => {
                 child_ids: recipe.childIds || [],
                 scenes: recipe.scenes || [],
                 memo: recipe.memo || '',
-                is_public: true
+                is_public: recipe.isPublic
             };
 
             const { data, error } = await supabase
@@ -153,11 +178,25 @@ export const useRecipes = () => {
             if (error) throw error;
 
             addToast('レシピを投稿しました', 'success');
+
+            // Handle Memo Images (Smart Canvas)
+            if (recipe.memoImages && recipe.memoImages.length > 0) {
+                const imageInserts = recipe.memoImages.map(img => ({
+                    recipe_id: data.id,
+                    user_id: user.id,
+                    image_url: img.image_url || img // Handle object or string
+                }));
+                const { error: imgError } = await supabase
+                    .from('recipe_images')
+                    .insert(imageInserts);
+                if (imgError) console.error('Error saving memo images', imgError);
+            }
+
             // Refresh list
             fetchRecipes();
+
             // Trigger async OGP image fetch if image not provided
             if (!newRecipe.image_url && newRecipe.source_url) {
-                // previewImage will fetch and update later
                 previewImage(newRecipe.source_url, data.id);
             }
             return data;
@@ -182,6 +221,7 @@ export const useRecipes = () => {
                 child_ids: recipe.childIds || [],
                 scenes: recipe.scenes || [],
                 memo: recipe.memo || '',
+                is_public: recipe.isPublic,
                 updated_at: new Date().toISOString()
             };
 
@@ -192,10 +232,28 @@ export const useRecipes = () => {
 
             if (error) throw error;
 
+            // Handle Memo Images Update
+            // Strategy: Verify current images. In a real app we might diff. 
+            // Here, we'll naive-sync: Delete all and re-insert (safe for small numbers) OR just insert new.
+            // But deleting requires knowing we aren't deleting someone else's if shared? RLS handles it.
+            // Let's just Insert new ones for now to avoid accidental data loss logic bugs in this turn.
+            // Wait, if I delete in UI, it should be removed.
+            // So: Delete *all* existing for this recipe, then insert current list.
+            if (recipe.memoImages) {
+                await supabase.from('recipe_images').delete().eq('recipe_id', id);
+                if (recipe.memoImages.length > 0) {
+                    const imageInserts = recipe.memoImages.map(img => ({
+                        recipe_id: id,
+                        user_id: user.id || updates.user_id, // ensure user_id is available
+                        image_url: img.image_url || img
+                    }));
+                    await supabase.from('recipe_images').insert(imageInserts);
+                }
+            }
+
             addToast('レシピを更新しました', 'success');
-            // Update local state
-            setRecipes(prev => prev.map(r => r.id === id ? { ...r, ...recipe } : r));
-            fetchRecipes(); // Refresh full list to be sure
+            // Update local state is tricky with joins. Refetch is safer.
+            fetchRecipes();
         } catch (error) {
             console.error('Error updating recipe:', error);
             addToast('更新に失敗しました', 'error');
@@ -227,6 +285,7 @@ export const useRecipes = () => {
         updateRecipe,
         deleteRecipe,
         refreshRecipes: fetchRecipes,
-        previewImage // expose for UI components
+        previewImage, // expose for UI components
+        addCookingLog // expose for UI components
     };
 };

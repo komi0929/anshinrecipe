@@ -430,13 +430,13 @@ const RecipeListPage = () => {
                         </h3>
                         <p className="text-slate-500 text-sm mb-6">
                             {activeTab === 'saved' ? '気に入ったレシピを保存して、\nあなただけのレシピブックを作りましょう！' :
-                                activeTab === 'mine' ? 'お子様のために作った工夫レシピを\n記録してみませんか？' :
+                                activeTab === 'mine' ? 'お子さまのためのレシピを記録しませんか？' :
                                     '検索条件を変えて試してみてください'}
                         </p>
                         {activeTab === 'mine' && (
                             <Link href="/recipe/new">
                                 <Button className="bg-orange-500 text-white shadow-lg shadow-orange-200">
-                                    最初のレシピを投稿する
+                                    最初のレシピを投稿
                                 </Button>
                             </Link>
                         )}

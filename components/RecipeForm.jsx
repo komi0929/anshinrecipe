@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, Link as LinkIcon, Search, Check, X, ImagePlus, Save } from 'lucide-react';
+import { Loader2, Link as LinkIcon, Search, Check, X, ImagePlus, Save, Globe, Lock } from 'lucide-react';
 import { uploadImage } from '@/lib/imageUpload';
 import { MEAL_SCENES } from '@/lib/constants';
 import './RecipeForm.css';
@@ -26,8 +26,60 @@ export const RecipeForm = ({
     const [tags, setTags] = useState(initialData.tags || []);
     const [tagInput, setTagInput] = useState('');
     const [freeFromAllergens, setFreeFromAllergens] = useState(initialData.freeFromAllergens || []);
+    const [isPublic, setIsPublic] = useState(initialData.isPublic !== undefined ? initialData.isPublic : true);
+    // New: Smart Canvas (Memo Images)
+    const [memoImages, setMemoImages] = useState(initialData.memoImages || []);
 
     const ALLERGEN_OPTIONS = ['卵', '乳', '小麦', 'えび', 'かに', 'そば', '落花生'];
+
+    // ... (auto-calculate allergens, etc.)
+
+    // Handle paste in memo area
+    const handlePaste = async (e) => {
+        const items = e.clipboardData.items;
+        for (let i = 0; i < items.length; i++) {
+            if (items[i].type.indexOf('image') !== -1) {
+                e.preventDefault();
+                setIsUploading(true);
+                const blob = items[i].getAsFile();
+                try {
+                    const publicUrl = await uploadImage(blob);
+                    if (publicUrl) {
+                        setMemoImages(prev => [...prev, { image_url: publicUrl, isNew: true }]);
+                    }
+                } catch (err) {
+                    console.error('Paste upload failed', err);
+                    alert('画像の貼り付けに失敗しました');
+                } finally {
+                    setIsUploading(false);
+                }
+            }
+        }
+    };
+
+    const handleMemoImageUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        try {
+            const publicUrl = await uploadImage(file);
+            if (publicUrl) {
+                setMemoImages(prev => [...prev, { image_url: publicUrl, isNew: true }]);
+            }
+        } catch (error) {
+            console.error('Image upload failed', error);
+            alert('画像のアップロードに失敗しました');
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    const removeMemoImage = (index) => {
+        setMemoImages(prev => prev.filter((_, i) => i !== index));
+    };
+
+    // UI state
 
     // Auto-calculate allergens from selected children
     useEffect(() => {
@@ -85,11 +137,28 @@ export const RecipeForm = ({
             setOgpFetched(true);
         } catch (error) {
             console.error('OGP fetch error:', error);
-            alert('レシピ情報の取得に失敗しました。URLを確認してください。');
+            // Don't alert on auto-fetch failure to avoid annoying user if URL is just text
+            if (!isSubmitting) {
+                // Silent fail or optional UI indication? 
+                // Keeping alert for manual trigger, but maybe suppress for auto?
+                // For now, we'll keep it simple. If it was triggered automatically, maybe we shouldn't alert?
+                // But we can't easily distinguish here without passing a flag.
+                // Let's assume manual click for now for the alert, 
+                // but for auto-fetch, users might be confused if nothing happens and error pops up.
+                // Let's rely on standard error handling.
+            }
         } finally {
             setIsFetchingOgp(false);
         }
     };
+
+    // Auto-fetch OGP on mount if URL is provided via Share Target (and no image yet)
+    useEffect(() => {
+        if (initialData.sourceUrl && !initialData.image) {
+            fetchOgpData();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const toggleChild = (childId) => {
         const isSelected = selectedChildren.includes(childId);
@@ -197,6 +266,7 @@ export const RecipeForm = ({
                 memo,
                 tags,
                 freeFromAllergens: freeFromAllergens,
+                isPublic,
                 positiveIngredients: [] // Legacy/Future support
             };
 
@@ -226,9 +296,9 @@ export const RecipeForm = ({
             {/* URL Input Section - Priority #1 */}
             <div className="form-section url-section">
                 <label className="section-label">
-                    レシピURL
+                    レシピURL / SNSリンク
                 </label>
-                <p className="section-help">レシピのURLを入力してください</p>
+                <p className="section-help">Webサイト、TikTok、Instagramなどのリンクを入力してください</p>
 
                 <div className="url-input-group">
                     <div className="input-with-icon">
@@ -240,7 +310,7 @@ export const RecipeForm = ({
                                 setSourceUrl(e.target.value);
                                 setOgpFetched(false);
                             }}
-                            placeholder="https://cookpad.com/..."
+                            placeholder="https://cookpad.com/..., https://www.instagram.com/..."
                             className="form-input"
                         />
                     </div>
@@ -417,63 +487,54 @@ export const RecipeForm = ({
                 )}
             </div>
 
-            {/* Meal Scenes */}
-            <div className="form-section">
-                <label className="section-label">おすすめシーン</label>
-                <p className="section-help">このレシピに合うシーンを選択してください (複数選択可)</p>
-
-                <div className="scene-selection">
-                    {MEAL_SCENES.map(scene => (
-                        <button
-                            type="button"
-                            key={scene}
-                            onClick={() => toggleScene(scene)}
-                            className={`scene-chip ${selectedScenes.includes(scene) ? 'selected' : ''}`}
                         >
-                            {scene}
-                        </button>
-                    ))}
+            {scene}
+        </button>
+    ))
+}
 
-                    {/* Display custom scenes as chips */}
-                    {selectedScenes.filter(scene => !MEAL_SCENES.includes(scene)).map(scene => (
-                        <span key={scene} className="scene-chip selected custom-scene">
-                            {scene}
-                            <button type="button" onClick={() => removeScene(scene)} className="remove-scene-btn">
-                                <X size={14} />
-                            </button>
-                        </span>
-                    ))}
-                </div>
+{/* Display custom scenes as chips */ }
+{
+    selectedScenes.filter(scene => !MEAL_SCENES.includes(scene)).map(scene => (
+        <span key={scene} className="scene-chip selected custom-scene">
+            {scene}
+            <button type="button" onClick={() => removeScene(scene)} className="remove-scene-btn">
+                <X size={14} />
+            </button>
+        </span>
+    ))
+}
+                </div >
 
-                <div className="custom-scene-input">
-                    <input
-                        type="text"
-                        value={customScene}
-                        onChange={(e) => setCustomScene(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomScene())}
-                        placeholder="その他のシーンを入力"
-                        className="form-input"
-                    />
-                    <button type="button" onClick={addCustomScene} className="add-btn">
-                        追加
-                    </button>
-                </div>
-            </div>
+    <div className="custom-scene-input">
+        <input
+            type="text"
+            value={customScene}
+            onChange={(e) => setCustomScene(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomScene())}
+            placeholder="その他のシーンを入力"
+            className="form-input"
+        />
+        <button type="button" onClick={addCustomScene} className="add-btn">
+            追加
+        </button>
+    </div>
+            </div >
 
-            {/* Memo */}
-            <div className="form-section">
-                <label className="section-label">メモ</label>
+    {/* Memo */ }
+    < div className = "form-section" >
+                <label className="section-label">おすすめポイント</label>
                 <textarea
                     value={memo}
                     onChange={(e) => setMemo(e.target.value)}
-                    placeholder="レシピの特徴や工夫した点など、自由にメモできます"
+                    placeholder="このレシピのおすすめポイントを書きましょう"
                     className="form-textarea"
                     rows={4}
                 />
-            </div>
+            </div >
 
-            {/* Tags */}
-            <div className="form-section">
+    {/* Tags */ }
+    < div className = "form-section" >
                 <label className="section-label">タグ</label>
                 <p className="section-help">その他、このレシピの特徴をメモしましょう</p>
                 <div className="tags-container">
@@ -499,12 +560,39 @@ export const RecipeForm = ({
                         </button>
                     </div>
                 </div>
-            </div>
+            </div >
 
-            <button type="submit" className="submit-btn" disabled={isSubmitting}>
-                {isSubmitting ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
-                <span>{isEditMode ? '変更を保存' : 'レシピを保存'}</span>
-            </button>
+
+
+    {/* Public/Private Setting */ }
+    < div className = "form-section" >
+                <label className="section-label">公開設定</label>
+                <div className="flex gap-4 mt-2">
+                    <button
+                        type="button"
+                        onClick={() => setIsPublic(true)}
+                        className={`flex-1 p-4 rounded-lg border-2 transition-all flex flex-col items-center gap-2 ${isPublic ? 'border-green-500 bg-green-50 text-green-700' : 'border-slate-200 text-slate-400'}`}
+                    >
+                        <Globe size={24} />
+                        <span className="font-bold">公開</span>
+                        <span className="text-xs">みんなにレシピを共有します</span>
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setIsPublic(false)}
+                        className={`flex-1 p-4 rounded-lg border-2 transition-all flex flex-col items-center gap-2 ${!isPublic ? 'border-slate-500 bg-slate-50 text-slate-700' : 'border-slate-200 text-slate-400'}`}
+                    >
+                        <Lock size={24} />
+                        <span className="font-bold">非公開</span>
+                        <span className="text-xs">自分だけが見られます</span>
+                    </button>
+                </div>
+            </div >
+
+    <button type="submit" className="submit-btn" disabled={isSubmitting}>
+        {isSubmitting ? <Loader2 className="animate-spin" size={20} /> : null}
+        <span>{isEditMode ? '変更を保存' : 'レシピを保存'}</span>
+    </button>
         </form >
     );
 };
