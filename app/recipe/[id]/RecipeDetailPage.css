@@ -254,23 +254,45 @@
 }
 
 /* Tried Reports & Recommendations */
+.tried-reports-section {
+    margin-top: 16px;
+    padding-top: 24px;
+    border-top: 1px solid #f1f5f9;
+}
+
 .section-header-with-action {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 16px;
+    gap: 16px;
+}
+
+.section-header-with-action h3 {
+    margin: 0;
+    font-size: 16px;
 }
 
 .add-report-btn {
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 12px;
-    font-weight: bold;
+    font-size: 13px;
+    font-weight: 600;
     color: #f97316;
     background: #fff7ed;
-    padding: 6px 12px;
-    border-radius: 20px;
+    padding: 8px 16px;
+    border-radius: 24px;
+    border: 1px solid #fed7aa;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.add-report-btn:hover {
+    background: #ffedd5;
+    transform: translateY(-1px);
 }
 
 .recommendations-grid {

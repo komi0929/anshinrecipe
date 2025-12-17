@@ -183,7 +183,7 @@ export default function ProfilePage() {
                 />
 
                 {/* 1. Profile Card */}
-                <div className="bg-white rounded-[32px] p-6 shadow-sm flex items-center gap-6">
+                <div className="bg-white rounded-[32px] p-6 shadow-sm flex items-center gap-4">
                     <div
                         className="relative group cursor-pointer"
                         onClick={() => fileInputRef.current?.click()}
@@ -214,7 +214,7 @@ export default function ProfilePage() {
                         />
                     </div>
 
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                         {isEditingName ? (
                             <div className="flex items-center gap-2">
                                 <Input
@@ -258,77 +258,77 @@ export default function ProfilePage() {
                 <div>
                     <h3 className="text-sm font-bold text-text-sub mb-3 ml-2">獲得バッジ</h3>
                     <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
-                        <div className="flex flex-col items-center min-w-[80px]">
-                            <div className={`w-16 h-16 rounded-full flex items-center justify-center border-2 mb-2 ${profile.children?.length > 0 ? 'bg-yellow-50 border-yellow-200 shadow-sm' : 'bg-slate-100 border-slate-200'}`}>
-                                <span className={`text-3xl ${profile.children?.length > 0 ? '' : 'grayscale opacity-40'}`}>🔰</span>
+                        <div className="flex flex-col items-center min-w-[72px]">
+                            <div className={`w-14 h-14 rounded-full flex items-center justify-center border-2 mb-2 ${profile.children?.length > 0 ? 'bg-amber-50 border-amber-200 shadow-sm' : 'bg-slate-100 border-slate-200'}`}>
+                                <span className={`text-2xl ${profile.children?.length > 0 ? '' : 'grayscale opacity-40'}`}>🔰</span>
                             </div>
-                            <span className={`text-xs font-bold ${profile.children?.length > 0 ? 'text-text-main' : 'text-slate-400'}`}>はじめまして</span>
+                            <span className={`text-[11px] font-bold ${profile.children?.length > 0 ? 'text-text-main' : 'text-slate-400'}`}>はじめまして</span>
                         </div>
 
-                        <div className="flex flex-col items-center min-w-[80px]">
-                            <div className={`relative w-16 h-16 rounded-full flex items-center justify-center border-2 mb-2 ${profile.stats?.recipeCount > 0 ? 'bg-orange-50 border-orange-200 shadow-sm' : 'bg-slate-100 border-slate-200'}`}>
-                                <span className={`text-3xl ${profile.stats?.recipeCount > 0 ? '' : 'grayscale opacity-40'}`}>🍳</span>
+                        <div className="flex flex-col items-center min-w-[72px]">
+                            <div className={`relative w-14 h-14 rounded-full flex items-center justify-center border-2 mb-2 ${profile.stats?.recipeCount > 0 ? 'bg-amber-50 border-amber-200 shadow-sm' : 'bg-slate-100 border-slate-200'}`}>
+                                <span className={`text-2xl ${profile.stats?.recipeCount > 0 ? '' : 'grayscale opacity-40'}`}>🍳</span>
                                 {(!profile.stats?.recipeCount) && (
-                                    <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-slate-400 rounded-full flex items-center justify-center">
-                                        <span className="text-[10px] text-white">🔒</span>
+                                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-slate-400 rounded-full flex items-center justify-center">
+                                        <span className="text-[8px] text-white">🔒</span>
                                     </div>
                                 )}
                             </div>
-                            <span className={`text-xs font-bold ${profile.stats?.recipeCount > 0 ? 'text-text-main' : 'text-slate-400'}`}>初投稿</span>
-                            <span className={`text-[10px] ${profile.stats?.recipeCount > 0 ? 'text-orange-400' : 'text-slate-300'}`}>{profile.stats?.recipeCount > 0 ? '獲得済み' : '未獲得'}</span>
+                            <span className={`text-[11px] font-bold ${profile.stats?.recipeCount > 0 ? 'text-text-main' : 'text-slate-400'}`}>初投稿</span>
+                            <span className={`text-[10px] ${profile.stats?.recipeCount > 0 ? 'text-amber-500' : 'text-slate-300'}`}>{profile.stats?.recipeCount > 0 ? '獲得済み' : '未獲得'}</span>
                         </div>
 
-                        <div className="flex flex-col items-center min-w-[80px]">
-                            <div className={`relative w-16 h-16 rounded-full flex items-center justify-center border-2 mb-2 ${profile.stats?.reportCount > 0 ? 'bg-blue-50 border-blue-200 shadow-sm' : 'bg-slate-100 border-slate-200'}`}>
-                                <span className={`text-3xl ${profile.stats?.reportCount > 0 ? '' : 'grayscale opacity-40'}`}>💬</span>
+                        <div className="flex flex-col items-center min-w-[72px]">
+                            <div className={`relative w-14 h-14 rounded-full flex items-center justify-center border-2 mb-2 ${profile.stats?.reportCount > 0 ? 'bg-amber-50 border-amber-200 shadow-sm' : 'bg-slate-100 border-slate-200'}`}>
+                                <span className={`text-2xl ${profile.stats?.reportCount > 0 ? '' : 'grayscale opacity-40'}`}>💬</span>
                                 {(!profile.stats?.reportCount) && (
-                                    <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-slate-400 rounded-full flex items-center justify-center">
-                                        <span className="text-[10px] text-white">🔒</span>
+                                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-slate-400 rounded-full flex items-center justify-center">
+                                        <span className="text-[8px] text-white">🔒</span>
                                     </div>
                                 )}
                             </div>
-                            <span className={`text-xs font-bold ${profile.stats?.reportCount > 0 ? 'text-text-main' : 'text-slate-400'}`}>初レポート</span>
-                            <span className={`text-[10px] ${profile.stats?.reportCount > 0 ? 'text-blue-400' : 'text-slate-300'}`}>{profile.stats?.reportCount > 0 ? '獲得済み' : '未獲得'}</span>
+                            <span className={`text-[11px] font-bold ${profile.stats?.reportCount > 0 ? 'text-text-main' : 'text-slate-400'}`}>初レポート</span>
+                            <span className={`text-[10px] ${profile.stats?.reportCount > 0 ? 'text-amber-500' : 'text-slate-300'}`}>{profile.stats?.reportCount > 0 ? '獲得済み' : '未獲得'}</span>
                         </div>
 
                         {/* NEW BADGES */}
-                        <div className="flex flex-col items-center min-w-[80px]">
-                            <div className={`relative w-16 h-16 rounded-full flex items-center justify-center border-2 mb-2 ${likedRecipeIds?.length >= 10 ? 'bg-pink-50 border-pink-200 shadow-sm' : 'bg-slate-100 border-slate-200'}`}>
-                                <span className={`text-3xl ${likedRecipeIds?.length >= 10 ? '' : 'grayscale opacity-40'}`}>😋</span>
+                        <div className="flex flex-col items-center min-w-[72px]">
+                            <div className={`relative w-14 h-14 rounded-full flex items-center justify-center border-2 mb-2 ${likedRecipeIds?.length >= 10 ? 'bg-amber-50 border-amber-200 shadow-sm' : 'bg-slate-100 border-slate-200'}`}>
+                                <span className={`text-2xl ${likedRecipeIds?.length >= 10 ? '' : 'grayscale opacity-40'}`}>😋</span>
                                 {(likedRecipeIds?.length || 0) < 10 && (
-                                    <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-slate-400 rounded-full flex items-center justify-center">
-                                        <span className="text-[10px] text-white">🔒</span>
+                                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-slate-400 rounded-full flex items-center justify-center">
+                                        <span className="text-[8px] text-white">🔒</span>
                                     </div>
                                 )}
                             </div>
-                            <span className={`text-xs font-bold ${likedRecipeIds?.length >= 10 ? 'text-text-main' : 'text-slate-400'}`}>食通</span>
-                            <span className={`text-[10px] ${likedRecipeIds?.length >= 10 ? 'text-pink-400' : 'text-slate-300'}`}>{likedRecipeIds?.length >= 10 ? '獲得済み' : 'あと' + (10 - (likedRecipeIds?.length || 0)) + '回'}</span>
+                            <span className={`text-[11px] font-bold ${likedRecipeIds?.length >= 10 ? 'text-text-main' : 'text-slate-400'}`}>食通</span>
+                            <span className={`text-[10px] ${likedRecipeIds?.length >= 10 ? 'text-amber-500' : 'text-slate-300'}`}>{likedRecipeIds?.length >= 10 ? '獲得済み' : 'あと' + (10 - (likedRecipeIds?.length || 0)) + '回'}</span>
                         </div>
 
-                        <div className="flex flex-col items-center min-w-[80px]">
-                            <div className={`relative w-16 h-16 rounded-full flex items-center justify-center border-2 mb-2 ${profile.stats?.recipeCount >= 10 ? 'bg-purple-50 border-purple-200 shadow-sm' : 'bg-slate-100 border-slate-200'}`}>
-                                <span className={`text-3xl ${profile.stats?.recipeCount >= 10 ? '' : 'grayscale opacity-40'}`}>👨‍🍳</span>
+                        <div className="flex flex-col items-center min-w-[72px]">
+                            <div className={`relative w-14 h-14 rounded-full flex items-center justify-center border-2 mb-2 ${profile.stats?.recipeCount >= 10 ? 'bg-amber-50 border-amber-200 shadow-sm' : 'bg-slate-100 border-slate-200'}`}>
+                                <span className={`text-2xl ${profile.stats?.recipeCount >= 10 ? '' : 'grayscale opacity-40'}`}>👨‍🍳</span>
                                 {(!profile.stats?.recipeCount || profile.stats.recipeCount < 10) && (
-                                    <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-slate-400 rounded-full flex items-center justify-center">
-                                        <span className="text-[10px] text-white">🔒</span>
+                                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-slate-400 rounded-full flex items-center justify-center">
+                                        <span className="text-[8px] text-white">🔒</span>
                                     </div>
                                 )}
                             </div>
-                            <span className={`text-xs font-bold ${profile.stats?.recipeCount >= 10 ? 'text-text-main' : 'text-slate-400'}`}>シェフ</span>
-                            <span className={`text-[10px] ${profile.stats?.recipeCount >= 10 ? 'text-purple-400' : 'text-slate-300'}`}>{profile.stats?.recipeCount >= 10 ? '獲得済み' : 'あと' + (10 - (profile.stats?.recipeCount || 0)) + '投稿'}</span>
+                            <span className={`text-[11px] font-bold ${profile.stats?.recipeCount >= 10 ? 'text-text-main' : 'text-slate-400'}`}>シェフ</span>
+                            <span className={`text-[10px] ${profile.stats?.recipeCount >= 10 ? 'text-amber-500' : 'text-slate-300'}`}>{profile.stats?.recipeCount >= 10 ? '獲得済み' : 'あと' + (10 - (profile.stats?.recipeCount || 0)) + '投稿'}</span>
                         </div>
 
-                        <div className="flex flex-col items-center min-w-[80px]">
-                            <div className={`relative w-16 h-16 rounded-full flex items-center justify-center border-2 mb-2 ${profile.stats?.reportCount >= 5 ? 'bg-teal-50 border-teal-200 shadow-sm' : 'bg-slate-100 border-slate-200'}`}>
-                                <span className={`text-3xl ${profile.stats?.reportCount >= 5 ? '' : 'grayscale opacity-40'}`}>📝</span>
+                        <div className="flex flex-col items-center min-w-[72px]">
+                            <div className={`relative w-14 h-14 rounded-full flex items-center justify-center border-2 mb-2 ${profile.stats?.reportCount >= 5 ? 'bg-amber-50 border-amber-200 shadow-sm' : 'bg-slate-100 border-slate-200'}`}>
+                                <span className={`text-2xl ${profile.stats?.reportCount >= 5 ? '' : 'grayscale opacity-40'}`}>📝</span>
                                 {(!profile.stats?.reportCount || profile.stats.reportCount < 5) && (
-                                    <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-slate-400 rounded-full flex items-center justify-center">
-                                        <span className="text-[10px] text-white">🔒</span>
+                                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-slate-400 rounded-full flex items-center justify-center">
+                                        <span className="text-[8px] text-white">🔒</span>
                                     </div>
                                 )}
                             </div>
-                            <span className={`text-xs font-bold ${profile.stats?.reportCount >= 5 ? 'text-text-main' : 'text-slate-400'}`}>レポーター</span>
-                            <span className={`text-[10px] ${profile.stats?.reportCount >= 5 ? 'text-teal-400' : 'text-slate-300'}`}>{profile.stats?.reportCount >= 5 ? '獲得済み' : 'あと' + (5 - (profile.stats?.reportCount || 0)) + '回'}</span>
+                            <span className={`text-[11px] font-bold ${profile.stats?.reportCount >= 5 ? 'text-text-main' : 'text-slate-400'}`}>レポーター</span>
+                            <span className={`text-[10px] ${profile.stats?.reportCount >= 5 ? 'text-amber-500' : 'text-slate-300'}`}>{profile.stats?.reportCount >= 5 ? '獲得済み' : 'あと' + (5 - (profile.stats?.reportCount || 0)) + '回'}</span>
                         </div>
                     </div>
                 </div>

@@ -48,49 +48,112 @@ export const CookingLog = ({ logs = [], onAddLog, onDeleteLog, currentUserId }) 
     };
 
     return (
-        <div className="my-memo-section mt-8 border-t-4 border-yellow-100 pt-6">
+        <div className="my-memo-section" style={{
+            marginTop: '32px',
+            paddingTop: '24px',
+            borderTop: '1px solid #f1f1f1'
+        }}>
             {/* Header */}
-            <div className="flex items-center gap-2 mb-4">
-                <span className="text-2xl">📝</span>
-                <h3 className="text-xl font-bold text-gray-800">マイメモ</h3>
-                <div className="flex items-center gap-1 ml-2 px-2 py-1 bg-slate-100 rounded-full">
-                    <Lock size={12} className="text-slate-400" />
-                    <span className="text-xs text-slate-500">非公開</span>
+            <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                marginBottom: '12px'
+            }}>
+                <span style={{ fontSize: '20px' }}>📝</span>
+                <h3 style={{
+                    fontSize: '18px',
+                    fontWeight: '700',
+                    color: '#1f2937',
+                    margin: 0
+                }}>マイメモ</h3>
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    marginLeft: '8px',
+                    padding: '2px 8px',
+                    backgroundColor: '#f8fafc',
+                    borderRadius: '12px',
+                    border: '1px solid #e2e8f0'
+                }}>
+                    <Lock size={10} style={{ color: '#94a3b8' }} />
+                    <span style={{ fontSize: '10px', color: '#64748b', fontWeight: '500' }}>非公開</span>
                 </div>
             </div>
 
-            <p className="text-sm text-slate-500 mb-4">
+            <p style={{
+                fontSize: '13px',
+                color: '#64748b',
+                marginBottom: '16px',
+                lineHeight: '1.5'
+            }}>
                 自分だけが見られる備忘録です。アレンジのアイデアや子どもの反応をメモしておきましょう。
             </p>
 
-            {/* Input Form - Sticky Note Style */}
-            <div className="bg-yellow-50 rounded-xl p-5 shadow-sm border border-yellow-200 relative mb-6">
-                {/* Corner fold effect */}
-                <div className="absolute top-0 right-0 w-0 h-0 border-t-[20px] border-t-yellow-200 border-l-[20px] border-l-transparent"></div>
-
+            {/* Input Form */}
+            <div style={{
+                backgroundColor: '#fffbeb',
+                borderRadius: '16px',
+                padding: '16px',
+                border: '1px solid #fef3c7',
+                marginBottom: '20px'
+            }}>
                 <form onSubmit={handleSubmit}>
                     <textarea
                         value={newLog}
                         onChange={(e) => setNewLog(e.target.value)}
                         placeholder="例：次回は砂糖を減らしてみる。子どもが喜んで食べた！"
-                        className="w-full p-0 bg-transparent text-sm border-none focus:ring-0 resize-none font-medium text-slate-700 leading-relaxed placeholder:text-yellow-400"
-                        rows={3}
+                        style={{
+                            width: '100%',
+                            minHeight: '80px',
+                            padding: '12px',
+                            border: '1px solid #fde68a',
+                            borderRadius: '12px',
+                            fontSize: '14px',
+                            lineHeight: '1.6',
+                            resize: 'none',
+                            backgroundColor: 'white',
+                            color: '#374151',
+                            outline: 'none',
+                            boxSizing: 'border-box'
+                        }}
+                        onFocus={(e) => e.target.style.borderColor = '#f59e0b'}
+                        onBlur={(e) => e.target.style.borderColor = '#fde68a'}
                     />
 
-                    <div className="flex justify-between items-end mt-4 pt-3 border-t border-yellow-200 border-dashed">
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginTop: '12px'
+                    }}>
                         <div>
-                            <span className="text-xs font-bold text-yellow-600 mb-1 block">評価（任意）</span>
-                            <div className="flex gap-1">
+                            <span style={{
+                                fontSize: '11px',
+                                fontWeight: '600',
+                                color: '#92400e',
+                                display: 'block',
+                                marginBottom: '4px'
+                            }}>評価（任意）</span>
+                            <div style={{ display: 'flex', gap: '2px' }}>
                                 {[1, 2, 3, 4, 5].map((star) => (
                                     <button
                                         key={star}
                                         type="button"
                                         onClick={() => setRating(rating === star ? 0 : star)}
-                                        className="transition-transform active:scale-110 focus:outline-none"
+                                        style={{
+                                            background: 'none',
+                                            border: 'none',
+                                            padding: '2px',
+                                            cursor: 'pointer',
+                                            transition: 'transform 0.1s'
+                                        }}
                                     >
                                         <Star
-                                            size={22}
-                                            className={`${rating >= star ? 'fill-yellow-400 text-yellow-400' : 'text-yellow-200'}`}
+                                            size={20}
+                                            fill={rating >= star ? '#fbbf24' : 'none'}
+                                            color={rating >= star ? '#fbbf24' : '#fde68a'}
                                         />
                                     </button>
                                 ))}
@@ -99,56 +162,125 @@ export const CookingLog = ({ logs = [], onAddLog, onDeleteLog, currentUserId }) 
                         <button
                             type="submit"
                             disabled={!newLog.trim() || isSubmitting}
-                            className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-bold text-sm transition-all ${!newLog.trim() || isSubmitting
-                                ? 'bg-yellow-100 text-yellow-300'
-                                : 'bg-yellow-500 text-white shadow-lg shadow-yellow-200 active:scale-95'
-                                }`}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                padding: '10px 20px',
+                                borderRadius: '24px',
+                                border: 'none',
+                                fontSize: '13px',
+                                fontWeight: '700',
+                                cursor: !newLog.trim() || isSubmitting ? 'not-allowed' : 'pointer',
+                                backgroundColor: !newLog.trim() || isSubmitting ? '#fef3c7' : '#f59e0b',
+                                color: !newLog.trim() || isSubmitting ? '#d97706' : 'white',
+                                transition: 'all 0.2s'
+                            }}
                         >
-                            <StickyNote size={16} />
+                            <StickyNote size={14} />
                             メモを追加
                         </button>
                     </div>
                 </form>
             </div>
 
-            {/* Memo Cards - Sticky Note Style */}
-            <div className="space-y-3">
+            {/* Memo Cards */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {myLogs.length === 0 ? (
-                    <div className="text-center py-8 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-100">
-                        <div className="text-4xl mb-2 opacity-50">📌</div>
-                        <p className="text-slate-400 text-sm font-bold mb-1">まだメモがありません</p>
-                        <p className="text-xs text-slate-400">気づいたことや試したいことを<br />書き留めておきましょう</p>
+                    <div style={{
+                        textAlign: 'center',
+                        padding: '32px 16px',
+                        backgroundColor: '#f8fafc',
+                        borderRadius: '16px',
+                        border: '2px dashed #e2e8f0'
+                    }}>
+                        <div style={{ fontSize: '32px', marginBottom: '8px', opacity: '0.5' }}>📌</div>
+                        <p style={{
+                            fontSize: '13px',
+                            fontWeight: '600',
+                            color: '#94a3b8',
+                            margin: '0 0 4px 0'
+                        }}>まだメモがありません</p>
+                        <p style={{
+                            fontSize: '12px',
+                            color: '#94a3b8',
+                            margin: 0,
+                            lineHeight: '1.5'
+                        }}>気づいたことや試したいことを<br />書き留めておきましょう</p>
                     </div>
                 ) : (
                     myLogs.map((log) => (
                         <div
                             key={log.id}
-                            className="bg-yellow-50 p-4 rounded-xl border border-yellow-100 shadow-sm relative group"
+                            style={{
+                                backgroundColor: '#fffbeb',
+                                padding: '14px 16px',
+                                borderRadius: '12px',
+                                border: '1px solid #fef3c7',
+                                position: 'relative'
+                            }}
                         >
                             {/* Delete button */}
                             {onDeleteLog && (
                                 <button
                                     onClick={() => handleDelete(log.id)}
-                                    className="absolute top-2 right-2 p-1.5 rounded-full opacity-0 group-hover:opacity-100 hover:bg-red-50 text-slate-300 hover:text-red-400 transition-all"
+                                    style={{
+                                        position: 'absolute',
+                                        top: '10px',
+                                        right: '10px',
+                                        padding: '4px',
+                                        borderRadius: '50%',
+                                        border: 'none',
+                                        backgroundColor: 'transparent',
+                                        cursor: 'pointer',
+                                        opacity: '0.4',
+                                        transition: 'all 0.2s'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.target.style.opacity = '1';
+                                        e.target.style.backgroundColor = '#fef2f2';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.target.style.opacity = '0.4';
+                                        e.target.style.backgroundColor = 'transparent';
+                                    }}
                                     title="削除"
                                 >
-                                    <Trash2 size={14} />
+                                    <Trash2 size={14} color="#ef4444" />
                                 </button>
                             )}
 
-                            <div className="flex justify-between items-center mb-2">
-                                <span className="text-xs font-bold text-yellow-600 bg-yellow-100 px-2 py-1 rounded">
+                            <div style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                marginBottom: '8px'
+                            }}>
+                                <span style={{
+                                    fontSize: '11px',
+                                    fontWeight: '600',
+                                    color: '#92400e',
+                                    backgroundColor: '#fef3c7',
+                                    padding: '2px 8px',
+                                    borderRadius: '4px'
+                                }}>
                                     {formatDate(log.created_at)}
                                 </span>
                                 {log.rating && (
-                                    <div className="flex gap-0.5">
+                                    <div style={{ display: 'flex', gap: '1px' }}>
                                         {[...Array(log.rating)].map((_, i) => (
-                                            <Star key={i} size={12} className="fill-yellow-400 text-yellow-400" />
+                                            <Star key={i} size={12} fill="#fbbf24" color="#fbbf24" />
                                         ))}
                                     </div>
                                 )}
                             </div>
-                            <p className="text-sm text-slate-700 leading-relaxed">{log.content}</p>
+                            <p style={{
+                                fontSize: '14px',
+                                color: '#374151',
+                                lineHeight: '1.6',
+                                margin: 0,
+                                paddingRight: '24px'
+                            }}>{log.content}</p>
                         </div>
                     ))
                 )}
