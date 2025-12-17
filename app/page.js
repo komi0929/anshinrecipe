@@ -31,9 +31,10 @@ const RecipeListPage = () => {
     const [tabLoading, setTabLoading] = useState(false);
 
     useEffect(() => {
+        // Reduced delay for faster initial showing
         const timer = setTimeout(() => {
             setImagesLoaded(true);
-        }, 500);
+        }, 100);
 
         return () => clearTimeout(timer);
     }, []);
@@ -139,13 +140,22 @@ const RecipeListPage = () => {
         return true;
     });
 
-    // Sort by safety match first, then new
+    // Sort by safety match first, then newest first, with stable ID tie-breaker
     filteredRecipes.sort((a, b) => {
         const aSafe = a.safeFor.length > 0;
         const bSafe = b.safeFor.length > 0;
+
+        // 1. Safety Match first
         if (aSafe && !bSafe) return -1;
         if (!aSafe && bSafe) return 1;
-        return new Date(b.created_at || b.createdAt) - new Date(a.created_at || a.createdAt);
+
+        // 2. Newest first
+        const dateA = new Date(a.created_at || a.createdAt || 0);
+        const dateB = new Date(b.created_at || b.createdAt || 0);
+        if (dateB - dateA !== 0) return dateB - dateA;
+
+        // 3. Stable Tie-breaker (important for masonry stability)
+        return String(a.id).localeCompare(String(b.id));
     });
 
     // Show LP for non-logged-in users

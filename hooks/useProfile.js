@@ -115,11 +115,13 @@ export const useProfile = () => {
                 });
             }
         } catch (error) {
-            // Only show error if it's not a "no rows" error (PGRST116)
-            if (error?.code !== 'PGRST116' && Object.keys(error || {}).length > 0) {
+            // Silently ignore empty errors or "no rows" errors
+            const hasErrorContent = error && typeof error === 'object' && Object.keys(error).length > 0 && error.code !== 'PGRST116';
+            if (hasErrorContent) {
                 console.error('Error fetching profile:', error);
                 addToast('プロフィールの取得に失敗しました', 'error');
             }
+            // Empty errors are normal for new users without profiles
         } finally {
             setLoading(false);
         }
