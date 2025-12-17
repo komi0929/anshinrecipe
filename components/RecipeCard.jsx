@@ -42,9 +42,10 @@ export const RecipeCard = ({ recipe, isSaved, onToggleSave, isLiked, onToggleLik
 
     // Get names of children who can eat this recipe
     const safeFor = recipe.safeFor || (profile?.children?.filter(child => {
+        const recipeAllergens = recipe.freeFromAllergens || recipe.free_from_allergens || [];
         if (!child.allergens || child.allergens.length === 0) return true;
-        if (!recipe.freeFromAllergens || recipe.freeFromAllergens.length === 0) return false;
-        return child.allergens.every(allergen => recipe.freeFromAllergens.includes(allergen));
+        if (!recipeAllergens || recipeAllergens.length === 0) return false;
+        return child.allergens.every(allergen => recipeAllergens.includes(allergen));
     })) || [];
 
     // Trigger async preview image fetch if image missing but sourceUrl exists

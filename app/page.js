@@ -71,8 +71,11 @@ const RecipeListPage = () => {
                             image: item.recipe.image_url,
                             tags: item.recipe.tags,
                             scenes: item.recipe.scenes,
-                            free_from_allergens: item.recipe.free_from_allergens,
+                            freeFromAllergens: item.recipe.free_from_allergens || [],
+                            positiveIngredients: item.recipe.positive_ingredients || [],
                             author: item.recipe.profiles,
+                            userId: item.recipe.user_id,
+                            createdAt: item.recipe.created_at,
                         }));
                         setTabRecipes(formatted);
                     }
@@ -90,8 +93,11 @@ const RecipeListPage = () => {
                             image: r.image_url,
                             tags: r.tags,
                             scenes: r.scenes,
-                            freeFromAllergens: r.free_from_allergens,
+                            freeFromAllergens: r.free_from_allergens || [],
+                            positiveIngredients: r.positive_ingredients || [],
                             author: r.profiles,
+                            userId: r.user_id,
+                            createdAt: r.created_at,
                             sourceUrl: r.source_url
                         }));
                         setTabRecipes(formatted);
@@ -112,10 +118,11 @@ const RecipeListPage = () => {
         if (!profile?.children) return { ...recipe, safeFor: [] };
 
         const safeFor = profile.children.filter(child => {
+            const recipeAllergens = recipe.freeFromAllergens || recipe.free_from_allergens || [];
             if (!child.allergens || child.allergens.length === 0) return true;
-            if (!recipe.free_from_allergens || recipe.free_from_allergens.length === 0) return false;
+            if (!recipeAllergens || recipeAllergens.length === 0) return false;
             return child.allergens.every(allergen =>
-                recipe.free_from_allergens.includes(allergen)
+                recipeAllergens.includes(allergen)
             );
         });
 
