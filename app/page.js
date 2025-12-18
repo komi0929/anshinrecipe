@@ -16,9 +16,7 @@ import LineLoginButton from '@/components/LineLoginButton';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 
-// Onboarding Components
-import WelcomeSlider from '@/components/WelcomeSlider';
-import OnboardingWizard from '@/components/OnboardingWizard';
+// Onboarding Components - Reverted
 import CoachMark from '@/components/CoachMark';
 
 const RecipeListPage = () => {
@@ -197,23 +195,137 @@ const RecipeListPage = () => {
         );
     }
 
-    // 2. Not Logged In -> Welcome Slider (Replaces old LP)
+    // 2. Not Logged In -> Original Landing Page
     if (!user) {
-        return <WelcomeSlider />;
+        return (
+            <div className="min-h-screen flex flex-col items-center bg-[#fcfcfc]">
+                <div className="flex-1 flex flex-col items-center justify-center p-6 max-w-[480px] mx-auto w-full">
+                    <div className="text-center mb-8 w-full">
+                        <div className="flex justify-center mb-6">
+                            <Image
+                                src="/logo.png"
+                                alt="あんしんレシピ"
+                                width={360}
+                                height={90}
+                                priority
+                                className="w-[200px] h-auto object-contain"
+                            />
+                        </div>
+
+                        {/* New Hero Illustration */}
+                        <div className="flex justify-center mb-6">
+                            <div className="relative w-full max-w-[320px] aspect-[4/3]">
+                                <Image
+                                    src="/illustrations/happy_family.png"
+                                    alt="家族で楽しく料理"
+                                    fill
+                                    className="object-contain"
+                                    priority
+                                />
+                            </div>
+                        </div>
+
+                        <h2 className="text-xl font-bold text-slate-700 mb-2">
+                            「これなら食べられる！」を<br />もっと簡単に、家族みんなで。
+                        </h2>
+                        <p className="text-gray-500 text-sm leading-relaxed">
+                            アレルギーっ子のパパ・ママのための<br />
+                            安心レシピ共有＆記録アプリ
+                        </p>
+                    </div>
+
+                    <div className="w-full flex flex-col gap-4 mb-10 px-2">
+                        <div className="flex items-start gap-4 bg-white p-4 rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+                            <div className="bg-orange-50 text-primary p-3 rounded-xl flex items-center justify-center shrink-0">
+                                <Search size={24} />
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="text-base font-bold text-slate-700 mb-1">簡単メモ</h3>
+                                <p className="text-[13px] text-slate-500 leading-normal">
+                                    子どものアレルギー情報や、食べられる食材をサッと記録
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-start gap-4 bg-white p-4 rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+                            <div className="bg-orange-50 text-primary p-3 rounded-xl flex items-center justify-center shrink-0">
+                                <BookHeart size={24} />
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="text-base font-bold text-slate-700 mb-1">レシピを共有</h3>
+                                <p className="text-[13px] text-slate-500 leading-normal">
+                                    工夫したレシピを投稿して、同じ悩みを持つパパ・ママにシェア
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-start gap-4 bg-white p-4 rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+                            <div className="bg-orange-50 text-primary p-3 rounded-xl flex items-center justify-center shrink-0">
+                                <Heart size={24} />
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="text-base font-bold text-slate-700 mb-1">感謝を伝えられる</h3>
+                                <p className="text-[13px] text-slate-500 leading-normal">
+                                    「助かった！」「美味しかった！」の気持ちをスタンプで気軽に送信
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="w-full bg-white rounded-3xl p-8 shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+                        <div className="flex flex-col items-center gap-6">
+                            <p className="text-center text-slate-700 font-bold text-base leading-relaxed">
+                                LINEアカウントでログインして<br />
+                                今すぐ始めましょう
+                            </p>
+
+                            <div className="w-full flex justify-center">
+                                <LineLoginButton />
+                            </div>
+
+                            <p className="text-center text-slate-500 text-sm leading-relaxed">
+                                ログインをもって <Link href="/terms" className="text-blue-500 underline">利用規約</Link>・<Link href="/privacy" className="text-blue-500 underline">プライバシーポリシー</Link> に同意とみなします
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <Footer showLinks={false} />
+            </div>
+        );
     }
 
     // 3. Logged In but No Children -> Onboarding Wizard
-    if (profile?.children?.length === 0 && showOnboarding) {
+    // 3. Show empty state for logged-in users without children
+    if (profile?.children?.length === 0) {
         return (
-            <OnboardingWizard
-                onComplete={() => {
-                    // Force refresh or just redirect to self to trigger main feed
-                    window.location.reload();
-                    // Or simpler: setShowOnboarding(false) if we had local state for children update, 
-                    // but since profile updates via hook subscription, it might just work or need a refresh.
-                    // Reload is safest for "Magic" feel to ensure everything is recalculated.
-                }}
-            />
+            <div className="container max-w-md mx-auto min-h-screen bg-background pb-20">
+                <div className="pt-6 pb-4 px-4 text-center">
+                    <h1 className="flex justify-center">
+                        <Image
+                            src="/logo.png"
+                            alt="あんしんレシピ"
+                            width={360}
+                            height={90}
+                            priority
+                            className="h-[60px] w-auto"
+                        />
+                    </h1>
+                </div>
+
+                <div className="text-center py-20 px-6 max-w-md mx-auto">
+                    <div className="mb-8 flex justify-center">
+                        <UserIcon size={64} className="text-primary/50" />
+                    </div>
+                    <h2 className="text-2xl font-bold mb-3 text-text-main">お子様を登録しましょう</h2>
+                    <p className="text-text-sub mb-8 leading-relaxed">
+                        アレルギー情報を登録すると、<br />
+                        レシピの安全性をチェックできます
+                    </p>
+                    <Link href="/profile">
+                        <Button>プロフィールを設定</Button>
+                    </Link>
+                </div>
+            </div>
         );
     }
 
@@ -271,7 +383,7 @@ const RecipeListPage = () => {
 
                     <div className="px-4 mb-4">
                         <div className="relative">
-                            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 font-bold" size={20} />
+                            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 font-bold" size={20} />
                             <input
                                 type="text"
                                 id="header-search-input" // For CoachMark
@@ -279,7 +391,7 @@ const RecipeListPage = () => {
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="w-full bg-white border-2 border-transparent rounded-full pr-5 py-3.5 text-slate-700 placeholder-slate-400 transition-all outline-none focus:border-orange-300 focus:shadow-[0_0_0_4px_rgba(251,146,60,0.1)] shadow-sm"
-                                style={{ paddingLeft: '52px' }}
+                                style={{ paddingLeft: '64px' }}
                             />
                         </div>
                     </div>
