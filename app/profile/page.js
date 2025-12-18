@@ -53,6 +53,8 @@ export default function ProfilePage() {
     // Inquiry Modal
     const [showInquiryModal, setShowInquiryModal] = useState(false);
     const [showFAQModal, setShowFAQModal] = useState(false);
+    const [showAnnouncementsModal, setShowAnnouncementsModal] = useState(false);
+    const [announcementTab, setAnnouncementTab] = useState('roadmap'); // 'roadmap', 'updates', 'news'
 
     const ALLERGEN_OPTIONS = [
         '卵', '乳', '小麦', 'えび', 'かに', 'そば', '落花生', // 特定原材料7品目
@@ -379,6 +381,16 @@ export default function ProfilePage() {
                     <h3 className="text-sm font-bold text-text-sub mb-3 ml-2">アプリについて</h3>
                     <div className="bg-white rounded-[24px] overflow-hidden shadow-sm">
                         <button
+                            onClick={() => setShowAnnouncementsModal(true)}
+                            className="w-full p-4 flex items-center justify-between border-b border-slate-50 last:border-none hover:bg-slate-50 transition-colors text-left"
+                        >
+                            <div className="flex items-center gap-3 text-text-main">
+                                <Info size={20} className="text-slate-400" />
+                                <span>お知らせ</span>
+                            </div>
+                            <ChevronRight className="text-slate-300" size={20} />
+                        </button>
+                        <button
                             onClick={() => setShowFAQModal(true)}
                             className="w-full p-4 flex items-center justify-between border-b border-slate-50 last:border-none hover:bg-slate-50 transition-colors text-left"
                         >
@@ -544,7 +556,15 @@ export default function ProfilePage() {
                                     selected={childAllergens}
                                     onChange={setChildAllergens}
                                 />
-                            </div>                        </div>
+                            </div>
+
+                            {/* Privacy Disclaimer */}
+                            <div className="bg-slate-50 rounded-2xl p-4 mt-4">
+                                <p className="text-xs text-slate-500 leading-relaxed text-center">
+                                    🔒 お子さまのお名前・アイコンが「{profile?.userName || 'ユーザー'}」さん以外に表示されることはありません。
+                                </p>
+                            </div>
+                        </div>
 
                         <div className="mt-8 flex gap-3">
                             {editingChild && (
@@ -611,6 +631,112 @@ export default function ProfilePage() {
                             onClick={() => setShowFAQModal(false)}
                             className="mt-8 w-full"
                         >
+                            閉じる
+                        </Button>
+                    </div>
+                </div>
+            )}
+
+            {/* Announcements Modal */}
+            {showAnnouncementsModal && (
+                <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setShowAnnouncementsModal(false)}>
+                    <div
+                        className="bg-white w-full max-w-md max-h-[85vh] rounded-[32px] p-6 shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-xl font-bold text-text-main">お知らせ</h3>
+                            <button onClick={() => setShowAnnouncementsModal(false)} className="text-slate-400 hover:text-slate-600 text-xl">×</button>
+                        </div>
+
+                        {/* Tab Switcher */}
+                        <div className="flex bg-slate-100 p-1 rounded-2xl mb-4 space-x-1">
+                            {[
+                                { id: 'roadmap', label: '改善予定' },
+                                { id: 'updates', label: '改善履歴' },
+                                { id: 'news', label: 'お知らせ' }
+                            ].map((tab) => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setAnnouncementTab(tab.id)}
+                                    className={`flex-1 py-2 text-sm font-bold rounded-xl transition-all ${announcementTab === tab.id ? 'bg-white text-primary shadow-sm' : 'text-text-sub'}`}
+                                >
+                                    {tab.label}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Tab Content */}
+                        <div className="flex-1 overflow-y-auto">
+                            {announcementTab === 'roadmap' && (
+                                <div className="space-y-4">
+                                    <p className="text-sm text-slate-500 mb-3">今後追加予定の機能</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {[
+                                            { name: 'レシピ検索の強化', status: 'wip' },
+                                            { name: '食材からレシピ提案', status: 'planned' },
+                                            { name: 'ダークモード', status: 'planned' },
+                                            { name: '多言語対応', status: 'planned' },
+                                            { name: 'お気に入りフォルダ', status: 'planned' },
+                                            { name: 'プッシュ通知', status: 'wip' },
+                                        ].map((item, i) => (
+                                            <span key={i} className={`px-3 py-1.5 rounded-full text-xs font-bold ${item.status === 'wip' ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-500'}`}>
+                                                {item.status === 'wip' && <span className="mr-1">🚧</span>}
+                                                {item.name}
+                                            </span>
+                                        ))}
+                                    </div>
+                                    <div className="mt-6 pt-4 border-t border-slate-100">
+                                        <p className="text-sm text-slate-500 mb-3">実装済み機能</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {['Q&A機能', '通知機能', 'レポート投稿', 'バッジ機能', 'アレルゲン自動判定'].map((item, i) => (
+                                                <span key={i} className="px-3 py-1.5 rounded-full text-xs font-bold bg-green-100 text-green-600">
+                                                    ✓ {item}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {announcementTab === 'updates' && (
+                                <div className="space-y-4">
+                                    {[
+                                        { date: '2025年12月18日', title: 'UI/UXの改善', desc: 'レシピ詳細画面の画像表示、通知機能の強化、Q&Aセクションを追加しました。' },
+                                        { date: '2025年12月17日', title: 'レシピ投稿機能の強化', desc: 'アレルゲン自動判定、公開設定のデフォルト化を実装しました。' },
+                                        { date: '2025年12月16日', title: 'ログイン不具合の修正', desc: 'LINEログインが正常に動作しない問題を解消しました。' },
+                                        { date: '2025年12月12日', title: '画像読み込み高速化', desc: 'レシピ登録時のOGP画像取得を高速化しました。' },
+                                    ].map((update, i) => (
+                                        <div key={i} className="bg-slate-50 rounded-2xl p-4">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <span className="text-lg">✨</span>
+                                                <span className="text-xs text-blue-500 font-bold">{update.date}</span>
+                                            </div>
+                                            <h4 className="font-bold text-slate-700 mb-1">{update.title}</h4>
+                                            <p className="text-xs text-slate-500 leading-relaxed">{update.desc}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {announcementTab === 'news' && (
+                                <div className="space-y-4">
+                                    <div className="bg-orange-50 rounded-2xl p-4 border border-orange-100">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <span className="text-lg">📢</span>
+                                            <span className="text-xs text-orange-500 font-bold">2025年12月18日</span>
+                                        </div>
+                                        <h4 className="font-bold text-slate-700 mb-1">あんしんレシピへようこそ！</h4>
+                                        <p className="text-xs text-slate-500 leading-relaxed">
+                                            アレルギーっ子のパパ・ママのためのレシピ共有アプリです。ご意見・ご要望はお気軽に「お問い合わせ」からお寄せください。
+                                        </p>
+                                    </div>
+                                    <p className="text-center text-sm text-slate-400 py-8">新しいお知らせはありません</p>
+                                </div>
+                            )}
+                        </div>
+
+                        <Button onClick={() => setShowAnnouncementsModal(false)} className="mt-4 w-full">
                             閉じる
                         </Button>
                     </div>

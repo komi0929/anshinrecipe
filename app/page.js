@@ -33,6 +33,7 @@ const RecipeListPage = () => {
     const [activeTab, setActiveTab] = useState('recommend'); // 'recommend', 'saved', 'mine'
     const [tabRecipes, setTabRecipes] = useState([]);
     const [tabLoading, setTabLoading] = useState(false);
+    const [sortOrder, setSortOrder] = useState('newest'); // 'newest' or 'likes'
 
     useEffect(() => {
         // No artificial delay needed, stabilize by checking actual data loading
@@ -52,8 +53,9 @@ const RecipeListPage = () => {
             setTabLoading(true);
             try {
                 if (activeTab === 'recommend') {
-                    // Use the data from useRecipes hook (already fetched)
-                    setTabRecipes(recipes);
+                    // Use the data from useRecipes hook, excluding own posts
+                    const filtered = recipes.filter(r => r.userId !== user.id);
+                    setTabRecipes(filtered);
                 } else if (activeTab === 'saved') {
                     const { data } = await supabase
                         .from('saved_recipes')
@@ -152,7 +154,7 @@ const RecipeListPage = () => {
             return true;
         });
 
-        // Sort by safety match first, then newest first, with stable ID tie-breaker
+        // Sort by safety match first, then by sortOrder
         return filtered.sort((a, b) => {
             const aSafe = a.safeFor.length > 0;
             const bSafe = b.safeFor.length > 0;
@@ -161,17 +163,24 @@ const RecipeListPage = () => {
             if (aSafe && !bSafe) return -1;
             if (!aSafe && bSafe) return 1;
 
-            // 2. Newest first
+            // 2. Sort by user preference
+            if (sortOrder === 'likes') {
+                const aLikes = a.likeCount || 0;
+                const bLikes = b.likeCount || 0;
+                if (bLikes - aLikes !== 0) return bLikes - aLikes;
+            }
+
+            // 3. Newest as secondary or primary sort
             const dateA = new Date(a.created_at || a.createdAt || 0);
             const dateB = new Date(b.created_at || b.createdAt || 0);
             if (dateB - dateA !== 0) return dateB - dateA;
 
-            // 3. Stable Tie-breaker (important for masonry stability)
+            // 4. Stable Tie-breaker
             const idA = String(a.id || a.recipe_id);
             const idB = String(b.id || b.recipe_id);
             return idA.localeCompare(idB);
         });
-    }, [processedRecipes, searchTerm, selectedChildId, selectedScene]);
+    }, [processedRecipes, searchTerm, selectedChildId, selectedScene, sortOrder]);
 
     // ----------------------------------------------------
     // VIEW STATE MANAGEMENT
@@ -361,7 +370,7 @@ const RecipeListPage = () => {
                     {/* Tab Switcher */}
                     <div className="flex bg-slate-100 p-1 rounded-2xl mb-4 mx-4 space-x-1">
                         {['recommend', 'saved', 'mine'].map((tab) => {
-                            const labels = { recommend: 'みんな', saved: '保存済み', mine: '自分の投稿' };
+                            const labels = { recommend: 'みんなの投稿', saved: '保存済み', mine: '自分の投稿' };
                             const isActive = activeTab === tab;
                             return (
                                 <button
@@ -394,6 +403,23 @@ const RecipeListPage = () => {
                                 style={{ paddingLeft: '64px' }}
                             />
                         </div>
+                    </div>
+
+                    {/* Sort Toggle */}
+                    <div className="flex items-center justify-end gap-2 px-4 mb-3">
+                        <span className="text-xs text-slate-400 mr-1">並び替え:</span>
+                        <button
+                            onClick={() => setSortOrder('newest')}
+                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${sortOrder === 'newest' ? 'bg-primary text-white shadow-sm' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                        >
+                            🕐 新着順
+                        </button>
+                        <button
+                            onClick={() => setSortOrder('likes')}
+                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${sortOrder === 'likes' ? 'bg-primary text-white shadow-sm' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                        >
+                            ❤️ いいね！順
+                        </button>
                     </div>
 
                     {/* Child Selection Row */}
