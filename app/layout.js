@@ -32,6 +32,10 @@ export const metadata = {
         capable: true,
         statusBarStyle: 'default',
         title: 'あんしんレシピ',
+        startupImage: [],
+    },
+    icons: {
+        apple: '/icon-512x512.png',
     },
 }
 

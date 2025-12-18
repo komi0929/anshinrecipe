@@ -570,7 +570,7 @@ export default function ProfilePage() {
                         <h3 className="text-xl font-bold text-center mb-6 text-text-main">お問い合わせ</h3>
                         <div className="space-y-4">
                             <a
-                                href="https://line.me/R/ti/p/@anshin_recipe"
+                                href="https://line.me/R/ti/p/@668fqaht"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex items-center justify-center gap-3 w-full py-4 bg-[#06C755] text-white rounded-2xl font-bold shadow-sm hover:shadow-md transition-all active:scale-95"
@@ -579,7 +579,7 @@ export default function ProfilePage() {
                                 LINEで問い合わせる
                             </a>
                             <a
-                                href="mailto:support@anshin-recipe.com"
+                                href="mailto:y.kominami@hitokoto1.co.jp"
                                 className="flex items-center justify-center gap-3 w-full py-4 bg-slate-100 text-slate-700 rounded-2xl font-bold hover:bg-slate-200 transition-colors active:scale-95"
                             >
                                 <Mail size={20} />
