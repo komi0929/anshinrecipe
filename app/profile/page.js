@@ -52,6 +52,7 @@ export default function ProfilePage() {
 
     // Inquiry Modal
     const [showInquiryModal, setShowInquiryModal] = useState(false);
+    const [showFAQModal, setShowFAQModal] = useState(false);
 
     const ALLERGEN_OPTIONS = [
         '卵', '乳', '小麦', 'えび', 'かに', 'そば', '落花生', // 特定原材料7品目
@@ -263,13 +264,6 @@ export default function ProfilePage() {
                     <h3 className="text-sm font-bold text-text-sub mb-3 ml-2">獲得バッジ</h3>
                     <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
                         <div className="flex flex-col items-center min-w-[72px]">
-                            <div className={`w-14 h-14 rounded-full flex items-center justify-center border-2 mb-2 ${profile.children?.length > 0 ? 'bg-amber-50 border-amber-200 shadow-sm' : 'bg-slate-100 border-slate-200'}`}>
-                                <span className={`text-2xl ${profile.children?.length > 0 ? '' : 'grayscale opacity-40'}`}>🔰</span>
-                            </div>
-                            <span className={`text-[11px] font-bold ${profile.children?.length > 0 ? 'text-text-main' : 'text-slate-400'}`}>はじめまして</span>
-                        </div>
-
-                        <div className="flex flex-col items-center min-w-[72px]">
                             <div className={`relative w-14 h-14 rounded-full flex items-center justify-center border-2 mb-2 ${profile.stats?.recipeCount > 0 ? 'bg-amber-50 border-amber-200 shadow-sm' : 'bg-slate-100 border-slate-200'}`}>
                                 <span className={`text-2xl ${profile.stats?.recipeCount > 0 ? '' : 'grayscale opacity-40'}`}>🍳</span>
                                 {(!profile.stats?.recipeCount) && (
@@ -384,6 +378,16 @@ export default function ProfilePage() {
                 <div>
                     <h3 className="text-sm font-bold text-text-sub mb-3 ml-2">アプリについて</h3>
                     <div className="bg-white rounded-[24px] overflow-hidden shadow-sm">
+                        <button
+                            onClick={() => setShowFAQModal(true)}
+                            className="w-full p-4 flex items-center justify-between border-b border-slate-50 last:border-none hover:bg-slate-50 transition-colors text-left"
+                        >
+                            <div className="flex items-center gap-3 text-text-main">
+                                <HelpCircle size={20} className="text-slate-400" />
+                                <span>よくある質問 (Q&A)</span>
+                            </div>
+                            <ChevronRight className="text-slate-300" size={20} />
+                        </button>
                         <Link href="/terms" className="p-4 flex items-center justify-between border-b border-slate-50 last:border-none hover:bg-slate-50 transition-colors">
                             <div className="flex items-center gap-3 text-text-main">
                                 <FileText size={20} className="text-slate-400" />
@@ -563,6 +567,52 @@ export default function ProfilePage() {
                                 {editingChild ? '保存する' : '追加する'}
                             </Button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* FAQ Modal */}
+            {showFAQModal && (
+                <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setShowFAQModal(false)}>
+                    <div
+                        className="bg-white w-full max-w-md max-h-[80vh] rounded-[32px] p-6 shadow-2xl animate-in zoom-in-95 duration-200 overflow-y-auto"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-xl font-bold text-text-main">よくある質問 (Q&A)</h3>
+                            <button onClick={() => setShowFAQModal(false)} className="text-slate-400 hover:text-slate-600">×</button>
+                        </div>
+                        <div className="space-y-6">
+                            {[
+                                { q: 'レポート投稿とは？', a: '他の人のレシピを作った際に、感想や写真を投稿できる機能です。投稿すると作者へ通知が届きます。' },
+                                { q: '非公開レシピとは？', a: '自分だけが見られるレシピです。SNSで見つけたレシピのメモ保管場所として便利です。' },
+                                { q: 'アレルゲン判定について', a: 'お子様のアレルギー情報とレシピの「含まないアレルゲン」情報を照合して、安全性を判定しています。' },
+                                { q: '獲得バッジとは？', a: 'アプリをたくさん使うほど種類が増えていく勲章です。プロフィールで進捗を確認できます。' },
+                                { q: 'レシピの保存方法は？', a: 'レシピ詳細ページの右上にある「保存（しおり）」アイコンをタップすると、保存済みタブに追加されます。' },
+                                { q: '外部サイトのレシピも登録できる？', a: 'はい。WebサイトやSNSのURLを入力すると、タイトルや画像を自動で取得して簡単に登録できます。' },
+                                { q: 'お子様の追加・編集方法は？', a: 'プロフィールの「お子様の設定」からいつでも追加や内容の変更が可能です。' },
+                                { q: '通知が届くタイミングは？', a: '自分のレシピが「いいね」「保存」「レポート投稿」された時、および運営からのお知らせが届きます。' },
+                                { q: '退会するとデータはどうなる？', a: 'アカウントを削除すると、これまで投稿したレシピや登録したお子様の情報は即座にすべて消去されます。' },
+                                { q: 'アレルギー情報の入力ミスを見つけた', a: 'レシピの編集画面からいつでもアレルゲン情報を修正できます。正確な情報の登録をお願いします。' }
+                            ].map((item, i) => (
+                                <div key={i} className="border-b border-slate-50 pb-4 last:border-none">
+                                    <div className="flex gap-2 text-primary font-bold mb-1">
+                                        <span className="shrink-0 text-orange-400">Q.</span>
+                                        <p className="text-sm">{item.q}</p>
+                                    </div>
+                                    <div className="flex gap-2 text-slate-600">
+                                        <span className="shrink-0 font-bold text-slate-400">A.</span>
+                                        <p className="text-xs leading-relaxed">{item.a}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        <Button
+                            onClick={() => setShowFAQModal(false)}
+                            className="mt-8 w-full"
+                        >
+                            閉じる
+                        </Button>
                     </div>
                 </div>
             )}

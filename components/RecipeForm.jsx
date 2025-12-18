@@ -26,7 +26,7 @@ export const RecipeForm = ({
     const [tags, setTags] = useState(initialData.tags || []);
     const [tagInput, setTagInput] = useState('');
     const [freeFromAllergens, setFreeFromAllergens] = useState(initialData.freeFromAllergens || []);
-    const [isPublic, setIsPublic] = useState(initialData.isPublic !== undefined ? initialData.isPublic : (isEditMode ? null : true));
+    const [isPublic, setIsPublic] = useState(initialData.isPublic !== undefined ? initialData.isPublic : true);
     // New: Smart Canvas (Memo Images)
     const [memoImages, setMemoImages] = useState(initialData.memoImages || []);
 
@@ -84,20 +84,18 @@ export const RecipeForm = ({
     // Auto-calculate allergens from selected children
     useEffect(() => {
         if (!isEditMode && selectedChildren.length > 0 && profile?.children) {
-            // Only runs if user hasn't manually modified yet? 
-            // For MVP simplicity: If freeFromAllergens is empty, auto-fill.
-            if (freeFromAllergens.length === 0) {
-                const selectedKids = profile.children.filter(c => selectedChildren.includes(c.id));
-                const allergensSet = new Set();
-                selectedKids.forEach(kid => {
-                    kid.allergens?.forEach(a => allergensSet.add(a));
-                });
-                if (allergensSet.size > 0) {
-                    setFreeFromAllergens(Array.from(allergensSet));
-                }
-            }
+            const selectedKids = profile.children.filter(c => selectedChildren.includes(c.id));
+            const allergensSet = new Set();
+            selectedKids.forEach(kid => {
+                kid.allergens?.forEach(a => allergensSet.add(a));
+            });
+            // ユーザーが手動で削った分を尊重しつつ、選択中の子供たちの全アレルゲンを表示
+            // ただし、初期状態や子供の変更時に連動させる
+            setFreeFromAllergens(Array.from(allergensSet));
+        } else if (!isEditMode && selectedChildren.length === 0) {
+            setFreeFromAllergens([]);
         }
-    }, [selectedChildren, isEditMode, profile]);
+    }, [selectedChildren, isEditMode, profile?.children]);
 
     // UI state
     const [isFetchingOgp, setIsFetchingOgp] = useState(false);
@@ -170,12 +168,7 @@ export const RecipeForm = ({
 
         // Auto-add allergens for newly selected child
         if (!isSelected && profile?.children) {
-            const child = profile.children.find(c => c.id === childId);
-            if (child && child.allergens) {
-                // Add new allergens to existing list
-                const newAllergens = new Set([...freeFromAllergens, ...child.allergens]);
-                setFreeFromAllergens(Array.from(newAllergens));
-            }
+            // アレルゲンの自動追加ロジックはuseEffectで行うため、ここでは何もしない
         }
     };
 

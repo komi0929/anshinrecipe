@@ -107,6 +107,18 @@ const RecipeDetailPage = () => {
         }
     }, [id, user, addToast]);
 
+    useEffect(() => {
+        if (!loading && typeof window !== 'undefined' && window.location.hash) {
+            const hash = window.location.hash.replace('#', '');
+            setTimeout(() => {
+                const element = document.getElementById(hash);
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth' });
+                }
+            }, 500); // Wait for content to settle
+        }
+    }, [loading]);
+
     const handleReaction = async (reactionType) => {
         if (!user) {
             router.push('/login');
@@ -198,13 +210,17 @@ const RecipeDetailPage = () => {
     const renderAllergenList = () => {
         const allergens = recipe.freeFromAllergens || recipe.free_from_allergens || [];
         if (allergens.length === 0) {
-            return <p className="text-muted">アレルギー除去情報はありません</p>;
+            return (
+                <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 text-center">
+                    <p className="text-slate-500 text-sm font-medium">アレルギー除去情報は登録されていません</p>
+                </div>
+            );
         }
         return (
             <div className="allergen-list">
                 {allergens.map(allergen => (
                     <span key={allergen} className="allergen-chip free-from">
-                        {allergen}
+                        {allergen}なし
                     </span>
                 ))}
             </div>
@@ -392,25 +408,17 @@ const RecipeDetailPage = () => {
                     </div>
                 )}
 
-                {/* Memo Section - Removed as it's now merged with Description */
-                    /* 
-                                    {recipe.memo && (
-                                        <div className="detail-section">
-                                            <h3>メモ</h3>
-                                            <p className="recipe-memo">{recipe.memo}</p>
-                                        </div>
-                                    )} 
-                    */
-                }
-
-                <div className="detail-section">
-                    <h3>タグ</h3>
-                    <div className="tags-list">
-                        {recipe.tags && recipe.tags.map(tag => (
-                            <span key={tag} className="tag-chip">#{tag}</span>
-                        ))}
+                {/* Tags Section */}
+                {recipe.tags && recipe.tags.length > 0 && (
+                    <div className="detail-section">
+                        <h3>タグ</h3>
+                        <div className="tags-list">
+                            {recipe.tags.map(tag => (
+                                <span key={tag} className="tag-chip">#{tag}</span>
+                            ))}
+                        </div>
                     </div>
-                </div>
+                )}
 
                 {/* Tried Reports Section */}
                 <div className="detail-section tried-reports-section" id="tried-reports">

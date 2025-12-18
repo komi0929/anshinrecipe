@@ -56,7 +56,7 @@ const TriedReportCard = ({ report, currentUserId, onDelete }) => {
     };
 
     return (
-        <div className="tried-report-card">
+        <div className="tried-report-card" id={`report-${report.id}`}>
             <div className="report-header">
                 <div className="user-info">
                     {(report.author?.avatarUrl || report.profiles?.avatar_url) ? (
