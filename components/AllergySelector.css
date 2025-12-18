@@ -43,14 +43,20 @@
 }
 
 .allergen-group {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
     gap: var(--spacing-sm);
     margin-bottom: var(--spacing-md);
 }
 
 .allergen-btn {
-    padding: 6px 12px;
+    width: 100%;
+    text-align: center;
+    padding: 8px 4px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     border-radius: var(--radius-full);
     font-size: var(--font-size-sm);
     border: 1px solid var(--color-border);
@@ -60,9 +66,10 @@
 }
 
 .allergen-btn.active {
-    background-color: var(--color-accent);
-    color: white;
+    background-color: var(--color-accent-light, #FFF3E0);
+    color: var(--color-accent, #FF9800);
     border-color: var(--color-accent);
+    font-weight: 600;
 }
 
 .toggle-link {
