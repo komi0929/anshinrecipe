@@ -11,8 +11,10 @@
     display: flex;
     flex-direction: column;
     /* Masonry essential: prevent break inside */
-    break-inside: avoid;
+    break-inside: avoid-column;
     page-break-inside: avoid;
+    display: inline-block;
+    vertical-align: top;
     margin-bottom: 12px;
     /* Consistent margin */
     position: relative;
@@ -25,6 +27,16 @@
 .recipe-card:hover {
     transform: translateY(-4px) scale(1.01);
     box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Content Area - Compact padding */
+.recipe-content {
+    padding: 10px 12px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 110px;
+    /* Stabilize height */
 }
 
 .recipe-card:active {
@@ -105,14 +117,7 @@
     backdrop-filter: blur(4px);
 }
 
-/* Content Area - Compact padding */
-.recipe-content {
-    padding: 10px 12px 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    /* Tighter gap */
-}
+
 
 /* Title - optimized for narrow columns */
 .recipe-title {

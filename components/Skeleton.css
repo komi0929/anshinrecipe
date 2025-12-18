@@ -20,11 +20,13 @@
 
 .recipe-card-skeleton {
     background: white;
-    border-radius: var(--radius-md);
+    border-radius: 12px;
     overflow: hidden;
     box-shadow: var(--shadow-sm);
-    margin-bottom: var(--spacing-md);
-    break-inside: avoid;
+    margin-bottom: 12px;
+    break-inside: avoid-column;
+    display: inline-block;
+    width: 100%;
 }
 
 .p-3 {

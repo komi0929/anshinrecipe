@@ -56,7 +56,7 @@ export const RecipeCard = ({ recipe, isSaved, onToggleSave, isLiked, onToggleLik
     }, [recipe.image, recipe.sourceUrl, recipe.id, previewImage]);
 
     return (
-        <Link href={`/recipe/${recipe.id}`} className="recipe-card fade-in">
+        <Link href={`/recipe/${recipe.id}`} className="recipe-card">
             <div className="recipe-image-wrapper">
                 {/* Use standard img tag for Masonry compatibility (Next.js Image with fill needs fixed container) */}
                 {recipe.image ? (

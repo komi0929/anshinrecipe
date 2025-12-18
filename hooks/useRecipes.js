@@ -123,16 +123,22 @@ export const useRecipes = () => {
         }
     };
 
+    const updateRecipeImageLocal = (id, imageUrl) => {
+        setRecipes(prev => prev.map(r => r.id === id ? { ...r, image: imageUrl } : r));
+    };
+
     const updateRecipeImage = async (id, imageUrl) => {
         if (!imageUrl) return;
         try {
+            // Update local state immediately for perceived speed
+            updateRecipeImageLocal(id, imageUrl);
+
             const { error } = await supabase
                 .from('recipes')
                 .update({ image_url: imageUrl })
                 .eq('id', id);
             if (error) throw error;
-            // Refresh the list to reflect the new image
-            fetchRecipes();
+            // No need to fetchRecipes() here as we already updated local state
         } catch (e) {
             console.error('Error updating recipe image:', e);
         }
