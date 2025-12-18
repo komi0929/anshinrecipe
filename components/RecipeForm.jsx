@@ -26,7 +26,7 @@ export const RecipeForm = ({
     const [tags, setTags] = useState(initialData.tags || []);
     const [tagInput, setTagInput] = useState('');
     const [freeFromAllergens, setFreeFromAllergens] = useState(initialData.freeFromAllergens || []);
-    const [isPublic, setIsPublic] = useState(initialData.isPublic !== undefined ? initialData.isPublic : null);
+    const [isPublic, setIsPublic] = useState(initialData.isPublic !== undefined ? initialData.isPublic : (isEditMode ? null : true));
     // New: Smart Canvas (Memo Images)
     const [memoImages, setMemoImages] = useState(initialData.memoImages || []);
 
@@ -180,11 +180,13 @@ export const RecipeForm = ({
     };
 
     const toggleAllergen = (allergen) => {
-        setFreeFromAllergens(prev =>
-            prev.includes(allergen)
-                ? prev.filter(a => a !== allergen)
-                : [...prev, allergen]
-        );
+        setFreeFromAllergens(prev => {
+            if (prev.includes(allergen)) {
+                return prev.filter(a => a !== allergen);
+            }
+            // Manual addition is disabled
+            return prev;
+        });
     };
 
     const toggleScene = (scene) => {
@@ -478,7 +480,7 @@ export const RecipeForm = ({
                 <label className="section-label">
                     除去アレルギー情報 (自動判定)
                 </label>
-                <p className="section-help">このレシピに含まれていない（除去されている）アレルギーを選択してください。<br />お子様を選択すると自動で追加されますが、手動で修正も可能です。</p>
+                <p className="section-help">お子様のアレルギー情報から自動判定されます。不要な場合はタップして削除してください。追加はできません。</p>
 
                 <div className="flex flex-wrap gap-2 mt-2">
                     {ALLERGEN_OPTIONS.map(allergen => (
