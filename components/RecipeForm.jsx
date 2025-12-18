@@ -590,7 +590,7 @@ export const RecipeForm = ({
 
             {/* Public/Private Setting */}
             <div className="form-section">
-                <label className="section-label">公開設定</label>
+                <label className="section-label">公開設定 <span className="required">*</span></label>
                 <div className="flex gap-4 mt-2">
                     <button
                         type="button"
