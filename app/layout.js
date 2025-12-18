@@ -35,7 +35,7 @@ export const metadata = {
         startupImage: [],
     },
     icons: {
-        apple: '/icon-512x512.png',
+        apple: '/pwa-icon.png',
     },
 }
 
@@ -57,7 +57,7 @@ export default function RootLayout({ children }) {
                 <ToastProvider>
                     <div className="app-container flex flex-col min-h-screen">
                         <SafetyBanner />
-                        <main className="flex-grow pb-24">
+                        <main className="flex-grow pb-16">
                             {children}
                         </main>
 

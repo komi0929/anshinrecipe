@@ -8,8 +8,8 @@
     border-top: 1px solid var(--color-border);
     display: flex;
     justify-content: space-around;
-    padding: 12px 0 16px 0;
-    /* Increased bottom padding for better spacing, total height ~64px */
+    padding: 12px 0 12px 0;
+    /* Reduced bottom padding to fix excessive space */
     box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
     z-index: 1000;
     max-width: 480px;
