@@ -237,10 +237,33 @@
 }
 
 .recipe-description {
-    font-size: 15px;
+    font-size: 1rem;
     line-height: 1.8;
-    color: #475569;
+    color: #4a5568;
     white-space: pre-wrap;
+}
+
+.recipe-additional-images {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.additional-image-wrapper {
+    flex: 1 1 200px;
+    max-width: 100%;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #f7fafc;
+    border: 1px border-slate-100;
+}
+
+.additional-image {
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: contain;
 }
 
 .scene-chip,

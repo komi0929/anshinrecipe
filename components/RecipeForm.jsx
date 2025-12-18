@@ -267,7 +267,8 @@ export const RecipeForm = ({
                 tags,
                 freeFromAllergens: freeFromAllergens,
                 isPublic,
-                positiveIngredients: [] // Legacy/Future support
+                positiveIngredients: [], // Legacy/Future support
+                memoImages: memoImages
             };
 
             await onSubmit(formData);

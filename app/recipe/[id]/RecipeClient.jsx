@@ -59,7 +59,8 @@ const RecipeDetailPage = () => {
                             username,
                             avatar_url
                         ),
-                        cooking_logs (id, content, rating, created_at, user_id)
+                        cooking_logs (id, content, rating, created_at, user_id),
+                        recipe_images (id, image_url)
                     `)
                     .eq('id', id)
                     .single();
@@ -186,12 +187,31 @@ const RecipeDetailPage = () => {
 
     // Calculate Safety
     const safeFor = profile?.children?.filter(child => {
+        const recipeAllergens = recipe.freeFromAllergens || recipe.free_from_allergens || [];
         if (!child.allergens || child.allergens.length === 0) return true;
-        if (!recipe.free_from_allergens || recipe.free_from_allergens.length === 0) return false;
-        return child.allergens.every(allergen => recipe.free_from_allergens.includes(allergen));
+        if (!recipeAllergens || recipeAllergens.length === 0) return false;
+        return child.allergens.every(allergen => recipeAllergens.includes(allergen));
     }) || [];
 
     const totalReactions = Object.values(reactionCounts).reduce((a, b) => a + b, 0);
+
+    const renderAllergenList = () => {
+        const allergens = recipe.freeFromAllergens || recipe.free_from_allergens || [];
+        if (allergens.length === 0) {
+            return <p className="text-muted">アレルギー除去情報はありません</p>;
+        }
+        return (
+            <div className="allergen-list">
+                {allergens.map(allergen => (
+                    <span key={allergen} className="allergen-chip free-from">
+                        {allergen}
+                    </span>
+                ))}
+            </div>
+        );
+    };
+
+    const positiveIngredients = recipe.positiveIngredients || recipe.positive_ingredients || [];
 
     return (
         <div className="container recipe-detail-page">
@@ -308,25 +328,17 @@ const RecipeDetailPage = () => {
                 )}
 
                 <div className="detail-section">
-                    <h3>アレルギー情報（使用していない素材）</h3>
-                    <div className="allergen-list">
-                        {recipe.free_from_allergens && recipe.free_from_allergens.length > 0 ? (
-                            recipe.free_from_allergens.map(allergen => (
-                                <span key={allergen} className="allergen-chip free-from">
-                                    {allergen}
-                                </span>
-                            ))
-                        ) : (
-                            <p className="text-muted">アレルギー除去情報はありません</p>
-                        )}
+                    <div className="allergen-labels mt-4">
+                        <h3 className="section-title">含まないアレルゲン</h3>
+                        {renderAllergenList()}
                     </div>
                 </div>
 
-                {recipe.positive_ingredients && recipe.positive_ingredients.length > 0 && (
+                {positiveIngredients.length > 0 && (
                     <div className="detail-section">
                         <h3>使用している食材</h3>
                         <div className="ingredient-tags">
-                            {recipe.positive_ingredients.map(ingredient => (
+                            {positiveIngredients.map(ingredient => (
                                 <Link
                                     key={ingredient}
                                     href={`/search/ingredient/${encodeURIComponent(ingredient)}`}
@@ -342,9 +354,20 @@ const RecipeDetailPage = () => {
                 <div className="detail-section">
                     <h3>おすすめポイント</h3>
                     {(recipe.memo || recipe.description) ? (
-                        <p className="recipe-description">
-                            {recipe.memo || recipe.description}
-                        </p>
+                        <>
+                            <p className="recipe-description">
+                                {recipe.memo || recipe.description}
+                            </p>
+                            {recipe.recipe_images && recipe.recipe_images.length > 0 && (
+                                <div className="recipe-additional-images">
+                                    {recipe.recipe_images.map(img => (
+                                        <div key={img.id} className="additional-image-wrapper">
+                                            <img src={img.image_url} alt="追加画像" className="additional-image" />
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </>
                     ) : (
                         <div className="empty-recommendation-points">
                             <p className="text-muted">まだおすすめポイントが設定されていません</p>

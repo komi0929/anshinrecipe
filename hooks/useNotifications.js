@@ -45,8 +45,24 @@ export const useNotifications = (userId) => {
             }
 
             if (data) {
-                setNotifications(data);
-                const unread = data.filter(n => !n.is_read).length;
+                const formatted = data.map(n => ({
+                    id: n.id,
+                    type: n.type,
+                    createdAt: n.created_at,
+                    isRead: n.is_read,
+                    actorId: n.actor_id,
+                    recipeId: n.recipe_id,
+                    actor: {
+                        displayName: n.actor?.display_name || 'ゲスト',
+                        avatarUrl: n.actor?.avatar_url
+                    },
+                    recipe: n.recipe ? {
+                        title: n.recipe.title,
+                        imageUrl: n.recipe.image_url
+                    } : null
+                }));
+                setNotifications(formatted);
+                const unread = formatted.filter(n => !n.isRead).length;
                 setUnreadCount(unread);
             }
         } catch (err) {
@@ -89,7 +105,10 @@ export const useNotifications = (userId) => {
                     // Update the notification in state
                     if (payload.new) {
                         setNotifications(prev =>
-                            prev.map(n => n.id === payload.new.id ? { ...n, ...payload.new } : n)
+                            prev.map(n => n.id === payload.new.id ? {
+                                ...n,
+                                isRead: payload.new.is_read
+                            } : n)
                         );
                         // Recalculate unread count
                         setUnreadCount(prev => {
@@ -119,7 +138,7 @@ export const useNotifications = (userId) => {
 
             if (!error) {
                 setNotifications(prev =>
-                    prev.map(n => n.id === notificationId ? { ...n, is_read: true } : n)
+                    prev.map(n => n.id === notificationId ? { ...n, isRead: true } : n)
                 );
                 setUnreadCount(prev => Math.max(0, prev - 1));
             }
@@ -137,7 +156,7 @@ export const useNotifications = (userId) => {
                 .eq('is_read', false);
 
             if (!error) {
-                setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+                setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
                 setUnreadCount(0);
             }
         } catch (error) {

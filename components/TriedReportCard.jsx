@@ -5,7 +5,8 @@ import { Trash2, User as UserIcon } from 'lucide-react';
 import './TriedReportCard.css';
 
 const TriedReportCard = ({ report, currentUserId, onDelete }) => {
-    const isOwner = currentUserId && report.user_id === currentUserId;
+    const reportUserId = report.userId || report.user_id;
+    const isOwner = currentUserId && reportUserId === currentUserId;
 
     const formatDate = (dateString) => {
         const date = new Date(dateString);
@@ -26,9 +27,9 @@ const TriedReportCard = ({ report, currentUserId, onDelete }) => {
         <div className="tried-report-card">
             <div className="report-header">
                 <div className="user-info">
-                    {report.profiles?.avatar_url ? (
+                    {(report.author?.avatarUrl || report.profiles?.avatar_url) ? (
                         <img
-                            src={report.profiles.avatar_url}
+                            src={report.author?.avatarUrl || report.profiles?.avatar_url}
                             alt=""
                             className="user-avatar"
                         />
@@ -39,10 +40,10 @@ const TriedReportCard = ({ report, currentUserId, onDelete }) => {
                     )}
                     <div className="user-details">
                         <span className="username">
-                            {report.profiles?.username || 'ゲスト'}
+                            {(report.author?.username || report.profiles?.username || 'ゲスト')}
                         </span>
                         <span className="timestamp">
-                            {formatDate(report.created_at)}
+                            {formatDate(report.createdAt || report.created_at)}
                         </span>
                     </div>
                 </div>
@@ -57,9 +58,9 @@ const TriedReportCard = ({ report, currentUserId, onDelete }) => {
                 )}
             </div>
 
-            {report.image_url ? (
+            {(report.imageUrl || report.image_url) ? (
                 <div className="report-image">
-                    <img src={report.image_url} alt="レポート画像" />
+                    <img src={report.imageUrl || report.image_url} alt="レポート画像" />
                 </div>
             ) : null}
 

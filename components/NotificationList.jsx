@@ -16,12 +16,14 @@ const NotificationList = ({ notifications, onRead, onMarkAllRead, unreadCount = 
     }
 
     const handleClick = (notification) => {
-        if (!notification.is_read) {
+        const isRead = notification.isRead !== undefined ? notification.isRead : notification.is_read;
+        const recipeId = notification.recipeId || notification.recipe_id;
+        if (!isRead) {
             onRead(notification.id);
         }
         // Navigate to the recipe
-        if (notification.recipe_id) {
-            router.push(`/recipe/${notification.recipe_id}`);
+        if (recipeId) {
+            router.push(`/recipe/${recipeId}`);
         }
     };
 
@@ -35,7 +37,7 @@ const NotificationList = ({ notifications, onRead, onMarkAllRead, unreadCount = 
     };
 
     const getMessage = (notification) => {
-        const actorName = notification.actor?.display_name || notification.actor?.username || '誰か';
+        const actorName = notification.actor?.displayName || notification.actor?.display_name || notification.actor?.username || '誰か';
         const recipeTitle = notification.recipe?.title || 'レシピ';
 
         switch (notification.type) {
@@ -98,32 +100,36 @@ const NotificationList = ({ notifications, onRead, onMarkAllRead, unreadCount = 
                     </button>
                 )}
             </div>
-            {notifications.map((n) => (
-                <div
-                    key={n.id}
-                    onClick={() => handleClick(n)}
-                    className={`
-                        flex items-start gap-3 p-4 border-b border-slate-50 last:border-0 cursor-pointer transition-colors
-                        ${n.is_read ? 'bg-white' : 'bg-orange-50/50'}
-                        hover:bg-slate-50
-                    `}
-                >
-                    <div className="mt-1 flex-shrink-0">
-                        {getIcon(n.type)}
+            {notifications.map((n) => {
+                const isRead = n.isRead !== undefined ? n.isRead : n.is_read;
+                const createdAt = n.createdAt || n.created_at;
+                return (
+                    <div
+                        key={n.id}
+                        onClick={() => handleClick(n)}
+                        className={`
+                            flex items-start gap-3 p-4 border-b border-slate-50 last:border-0 cursor-pointer transition-colors
+                            ${isRead ? 'bg-white' : 'bg-orange-50/50'}
+                            hover:bg-slate-50
+                        `}
+                    >
+                        <div className="mt-1 flex-shrink-0">
+                            {getIcon(n.type)}
+                        </div>
+                        <div className="flex-grow min-w-0">
+                            <p className="text-sm text-slate-700 leading-snug">
+                                {getMessage(n)}
+                            </p>
+                            <span className="text-xs text-slate-400 mt-1 block">
+                                {formatDate(createdAt)}
+                            </span>
+                        </div>
+                        {!isRead && (
+                            <div className="w-2 h-2 rounded-full bg-orange-500 mt-2 flex-shrink-0"></div>
+                        )}
                     </div>
-                    <div className="flex-grow min-w-0">
-                        <p className="text-sm text-slate-700 leading-snug">
-                            {getMessage(n)}
-                        </p>
-                        <span className="text-xs text-slate-400 mt-1 block">
-                            {formatDate(n.created_at)}
-                        </span>
-                    </div>
-                    {!n.is_read && (
-                        <div className="w-2 h-2 rounded-full bg-orange-500 mt-2 flex-shrink-0"></div>
-                    )}
-                </div>
-            ))}
+                );
+            })}
         </div>
     );
 };

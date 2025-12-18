@@ -25,9 +25,9 @@ export default function IngredientSearchPage() {
                 id: r.id,
                 title: r.title,
                 image: r.image_url,
-                tags: r.tags,
-                freeFromAllergens: r.free_from_allergens,
-                positiveIngredients: r.positive_ingredients,
+                tags: r.tags || [],
+                freeFromAllergens: r.free_from_allergens || [],
+                positiveIngredients: r.positive_ingredients || [],
                 author: r.profiles,
                 sourceUrl: r.source_url,
                 createdAt: r.created_at
