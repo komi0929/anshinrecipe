@@ -315,7 +315,7 @@ export const RecipeForm = ({
             )}
 
             {/* URL Input Section - Priority #1 */}
-            <div className="form-section url-section">
+            <div className="form-section url-section" id="recipe-form-url-input">
                 <label className="section-label">
                     レシピURL / SNSリンク
                 </label>
@@ -344,17 +344,17 @@ export const RecipeForm = ({
                         {isFetchingOgp ? (
                             <>
                                 <Loader2 size={18} className="animate-spin" />
-                                <span>取得中...</span>
+                                <span className="hidden sm:inline">取得中...</span>
                             </>
                         ) : ogpFetched ? (
                             <>
                                 <Check size={18} />
-                                <span>取得済み</span>
+                                <span className="hidden sm:inline">取得済み</span>
                             </>
                         ) : (
                             <>
                                 <Search size={18} />
-                                <span>情報を取得</span>
+                                <span className="hidden sm:inline">情報を取得</span>
                             </>
                         )}
                     </button>
@@ -377,7 +377,7 @@ export const RecipeForm = ({
                 </div>
 
                 {/* Image Section - Always visible */}
-                <div className="form-group">
+                <div className="form-group" id="recipe-form-image-area">
                     <label>レシピ画像 <span className="required">*</span></label>
                     {isFetchingOgp ? (
                         <div className="image-upload-area loading">
@@ -595,8 +595,6 @@ export const RecipeForm = ({
                 </div>
             </div >
 
-
-
             {/* Public/Private Setting */}
             <div className="form-section">
                 <label className="section-label">公開設定</label>
@@ -604,7 +602,7 @@ export const RecipeForm = ({
                     <button
                         type="button"
                         onClick={() => setIsPublic(true)}
-                        className={`flex-1 p-4 rounded-lg border-2 transition-all flex flex-col items-center gap-2 ${isPublic === true ? 'border-green-500 bg-green-50 text-green-700' : 'border-slate-200 text-slate-400'}`}
+                        className={`flex-1 p-4 rounded-lg border-2 transition-all flex flex-col items-center gap-2 ${isPublic === true ? 'border-green-50 text-green-700' : 'border-slate-200 text-slate-400'}`}
                     >
                         <Globe size={24} />
                         <span className="font-bold">公開</span>

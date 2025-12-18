@@ -7,7 +7,7 @@ import { useRecipes } from '@/hooks/useRecipes';
 import { useProfile } from '@/hooks/useProfile';
 import { supabase } from '@/lib/supabaseClient';
 
-import { Search, Plus, User as UserIcon, Grid, Bookmark, Heart, Baby, BookHeart } from 'lucide-react';
+import { Search, Plus, User as UserIcon, Grid, Bookmark, Heart, Baby, BookHeart, Sparkles } from 'lucide-react';
 import { RecipeCardSkeleton } from '@/components/Skeleton';
 import { RecipeCard } from '../components/RecipeCard';
 import { MEAL_SCENES, SCENE_ICONS } from '@/lib/constants';
@@ -16,6 +16,11 @@ import LineLoginButton from '@/components/LineLoginButton';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 
+// Onboarding Components
+import WelcomeSlider from '@/components/WelcomeSlider';
+import OnboardingWizard from '@/components/OnboardingWizard';
+import CoachMark from '@/components/CoachMark';
+
 const RecipeListPage = () => {
     const { recipes, loading, refreshRecipes } = useRecipes();
     const { profile, user, loading: profileLoading, savedRecipeIds, toggleSave, likedRecipeIds, toggleLike } = useProfile();
@@ -23,6 +28,7 @@ const RecipeListPage = () => {
     const [selectedChildId, setSelectedChildId] = useState(null);
     const [selectedScene, setSelectedScene] = useState(null);
     const [imagesLoaded, setImagesLoaded] = useState(false);
+    const [showOnboarding, setShowOnboarding] = useState(true); // Control wizard visibility
 
 
     // New Tab State
@@ -169,153 +175,73 @@ const RecipeListPage = () => {
         });
     }, [processedRecipes, searchTerm, selectedChildId, selectedScene]);
 
-    // Show LP for non-logged-in users
-    if (!profileLoading && !user && !loading) {
+    // ----------------------------------------------------
+    // VIEW STATE MANAGEMENT
+    // ----------------------------------------------------
+
+    // 1. Loading State
+    if (loading || profileLoading) {
+        // While loading user state, show a minimal loading screen to prevent flash
         return (
-            <div className="min-h-screen flex flex-col items-center bg-[#fcfcfc]">
-                <div className="flex-1 flex flex-col items-center justify-center p-6 max-w-[480px] mx-auto w-full">
-                    <div className="text-center mb-8 w-full">
-                        <div className="flex justify-center mb-6">
-                            <Image
-                                src="/logo.png"
-                                alt="あんしんレシピ"
-                                width={360}
-                                height={90}
-                                priority
-                                className="w-[200px] h-auto object-contain"
-                            />
-                        </div>
-
-                        {/* New Hero Illustration */}
-                        <div className="flex justify-center mb-6">
-                            <div className="relative w-full max-w-[320px] aspect-[4/3]">
-                                <Image
-                                    src="/illustrations/happy_family.png"
-                                    alt="家族で楽しく料理"
-                                    fill
-                                    className="object-contain"
-                                    priority
-                                />
-                            </div>
-                        </div>
-
-                        <h2 className="text-xl font-bold text-slate-700 mb-2">
-                            「これなら食べられる！」を<br />もっと簡単に、家族みんなで。
-                        </h2>
-                        <p className="text-gray-500 text-sm leading-relaxed">
-                            アレルギーっ子のパパ・ママのための<br />
-                            安心レシピ共有＆記録アプリ
-                        </p>
-                    </div>
-
-                    <div className="w-full flex flex-col gap-4 mb-10 px-2">
-                        <div className="flex items-start gap-4 bg-white p-4 rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
-                            <div className="bg-orange-50 text-primary p-3 rounded-xl flex items-center justify-center shrink-0">
-                                <Search size={24} />
-                            </div>
-                            <div className="flex-1">
-                                <h3 className="text-base font-bold text-slate-700 mb-1">簡単メモ</h3>
-                                <p className="text-[13px] text-slate-500 leading-normal">
-                                    子どものアレルギー情報や、食べられる食材をサッと記録
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="flex items-start gap-4 bg-white p-4 rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
-                            <div className="bg-orange-50 text-primary p-3 rounded-xl flex items-center justify-center shrink-0">
-                                <BookHeart size={24} />
-                            </div>
-                            <div className="flex-1">
-                                <h3 className="text-base font-bold text-slate-700 mb-1">レシピを共有</h3>
-                                <p className="text-[13px] text-slate-500 leading-normal">
-                                    工夫したレシピを投稿して、同じ悩みを持つパパ・ママにシェア
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="flex items-start gap-4 bg-white p-4 rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
-                            <div className="bg-orange-50 text-primary p-3 rounded-xl flex items-center justify-center shrink-0">
-                                <Heart size={24} />
-                            </div>
-                            <div className="flex-1">
-                                <h3 className="text-base font-bold text-slate-700 mb-1">感謝を伝えられる</h3>
-                                <p className="text-[13px] text-slate-500 leading-normal">
-                                    「助かった！」「美味しかった！」の気持ちをスタンプで気軽に送信
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="w-full bg-white rounded-3xl p-8 shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
-                        <div className="flex flex-col items-center gap-6">
-                            <p className="text-center text-slate-700 font-bold text-base leading-relaxed">
-                                LINEアカウントでログインして<br />
-                                今すぐ始めましょう
-                            </p>
-
-                            <div className="w-full flex justify-center">
-                                <LineLoginButton />
-                            </div>
-
-                            <p className="text-center text-slate-500 text-sm leading-relaxed">
-                                ログインをもって <Link href="/terms" className="text-blue-500 underline">利用規約</Link>・<Link href="/privacy" className="text-blue-500 underline">プライバシーポリシー</Link> に同意とみなします
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                <Footer showLinks={false} />
-            </div>
-        );
-    }
-
-    // Show empty state for logged-in users without children
-    if (!profileLoading && user && profile?.children?.length === 0 && !loading) {
-        return (
-            <div className="container max-w-md mx-auto min-h-screen bg-background pb-20">
-                <div className="pt-6 pb-4 px-4 text-center">
-                    <h1 className="flex justify-center">
-                        <Image
-                            src="/logo.png"
-                            alt="あんしんレシピ"
-                            width={360}
-                            height={90}
-                            priority
-                            className="h-[60px] w-auto"
-                        />
-                    </h1>
-                </div>
-
-                <div className="text-center py-20 px-6 max-w-md mx-auto">
-                    <div className="mb-8 flex justify-center">
-                        <UserIcon size={64} className="text-primary/50" />
-                    </div>
-                    <h2 className="text-2xl font-bold mb-3 text-text-main">お子様を登録しましょう</h2>
-                    <p className="text-text-sub mb-8 leading-relaxed">
-                        アレルギー情報を登録すると、<br />
-                        レシピの安全性をチェックできます
-                    </p>
-                    <Link href="/profile">
-                        <Button>プロフィールを設定</Button>
-                    </Link>
+            <div className="min-h-screen flex items-center justify-center bg-[#fcfcfc]">
+                <div className="animate-pulse">
+                    <Image
+                        src="/logo.png"
+                        alt="Loading..."
+                        width={180}
+                        height={45}
+                        className="object-contain opacity-50"
+                    />
                 </div>
             </div>
         );
     }
 
-    // Main feed for logged-in users with children
+    // 2. Not Logged In -> Welcome Slider (Replaces old LP)
+    if (!user) {
+        return <WelcomeSlider />;
+    }
+
+    // 3. Logged In but No Children -> Onboarding Wizard
+    if (profile?.children?.length === 0 && showOnboarding) {
+        return (
+            <OnboardingWizard
+                onComplete={() => {
+                    // Force refresh or just redirect to self to trigger main feed
+                    window.location.reload();
+                    // Or simpler: setShowOnboarding(false) if we had local state for children update, 
+                    // but since profile updates via hook subscription, it might just work or need a refresh.
+                    // Reload is safest for "Magic" feel to ensure everything is recalculated.
+                }}
+            />
+        );
+    }
+
+
+    // 4. Main Feed (Logged In & Setup Complete)
     return (
         <div className="container max-w-md mx-auto min-h-screen bg-background pb-24">
-            <div className="pt-6 pb-4 px-4 text-center">
-                <h1 className="flex justify-center">
+            {/* Header with Personalization */}
+            <div className="pt-6 pb-4 px-4 flex items-center justify-between">
+                <div>
                     <Image
                         src="/logo.png"
                         alt="あんしんレシピ"
-                        width={360}
-                        height={90}
+                        width={300} // Increased base width for better resolution
+                        height={75}
                         priority
-                        className="h-[60px] w-auto"
+                        className="h-[40px] w-auto object-contain"
                     />
-                </h1>
+                    {/* Greeting Logic: Default to userName + San */}
+                    <p className="text-xs text-text-sub font-bold mt-1 ml-1 flex items-center gap-1">
+                        <Sparkles size={12} className="text-yellow-400" />
+                        {profile?.userName || 'ユーザー'}さん、こんにちは！
+                        {/* Optional: Add logic to use child name without 'Mama' if preferred? 
+                                 "User-san" covers all bases as requested "San-zuke".
+                             */}
+                    </p>
+                </div>
+                {/* Optional: Add profile icon or notification bell here? */}
             </div>
 
             {user && (
@@ -348,6 +274,7 @@ const RecipeListPage = () => {
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={22} />
                             <input
                                 type="text"
+                                id="header-search-input" // For CoachMark
                                 placeholder="レシピ名、食材、タグで検索..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -471,7 +398,20 @@ const RecipeListPage = () => {
                 )}
             </div>
 
-            {/* Removed FAB */}
+            {/* Coach Marks */}
+            <CoachMark
+                targetId="header-search-input"
+                message="冷蔵庫の余り物でも検索できますよ。"
+                position="bottom"
+                uniqueKey="search_intro"
+                delay={2000}
+            />
+            {/* Note: Save button coach mark would need an ID on the save button in RecipeCard, 
+                or we can add one here if there is a global save button, but there isn't.
+                Ideally we pass a prop to RecipeCard to show coachmark on the first one, 
+                but let's stick to the search one for now as per plan "Search Coach".
+            */}
+
         </div>
     );
 };

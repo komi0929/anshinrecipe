@@ -7,6 +7,7 @@ import { useProfile } from '@/hooks/useProfile';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { RecipeForm } from '@/components/RecipeForm';
+import CoachMark from '@/components/CoachMark';
 
 const AddRecipeContent = () => {
     const router = useRouter();
@@ -79,6 +80,25 @@ const AddRecipeContent = () => {
                     profile={profile}
                 />
             </div>
+
+            {/* Coach Marks for First Time Users */}
+            <CoachMark
+                targetId="recipe-form-url-input"
+                message="便利な機能✨ URLを入力するとレシピ情報を自動で読み込みます！"
+                position="bottom"
+                uniqueKey="recipe_url_guide"
+                delay={1000}
+            />
+
+            <CoachMark
+                targetId="recipe-form-image-area"
+                message="自分で撮った写真をアップロードすることもできます📷"
+                position="top"
+                uniqueKey="recipe_image_guide"
+                delay={5000}
+            />
+
+            {/* Note: Delays are staggered so they don't pop up all at once if user is fast */}
         </div>
     );
 };
