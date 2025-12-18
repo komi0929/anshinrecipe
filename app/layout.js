@@ -35,6 +35,8 @@ export const metadata = {
         startupImage: [],
     },
     icons: {
+        icon: '/icon-512x512.png',
+        shortcut: '/icon-512x512.png',
         apple: '/pwa-icon.png',
     },
 }
