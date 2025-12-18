@@ -19,7 +19,7 @@
     /* Remove translateZ(0) to avoid rendering context issues during scroll */
     width: 100%;
     /* Ensure small layout changes don't cause major column moves */
-    contain: layout;
+    width: 100%;
 }
 
 .recipe-card:hover {

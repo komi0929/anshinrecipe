@@ -116,12 +116,18 @@ export default function ProfilePage() {
             allergens: childAllergens
         };
 
-        if (editingChild) {
-            await updateChild(editingChild.id, childData);
-        } else {
-            await addChild(childData);
+        try {
+            if (editingChild) {
+                await updateChild(editingChild.id, childData);
+            } else {
+                await addChild(childData);
+            }
+            // Close modal immediately after successful registration
+            closeChildModal();
+        } catch (error) {
+            console.error('Error saving child:', error);
+            // Modal stays open so user can fix issues
         }
-        closeChildModal();
     };
 
     const openChildModal = (child = null) => {
@@ -468,7 +474,7 @@ export default function ProfilePage() {
                                     <span className="text-4xl">{childIcon}</span>
                                 )}
                                 {/* Persistent Camera Badge */}
-                                <div className="absolute bottom-0 right-0 w-8 h-8 bg-black/50 rounded-full flex items-center justify-center border-2 border-white shadow-sm">
+                                <div className="absolute bottom-1 right-1 w-8 h-8 bg-black/50 rounded-full flex items-center justify-center border-2 border-white shadow-sm transition-transform active:scale-90">
                                     <Camera className="text-white" size={14} />
                                 </div>
                             </div>

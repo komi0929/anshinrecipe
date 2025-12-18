@@ -31,13 +31,11 @@ const RecipeListPage = () => {
     const [tabLoading, setTabLoading] = useState(false);
 
     useEffect(() => {
-        // Reduced delay for faster initial showing
-        const timer = setTimeout(() => {
+        // No artificial delay needed, stabilize by checking actual data loading
+        if (!loading && recipes.length > 0) {
             setImagesLoaded(true);
-        }, 100);
-
-        return () => clearTimeout(timer);
-    }, []);
+        }
+    }, [loading, recipes]);
 
     // Fetch Logic based on Tab
     useEffect(() => {
@@ -114,56 +112,62 @@ const RecipeListPage = () => {
     }, [activeTab, user, recipes]);
 
     // Unified Safety Check & Filter Logic
-    const processedRecipes = tabRecipes.map(recipe => {
-        if (!profile?.children) return { ...recipe, safeFor: [] };
+    const processedRecipes = React.useMemo(() => {
+        return tabRecipes.map(recipe => {
+            if (!profile?.children) return { ...recipe, safeFor: [] };
 
-        const safeFor = profile.children.filter(child => {
-            const recipeAllergens = recipe.freeFromAllergens || recipe.free_from_allergens || [];
-            if (!child.allergens || child.allergens.length === 0) return true;
-            if (!recipeAllergens || recipeAllergens.length === 0) return false;
-            return child.allergens.every(allergen =>
-                recipeAllergens.includes(allergen)
-            );
+            const safeFor = profile.children.filter(child => {
+                const recipeAllergens = recipe.freeFromAllergens || recipe.free_from_allergens || [];
+                if (!child.allergens || child.allergens.length === 0) return true;
+                if (!recipeAllergens || recipeAllergens.length === 0) return false;
+                return child.allergens.every(allergen =>
+                    recipeAllergens.includes(allergen)
+                );
+            });
+
+            return { ...recipe, safeFor };
+        });
+    }, [tabRecipes, profile?.children]);
+
+    const filteredRecipes = React.useMemo(() => {
+        const filtered = processedRecipes.filter(recipe => {
+            const matchesSearch = recipe.title.includes(searchTerm) ||
+                (recipe.tags && recipe.tags.some(t => t.includes(searchTerm))) ||
+                (recipe.positiveIngredients && recipe.positiveIngredients.some(pi => pi.includes(searchTerm)));
+
+            if (!matchesSearch) return false;
+
+            if (selectedChildId) {
+                if (!recipe.safeFor.some(c => c.id === selectedChildId)) return false;
+            }
+
+            if (selectedScene) {
+                if (!recipe.scenes || !recipe.scenes.includes(selectedScene)) return false;
+            }
+
+            return true;
         });
 
-        return { ...recipe, safeFor };
-    });
+        // Sort by safety match first, then newest first, with stable ID tie-breaker
+        return filtered.sort((a, b) => {
+            const aSafe = a.safeFor.length > 0;
+            const bSafe = b.safeFor.length > 0;
 
-    const filteredRecipes = processedRecipes.filter(recipe => {
-        const matchesSearch = recipe.title.includes(searchTerm) ||
-            (recipe.tags && recipe.tags.some(t => t.includes(searchTerm))) ||
-            (recipe.positiveIngredients && recipe.positiveIngredients.some(pi => pi.includes(searchTerm)));
+            // 1. Safety Match first
+            if (aSafe && !bSafe) return -1;
+            if (!aSafe && bSafe) return 1;
 
-        if (!matchesSearch) return false;
+            // 2. Newest first
+            const dateA = new Date(a.created_at || a.createdAt || 0);
+            const dateB = new Date(b.created_at || b.createdAt || 0);
+            if (dateB - dateA !== 0) return dateB - dateA;
 
-        if (selectedChildId) {
-            if (!recipe.safeFor.some(c => c.id === selectedChildId)) return false;
-        }
-
-        if (selectedScene) {
-            if (!recipe.scenes || !recipe.scenes.includes(selectedScene)) return false;
-        }
-
-        return true;
-    });
-
-    // Sort by safety match first, then newest first, with stable ID tie-breaker
-    filteredRecipes.sort((a, b) => {
-        const aSafe = a.safeFor.length > 0;
-        const bSafe = b.safeFor.length > 0;
-
-        // 1. Safety Match first
-        if (aSafe && !bSafe) return -1;
-        if (!aSafe && bSafe) return 1;
-
-        // 2. Newest first
-        const dateA = new Date(a.created_at || a.createdAt || 0);
-        const dateB = new Date(b.created_at || b.createdAt || 0);
-        if (dateB - dateA !== 0) return dateB - dateA;
-
-        // 3. Stable Tie-breaker (important for masonry stability)
-        return String(a.id).localeCompare(String(b.id));
-    });
+            // 3. Stable Tie-breaker (important for masonry stability)
+            const idA = String(a.id || a.recipe_id);
+            const idB = String(b.id || b.recipe_id);
+            return idA.localeCompare(idB);
+        });
+    }, [processedRecipes, searchTerm, selectedChildId, selectedScene]);
 
     // Show LP for non-logged-in users
     if (!profileLoading && !user && !loading) {
@@ -430,7 +434,7 @@ const RecipeListPage = () => {
                     ))
                 ) : filteredRecipes.length > 0 ? (
                     filteredRecipes.map(recipe => (
-                        <div key={recipe.id} className="break-inside-avoid mb-3">
+                        <div key={recipe.id} className="break-inside-avoid-column mb-3 inline-block w-full">
                             <RecipeCard
                                 recipe={recipe}
                                 profile={profile}
