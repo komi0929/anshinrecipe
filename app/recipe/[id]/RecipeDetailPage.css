@@ -109,7 +109,8 @@
     padding: 24px 20px;
     background: white;
     border-radius: 32px 32px 0 0;
-    margin-top: -24px;
+    margin-top: 0;
+    /* Removed negative margin to prevent overlap with image */
     position: relative;
     z-index: 10;
 }

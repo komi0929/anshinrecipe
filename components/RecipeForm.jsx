@@ -254,6 +254,11 @@ export const RecipeForm = ({
             return;
         }
 
+        if (!image) {
+            alert('レシピ画像を登録してください');
+            return;
+        }
+
         if (selectedChildren.length === 0) {
             alert('お子様を選択してください');
             return;
@@ -371,7 +376,7 @@ export const RecipeForm = ({
 
                 {/* Image Section - Always visible */}
                 <div className="form-group">
-                    <label>レシピ画像</label>
+                    <label>レシピ画像 <span className="required">*</span></label>
                     {isFetchingOgp ? (
                         <div className="image-upload-area loading">
                             <Loader2 className="animate-spin upload-icon" />

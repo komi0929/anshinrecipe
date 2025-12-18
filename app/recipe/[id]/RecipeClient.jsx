@@ -305,7 +305,7 @@ const RecipeDetailPage = () => {
                                 <UserIcon size={16} />
                             </div>
                         )}
-                        <span className="author-name">{recipe.profiles?.username || 'ゲスト'}</span>
+                        <span className="author-name">{recipe.profiles?.display_name || recipe.profiles?.username || recipe.author?.username || 'ゲスト'}</span>
                     </div>
                     <div className="date-info">
                         <Clock size={14} />
@@ -412,19 +412,8 @@ const RecipeDetailPage = () => {
                     </div>
                 </div>
 
-                {/* --- NEW LOCATION: My Kitchen Lab (Cooking Log) --- */}
-                {user && (
-                    <CookingLog
-                        logs={recipe.cooking_logs || []}
-                        onAddLog={handleAddLog}
-                        onDeleteLog={handleDeleteLog}
-                        currentUserId={user.id}
-                    />
-                )}
-                {/* -------------------------------------------------- */}
-
                 {/* Tried Reports Section */}
-                <div className="detail-section tried-reports-section">
+                <div className="detail-section tried-reports-section" id="tried-reports">
                     <div className="section-header-with-action">
                         <h3>試してみたレポート ({triedReports.length})</h3>
                         {user && (
@@ -480,6 +469,17 @@ const RecipeDetailPage = () => {
                         )}
                     </div>
                 </div>
+
+                {/* --- My Kitchen Lab (Cooking Log) --- */}
+                {user && (
+                    <CookingLog
+                        logs={recipe.cooking_logs || []}
+                        onAddLog={handleAddLog}
+                        onDeleteLog={handleDeleteLog}
+                        currentUserId={user.id}
+                    />
+                )}
+                {/* -------------------------------------------------- */}
 
                 {/* Recommendations */}
                 {recommendations.length > 0 && (

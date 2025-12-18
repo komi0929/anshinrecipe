@@ -97,7 +97,7 @@ export const RecipeCard = ({ recipe, isSaved, onToggleSave, isLiked, onToggleLik
                                     <UserIcon size={12} />
                                 </div>
                             )}
-                            <span className="author-name">{recipe.author.username || 'ゲスト'}</span>
+                            <span className="author-name">{recipe.author.display_name || recipe.author.username || 'ゲスト'}</span>
                         </div>
                     )}
                 </div>

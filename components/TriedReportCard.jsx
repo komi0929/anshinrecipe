@@ -1,12 +1,44 @@
-'use client'
-
-import React from 'react';
-import { Trash2, User as UserIcon } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Trash2, User as UserIcon, Heart } from 'lucide-react';
+import { toggleReportLike, getReportLikeInfo } from '../lib/actions/socialActions';
 import './TriedReportCard.css';
 
 const TriedReportCard = ({ report, currentUserId, onDelete }) => {
     const reportUserId = report.userId || report.user_id;
     const isOwner = currentUserId && reportUserId === currentUserId;
+    const [likeCount, setLikeCount] = useState(0);
+    const [isLiked, setIsLiked] = useState(false);
+    const [isLiking, setIsLiking] = useState(false);
+
+    useEffect(() => {
+        const fetchLikeInfo = async () => {
+            const info = await getReportLikeInfo(report.id, currentUserId);
+            setLikeCount(info.count);
+            setIsLiked(info.isLiked);
+        };
+        fetchLikeInfo();
+    }, [report.id, currentUserId]);
+
+    const handleLike = async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!currentUserId) {
+            alert('いいねするにはログインが必要です');
+            return;
+        }
+        if (isLiking) return;
+
+        setIsLiking(true);
+        try {
+            const liked = await toggleReportLike(report.id, currentUserId);
+            setIsLiked(liked);
+            setLikeCount(prev => liked ? prev + 1 : prev - 1);
+        } catch (error) {
+            console.error('Error liking report:', error);
+        } finally {
+            setIsLiking(false);
+        }
+    };
 
     const formatDate = (dateString) => {
         const date = new Date(dateString);
@@ -40,22 +72,32 @@ const TriedReportCard = ({ report, currentUserId, onDelete }) => {
                     )}
                     <div className="user-details">
                         <span className="username">
-                            {(report.author?.username || report.profiles?.username || 'ゲスト')}
+                            {(report.author?.display_name || report.author?.username || report.profiles?.display_name || report.profiles?.username || 'ゲスト')}
                         </span>
                         <span className="timestamp">
                             {formatDate(report.createdAt || report.created_at)}
                         </span>
                     </div>
                 </div>
-                {isOwner && onDelete && (
+                <div className="header-actions">
                     <button
-                        onClick={() => onDelete(report.id)}
-                        className="delete-btn"
-                        title="削除"
+                        onClick={handleLike}
+                        className={`report-like-btn ${isLiked ? 'active' : ''}`}
+                        disabled={isLiking}
                     >
-                        <Trash2 size={16} />
+                        <Heart size={16} fill={isLiked ? "currentColor" : "none"} />
+                        {likeCount > 0 && <span className="like-count">{likeCount}</span>}
                     </button>
-                )}
+                    {isOwner && onDelete && (
+                        <button
+                            onClick={() => onDelete(report.id)}
+                            className="delete-btn"
+                            title="削除"
+                        >
+                            <Trash2 size={16} />
+                        </button>
+                    )}
+                </div>
             </div>
 
             {(report.imageUrl || report.image_url) ? (

@@ -111,3 +111,47 @@
     font-size: 24px;
     opacity: 0.6;
 }
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.report-like-btn {
+    background: none;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 10px;
+    border-radius: 20px;
+    color: var(--color-text-light);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.report-like-btn:hover:not(:disabled) {
+    background: #FFF1F2;
+    color: #F43F5E;
+    transform: scale(1.05);
+}
+
+.report-like-btn.active {
+    color: #F43F5E;
+    background: #FFF1F2;
+}
+
+.report-like-btn .like-count {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.report-like-btn:active:not(:disabled) {
+    transform: scale(0.95);
+}
+
+.report-like-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
