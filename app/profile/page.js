@@ -442,128 +442,130 @@ export default function ProfilePage() {
             </div>
 
             {/* Child Edit Modal */}
-            <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-                <div
-                    className="bg-white w-full max-w-md rounded-t-[32px] sm:rounded-[32px] p-6 shadow-2xl animate-in slide-in-from-bottom duration-300 mb-[env(safe-area-inset-bottom)] pb-12 sm:pb-6"
-                    onClick={(e) => e.stopPropagation()}
-                >
-                    <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-xl font-bold text-text-main">
-                            {editingChild ? 'お子様情報を編集' : 'お子様を追加'}
-                        </h3>
-                        <button
-                            onClick={closeChildModal}
-                            className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200"
-                        >
-                            ×
-                        </button>
-                    </div>
-
-                    <div className="space-y-6 max-h-[70vh] overflow-y-auto px-1 pb-24">
-                        {/* Photo / Icon Selection */}
-                        <div className="flex flex-col items-center gap-4">
-                            <div
-                                className="relative w-24 h-24 rounded-full bg-slate-100 border-4 border-white shadow-lg flex items-center justify-center overflow-hidden cursor-pointer group"
-                                onClick={() => childFileInputRef.current?.click()}
+            {showChildModal && (
+                <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={closeChildModal}>
+                    <div
+                        className="bg-white w-full max-w-md rounded-t-[32px] sm:rounded-[32px] p-6 shadow-2xl animate-in slide-in-from-bottom duration-300 mb-[env(safe-area-inset-bottom)] pb-12 sm:pb-6"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-xl font-bold text-text-main">
+                                {editingChild ? 'お子様情報を編集' : 'お子様を追加'}
+                            </h3>
+                            <button
+                                onClick={closeChildModal}
+                                className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200"
                             >
-                                {childPhotoFile ? (
-                                    <img src={URL.createObjectURL(childPhotoFile)} className="w-full h-full object-cover" />
-                                ) : childPhoto ? (
-                                    <img src={childPhoto} className="w-full h-full object-cover" />
-                                ) : (
-                                    <span className="text-4xl">{childIcon}</span>
-                                )}
-                                {/* Persistent Camera Badge */}
-                                <div className="absolute bottom-1 right-1 w-8 h-8 bg-black/50 rounded-full flex items-center justify-center border-2 border-white shadow-sm transition-transform active:scale-90">
-                                    <Camera className="text-white" size={14} />
-                                </div>
-                            </div>
-                            <input
-                                type="file"
-                                ref={childFileInputRef}
-                                className="hidden"
-                                accept="image/*"
-                                onChange={(e) => {
-                                    if (e.target.files?.[0]) setChildPhotoFile(e.target.files[0]);
-                                }}
-                            />
+                                ×
+                            </button>
+                        </div>
 
-                            {/* Icon Picker Toggle */}
-                            <div className="w-full">
-                                <div className="flex justify-center mb-2">
-                                    <button
-                                        type="button"
-                                        className="text-sm font-bold text-primary flex items-center gap-1 hover:bg-orange-50 px-3 py-1.5 rounded-full transition-colors"
-                                        onClick={() => {
-                                            // Toggle logic needs state, but we can't add state easily in multi_replace without refactor. 
-                                            // Actually, checking lines 39-50, I can add a state there or just keep it always open?
-                                            // User said "Icons are many", usually implies a grid.
-                                            // Let's use a details element or just render IconPicker.
-                                            // Given the constraints, I will render IconPicker directly but maybe styled?
-                                            // Wait, I saw childCard has showIconPicker state. ProfilePage does not.
-                                            // I should add the state to ProfilePage first.
-                                        }}
-                                    >
-                                        {/* I need to add state first. Abort this chunk and do state first? No, I can do it in parallel or sequential. */}
-                                        {/* Let's assume I'll add state in another tool call or include it in a previous replace. */}
-                                        {/* I'll use a simple DETAILS/SUMMARY for now if I can't add state, OR just show it always. */}
-                                        {/* "Icon is many" -> Just showing them all is fine? 30 icons might be large. */}
-                                        {/* I will add state `showIconPicker` to ProfilePage. */}
-                                    </button>
+                        <div className="space-y-6 max-h-[70vh] overflow-y-auto px-1 pb-24">
+                            {/* Photo / Icon Selection */}
+                            <div className="flex flex-col items-center gap-4">
+                                <div
+                                    className="relative w-24 h-24 rounded-full bg-slate-100 border-4 border-white shadow-lg flex items-center justify-center overflow-hidden cursor-pointer group"
+                                    onClick={() => childFileInputRef.current?.click()}
+                                >
+                                    {childPhotoFile ? (
+                                        <img src={URL.createObjectURL(childPhotoFile)} className="w-full h-full object-cover" />
+                                    ) : childPhoto ? (
+                                        <img src={childPhoto} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <span className="text-4xl">{childIcon}</span>
+                                    )}
+                                    {/* Persistent Camera Badge */}
+                                    <div className="absolute bottom-1 right-1 w-8 h-8 bg-black/50 rounded-full flex items-center justify-center border-2 border-white shadow-sm transition-transform active:scale-90">
+                                        <Camera className="text-white" size={14} />
+                                    </div>
                                 </div>
-                                <IconPicker
-                                    selected={childIcon}
-                                    onChange={(icon) => {
-                                        setChildIcon(icon);
-                                        setChildPhoto(null);
-                                        setChildPhotoFile(null);
+                                <input
+                                    type="file"
+                                    ref={childFileInputRef}
+                                    className="hidden"
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                        if (e.target.files?.[0]) setChildPhotoFile(e.target.files[0]);
                                     }}
                                 />
+
+                                {/* Icon Picker Toggle */}
+                                <div className="w-full">
+                                    <div className="flex justify-center mb-2">
+                                        <button
+                                            type="button"
+                                            className="text-sm font-bold text-primary flex items-center gap-1 hover:bg-orange-50 px-3 py-1.5 rounded-full transition-colors"
+                                            onClick={() => {
+                                                // Toggle logic needs state, but we can't add state easily in multi_replace without refactor. 
+                                                // Actually, checking lines 39-50, I can add a state there or just keep it always open?
+                                                // User said "Icons are many", usually implies a grid.
+                                                // Let's use a details element or just render IconPicker.
+                                                // Given the constraints, I will render IconPicker directly but maybe styled?
+                                                // Wait, I saw childCard has showIconPicker state. ProfilePage does not.
+                                                // I should add the state to ProfilePage first.
+                                            }}
+                                        >
+                                            {/* I need to add state first. Abort this chunk and do state first? No, I can do it in parallel or sequential. */}
+                                            {/* Let's assume I'll add state in another tool call or include it in a previous replace. */}
+                                            {/* I'll use a simple DETAILS/SUMMARY for now if I can't add state, OR just show it always. */}
+                                            {/* "Icon is many" -> Just showing them all is fine? 30 icons might be large. */}
+                                            {/* I will add state `showIconPicker` to ProfilePage. */}
+                                        </button>
+                                    </div>
+                                    <IconPicker
+                                        selected={childIcon}
+                                        onChange={(icon) => {
+                                            setChildIcon(icon);
+                                            setChildPhoto(null);
+                                            setChildPhotoFile(null);
+                                        }}
+                                    />
+                                </div>
                             </div>
-                        </div>
 
-                        {/* Name Input */}
-                        <div>
-                            <label className="text-sm font-bold text-text-sub mb-2 block">お名前</label>
-                            <Input
-                                type="text"
-                                value={childName}
-                                onChange={(e) => setChildName(e.target.value)}
-                                placeholder="たろう"
-                            />
-                        </div>
+                            {/* Name Input */}
+                            <div>
+                                <label className="text-sm font-bold text-text-sub mb-2 block">お名前</label>
+                                <Input
+                                    type="text"
+                                    value={childName}
+                                    onChange={(e) => setChildName(e.target.value)}
+                                    placeholder="たろう"
+                                />
+                            </div>
 
-                        {/* Allergens */}
-                        <div>
-                            <AllergySelector
-                                selected={childAllergens}
-                                onChange={setChildAllergens}
-                            />
-                        </div>                        </div>
+                            {/* Allergens */}
+                            <div>
+                                <AllergySelector
+                                    selected={childAllergens}
+                                    onChange={setChildAllergens}
+                                />
+                            </div>                        </div>
 
-                    <div className="mt-8 flex gap-3">
-                        {editingChild && (
-                            <button
-                                onClick={() => {
-                                    if (confirm('本当に削除しますか？')) {
-                                        deleteChild(editingChild.id);
-                                        closeChildModal();
-                                    }
-                                }}
-                                className="w-12 h-12 flex items-center justify-center rounded-full bg-rose-50 text-rose-500 hover:bg-rose-100 transition-colors"
+                        <div className="mt-8 flex gap-3">
+                            {editingChild && (
+                                <button
+                                    onClick={() => {
+                                        if (confirm('本当に削除しますか？')) {
+                                            deleteChild(editingChild.id);
+                                            closeChildModal();
+                                        }
+                                    }}
+                                    className="w-12 h-12 flex items-center justify-center rounded-full bg-rose-50 text-rose-500 hover:bg-rose-100 transition-colors"
+                                >
+                                    <Trash2 size={20} />
+                                </button>
+                            )}
+                            <Button
+                                onClick={handleSaveChild}
+                                className="flex-1"
                             >
-                                <Trash2 size={20} />
-                            </button>
-                        )}
-                        <Button
-                            onClick={handleSaveChild}
-                            className="flex-1"
-                        >
-                            {editingChild ? '保存する' : '追加する'}
-                        </Button>
+                                {editingChild ? '保存する' : '追加する'}
+                            </Button>
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
 
             {/* Inquiry Modal */}
             {showInquiryModal && (
