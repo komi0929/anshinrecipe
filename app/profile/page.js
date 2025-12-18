@@ -247,9 +247,7 @@ export default function ProfilePage() {
                             </div>
                         )}
                         <p className="text-xs text-text-sub mt-1">
-                            {profile.children?.length > 0
-                                ? `${profile.children.length}人のお子様を登録中`
-                                : 'お子様を登録してください'}
+                            ママ・パパの名前
                         </p>
                     </div>
                 </div>

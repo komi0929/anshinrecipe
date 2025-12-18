@@ -26,7 +26,7 @@ export const RecipeForm = ({
     const [tags, setTags] = useState(initialData.tags || []);
     const [tagInput, setTagInput] = useState('');
     const [freeFromAllergens, setFreeFromAllergens] = useState(initialData.freeFromAllergens || []);
-    const [isPublic, setIsPublic] = useState(initialData.isPublic !== undefined ? initialData.isPublic : true);
+    const [isPublic, setIsPublic] = useState(initialData.isPublic !== undefined ? initialData.isPublic : null);
     // New: Smart Canvas (Memo Images)
     const [memoImages, setMemoImages] = useState(initialData.memoImages || []);
 
@@ -246,6 +246,11 @@ export const RecipeForm = ({
 
         if (!title.trim()) {
             alert('レシピ名は必須です');
+            return;
+        }
+
+        if (isPublic === null) {
+            alert('公開設定を選択してください');
             return;
         }
 
@@ -592,7 +597,7 @@ export const RecipeForm = ({
                     <button
                         type="button"
                         onClick={() => setIsPublic(true)}
-                        className={`flex-1 p-4 rounded-lg border-2 transition-all flex flex-col items-center gap-2 ${isPublic ? 'border-green-500 bg-green-50 text-green-700' : 'border-slate-200 text-slate-400'}`}
+                        className={`flex-1 p-4 rounded-lg border-2 transition-all flex flex-col items-center gap-2 ${isPublic === true ? 'border-green-500 bg-green-50 text-green-700' : 'border-slate-200 text-slate-400'}`}
                     >
                         <Globe size={24} />
                         <span className="font-bold">公開</span>
@@ -601,7 +606,7 @@ export const RecipeForm = ({
                     <button
                         type="button"
                         onClick={() => setIsPublic(false)}
-                        className={`flex-1 p-4 rounded-lg border-2 transition-all flex flex-col items-center gap-2 ${!isPublic ? 'border-slate-500 bg-slate-50 text-slate-700' : 'border-slate-200 text-slate-400'}`}
+                        className={`flex-1 p-4 rounded-lg border-2 transition-all flex flex-col items-center gap-2 ${isPublic === false ? 'border-slate-500 bg-slate-50 text-slate-700' : 'border-slate-200 text-slate-400'}`}
                     >
                         <Lock size={24} />
                         <span className="font-bold">非公開</span>

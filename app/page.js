@@ -347,7 +347,7 @@ const RecipeListPage = () => {
                                 placeholder="レシピ名、食材、タグで検索..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full bg-white border-2 border-transparent rounded-full pl-12 pr-5 py-3 text-slate-700 placeholder-slate-400 transition-all outline-none focus:border-orange-300 focus:shadow-[0_0_0_4px_rgba(251,146,60,0.1)]"
+                                className="w-full bg-white border-2 border-transparent rounded-full pl-14 pr-5 py-3 text-slate-700 placeholder-slate-400 transition-all outline-none focus:border-orange-300 focus:shadow-[0_0_0_4px_rgba(251,146,60,0.1)]"
                             />
                         </div>
                     </div>
@@ -421,7 +421,7 @@ const RecipeListPage = () => {
             )}
 
             {/* Recipe Grid - Masonry Layout (Strict Max 3 Columns) */}
-            <div className="px-3 columns-2 md:columns-3 gap-3 space-y-3 pb-24">
+            <div className="px-3 columns-2 md:columns-3 gap-3 pb-24">
                 {loading || tabLoading || !imagesLoaded ? (
                     Array.from({ length: 6 }).map((_, i) => (
                         <div key={i} className="break-inside-avoid mb-3">
@@ -430,15 +430,16 @@ const RecipeListPage = () => {
                     ))
                 ) : filteredRecipes.length > 0 ? (
                     filteredRecipes.map(recipe => (
-                        <RecipeCard
-                            key={recipe.id}
-                            recipe={recipe}
-                            profile={profile}
-                            isSaved={savedRecipeIds?.includes(recipe.id)}
-                            onToggleSave={() => toggleSave(recipe.id)}
-                            isLiked={likedRecipeIds?.includes(recipe.id)}
-                            onToggleLike={() => toggleLike(recipe.id)}
-                        />
+                        <div key={recipe.id} className="break-inside-avoid mb-3">
+                            <RecipeCard
+                                recipe={recipe}
+                                profile={profile}
+                                isSaved={savedRecipeIds?.includes(recipe.id)}
+                                onToggleSave={() => toggleSave(recipe.id)}
+                                isLiked={likedRecipeIds?.includes(recipe.id)}
+                                onToggleLike={() => toggleLike(recipe.id)}
+                            />
+                        </div>
                     ))
                 ) : (
                     <div className="col-span-full py-10 text-center break-inside-avoid">
