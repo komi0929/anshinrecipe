@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2, Link as LinkIcon, Search, Check, X, ImagePlus, Save, Globe, Lock } from 'lucide-react';
 import { uploadImage } from '@/lib/imageUpload';
-import { MEAL_SCENES } from '@/lib/constants';
+import { MEAL_SCENES, SCENE_ICONS } from '@/lib/constants';
 import './RecipeForm.css';
 
 export const RecipeForm = ({
@@ -30,7 +30,7 @@ export const RecipeForm = ({
     // New: Smart Canvas (Memo Images)
     const [memoImages, setMemoImages] = useState(initialData.memoImages || []);
 
-    const ALLERGEN_OPTIONS = ['卵', '乳', '小麦', 'えび', 'かに', 'そば', '落花生'];
+    // ALLERGEN_OPTIONS moved to useMemo for filtering based on selected children
 
     // ... (auto-calculate allergens, etc.)
 
@@ -366,7 +366,6 @@ export const RecipeForm = ({
                         required
                         className="form-input"
                     />
-                    <p className="field-hint">OGP取得後も自由に編集できます</p>
                 </div>
 
                 {/* Image Section - Always visible */}
@@ -468,38 +467,29 @@ export const RecipeForm = ({
                 </div>
             )}
 
-            {/* Allergen Selection (Transparency) */}
-            <div className="form-section">
-                <label className="section-label">
-                    除去アレルギー情報 (自動判定)
-                </label>
-                <p className="section-help">お子様のアレルギー情報から自動判定されます。不要な場合はタップして削除してください。追加はできません。</p>
+            {/* Allergen Selection (Transparency) - Only show if children have allergens */}
+            {freeFromAllergens.length > 0 && (
+                <div className="form-section">
+                    <label className="section-label">
+                        除去アレルギー情報 (自動判定)
+                    </label>
+                    <p className="section-help">お子様のアレルギー情報から自動判定されます。不要な場合はタップして削除してください。</p>
 
-                <div className="flex flex-wrap gap-2 mt-2">
-                    {ALLERGEN_OPTIONS.map(allergen => (
-                        <button
-                            key={allergen}
-                            type="button"
-                            onClick={() => toggleAllergen(allergen)}
-                            className={`
-                            px-4 py-2 rounded-full text-sm font-bold transition-all border
-                            ${freeFromAllergens.includes(allergen)
-                                    ? 'bg-green-500 text-white border-green-500 shadow-md'
-                                    : 'bg-white text-slate-400 border-slate-200 hover:border-green-300'
-                                }
-                        `}
-                        >
-                            {allergen}なし
-                            {freeFromAllergens.includes(allergen) && <Check size={14} className="ml-1 inline" />}
-                        </button>
-                    ))}
+                    <div className="flex flex-wrap gap-2 mt-2">
+                        {freeFromAllergens.map(allergen => (
+                            <button
+                                key={allergen}
+                                type="button"
+                                onClick={() => toggleAllergen(allergen)}
+                                className="px-4 py-2 rounded-full text-sm font-bold transition-all border bg-green-500 text-white border-green-500 shadow-md hover:bg-green-600"
+                            >
+                                {allergen}なし
+                                <Check size={14} className="ml-1 inline" />
+                            </button>
+                        ))}
+                    </div>
                 </div>
-                {(freeFromAllergens.length === 0 && selectedChildren.length > 0) && (
-                    <p className="text-xs text-orange-500 mt-2">
-                        ※注意: アレルギー除去情報が設定されていません。本当にアレルギー物質を含まないか確認してください。
-                    </p>
-                )}
-            </div>
+            )}
 
             {/* Meal Scenes */}
             <div className="form-section">
@@ -514,6 +504,7 @@ export const RecipeForm = ({
                             onClick={() => toggleScene(scene)}
                             className={`scene-chip ${selectedScenes.includes(scene) ? 'selected' : ''}`}
                         >
+                            <span className="mr-1">{SCENE_ICONS[scene] || '🍽️'}</span>
                             {scene}
                         </button>
                     ))
@@ -595,7 +586,7 @@ export const RecipeForm = ({
                     <button
                         type="button"
                         onClick={() => setIsPublic(true)}
-                        className={`flex-1 p-4 rounded-lg border-2 transition-all flex flex-col items-center gap-2 ${isPublic === true ? 'border-green-50 text-green-700' : 'border-slate-200 text-slate-400'}`}
+                        className={`flex-1 p-4 rounded-lg border-2 transition-all flex flex-col items-center gap-2 ${isPublic === true ? 'border-green-500 bg-green-50 text-green-700' : 'border-slate-200 text-slate-400'}`}
                     >
                         <Globe size={24} />
                         <span className="font-bold">公開</span>
@@ -604,7 +595,7 @@ export const RecipeForm = ({
                     <button
                         type="button"
                         onClick={() => setIsPublic(false)}
-                        className={`flex-1 p-4 rounded-lg border-2 transition-all flex flex-col items-center gap-2 ${isPublic === false ? 'border-slate-500 bg-slate-50 text-slate-700' : 'border-slate-200 text-slate-400'}`}
+                        className={`flex-1 p-4 rounded-lg border-2 transition-all flex flex-col items-center gap-2 ${isPublic === false ? 'border-slate-500 bg-slate-100 text-slate-700' : 'border-slate-200 text-slate-400'}`}
                     >
                         <Lock size={24} />
                         <span className="font-bold">非公開</span>

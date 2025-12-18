@@ -87,24 +87,9 @@ export const RecipeCard = ({ recipe, isSaved, onToggleSave, isLiked, onToggleLik
             <div className="recipe-content">
                 <h3 className="recipe-title">{recipe.title}</h3>
 
-                <div className="recipe-footer-meta">
-                    {recipe.author && (
-                        <div className="recipe-author">
-                            {recipe.author.avatar_url ? (
-                                <img src={recipe.author.avatar_url} alt="" className="author-avatar" />
-                            ) : (
-                                <div className="author-avatar-placeholder">
-                                    <UserIcon size={12} />
-                                </div>
-                            )}
-                            <span className="author-name">{recipe.author.display_name || recipe.author.username || 'ゲスト'}</span>
-                        </div>
-                    )}
-                </div>
-
-                {/* Scene Tags - Show max 2 */}
+                {/* Scene Tags - Show max 2, compact display */}
                 {recipe.scenes && recipe.scenes.length > 0 && (
-                    <div className="recipe-scene-tags">
+                    <div className="recipe-scene-tags compact">
                         {recipe.scenes.slice(0, 2).map(scene => (
                             <span key={scene} className="recipe-scene-tag">
                                 <span className="tag-icon">{SCENE_ICONS[scene] || '🍽️'}</span>

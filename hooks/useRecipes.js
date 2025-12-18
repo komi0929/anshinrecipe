@@ -46,6 +46,7 @@ export const useRecipes = () => {
                 author: recipe.profiles,
                 userId: recipe.user_id,
                 createdAt: recipe.created_at,
+                likeCount: recipe.like_count || 0,
                 // New fields
                 logs: recipe.cooking_logs || [],
                 memoImages: recipe.recipe_images || []

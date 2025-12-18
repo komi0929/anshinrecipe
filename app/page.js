@@ -7,7 +7,7 @@ import { useRecipes } from '@/hooks/useRecipes';
 import { useProfile } from '@/hooks/useProfile';
 import { supabase } from '@/lib/supabaseClient';
 
-import { Search, Plus, User as UserIcon, Grid, Bookmark, Heart, Baby, BookHeart, Sparkles } from 'lucide-react';
+import { Search, Plus, User as UserIcon, Grid, Bookmark, Heart, Baby, BookHeart, Sparkles, Bell } from 'lucide-react';
 import { RecipeCardSkeleton } from '@/components/Skeleton';
 import { RecipeCard } from '../components/RecipeCard';
 import { MEAL_SCENES, SCENE_ICONS } from '@/lib/constants';
@@ -16,8 +16,19 @@ import LineLoginButton from '@/components/LineLoginButton';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 
-// Onboarding Components - Reverted
-import CoachMark from '@/components/CoachMark';
+// Onboarding Components - Removed per user request
+import { useNotifications } from '@/hooks/useNotifications';
+
+// Random greeting messages
+const GREETINGS = [
+    'こんにちは！今日も素敵なレシピを探しましょう✨',
+    'お料理日和ですね🍳',
+    '今日のごはんは何にしますか？',
+    '素敵なレシピが見つかりますように🌟',
+    '今日もお子さまの笑顔のために😊',
+    '新しいレシピが届いています🎉',
+    '今日も安心おいしいごはんを🍽️',
+];
 
 const RecipeListPage = () => {
     const { recipes, loading, refreshRecipes } = useRecipes();
@@ -33,7 +44,11 @@ const RecipeListPage = () => {
     const [activeTab, setActiveTab] = useState('recommend'); // 'recommend', 'saved', 'mine'
     const [tabRecipes, setTabRecipes] = useState([]);
     const [tabLoading, setTabLoading] = useState(false);
-    const [sortOrder, setSortOrder] = useState('newest'); // 'newest' or 'likes'
+    const [sortOrder, setSortOrder] = useState(null); // null, 'newest', or 'likes'
+    const { unreadCount } = useNotifications(user?.id);
+
+    // Random greeting - stable per session
+    const [greeting] = useState(() => GREETINGS[Math.floor(Math.random() * GREETINGS.length)]);
 
     useEffect(() => {
         // No artificial delay needed, stabilize by checking actual data loading
@@ -165,9 +180,13 @@ const RecipeListPage = () => {
 
             // 2. Sort by user preference
             if (sortOrder === 'likes') {
-                const aLikes = a.likeCount || 0;
-                const bLikes = b.likeCount || 0;
+                const aLikes = a.like_count || a.likeCount || 0;
+                const bLikes = b.like_count || b.likeCount || 0;
                 if (bLikes - aLikes !== 0) return bLikes - aLikes;
+            } else if (sortOrder === 'newest') {
+                const dateA = new Date(a.created_at || a.createdAt || 0);
+                const dateB = new Date(b.created_at || b.createdAt || 0);
+                if (dateB - dateA !== 0) return dateB - dateA;
             }
 
             // 3. Newest as secondary or primary sort
@@ -221,26 +240,9 @@ const RecipeListPage = () => {
                             />
                         </div>
 
-                        {/* New Hero Illustration */}
-                        <div className="flex justify-center mb-6">
-                            <div className="relative w-full max-w-[320px] aspect-[4/3]">
-                                <Image
-                                    src="/illustrations/happy_family.png"
-                                    alt="家族で楽しく料理"
-                                    fill
-                                    className="object-contain"
-                                    priority
-                                />
-                            </div>
-                        </div>
-
-                        <h2 className="text-xl font-bold text-slate-700 mb-2">
-                            「これなら食べられる！」を<br />もっと簡単に、家族みんなで。
+                        <h2 className="text-2xl font-bold text-slate-700 mb-4 leading-relaxed">
+                            アレルギーっ子が笑顔になれる<br />みんなのレシピ帳
                         </h2>
-                        <p className="text-gray-500 text-sm leading-relaxed">
-                            アレルギーっ子のパパ・ママのための<br />
-                            安心レシピ共有＆記録アプリ
-                        </p>
                     </div>
 
                     <div className="w-full flex flex-col gap-4 mb-10 px-2">
@@ -353,16 +355,21 @@ const RecipeListPage = () => {
                         priority
                         className="h-[40px] w-auto object-contain"
                     />
-                    {/* Greeting Logic: Default to userName + San */}
+                    {/* Greeting Logic: Random message */}
                     <p className="text-xs text-text-sub font-bold mt-1 ml-1 flex items-center gap-1">
                         <Sparkles size={12} className="text-yellow-400" />
-                        {profile?.userName || 'ユーザー'}さん、こんにちは！
-                        {/* Optional: Add logic to use child name without 'Mama' if preferred? 
-                                 "User-san" covers all bases as requested "San-zuke".
-                             */}
+                        {greeting}
                     </p>
                 </div>
-                {/* Optional: Add profile icon or notification bell here? */}
+                {/* Notification Bell */}
+                <Link href="/profile" className="relative p-2">
+                    <Bell size={24} className="text-slate-400" />
+                    {unreadCount > 0 && (
+                        <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center text-[10px] text-white font-bold animate-pulse">
+                            {unreadCount > 9 ? '9+' : unreadCount}
+                        </span>
+                    )}
+                </Link>
             </div>
 
             {user && (
@@ -409,13 +416,13 @@ const RecipeListPage = () => {
                     <div className="flex items-center justify-end gap-2 px-4 mb-3">
                         <span className="text-xs text-slate-400 mr-1">並び替え:</span>
                         <button
-                            onClick={() => setSortOrder('newest')}
+                            onClick={() => setSortOrder(sortOrder === 'newest' ? null : 'newest')}
                             className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${sortOrder === 'newest' ? 'bg-primary text-white shadow-sm' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
                         >
                             🕐 新着順
                         </button>
                         <button
-                            onClick={() => setSortOrder('likes')}
+                            onClick={() => setSortOrder(sortOrder === 'likes' ? null : 'likes')}
                             className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${sortOrder === 'likes' ? 'bg-primary text-white shadow-sm' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
                         >
                             ❤️ いいね！順
@@ -537,19 +544,6 @@ const RecipeListPage = () => {
                 )}
             </div>
 
-            {/* Coach Marks */}
-            <CoachMark
-                targetId="header-search-input"
-                message="冷蔵庫の余り物でも検索できますよ。"
-                position="bottom"
-                uniqueKey="search_intro"
-                delay={2000}
-            />
-            {/* Note: Save button coach mark would need an ID on the save button in RecipeCard, 
-                or we can add one here if there is a global save button, but there isn't.
-                Ideally we pass a prop to RecipeCard to show coachmark on the first one, 
-                but let's stick to the search one for now as per plan "Search Coach".
-            */}
 
         </div>
     );

@@ -71,9 +71,16 @@ export default function ProfilePage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-background text-text-sub">
-                <Loader2 className="animate-spin mr-2" />
-                読み込み中...
+            <div className="min-h-screen flex items-center justify-center bg-[#fcfcfc]">
+                <div className="animate-pulse">
+                    <Image
+                        src="/logo.png"
+                        alt="Loading..."
+                        width={180}
+                        height={45}
+                        className="object-contain opacity-50"
+                    />
+                </div>
             </div>
         );
     }
@@ -400,20 +407,6 @@ export default function ProfilePage() {
                             </div>
                             <ChevronRight className="text-slate-300" size={20} />
                         </button>
-                        <Link href="/terms" className="p-4 flex items-center justify-between border-b border-slate-50 last:border-none hover:bg-slate-50 transition-colors">
-                            <div className="flex items-center gap-3 text-text-main">
-                                <FileText size={20} className="text-slate-400" />
-                                <span>利用規約</span>
-                            </div>
-                            <ChevronRight className="text-slate-300" size={20} />
-                        </Link>
-                        <Link href="/privacy" className="p-4 flex items-center justify-between border-b border-slate-50 last:border-none hover:bg-slate-50 transition-colors">
-                            <div className="flex items-center gap-3 text-text-main">
-                                <ShieldAlert size={20} className="text-slate-400" />
-                                <span>プライバシーポリシー</span>
-                            </div>
-                            <ChevronRight className="text-slate-300" size={20} />
-                        </Link>
                         <button
                             onClick={() => setShowInquiryModal(true)}
                             className="w-full p-4 flex items-center justify-between border-b border-slate-50 last:border-none hover:bg-slate-50 transition-colors text-left"
@@ -488,12 +481,8 @@ export default function ProfilePage() {
                                     ) : childPhoto ? (
                                         <img src={childPhoto} className="w-full h-full object-cover" />
                                     ) : (
-                                        <span className="text-4xl">{childIcon}</span>
+                                        <Camera className="text-slate-400" size={32} />
                                     )}
-                                    {/* Persistent Camera Badge */}
-                                    <div className="absolute bottom-1 right-1 w-8 h-8 bg-black/50 rounded-full flex items-center justify-center border-2 border-white shadow-sm transition-transform active:scale-90">
-                                        <Camera className="text-white" size={14} />
-                                    </div>
                                 </div>
                                 <input
                                     type="file"
@@ -508,25 +497,7 @@ export default function ProfilePage() {
                                 {/* Icon Picker Toggle */}
                                 <div className="w-full">
                                     <div className="flex justify-center mb-2">
-                                        <button
-                                            type="button"
-                                            className="text-sm font-bold text-primary flex items-center gap-1 hover:bg-orange-50 px-3 py-1.5 rounded-full transition-colors"
-                                            onClick={() => {
-                                                // Toggle logic needs state, but we can't add state easily in multi_replace without refactor. 
-                                                // Actually, checking lines 39-50, I can add a state there or just keep it always open?
-                                                // User said "Icons are many", usually implies a grid.
-                                                // Let's use a details element or just render IconPicker.
-                                                // Given the constraints, I will render IconPicker directly but maybe styled?
-                                                // Wait, I saw childCard has showIconPicker state. ProfilePage does not.
-                                                // I should add the state to ProfilePage first.
-                                            }}
-                                        >
-                                            {/* I need to add state first. Abort this chunk and do state first? No, I can do it in parallel or sequential. */}
-                                            {/* Let's assume I'll add state in another tool call or include it in a previous replace. */}
-                                            {/* I'll use a simple DETAILS/SUMMARY for now if I can't add state, OR just show it always. */}
-                                            {/* "Icon is many" -> Just showing them all is fine? 30 icons might be large. */}
-                                            {/* I will add state `showIconPicker` to ProfilePage. */}
-                                        </button>
+                                        <p className="text-sm text-slate-400">アイコンでも設定できます</p>
                                     </div>
                                     <IconPicker
                                         selected={childIcon}
@@ -561,7 +532,7 @@ export default function ProfilePage() {
                             {/* Privacy Disclaimer */}
                             <div className="bg-slate-50 rounded-2xl p-4 mt-4">
                                 <p className="text-xs text-slate-500 leading-relaxed text-center">
-                                    🔒 お子さまのお名前・アイコンが「{profile?.userName || 'ユーザー'}」さん以外に表示されることはありません。
+                                    🔒 お子さまのお名前・アイコンはあなた以外には表示されません。
                                 </p>
                             </div>
                         </div>
@@ -728,7 +699,7 @@ export default function ProfilePage() {
                                         </div>
                                         <h4 className="font-bold text-slate-700 mb-1">あんしんレシピへようこそ！</h4>
                                         <p className="text-xs text-slate-500 leading-relaxed">
-                                            アレルギーっ子のパパ・ママのためのレシピ共有アプリです。ご意見・ご要望はお気軽に「お問い合わせ」からお寄せください。
+                                            アレルギーっ子のパパ・ママのためのレシピ共有アプリです。ご意見・ご要望はお気軽に<button onClick={() => { setShowAnnouncementsModal(false); setShowInquiryModal(true); }} className="text-primary underline font-bold">お問い合わせ</button>からお寄せください。
                                         </p>
                                     </div>
                                     <p className="text-center text-sm text-slate-400 py-8">新しいお知らせはありません</p>
@@ -758,7 +729,7 @@ export default function ProfilePage() {
                                 rel="noopener noreferrer"
                                 className="flex items-center justify-center gap-3 w-full py-4 bg-[#06C755] text-white rounded-2xl font-bold shadow-sm hover:shadow-md transition-all active:scale-95"
                             >
-                                <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/LINE_logo.svg" alt="LINE" className="w-6 h-6 bg-white rounded-full p-0.5" />
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/LINE_logo.svg" alt="LINE" className="w-6 h-6" />
                                 LINEで問い合わせる
                             </a>
                             <a

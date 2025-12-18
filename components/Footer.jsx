@@ -17,7 +17,7 @@ export const Footer = ({ showLinks = true }) => {
 
                 <div className="text-xs text-slate-400 footer-disclaimer">
                     <p className="mb-2 max-w-lg mx-auto leading-relaxed font-bold text-slate-500">
-                        ※本アプリはレシピの安全を完全に保証するものではありません。
+                        ※レシピの安全を完全に保証するものではありません。
                     </p>
                     <p className="mb-4 max-w-lg mx-auto leading-relaxed font-bold text-slate-500">
                         使用されている食材はご自身でもご確認ください。
