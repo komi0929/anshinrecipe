@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ArrowLeft } from 'lucide-react';
 import { searchByIngredient } from '@/lib/recommendations';
 import { RecipeCard } from '@/components/RecipeCard';
@@ -50,7 +51,17 @@ export default function IngredientSearchPage() {
             </div>
 
             {loading ? (
-                <div className="loading-spinner">読み込み中...</div>
+                <div className="min-h-[50vh] flex items-center justify-center">
+                    <div className="animate-pulse">
+                        <Image
+                            src="/logo.png"
+                            alt="Loading..."
+                            width={180}
+                            height={45}
+                            className="object-contain opacity-50"
+                        />
+                    </div>
+                </div>
             ) : recipes.length === 0 ? (
                 <div className="empty-state">
                     <p>「{ingredientName}」を使ったレシピが見つかりませんでした</p>

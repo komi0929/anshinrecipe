@@ -6,6 +6,7 @@ import { useRecipes } from '@/hooks/useRecipes';
 import { useProfile } from '@/hooks/useProfile';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { RecipeForm } from '@/components/RecipeForm';
 import { supabase } from '@/lib/supabaseClient';
 
@@ -83,7 +84,19 @@ const EditRecipeContent = () => {
     };
 
     if (profileLoading || isLoading) {
-        return <div className="loading-spinner">読み込み中...</div>;
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-[#fcfcfc]">
+                <div className="animate-pulse">
+                    <Image
+                        src="/logo.png"
+                        alt="Loading..."
+                        width={180}
+                        height={45}
+                        className="object-contain opacity-50"
+                    />
+                </div>
+            </div>
+        );
     }
 
     if (!user || !initialData) return null;
@@ -111,8 +124,22 @@ const EditRecipeContent = () => {
 };
 
 const EditRecipePage = () => {
+    const LoadingScreen = () => (
+        <div className="min-h-screen flex items-center justify-center bg-[#fcfcfc]">
+            <div className="animate-pulse">
+                <Image
+                    src="/logo.png"
+                    alt="Loading..."
+                    width={180}
+                    height={45}
+                    className="object-contain opacity-50"
+                />
+            </div>
+        </div>
+    );
+
     return (
-        <Suspense fallback={<div className="loading-spinner">読み込み中...</div>}>
+        <Suspense fallback={<LoadingScreen />}>
             <EditRecipeContent />
         </Suspense>
     );
