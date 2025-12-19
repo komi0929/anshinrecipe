@@ -1,69 +1,227 @@
 'use client'
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { ArrowLeft, Heart, Megaphone, Check, CheckCheck } from 'lucide-react';
 import { useProfile } from '@/hooks/useProfile';
 import { useNotifications } from '@/hooks/useNotifications';
-import NotificationList from '@/components/NotificationList';
-import { ArrowLeft, Bell } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
-export default function NotificationsPage() {
-    const router = useRouter();
-    const { user, loading: profileLoading } = useProfile();
-    const { notifications, unreadCount, markAsRead, markAllAsRead, loading } = useNotifications(user?.id);
+const NotificationsPage = () => {
+    const { user, profile, loading: profileLoading } = useProfile();
+    const { notifications, loading: notificationsLoading, markAsRead, markAllAsRead } = useNotifications(user?.id);
+    const [activeTab, setActiveTab] = useState('activity'); // 'activity' | 'announcements'
 
-    if (profileLoading || loading) {
+    // App announcements (static for now)
+    const announcements = [
+        {
+            id: 1,
+            title: 'あんしんレシピ へようこそ！',
+            content: 'アレルギーっ子のパパ・ママのためのレシピ共有アプリです。ご意見・ご要望はお気軽にお問い合わせからお寄せください。',
+            date: '2024-12-01',
+            isNew: false
+        }
+    ];
+
+    if (profileLoading) {
         return (
-            <div className="min-h-screen bg-background flex items-center justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <div className="min-h-screen flex items-center justify-center bg-[#fcfcfc]">
+                <div className="animate-pulse">
+                    <Image
+                        src="/logo.png"
+                        alt="Loading..."
+                        width={180}
+                        height={45}
+                        className="object-contain opacity-50"
+                    />
+                </div>
             </div>
         );
     }
 
     if (!user) {
         return (
-            <div className="min-h-screen bg-background flex items-center justify-center">
-                <div className="text-center px-6">
-                    <Bell size={48} className="mx-auto text-slate-300 mb-4" />
-                    <h2 className="text-lg font-bold text-slate-700 mb-2">ログインが必要です</h2>
-                    <p className="text-sm text-slate-500">通知を確認するにはログインしてください</p>
-                </div>
+            <div className="container max-w-md mx-auto min-h-screen bg-background pb-20 px-4 pt-6">
+                <p className="text-center text-slate-500">ログインが必要です</p>
             </div>
         );
     }
 
+    const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diff = now - date;
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+        if (hours < 1) return 'たった今';
+        if (hours < 24) return `${hours}時間前`;
+        if (days < 7) return `${days}日前`;
+        return `${date.getMonth() + 1}/${date.getDate()}`;
+    };
+
+    const getNotificationMessage = (notification) => {
+        switch (notification.type) {
+            case 'like':
+                return 'があなたのレシピにいいね！しました';
+            case 'tried':
+                return 'があなたのレシピを作りました';
+            case 'comment':
+                return 'がコメントしました';
+            default:
+                return 'からの通知';
+        }
+    };
+
     return (
-        <div className="min-h-screen bg-background pb-24">
+        <div className="container max-w-md mx-auto min-h-screen bg-background pb-24">
             {/* Header */}
-            <div className="sticky top-0 z-10 bg-white border-b border-slate-100">
-                <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
+            <div className="page-header sticky top-0 bg-background z-10 border-b border-slate-100">
+                <Link href="/" className="back-button">
+                    <ArrowLeft size={24} />
+                </Link>
+                <h1 className="page-title">お知らせ</h1>
+                {activeTab === 'activity' && notifications.some(n => !n.is_read) && (
                     <button
-                        onClick={() => router.back()}
-                        className="p-2 -ml-2 hover:bg-slate-100 rounded-full transition-colors"
+                        onClick={markAllAsRead}
+                        className="ml-auto text-xs text-primary font-bold flex items-center gap-1"
                     >
-                        <ArrowLeft size={20} className="text-slate-600" />
+                        <CheckCheck size={14} />
+                        すべて既読
                     </button>
-                    <h1 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                        <Bell size={20} className="text-primary" />
-                        通知
-                        {unreadCount > 0 && (
-                            <span className="text-xs bg-primary text-white px-2 py-0.5 rounded-full">
-                                {unreadCount}
-                            </span>
-                        )}
-                    </h1>
-                </div>
+                )}
+            </div>
+
+            {/* Tab Switcher */}
+            <div className="flex bg-slate-100 p-1 rounded-2xl m-4 space-x-1">
+                <button
+                    onClick={() => setActiveTab('activity')}
+                    className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2
+                        ${activeTab === 'activity'
+                            ? 'bg-white text-primary shadow-sm'
+                            : 'text-slate-500 hover:text-slate-700'
+                        }`}
+                >
+                    <Heart size={16} />
+                    アクティビティ
+                    {notifications.filter(n => !n.is_read).length > 0 && (
+                        <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">
+                            {notifications.filter(n => !n.is_read).length}
+                        </span>
+                    )}
+                </button>
+                <button
+                    onClick={() => setActiveTab('announcements')}
+                    className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2
+                        ${activeTab === 'announcements'
+                            ? 'bg-white text-primary shadow-sm'
+                            : 'text-slate-500 hover:text-slate-700'
+                        }`}
+                >
+                    <Megaphone size={16} />
+                    運営からのお知らせ
+                </button>
             </div>
 
             {/* Content */}
-            <div className="max-w-lg mx-auto p-4">
-                <NotificationList
-                    notifications={notifications}
-                    onRead={markAsRead}
-                    onMarkAllRead={markAllAsRead}
-                    unreadCount={unreadCount}
-                />
+            <div className="px-4">
+                {activeTab === 'activity' ? (
+                    <div className="space-y-2">
+                        {notificationsLoading ? (
+                            <div className="text-center py-8 text-slate-400">読み込み中...</div>
+                        ) : notifications.length === 0 ? (
+                            <div className="text-center py-12">
+                                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <Heart size={24} className="text-slate-300" />
+                                </div>
+                                <p className="text-slate-400 text-sm">まだ通知はありません</p>
+                                <p className="text-slate-300 text-xs mt-1">
+                                    レシピにいいね！がつくとここに表示されます
+                                </p>
+                            </div>
+                        ) : (
+                            notifications.map((notification) => (
+                                <div
+                                    key={notification.id}
+                                    onClick={() => {
+                                        if (!notification.is_read) markAsRead(notification.id);
+                                    }}
+                                    className={`p-4 rounded-2xl transition-all cursor-pointer ${notification.is_read
+                                            ? 'bg-white border border-slate-100'
+                                            : 'bg-orange-50 border border-orange-100'
+                                        }`}
+                                >
+                                    <div className="flex items-start gap-3">
+                                        <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-100 flex-shrink-0">
+                                            {notification.actor?.avatar_url ? (
+                                                <img
+                                                    src={notification.actor.avatar_url}
+                                                    alt=""
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-slate-400">
+                                                    👤
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm text-slate-700">
+                                                <span className="font-bold">
+                                                    {notification.actor?.display_name || notification.actor?.username || 'ユーザー'}
+                                                </span>
+                                                {getNotificationMessage(notification)}
+                                            </p>
+                                            {notification.recipe && (
+                                                <Link
+                                                    href={`/recipe/${notification.recipe.id}`}
+                                                    className="text-xs text-primary mt-1 block truncate hover:underline"
+                                                >
+                                                    {notification.recipe.title}
+                                                </Link>
+                                            )}
+                                            <p className="text-xs text-slate-400 mt-1">
+                                                {formatDate(notification.created_at)}
+                                            </p>
+                                        </div>
+                                        {!notification.is_read && (
+                                            <div className="w-2 h-2 bg-orange-400 rounded-full flex-shrink-0 mt-2"></div>
+                                        )}
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                ) : (
+                    <div className="space-y-3">
+                        {announcements.map((announcement) => (
+                            <div
+                                key={announcement.id}
+                                className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm"
+                            >
+                                <div className="flex items-start gap-3">
+                                    <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-amber-400 rounded-full flex items-center justify-center flex-shrink-0">
+                                        <Megaphone size={18} className="text-white" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <h3 className="font-bold text-slate-700 mb-1">
+                                            {announcement.title}
+                                        </h3>
+                                        <p className="text-sm text-slate-500 leading-relaxed">
+                                            {announcement.content}
+                                        </p>
+                                        <p className="text-xs text-slate-400 mt-2">
+                                            {announcement.date}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
         </div>
     );
-}
+};
+
+export default NotificationsPage;
