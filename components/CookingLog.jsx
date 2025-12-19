@@ -50,8 +50,10 @@ export const CookingLog = ({ logs = [], onAddLog, onDeleteLog, currentUserId }) 
     return (
         <div className="my-memo-section" style={{
             marginTop: '32px',
-            paddingTop: '24px',
-            borderTop: '1px solid #f1f1f1'
+            padding: '20px',
+            backgroundColor: '#fffbeb',
+            borderRadius: '20px',
+            border: '1px solid #fdefc8'
         }}>
             {/* Header */}
             <div style={{
@@ -93,10 +95,10 @@ export const CookingLog = ({ logs = [], onAddLog, onDeleteLog, currentUserId }) 
 
             {/* Input Form */}
             <div style={{
-                backgroundColor: '#fffbeb',
+                backgroundColor: 'white',
                 borderRadius: '16px',
                 padding: '16px',
-                border: '1px solid #fef3c7',
+                border: '1px solid #fde68a',
                 marginBottom: '20px'
             }}>
                 <form onSubmit={handleSubmit}>
@@ -190,9 +192,9 @@ export const CookingLog = ({ logs = [], onAddLog, onDeleteLog, currentUserId }) 
                     <div style={{
                         textAlign: 'center',
                         padding: '32px 16px',
-                        backgroundColor: '#f8fafc',
+                        backgroundColor: 'white',
                         borderRadius: '16px',
-                        border: '2px dashed #e2e8f0'
+                        border: '2px dashed #fde68a'
                     }}>
                         <div style={{ fontSize: '32px', marginBottom: '8px', opacity: '0.5' }}>📌</div>
                         <p style={{
@@ -213,10 +215,10 @@ export const CookingLog = ({ logs = [], onAddLog, onDeleteLog, currentUserId }) 
                         <div
                             key={log.id}
                             style={{
-                                backgroundColor: '#fffbeb',
+                                backgroundColor: 'white',
                                 padding: '14px 16px',
                                 borderRadius: '12px',
-                                border: '1px solid #fef3c7',
+                                border: '1px solid #fde68a',
                                 position: 'relative'
                             }}
                         >

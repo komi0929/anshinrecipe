@@ -220,7 +220,7 @@ const RecipeDetailPage = () => {
             <div className="allergen-list">
                 {allergens.map(allergen => (
                     <span key={allergen} className="allergen-chip free-from">
-                        {allergen}なし
+                        {allergen}
                     </span>
                 ))}
             </div>
@@ -345,7 +345,7 @@ const RecipeDetailPage = () => {
 
                 <div className="detail-section">
                     <div className="allergen-labels mt-4">
-                        <h3 className="section-title">含まないアレルゲン</h3>
+                        <h3 className="section-title">レシピに含まれない食材</h3>
                         {renderAllergenList()}
                     </div>
                 </div>
