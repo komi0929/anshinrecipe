@@ -353,42 +353,112 @@ export const useProfile = () => {
         try {
             setLoading(true);
 
-            // 1. Delete children
+            // 1. Delete notifications (where user is recipient)
+            const { error: notifError } = await supabase
+                .from('notifications')
+                .delete()
+                .eq('recipient_id', user.id);
+            if (notifError) console.error('Error deleting notifications:', notifError);
+
+            // 2. Delete tried_reports (user's "作ってみた" reports)
+            const { error: triedError } = await supabase
+                .from('tried_reports')
+                .delete()
+                .eq('user_id', user.id);
+            if (triedError) console.error('Error deleting tried_reports:', triedError);
+
+            // 3. Delete report_likes
+            const { error: reportLikesError } = await supabase
+                .from('report_likes')
+                .delete()
+                .eq('user_id', user.id);
+            if (reportLikesError) console.error('Error deleting report_likes:', reportLikesError);
+
+            // 4. Get user's recipe IDs for recipe_images deletion
+            const { data: userRecipes } = await supabase
+                .from('recipes')
+                .select('id')
+                .eq('user_id', user.id);
+
+            if (userRecipes?.length) {
+                const recipeIds = userRecipes.map(r => r.id);
+                // Delete recipe_images
+                const { error: recipeImgError } = await supabase
+                    .from('recipe_images')
+                    .delete()
+                    .in('recipe_id', recipeIds);
+                if (recipeImgError) console.error('Error deleting recipe_images:', recipeImgError);
+            }
+
+            // 5. Delete storage files
+            try {
+                // 5a. Avatar files
+                const { data: avatarFiles } = await supabase.storage
+                    .from('avatars')
+                    .list(user.id);
+                if (avatarFiles?.length) {
+                    await supabase.storage.from('avatars')
+                        .remove(avatarFiles.map(f => `${user.id}/${f.name}`));
+                }
+
+                // 5b. Recipe image files
+                const { data: recipeImgFiles } = await supabase.storage
+                    .from('recipe-images')
+                    .list(user.id);
+                if (recipeImgFiles?.length) {
+                    await supabase.storage.from('recipe-images')
+                        .remove(recipeImgFiles.map(f => `${user.id}/${f.name}`));
+                }
+
+                // 5c. Children photo files
+                const { data: childrenFiles } = await supabase.storage
+                    .from('children-photos')
+                    .list(user.id);
+                if (childrenFiles?.length) {
+                    await supabase.storage.from('children-photos')
+                        .remove(childrenFiles.map(f => `${user.id}/${f.name}`));
+                }
+            } catch (storageError) {
+                console.error('Error deleting storage files:', storageError);
+                // Continue with account deletion even if storage cleanup fails
+            }
+
+            // 6. Delete children
             const { error: childError } = await supabase
                 .from('children')
                 .delete()
                 .eq('user_id', user.id);
             if (childError) console.error('Error deleting children:', childError);
 
-            // 2. Delete saved recipes
+            // 7. Delete saved recipes
             const { error: savedError } = await supabase
                 .from('saved_recipes')
                 .delete()
                 .eq('user_id', user.id);
             if (savedError) console.error('Error deleting saved recipes:', savedError);
 
-            // 3. Delete likes
+            // 8. Delete likes
             const { error: likesError } = await supabase
                 .from('likes')
                 .delete()
                 .eq('user_id', user.id);
             if (likesError) console.error('Error deleting likes:', likesError);
 
-            // 4. Delete user's recipes
+            // 9. Delete user's recipes
             const { error: recipeError } = await supabase
                 .from('recipes')
                 .delete()
                 .eq('user_id', user.id);
             if (recipeError) console.error('Error deleting recipes:', recipeError);
 
-            // 5. Delete profile
+            // 10. Delete profile (last, as other tables may reference it)
             const { error: profileError } = await supabase
                 .from('profiles')
                 .delete()
                 .eq('id', user.id);
             if (profileError) console.error('Error deleting profile:', profileError);
 
-            // 6. Sign out
+            // 11. Sign out
             await supabase.auth.signOut();
 
             // State cleanup happens in onAuthStateChange
