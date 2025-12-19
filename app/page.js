@@ -376,202 +376,203 @@ const RecipeListPage = () => {
                         {greeting}
                     </p>
                 </div>
+            </div>
 
-                {user && (
-                    <>
-                        {/* Tab Switcher */}
-                        <div className="flex bg-slate-100 p-1 rounded-2xl mb-4 mx-4 space-x-1">
-                            {['recommend', 'saved', 'mine'].map((tab) => {
-                                const labels = { recommend: 'みんなの投稿', saved: '保存済み', mine: '自分の投稿' };
-                                const isActive = activeTab === tab;
-                                return (
-                                    <button
-                                        key={tab}
-                                        onClick={() => setActiveTab(tab)}
-                                        className={`
+            {user && (
+                <>
+                    {/* Tab Switcher */}
+                    <div className="flex bg-slate-100 p-1 rounded-2xl mb-4 mx-4 space-x-1">
+                        {['recommend', 'saved', 'mine'].map((tab) => {
+                            const labels = { recommend: 'みんなの投稿', saved: '保存済み', mine: '自分の投稿' };
+                            const isActive = activeTab === tab;
+                            return (
+                                <button
+                                    key={tab}
+                                    onClick={() => setActiveTab(tab)}
+                                    className={`
                                         flex-1 py-2.5 text-sm font-bold rounded-xl transition-all duration-200
                                         ${isActive
-                                                ? 'bg-white text-primary shadow-sm'
-                                                : 'text-text-sub hover:text-text-main hover:bg-white/50'
-                                            }
-                                    `}
-                                    >
-                                        {labels[tab]}
-                                    </button>
-                                );
-                            })}
-                        </div>
-
-                        <div className="px-4 mb-4">
-                            <div className="relative">
-                                <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 font-bold" size={20} />
-                                <input
-                                    type="text"
-                                    id="header-search-input" // For CoachMark
-                                    placeholder="レシピ名、食材、タグで検索..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full bg-white border-2 border-transparent rounded-full pr-5 py-3.5 text-slate-700 placeholder-slate-400 transition-all outline-none focus:border-orange-300 focus:shadow-[0_0_0_4px_rgba(251,146,60,0.1)] shadow-sm"
-                                    style={{ paddingLeft: '64px' }}
-                                />
-                            </div>
-                        </div>
-
-                        {/* Sort Toggle */}
-                        <div className="flex items-center justify-end gap-2 px-4 mb-3">
-                            <span className="text-xs text-slate-400 mr-1">並び替え:</span>
-                            <button
-                                onClick={() => setSortOrder(sortOrder === 'newest' ? null : 'newest')}
-                                className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${sortOrder === 'newest' ? 'bg-primary text-white shadow-sm' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
-                            >
-                                🕐 新着順
-                            </button>
-                            <button
-                                onClick={() => setSortOrder(sortOrder === 'likes' ? null : 'likes')}
-                                className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${sortOrder === 'likes' ? 'bg-primary text-white shadow-sm' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
-                            >
-                                ❤️ いいね！順
-                            </button>
-                        </div>
-
-                        {/* Child Selection Row */}
-                        {profile?.children?.length > 0 && (
-                            <div className="flex gap-2 px-4 mb-4 overflow-x-auto pb-2 scrollbar-hide">
-                                <button
-                                    className={`
-                                    px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap
-                                    ${selectedChildId === null
-                                            ? 'bg-primary text-white shadow-md shadow-orange-200'
-                                            : 'bg-white text-text-sub border border-slate-100 hover:bg-slate-50'
+                                            ? 'bg-white text-primary shadow-sm'
+                                            : 'text-text-sub hover:text-text-main hover:bg-white/50'
                                         }
-                                `}
-                                    onClick={() => setSelectedChildId(null)}
-                                >
-                                    全員
-                                </button>
-                                {profile.children.map(child => (
-                                    <button
-                                        key={child.id}
-                                        className={`
-                                        px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap flex items-center gap-2
-                                        ${selectedChildId === child.id
-                                                ? 'bg-primary text-white shadow-md shadow-orange-200'
-                                                : 'bg-white text-text-sub border border-slate-100 hover:bg-slate-50'
-                                            }
                                     `}
-                                        onClick={() => setSelectedChildId(child.id)}
-                                    >
-                                        <span>{child.icon || '👶'}</span>
-                                        {child.name}
-                                    </button>
-                                ))}
-                            </div>
-                        )}
+                                >
+                                    {labels[tab]}
+                                </button>
+                            );
+                        })}
+                    </div>
 
-                        {/* Scene Selection Row */}
-                        <div className="flex gap-2 px-4 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+                    <div className="px-4 mb-4">
+                        <div className="relative">
+                            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 font-bold" size={20} />
+                            <input
+                                type="text"
+                                id="header-search-input" // For CoachMark
+                                placeholder="レシピ名、食材、タグで検索..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full bg-white border-2 border-transparent rounded-full pr-5 py-3.5 text-slate-700 placeholder-slate-400 transition-all outline-none focus:border-orange-300 focus:shadow-[0_0_0_4px_rgba(251,146,60,0.1)] shadow-sm"
+                                style={{ paddingLeft: '64px' }}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Sort Toggle */}
+                    <div className="flex items-center justify-end gap-2 px-4 mb-3">
+                        <span className="text-xs text-slate-400 mr-1">並び替え:</span>
+                        <button
+                            onClick={() => setSortOrder(sortOrder === 'newest' ? null : 'newest')}
+                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${sortOrder === 'newest' ? 'bg-primary text-white shadow-sm' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                        >
+                            🕐 新着順
+                        </button>
+                        <button
+                            onClick={() => setSortOrder(sortOrder === 'likes' ? null : 'likes')}
+                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${sortOrder === 'likes' ? 'bg-primary text-white shadow-sm' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                        >
+                            ❤️ いいね！順
+                        </button>
+                    </div>
+
+                    {/* Child Selection Row */}
+                    {profile?.children?.length > 0 && (
+                        <div className="flex gap-2 px-4 mb-4 overflow-x-auto pb-2 scrollbar-hide">
                             <button
                                 className={`
-                                px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap
-                                ${selectedScene === null
+                                    px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap
+                                    ${selectedChildId === null
                                         ? 'bg-primary text-white shadow-md shadow-orange-200'
                                         : 'bg-white text-text-sub border border-slate-100 hover:bg-slate-50'
                                     }
-                            `}
-                                onClick={() => setSelectedScene(null)}
+                                `}
+                                onClick={() => setSelectedChildId(null)}
                             >
-                                すべてのシーン
+                                全員
                             </button>
-                            {MEAL_SCENES.map(scene => (
+                            {profile.children.map(child => (
                                 <button
-                                    key={scene}
+                                    key={child.id}
                                     className={`
-                                    px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap flex items-center gap-1.5
-                                    ${selectedScene === scene
+                                        px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap flex items-center gap-2
+                                        ${selectedChildId === child.id
                                             ? 'bg-primary text-white shadow-md shadow-orange-200'
                                             : 'bg-white text-text-sub border border-slate-100 hover:bg-slate-50'
                                         }
-                                `}
-                                    onClick={() => setSelectedScene(scene)}
+                                    `}
+                                    onClick={() => setSelectedChildId(child.id)}
                                 >
-                                    <span>{SCENE_ICONS[scene] || '🍽️'}</span>
-                                    {scene}
+                                    <span>{child.icon || '👶'}</span>
+                                    {child.name}
                                 </button>
                             ))}
                         </div>
-                    </>
-                )}
-
-                {/* Recipe Grid - Masonry Layout (Strict Max 3 Columns) */}
-                <div className="px-3 columns-2 md:columns-3 gap-3 pb-24">
-                    {loading || tabLoading || !imagesLoaded ? (
-                        Array.from({ length: 6 }).map((_, i) => (
-                            <div key={i} className="break-inside-avoid mb-3">
-                                <RecipeCardSkeleton />
-                            </div>
-                        ))
-                    ) : filteredRecipes.length > 0 ? (
-                        filteredRecipes.map(recipe => (
-                            <div key={recipe.id} className="break-inside-avoid-column mb-3 inline-block w-full">
-                                <RecipeCard
-                                    recipe={recipe}
-                                    profile={profile}
-                                    isSaved={savedRecipeIds?.includes(recipe.id)}
-                                    onToggleSave={() => toggleSave(recipe.id)}
-                                    isLiked={likedRecipeIds?.includes(recipe.id)}
-                                    onToggleLike={() => toggleLike(recipe.id)}
-                                />
-                            </div>
-                        ))
-                    ) : (
-                        <div className="col-span-full py-10 text-center break-inside-avoid">
-                            <div className="mb-4 text-6xl opacity-20 filter grayscale">
-                                {activeTab === 'saved' ? '🔖' : activeTab === 'mine' ? '🍳' : '🔍'}
-                            </div>
-                            <h3 className="text-lg font-bold text-slate-700 mb-2">
-                                {activeTab === 'saved' ? '保存したレシピはありません' :
-                                    activeTab === 'mine' ? 'まだ投稿がありません' :
-                                        'レシピが見つかりませんでした'}
-                            </h3>
-                            <p className="text-slate-500 text-sm mb-6">
-                                {activeTab === 'saved' ? '気に入ったレシピを保存して、\nあなただけのレシピブックを作りましょう！' :
-                                    activeTab === 'mine' ? 'お子さまのためのレシピを記録しませんか？' :
-                                        '検索条件を変えて試してみてください'}
-                            </p>
-                            {activeTab === 'mine' && (
-                                <Link href="/recipe/new">
-                                    <Button className="bg-orange-500 text-white shadow-lg shadow-orange-200">
-                                        最初のレシピを投稿
-                                    </Button>
-                                </Link>
-                            )}
-                        </div>
                     )}
-                </div>
 
+                    {/* Scene Selection Row */}
+                    <div className="flex gap-2 px-4 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+                        <button
+                            className={`
+                                px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap
+                                ${selectedScene === null
+                                    ? 'bg-primary text-white shadow-md shadow-orange-200'
+                                    : 'bg-white text-text-sub border border-slate-100 hover:bg-slate-50'
+                                }
+                            `}
+                            onClick={() => setSelectedScene(null)}
+                        >
+                            すべてのシーン
+                        </button>
+                        {MEAL_SCENES.map(scene => (
+                            <button
+                                key={scene}
+                                className={`
+                                    px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap flex items-center gap-1.5
+                                    ${selectedScene === scene
+                                        ? 'bg-primary text-white shadow-md shadow-orange-200'
+                                        : 'bg-white text-text-sub border border-slate-100 hover:bg-slate-50'
+                                    }
+                                `}
+                                onClick={() => setSelectedScene(scene)}
+                            >
+                                <span>{SCENE_ICONS[scene] || '🍽️'}</span>
+                                {scene}
+                            </button>
+                        ))}
+                    </div>
+                </>
+            )}
 
+            {/* Recipe Grid - Masonry Layout (Strict Max 3 Columns) */}
+            <div className="px-3 columns-2 md:columns-3 gap-3 pb-24">
+                {loading || tabLoading || !imagesLoaded ? (
+                    Array.from({ length: 6 }).map((_, i) => (
+                        <div key={i} className="break-inside-avoid mb-3">
+                            <RecipeCardSkeleton />
+                        </div>
+                    ))
+                ) : filteredRecipes.length > 0 ? (
+                    filteredRecipes.map(recipe => (
+                        <div key={recipe.id} className="break-inside-avoid-column mb-3 inline-block w-full">
+                            <RecipeCard
+                                recipe={recipe}
+                                profile={profile}
+                                isSaved={savedRecipeIds?.includes(recipe.id)}
+                                onToggleSave={() => toggleSave(recipe.id)}
+                                isLiked={likedRecipeIds?.includes(recipe.id)}
+                                onToggleLike={() => toggleLike(recipe.id)}
+                            />
+                        </div>
+                    ))
+                ) : (
+                    <div className="col-span-full py-10 text-center break-inside-avoid">
+                        <div className="mb-4 text-6xl opacity-20 filter grayscale">
+                            {activeTab === 'saved' ? '🔖' : activeTab === 'mine' ? '🍳' : '🔍'}
+                        </div>
+                        <h3 className="text-lg font-bold text-slate-700 mb-2">
+                            {activeTab === 'saved' ? '保存したレシピはありません' :
+                                activeTab === 'mine' ? 'まだ投稿がありません' :
+                                    'レシピが見つかりませんでした'}
+                        </h3>
+                        <p className="text-slate-500 text-sm mb-6">
+                            {activeTab === 'saved' ? '気に入ったレシピを保存して、\nあなただけのレシピブックを作りましょう！' :
+                                activeTab === 'mine' ? 'お子さまのためのレシピを記録しませんか？' :
+                                    '検索条件を変えて試してみてください'}
+                        </p>
+                        {activeTab === 'mine' && (
+                            <Link href="/recipe/new">
+                                <Button className="bg-orange-500 text-white shadow-lg shadow-orange-200">
+                                    最初のレシピを投稿
+                                </Button>
+                            </Link>
+                        )}
+                    </div>
+                )}
             </div>
-            );
+
+
+        </div>
+    );
 };
 
 const RecipeListPageWrapper = () => {
     return (
-            <Suspense fallback={
-                <div className="min-h-screen flex items-center justify-center bg-[#fcfcfc]">
-                    <div className="animate-pulse">
-                        <img
-                            src="/logo.png"
-                            alt="Loading..."
-                            width={180}
-                            height={45}
-                            className="object-contain opacity-50"
-                        />
-                    </div>
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-[#fcfcfc]">
+                <div className="animate-pulse">
+                    <img
+                        src="/logo.png"
+                        alt="Loading..."
+                        width={180}
+                        height={45}
+                        className="object-contain opacity-50"
+                    />
                 </div>
-            }>
-                <RecipeListPage />
-            </Suspense>
-            );
+            </div>
+        }>
+            <RecipeListPage />
+        </Suspense>
+    );
 };
 
-            export default RecipeListPageWrapper;
+export default RecipeListPageWrapper;
