@@ -54,7 +54,7 @@ const AddRecipeContent = () => {
     const handleCreateRecipe = async (formData) => {
         try {
             await addRecipe(formData, user, profile);
-            router.push('/');
+            router.push('/?tab=mine');
         } catch (error) {
             console.error('Failed to add recipe', error);
             alert('レシピの保存に失敗しました');

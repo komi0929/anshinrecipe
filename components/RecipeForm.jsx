@@ -347,7 +347,7 @@ export const RecipeForm = ({
                         ) : (
                             <>
                                 <Search size={18} />
-                                <span className="hidden sm:inline">情報を取得</span>
+                                <span className="hidden sm:inline">情報を読み取る</span>
                             </>
                         )}
                     </button>
@@ -413,7 +413,6 @@ export const RecipeForm = ({
                             <span className="upload-text">
                                 {isUploading ? 'アップロード中...' : '画像をアップロード'}
                             </span>
-                            <p className="field-hint">※OGP取得で自動入力された画像もこちらで変更できます</p>
                         </div>
                     )}
                     <input
@@ -468,28 +467,26 @@ export const RecipeForm = ({
             )}
 
             {/* Allergen Selection (Transparency) - Only show if children have allergens */}
-            {freeFromAllergens.length > 0 && (
-                <div className="form-section">
-                    <label className="section-label">
-                        除去アレルギー情報 (自動判定)
-                    </label>
-                    <p className="section-help">お子様のアレルギー情報から自動判定されます。不要な場合はタップして削除してください。</p>
+            <div className="form-section">
+                <label className="section-label">
+                    使われていない材料
+                </label>
+                <p className="section-help">お子様のアレルギー情報から自動判定されます。不要な場合はタップして削除してください。</p>
 
-                    <div className="flex flex-wrap gap-2 mt-2">
-                        {freeFromAllergens.map(allergen => (
-                            <button
-                                key={allergen}
-                                type="button"
-                                onClick={() => toggleAllergen(allergen)}
-                                className="px-4 py-2 rounded-full text-sm font-bold transition-all border bg-green-500 text-white border-green-500 shadow-md hover:bg-green-600"
-                            >
-                                {allergen}なし
-                                <Check size={14} className="ml-1 inline" />
-                            </button>
-                        ))}
-                    </div>
+                <div className="flex flex-wrap gap-2 mt-2">
+                    {freeFromAllergens.map(allergen => (
+                        <button
+                            key={allergen}
+                            type="button"
+                            onClick={() => toggleAllergen(allergen)}
+                            className="px-4 py-2 rounded-full text-sm font-bold transition-all border bg-green-500 text-white border-green-500 shadow-md hover:bg-green-600"
+                        >
+                            {allergen}なし
+                            <Check size={14} className="ml-1 inline" />
+                        </button>
+                    ))}
                 </div>
-            )}
+            </div>
 
             {/* Meal Scenes */}
             <div className="form-section">
