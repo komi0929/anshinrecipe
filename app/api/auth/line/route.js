@@ -83,6 +83,7 @@ export async function POST(request) {
                 .update({
                     display_name: displayName,
                     picture_url: pictureUrl,
+                    avatar_url: pictureUrl,
                 })
                 .eq('id', userId);
         } else {
@@ -104,6 +105,7 @@ export async function POST(request) {
                         line_user_id: lineUserId,
                         display_name: displayName,
                         picture_url: pictureUrl,
+                        avatar_url: pictureUrl,
                     }, {
                         onConflict: 'id'
                     });
@@ -155,6 +157,7 @@ export async function POST(request) {
                         line_user_id: lineUserId,
                         display_name: displayName,
                         picture_url: pictureUrl,
+                        avatar_url: pictureUrl,
                     }, {
                         onConflict: 'id'
                     });

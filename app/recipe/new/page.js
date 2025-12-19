@@ -78,6 +78,9 @@ const AddRecipeContent = () => {
     }
     if (!user) return null;
 
+    // Check if user has no children registered
+    const hasNoChildren = !profile?.children || profile.children.length === 0;
+
     return (
         <div className="container add-recipe-page relative">
             <div className="page-header">
@@ -87,33 +90,57 @@ const AddRecipeContent = () => {
                 <h1 className="page-title">レシピを追加</h1>
             </div>
 
-            <div className="w-full max-w-2xl mx-auto">
-                <RecipeForm
-                    initialData={initialData}
-                    onSubmit={handleCreateRecipe}
-                    user={user}
-                    profile={profile}
-                />
-            </div>
+            {hasNoChildren ? (
+                <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+                    <div className="w-20 h-20 bg-gradient-to-br from-orange-100 to-amber-50 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-orange-100">
+                        <span className="text-4xl">👶</span>
+                    </div>
+                    <h2 className="text-xl font-bold text-slate-700 mb-3">
+                        お子様を登録しましょう
+                    </h2>
+                    <p className="text-slate-500 text-sm mb-6 leading-relaxed">
+                        アレルギー情報を登録すると<br />
+                        すべての機能が使用いただけます
+                    </p>
+                    <Link
+                        href="/profile"
+                        className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-400 to-amber-400 text-white px-8 py-4 rounded-full font-bold shadow-lg shadow-orange-200 hover:shadow-xl transition-all active:scale-95"
+                    >
+                        <span className="text-lg">👶</span>
+                        お子様を登録する
+                    </Link>
+                </div>
+            ) : (
+                <>
+                    <div className="w-full max-w-2xl mx-auto">
+                        <RecipeForm
+                            initialData={initialData}
+                            onSubmit={handleCreateRecipe}
+                            user={user}
+                            profile={profile}
+                        />
+                    </div>
 
-            {/* Coach Marks for First Time Users */}
-            <CoachMark
-                targetId="recipe-form-url-input"
-                message="便利な機能✨ URLを入力するとレシピ情報を自動で読み込みます！"
-                position="bottom"
-                uniqueKey="recipe_url_guide"
-                delay={1000}
-            />
+                    {/* Coach Marks for First Time Users */}
+                    <CoachMark
+                        targetId="recipe-form-url-input"
+                        message="便利な機能✨ URLを入力するとレシピ情報を自動で読み込みます！"
+                        position="bottom"
+                        uniqueKey="recipe_url_guide"
+                        delay={1000}
+                    />
 
-            <CoachMark
-                targetId="recipe-form-image-area"
-                message="自分で撮った写真をアップロードすることもできます📷"
-                position="top"
-                uniqueKey="recipe_image_guide"
-                delay={5000}
-            />
+                    <CoachMark
+                        targetId="recipe-form-image-area"
+                        message="自分で撮った写真をアップロードすることもできます📷"
+                        position="top"
+                        uniqueKey="recipe_image_guide"
+                        delay={5000}
+                    />
 
-            {/* Note: Delays are staggered so they don't pop up all at once if user is fast */}
+                    {/* Note: Delays are staggered so they don't pop up all at once if user is fast */}
+                </>
+            )}
         </div>
     );
 };
