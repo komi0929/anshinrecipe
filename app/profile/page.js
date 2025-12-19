@@ -49,6 +49,7 @@ export default function ProfilePage() {
     const [childPhotoFile, setChildPhotoFile] = useState(null); // File object
     const [childAllergens, setChildAllergens] = useState([]);
     const [customAllergen, setCustomAllergen] = useState(''); // Free text input
+    const [formErrors, setFormErrors] = useState({}); // Validation errors
 
     // Inquiry Modal
     const [showInquiryModal, setShowInquiryModal] = useState(false);
@@ -104,14 +105,27 @@ export default function ProfilePage() {
     };
 
     const handleSaveChild = async () => {
-        if (!childName.trim()) return;
+        // Validate all required fields
+        const errors = {};
+        if (!childName.trim()) {
+            errors.name = 'お名前を入力してください';
+        }
+        if (childAllergens.length === 0) {
+            errors.allergens = 'アレルギーを最低1つ選択してください';
+        }
+
+        setFormErrors(errors);
+
+        if (Object.keys(errors).length > 0) {
+            return;
+        }
 
         let photoUrl = childPhoto;
 
         // Upload new photo if selected
         if (childPhotoFile) {
             try {
-                photoUrl = await uploadImage(childPhotoFile, 'child-photos'); // Use 'child-photos' bucket or Folder
+                photoUrl = await uploadImage(childPhotoFile, 'child-photos');
             } catch (error) {
                 console.error('Child photo upload failed:', error);
                 alert('写真のアップロードに失敗しました');
@@ -132,11 +146,9 @@ export default function ProfilePage() {
             } else {
                 await addChild(childData);
             }
-            // Close modal immediately after successful registration
             closeChildModal();
         } catch (error) {
             console.error('Error saving child:', error);
-            // Modal stays open so user can fix issues
         }
     };
 
@@ -162,6 +174,7 @@ export default function ProfilePage() {
     const closeChildModal = () => {
         setShowChildModal(false);
         setEditingChild(null);
+        setFormErrors({});
     };
 
     const handleSignOut = async () => {
@@ -480,6 +493,8 @@ export default function ProfilePage() {
                                         <img src={URL.createObjectURL(childPhotoFile)} className="w-full h-full object-cover" />
                                     ) : childPhoto ? (
                                         <img src={childPhoto} className="w-full h-full object-cover" />
+                                    ) : childIcon && childIcon !== '👶' ? (
+                                        <span className="text-5xl">{childIcon}</span>
                                     ) : (
                                         <Camera className="text-slate-400" size={32} />
                                     )}
@@ -512,21 +527,41 @@ export default function ProfilePage() {
 
                             {/* Name Input */}
                             <div>
-                                <label className="text-sm font-bold text-text-sub mb-2 block">お名前</label>
+                                <label className="text-sm font-bold text-text-sub mb-2 block">
+                                    お名前 <span className="text-rose-500">*</span>
+                                </label>
                                 <Input
                                     type="text"
                                     value={childName}
-                                    onChange={(e) => setChildName(e.target.value)}
+                                    onChange={(e) => {
+                                        setChildName(e.target.value);
+                                        if (formErrors.name) setFormErrors(prev => ({ ...prev, name: null }));
+                                    }}
                                     placeholder="たろう"
+                                    className={formErrors.name ? 'border-rose-500' : ''}
                                 />
+                                {formErrors.name && (
+                                    <p className="text-rose-500 text-xs mt-1">{formErrors.name}</p>
+                                )}
                             </div>
 
                             {/* Allergens */}
                             <div>
+                                <div className="mb-2">
+                                    <span className="text-sm font-bold text-text-sub">
+                                        アレルギー <span className="text-rose-500">*</span>
+                                    </span>
+                                </div>
                                 <AllergySelector
                                     selected={childAllergens}
-                                    onChange={setChildAllergens}
+                                    onChange={(allergens) => {
+                                        setChildAllergens(allergens);
+                                        if (formErrors.allergens) setFormErrors(prev => ({ ...prev, allergens: null }));
+                                    }}
                                 />
+                                {formErrors.allergens && (
+                                    <p className="text-rose-500 text-xs mt-1">{formErrors.allergens}</p>
+                                )}
                             </div>
 
                             {/* Privacy Disclaimer */}

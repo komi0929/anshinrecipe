@@ -158,8 +158,16 @@ const RecipeListPage = () => {
 
             if (!matchesSearch) return false;
 
-            if (selectedChildId) {
-                if (!recipe.safeFor.some(c => c.id === selectedChildId)) return false;
+            // Child filter: if selectedChildId is set, filter for that child
+            // If selectedChildId is null ("全員"), show recipes safe for ALL registered children
+            if (profile?.children?.length > 0) {
+                if (selectedChildId) {
+                    // Specific child selected
+                    if (!recipe.safeFor.some(c => c.id === selectedChildId)) return false;
+                } else {
+                    // "全員" selected - recipe must be safe for ALL children
+                    if (recipe.safeFor.length !== profile.children.length) return false;
+                }
             }
 
             if (selectedScene) {
@@ -324,13 +332,10 @@ const RecipeListPage = () => {
                 </div>
 
                 <div className="text-center py-20 px-6 max-w-md mx-auto">
-                    <div className="mb-8 flex justify-center">
-                        <UserIcon size={64} className="text-primary/50" />
-                    </div>
                     <h2 className="text-2xl font-bold mb-3 text-text-main">お子様を登録しましょう</h2>
                     <p className="text-text-sub mb-8 leading-relaxed">
-                        アレルギー情報を登録すると、<br />
-                        レシピの安全性をチェックできます
+                        アレルギー情報を登録すると<br />
+                        すべての機能が使用いただけます
                     </p>
                     <Link href="/profile">
                         <Button>プロフィールを設定</Button>
