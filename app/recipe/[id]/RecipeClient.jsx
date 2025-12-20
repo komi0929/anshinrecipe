@@ -196,19 +196,8 @@ const RecipeDetailPage = () => {
         }
     };
 
-    if (loading) return (
-        <div className="min-h-screen flex items-center justify-center bg-[#fcfcfc]">
-            <div className="animate-pulse">
-                <img
-                    src="/logo.png"
-                    alt="Loading..."
-                    width={180}
-                    height={45}
-                    className="object-contain opacity-50"
-                />
-            </div>
-        </div>
-    );
+    // Removed blocking loading - render immediately
+    if (loading) return null;
     if (!recipe) return <div className="error-state">レシピが見つかりません</div>;
 
     // Calculate Safety

@@ -83,21 +83,8 @@ const EditRecipeContent = () => {
         }
     };
 
-    if (profileLoading || isLoading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-[#fcfcfc]">
-                <div className="animate-pulse">
-                    <Image
-                        src="/logo.png"
-                        alt="Loading..."
-                        width={180}
-                        height={45}
-                        className="object-contain opacity-50"
-                    />
-                </div>
-            </div>
-        );
-    }
+    // Removed blocking loading - render immediately
+    if (profileLoading || isLoading) return null;
 
     if (!user || !initialData) return null;
 
@@ -124,22 +111,8 @@ const EditRecipeContent = () => {
 };
 
 const EditRecipePage = () => {
-    const LoadingScreen = () => (
-        <div className="min-h-screen flex items-center justify-center bg-[#fcfcfc]">
-            <div className="animate-pulse">
-                <Image
-                    src="/logo.png"
-                    alt="Loading..."
-                    width={180}
-                    height={45}
-                    className="object-contain opacity-50"
-                />
-            </div>
-        </div>
-    );
-
     return (
-        <Suspense fallback={<LoadingScreen />}>
+        <Suspense fallback={null}>
             <EditRecipeContent />
         </Suspense>
     );

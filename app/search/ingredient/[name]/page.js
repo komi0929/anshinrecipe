@@ -51,17 +51,7 @@ export default function IngredientSearchPage() {
             </div>
 
             {loading ? (
-                <div className="min-h-[50vh] flex items-center justify-center">
-                    <div className="animate-pulse">
-                        <Image
-                            src="/logo.png"
-                            alt="Loading..."
-                            width={180}
-                            height={45}
-                            className="object-contain opacity-50"
-                        />
-                    </div>
-                </div>
+                <div className="text-center py-8 text-slate-400">読み込み中...</div>
             ) : recipes.length === 0 ? (
                 <div className="empty-state">
                     <p>「{ingredientName}」を使ったレシピが見つかりませんでした</p>
