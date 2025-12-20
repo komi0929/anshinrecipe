@@ -512,17 +512,17 @@ const RecipeListPage = () => {
                 </>
             )}
 
-            {/* Recipe Grid - Masonry Layout (Strict Max 3 Columns) */}
-            <div className="px-3 columns-2 md:columns-3 gap-3 pb-24">
+            {/* Recipe Grid - CSS Grid Layout for stability */}
+            <div className="px-3 grid grid-cols-2 gap-3 pb-24">
                 {loading || tabLoading || !imagesLoaded ? (
                     Array.from({ length: 6 }).map((_, i) => (
-                        <div key={i} className="break-inside-avoid mb-3">
+                        <div key={i}>
                             <RecipeCardSkeleton />
                         </div>
                     ))
                 ) : filteredRecipes.length > 0 ? (
                     filteredRecipes.map(recipe => (
-                        <div key={recipe.id} className="break-inside-avoid-column mb-3 inline-block w-full">
+                        <div key={recipe.id}>
                             <RecipeCard
                                 recipe={recipe}
                                 profile={profile}

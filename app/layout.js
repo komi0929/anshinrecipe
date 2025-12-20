@@ -52,6 +52,8 @@ export const viewport = {
     viewportFit: "cover",
 }
 
+import PWAInstallPrompt from '@/components/PWAInstallPrompt';
+
 export default function RootLayout({ children }) {
     return (
         <html lang="ja" className={zenMaruGothic.variable} suppressHydrationWarning>
@@ -64,6 +66,7 @@ export default function RootLayout({ children }) {
                         </main>
 
                         <BottomNav />
+                        <PWAInstallPrompt />
                     </div>
                 </ToastProvider>
             </body>
