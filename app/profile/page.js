@@ -375,9 +375,13 @@ export default function ProfilePage() {
                                     <div className="flex items-center gap-2 flex-wrap flex-1">
                                         <span className="font-bold text-text-main">{child.name}</span>
                                         {child.allergens && child.allergens.length > 0 ? (
-                                            <span className="text-xs text-slate-500">
-                                                {child.allergens.join('・')}
-                                            </span>
+                                            <div className="flex flex-wrap gap-1">
+                                                {child.allergens.map(a => (
+                                                    <span key={a} className="text-xs px-2 py-0.5 bg-orange-50 text-orange-600 rounded-full font-bold border border-orange-200">
+                                                        {a}なし
+                                                    </span>
+                                                ))}
+                                            </div>
                                         ) : (
                                             <span className="text-xs px-2 py-0.5 bg-green-50 text-green-600 rounded-full font-bold">
                                                 アレルギーなし

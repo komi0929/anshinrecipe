@@ -451,9 +451,13 @@ export const RecipeForm = ({
                                 <div className="child-select-info" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', flex: 1 }}>
                                     <span className="child-select-name" style={{ fontWeight: 'bold' }}>{child.name}</span>
                                     {child.allergens && child.allergens.length > 0 && (
-                                        <span className="child-select-allergens" style={{ fontSize: '13px', color: '#64748b' }}>
-                                            {child.allergens.join('・')}
-                                        </span>
+                                        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                                            {child.allergens.map(a => (
+                                                <span key={a} style={{ fontSize: '12px', padding: '2px 8px', background: '#fff7ed', color: '#ea580c', borderRadius: '9999px', fontWeight: 'bold', border: '1px solid #fed7aa' }}>
+                                                    {a}なし
+                                                </span>
+                                            ))}
+                                        </div>
                                     )}
                                 </div>
                                 {selectedChildren.includes(child.id) && (
