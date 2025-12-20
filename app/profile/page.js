@@ -368,27 +368,24 @@ export default function ProfilePage() {
                                 className="p-4 flex items-center justify-between border-b border-slate-50 last:border-none active:bg-slate-50 transition-colors cursor-pointer"
                                 onClick={() => openChildModal(child)}
                             >
-                                <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center text-2xl border border-orange-100">
+                                <div className="flex items-center gap-4 flex-1">
+                                    <div className="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center text-2xl border border-orange-100 flex-shrink-0">
                                         {child.icon || '👶'}
                                     </div>
-                                    <div>
-                                        <span className="font-bold text-text-main block">{child.name}</span>
-                                        <div className="flex flex-wrap gap-1 mt-1">
-                                            {child.allergens?.map(a => (
-                                                <span key={a} className="text-[10px] px-2 py-0.5 bg-rose-50 text-rose-500 rounded-full font-bold">
-                                                    {a}
-                                                </span>
-                                            ))}
-                                            {(!child.allergens || child.allergens.length === 0) && (
-                                                <span className="text-[10px] px-2 py-0.5 bg-green-50 text-green-600 rounded-full font-bold">
-                                                    アレルギーなし
-                                                </span>
-                                            )}
-                                        </div>
+                                    <div className="flex items-center gap-2 flex-wrap flex-1">
+                                        <span className="font-bold text-text-main">{child.name}</span>
+                                        {child.allergens && child.allergens.length > 0 ? (
+                                            <span className="text-xs text-slate-500">
+                                                {child.allergens.join('・')}
+                                            </span>
+                                        ) : (
+                                            <span className="text-xs px-2 py-0.5 bg-green-50 text-green-600 rounded-full font-bold">
+                                                アレルギーなし
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
-                                <ChevronRight className="text-slate-300" size={20} />
+                                <ChevronRight className="text-slate-300 flex-shrink-0" size={20} />
                             </div>
                         ))}
                         <button

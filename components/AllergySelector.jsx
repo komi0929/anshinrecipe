@@ -35,10 +35,10 @@ const AllergySelector = ({ selected = [], onChange }) => {
             <div className="selected-allergens">
                 {selected.length === 0 && <p style={{ color: '#aaa', fontSize: '0.875rem' }}>選択されていません</p>}
                 {selected.map(item => (
-                    <span key={item} className="chip selected">
+                    <span key={item} className="chip selected" style={{ fontSize: '14px', padding: '8px 12px' }}>
                         {item}
-                        <button onClick={() => toggleAllergen(item)}>
-                            <X size={14} />
+                        <button onClick={() => toggleAllergen(item)} style={{ marginLeft: '6px', color: '#f97316', fontWeight: 'bold', fontSize: '12px' }}>
+                            なし
                         </button>
                     </span>
                 ))}

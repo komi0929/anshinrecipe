@@ -451,7 +451,7 @@ export const RecipeForm = ({
                                 <div className="child-select-info" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', flex: 1 }}>
                                     <span className="child-select-name" style={{ fontWeight: 'bold' }}>{child.name}</span>
                                     {child.allergens && child.allergens.length > 0 && (
-                                        <span className="child-select-allergens" style={{ fontSize: '11px', color: '#94a3b8', whiteSpace: 'nowrap' }}>
+                                        <span className="child-select-allergens" style={{ fontSize: '13px', color: '#64748b' }}>
                                             {child.allergens.join('・')}
                                         </span>
                                     )}
