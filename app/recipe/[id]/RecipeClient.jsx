@@ -57,7 +57,9 @@ const RecipeDetailPage = () => {
                         *,
                         profiles:user_id (
                             username,
-                            avatar_url
+                            display_name,
+                            avatar_url,
+                            picture_url
                         ),
                         cooking_logs (id, content, rating, created_at, user_id),
                         recipe_images (id, image_url)
@@ -326,14 +328,14 @@ const RecipeDetailPage = () => {
 
                 <div className="recipe-meta">
                     <div className="author-info">
-                        {recipe.profiles?.avatar_url ? (
-                            <img src={recipe.profiles.avatar_url} alt="" className="author-avatar-small" />
+                        {(recipe.profiles?.avatar_url || recipe.profiles?.picture_url) ? (
+                            <img src={recipe.profiles?.avatar_url || recipe.profiles?.picture_url} alt="" className="author-avatar-small" />
                         ) : (
                             <div className="author-avatar-placeholder small">
                                 <UserIcon size={16} />
                             </div>
                         )}
-                        <span className="author-name">{recipe.profiles?.display_name || recipe.profiles?.username || recipe.author?.username || 'ゲスト'}</span>
+                        <span className="author-name">{recipe.profiles?.display_name || recipe.profiles?.username || 'ゲスト'}</span>
                     </div>
                     <div className="date-info">
                         <Clock size={14} />

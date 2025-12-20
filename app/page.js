@@ -357,7 +357,6 @@ const RecipeListPage = () => {
                         href="/profile"
                         className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-400 to-amber-400 text-white px-8 py-4 rounded-full font-bold shadow-lg shadow-orange-200 hover:shadow-xl transition-all active:scale-95"
                     >
-                        <span className="text-lg">👶</span>
                         お子様を登録する
                     </Link>
                 </div>

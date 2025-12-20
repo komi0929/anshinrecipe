@@ -65,10 +65,13 @@ export async function POST(request) {
         const lineProfile = await profileResponse.json();
         const { userId: lineUserId, displayName, pictureUrl } = lineProfile;
 
+        // Debug log for pictureUrl
+        console.log('LINE Profile:', { lineUserId, displayName, pictureUrl: pictureUrl || 'NOT PROVIDED' });
+
         // Check if user already exists
         const { data: existingProfile } = await supabaseAdmin
             .from('profiles')
-            .select('id')
+            .select('id, picture_url')
             .eq('line_user_id', lineUserId)
             .single();
 
@@ -78,13 +81,19 @@ export async function POST(request) {
             // Existing user - update profile
             userId = existingProfile.id;
 
+            // Only update picture if LINE provides one, otherwise keep existing
+            const updateData = {
+                display_name: displayName,
+            };
+
+            if (pictureUrl) {
+                updateData.picture_url = pictureUrl;
+                updateData.avatar_url = pictureUrl;
+            }
+
             await supabaseAdmin
                 .from('profiles')
-                .update({
-                    display_name: displayName,
-                    picture_url: pictureUrl,
-                    avatar_url: pictureUrl,
-                })
+                .update(updateData)
                 .eq('id', userId);
         } else {
             // Check if auth user exists but profile doesn't

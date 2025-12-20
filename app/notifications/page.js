@@ -17,9 +17,10 @@ const NotificationsPage = () => {
         {
             id: 1,
             title: 'あんしんレシピ へようこそ！',
-            content: 'アレルギーっ子のパパ・ママのためのレシピ共有アプリです。ご意見・ご要望はお気軽にお問い合わせからお寄せください。',
+            content: 'アレルギーっ子のパパ・ママのためのレシピ共有アプリです。',
             date: '2024-12-01',
-            isNew: false
+            isNew: false,
+            hasContactLink: true
         }
     ];
 
@@ -209,6 +210,11 @@ const NotificationsPage = () => {
                                         </h3>
                                         <p className="text-sm text-slate-500 leading-relaxed">
                                             {announcement.content}
+                                            {announcement.hasContactLink && (
+                                                <>
+                                                    ご意見・ご要望は<Link href="/profile" className="text-primary font-bold underline">お問い合わせ</Link>からお寄せください。
+                                                </>
+                                            )}
                                         </p>
                                         <p className="text-xs text-slate-400 mt-2">
                                             {announcement.date}

@@ -73,7 +73,8 @@ export const RecipeCard = ({ recipe, isSaved, onToggleSave, isLiked, onToggleLik
                     </div>
                 )}
 
-                {safeFor.length > 0 && (
+                {/* Only show child badges for own recipes */}
+                {user && recipe.userId === user.id && safeFor.length > 0 && (
                     <div className="safety-badges-overlay">
                         {safeFor.map(child => (
                             <span key={child.id} className="mini-child-badge" title={`${child.name}ちゃんOK`}>
