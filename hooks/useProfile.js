@@ -63,8 +63,8 @@ export const useProfile = () => {
     const savedRecipeIds = profileData?.savedRecipeIds ?? [];
     const likedRecipeIds = profileData?.likedRecipeIds ?? [];
 
-    // Loading is only true during initial auth check, not SWR refetch
-    const loading = initializing || (user && !profileData && swrLoading);
+    // Loading is true during initial auth check OR when profile data is not yet loaded
+    const loading = initializing || (user && !profileData);
 
     useEffect(() => {
         // Get current session - use cached if available
