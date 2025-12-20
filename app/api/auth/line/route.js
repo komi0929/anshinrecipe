@@ -81,15 +81,12 @@ export async function POST(request) {
             // Existing user - update profile
             userId = existingProfile.id;
 
-            // Only update picture if LINE provides one, otherwise keep existing
+            // Always update avatar from LINE to ensure it's current
             const updateData = {
                 display_name: displayName,
+                picture_url: pictureUrl || existingProfile.picture_url,
+                avatar_url: pictureUrl || existingProfile.picture_url,
             };
-
-            if (pictureUrl) {
-                updateData.picture_url = pictureUrl;
-                updateData.avatar_url = pictureUrl;
-            }
 
             await supabaseAdmin
                 .from('profiles')

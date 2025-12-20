@@ -224,23 +224,8 @@ const RecipeListPage = () => {
     // VIEW STATE MANAGEMENT
     // ----------------------------------------------------
 
-    // 1. Loading State
-    if (loading || profileLoading) {
-        // While loading user state, show a minimal loading screen to prevent flash
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-[#fcfcfc]">
-                <div className="animate-pulse">
-                    <Image
-                        src="/logo.png"
-                        alt="Loading..."
-                        width={180}
-                        height={45}
-                        className="object-contain opacity-50"
-                    />
-                </div>
-            </div>
-        );
-    }
+    // Removed blocking loading state - content will render immediately
+    // with skeleton placeholders where needed
 
     // 2. Not Logged In -> Original Landing Page
     if (!user) {
