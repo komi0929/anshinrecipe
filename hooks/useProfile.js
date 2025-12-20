@@ -318,8 +318,6 @@ export const useProfile = () => {
         if (!user) return;
 
         try {
-            setLoading(true);
-
             console.log('Calling account deletion API for user:', user.id);
 
             // Call server-side API that uses service role to bypass RLS
@@ -346,8 +344,6 @@ export const useProfile = () => {
         } catch (error) {
             console.error('Error deleting account:', error);
             addToast('アカウント削除に失敗しました', 'error');
-        } finally {
-            setLoading(false);
         }
     };
 
