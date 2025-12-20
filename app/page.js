@@ -527,22 +527,24 @@ const RecipeListPage = () => {
                 ) : (
                     <div className="col-span-full py-10 text-center break-inside-avoid">
                         <div className="mb-4 text-6xl opacity-20 filter grayscale">
-                            {activeTab === 'saved' ? '🔖' : activeTab === 'mine' ? '🍳' : '🔍'}
+                            {activeTab === 'saved' ? '🔖' : activeTab === 'mine' ? '🍳' : '📚'}
                         </div>
                         <h3 className="text-lg font-bold text-slate-700 mb-2">
                             {activeTab === 'saved' ? '保存したレシピはありません' :
                                 activeTab === 'mine' ? 'まだ投稿がありません' :
-                                    'レシピが見つかりませんでした'}
+                                    searchTerm || selectedScene ? 'レシピが見つかりませんでした' :
+                                        'まだレシピが投稿されていません'}
                         </h3>
-                        <p className="text-slate-500 text-sm mb-6">
+                        <p className="text-slate-500 text-sm mb-6 whitespace-pre-line">
                             {activeTab === 'saved' ? '気に入ったレシピを保存して、\nあなただけのレシピブックを作りましょう！' :
                                 activeTab === 'mine' ? 'お子さまのためのレシピを記録しませんか？' :
-                                    '検索条件を変えて試してみてください'}
+                                    searchTerm || selectedScene ? '検索条件を変えて試してみてください' :
+                                        '最初のレシピを投稿して、\n他のパパ・ママを助けましょう！🌟'}
                         </p>
-                        {activeTab === 'mine' && (
+                        {(activeTab === 'mine' || (activeTab === 'recommend' && !searchTerm && !selectedScene)) && (
                             <Link href="/recipe/new">
                                 <Button className="bg-orange-500 text-white shadow-lg shadow-orange-200">
-                                    最初のレシピを投稿
+                                    {activeTab === 'mine' ? '最初のレシピを投稿' : 'レシピを投稿する'}
                                 </Button>
                             </Link>
                         )}
