@@ -7,7 +7,7 @@
     "background_color": "#FAFAF9",
     "theme_color": "#ffffff",
     "share_target": {
-        "action": "/recipe/new",
+        "action": "/recipe/quick-save",
         "method": "GET",
         "params": {
             "title": "title",
