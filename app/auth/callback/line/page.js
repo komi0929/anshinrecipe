@@ -1,11 +1,12 @@
 'use client'
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import { Loader2, AlertCircle } from 'lucide-react';
+import Image from 'next/image';
 
-export default function LineCallbackPage() {
+function LineCallbackContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [error, setError] = useState('');
@@ -155,5 +156,25 @@ export default function LineCallbackPage() {
         }
       `}</style>
         </div>
+    );
+}
+
+export default function LineCallbackPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-[#fcfcfc]">
+                <div className="animate-pulse">
+                    <Image
+                        src="/logo.png"
+                        alt="Loading..."
+                        width={180}
+                        height={45}
+                        className="object-contain opacity-50"
+                    />
+                </div>
+            </div>
+        }>
+            <LineCallbackContent />
+        </Suspense>
     );
 }
