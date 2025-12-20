@@ -196,9 +196,34 @@ const RecipeDetailPage = () => {
         }
     };
 
-    // Removed blocking loading - render immediately
-    if (loading) return null;
-    if (!recipe) return <div className="error-state">レシピが見つかりません</div>;
+    // Show skeleton while loading - prevents blank flash
+    if (loading || !recipe) {
+        return (
+            <div className="container recipe-detail-page">
+                <div className="detail-header">
+                    <div className="w-10 h-10 bg-slate-200 rounded-full animate-pulse" />
+                    <div className="flex gap-2">
+                        <div className="w-10 h-10 bg-slate-200 rounded-full animate-pulse" />
+                        <div className="w-10 h-10 bg-slate-200 rounded-full animate-pulse" />
+                    </div>
+                </div>
+                <div className="recipe-hero">
+                    <div className="w-full aspect-video bg-slate-200 animate-pulse rounded-xl" />
+                </div>
+                <div className="recipe-info p-4 space-y-4">
+                    <div className="h-8 w-3/4 bg-slate-200 rounded animate-pulse" />
+                    <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-slate-200 rounded-full animate-pulse" />
+                        <div className="h-4 w-20 bg-slate-200 rounded animate-pulse" />
+                    </div>
+                    <div className="space-y-2">
+                        <div className="h-4 w-full bg-slate-100 rounded animate-pulse" />
+                        <div className="h-4 w-2/3 bg-slate-100 rounded animate-pulse" />
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     // Calculate Safety
     const safeFor = profile?.children?.filter(child => {

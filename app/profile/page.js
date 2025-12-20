@@ -70,11 +70,35 @@ export default function ProfilePage() {
         }
     }, [user, loading, router]);
 
-    // Removed blocking loading - render immediately
-    if (loading) return null;
-
-    if (!user) {
-        return null;
+    // Show skeleton while loading - prevents blank flash
+    if (loading || !user) {
+        return (
+            <div className="min-h-screen bg-background pb-20">
+                <div className="pt-6 pb-2 px-6">
+                    <div className="h-8 w-32 bg-slate-200 rounded-lg animate-pulse" />
+                </div>
+                <div className="px-4 space-y-6">
+                    {/* Profile card skeleton */}
+                    <div className="bg-white rounded-[32px] p-6 shadow-sm flex items-center gap-4">
+                        <div className="w-20 h-20 rounded-full bg-slate-200 animate-pulse" />
+                        <div className="flex-1">
+                            <div className="h-6 w-24 bg-slate-200 rounded animate-pulse mb-2" />
+                            <div className="h-4 w-16 bg-slate-100 rounded animate-pulse" />
+                        </div>
+                    </div>
+                    {/* Badges skeleton */}
+                    <div className="flex gap-4">
+                        {[1, 2, 3, 4].map(i => (
+                            <div key={i} className="w-14 h-14 rounded-full bg-slate-200 animate-pulse" />
+                        ))}
+                    </div>
+                    {/* Children skeleton */}
+                    <div className="bg-white rounded-[24px] p-4 shadow-sm">
+                        <div className="h-12 bg-slate-100 rounded animate-pulse" />
+                    </div>
+                </div>
+            </div>
+        );
     }
 
     const handleUpdateName = async () => {

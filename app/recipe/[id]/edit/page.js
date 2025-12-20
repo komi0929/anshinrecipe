@@ -83,10 +83,23 @@ const EditRecipeContent = () => {
         }
     };
 
-    // Removed blocking loading - render immediately
-    if (profileLoading || isLoading) return null;
-
-    if (!user || !initialData) return null;
+    // Show skeleton while loading - prevents blank flash
+    if (profileLoading || isLoading || !user || !initialData) {
+        return (
+            <div className="container add-recipe-page relative">
+                <div className="page-header">
+                    <div className="w-8 h-8 bg-slate-200 rounded-full animate-pulse" />
+                    <div className="h-6 w-32 bg-slate-200 rounded animate-pulse" />
+                </div>
+                <div className="w-full max-w-2xl mx-auto p-4 space-y-6">
+                    <div className="h-12 bg-slate-200 rounded-xl animate-pulse" />
+                    <div className="aspect-video bg-slate-200 rounded-xl animate-pulse" />
+                    <div className="h-32 bg-slate-200 rounded-xl animate-pulse" />
+                    <div className="h-12 bg-slate-200 rounded-xl animate-pulse" />
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="container add-recipe-page relative">

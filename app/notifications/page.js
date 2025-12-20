@@ -24,13 +24,25 @@ const NotificationsPage = () => {
         }
     ];
 
-    // Removed blocking loading - render immediately
-    if (profileLoading) return null;
-
-    if (!user) {
+    // Show skeleton while loading - prevents blank flash
+    if (profileLoading || !user) {
         return (
-            <div className="container max-w-md mx-auto min-h-screen bg-background pb-20 px-4 pt-6">
-                <p className="text-center text-slate-500">ログインが必要です</p>
+            <div className="container max-w-md mx-auto min-h-screen bg-background pb-24">
+                <div className="page-header sticky top-0 bg-background z-10 border-b border-slate-100">
+                    <div className="w-8 h-8 bg-slate-200 rounded-full animate-pulse" />
+                    <div className="h-6 w-24 bg-slate-200 rounded animate-pulse" />
+                </div>
+                <div className="px-4 pt-4 space-y-2">
+                    {[1, 2, 3].map(i => (
+                        <div key={i} className="bg-white rounded-2xl p-4 flex gap-3">
+                            <div className="w-10 h-10 bg-slate-200 rounded-full animate-pulse" />
+                            <div className="flex-1 space-y-2">
+                                <div className="h-4 w-3/4 bg-slate-200 rounded animate-pulse" />
+                                <div className="h-3 w-1/2 bg-slate-100 rounded animate-pulse" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
         );
     }
