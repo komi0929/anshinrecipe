@@ -118,7 +118,7 @@ const AddRecipeContent = () => {
 
                     <CoachMark
                         targetId="recipe-form-image-area"
-                        message="自分で撮った写真をアップロードすることもできます📷"
+                        message="自分で撮った写真も登録できます📷"
                         position="top"
                         uniqueKey="recipe_image_guide"
                         delay={5000}

@@ -448,12 +448,11 @@ export const RecipeForm = ({
                                         <span>{child.icon}</span>
                                     )}
                                 </div>
-                                <div className="child-select-info" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                                    <span className="child-select-name">{child.name}</span>
+                                <div className="child-select-info" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', flex: 1 }}>
+                                    <span className="child-select-name" style={{ fontWeight: 'bold' }}>{child.name}</span>
                                     {child.allergens && child.allergens.length > 0 && (
-                                        <span className="child-select-allergens" style={{ fontSize: '11px', color: '#94a3b8' }}>
-                                            {child.allergens.slice(0, 3).join(', ')}
-                                            {child.allergens.length > 3 && '...'}
+                                        <span className="child-select-allergens" style={{ fontSize: '11px', color: '#94a3b8', whiteSpace: 'nowrap' }}>
+                                            {child.allergens.join('・')}
                                         </span>
                                     )}
                                 </div>
