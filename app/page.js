@@ -362,10 +362,10 @@ const RecipeListPage = () => {
                     <Image
                         src="/logo.png"
                         alt="あんしんレシピ"
-                        width={300} // Increased base width for better resolution
-                        height={75}
+                        width={450} // Increased for 150% size
+                        height={113}
                         priority
-                        className="h-[40px] w-auto object-contain"
+                        className="h-[90px] w-auto object-contain"
                     />
                     {/* Greeting Logic: Random message */}
                     <p className="text-xs text-text-sub font-bold mt-1 ml-1 flex items-center gap-1">

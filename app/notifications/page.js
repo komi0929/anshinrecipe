@@ -77,9 +77,6 @@ const NotificationsPage = () => {
         <div className="container max-w-md mx-auto min-h-screen bg-background pb-24">
             {/* Header */}
             <div className="page-header sticky top-0 bg-background z-10 border-b border-slate-100">
-                <Link href="/" className="back-button">
-                    <ArrowLeft size={24} />
-                </Link>
                 <h1 className="page-title">お知らせ</h1>
                 {activeTab === 'activity' && notifications.some(n => !n.is_read) && (
                     <button
@@ -211,7 +208,7 @@ const NotificationsPage = () => {
                                             {announcement.content}
                                             {announcement.hasContactLink && (
                                                 <>
-                                                    ご意見・ご要望は<Link href="/profile" className="text-primary font-bold underline">お問い合わせ</Link>からお寄せください。
+                                                    ご意見・ご要望は<a href="https://line.me/R/ti/p/@668fqaht" target="_blank" rel="noopener noreferrer" className="text-[#06C755] font-bold mx-0.5 underline">LINE</a>か<a href="mailto:y.kominami@hitokoto1.co.jp" className="text-primary font-bold mx-0.5 underline">メール</a>でお寄せください。
                                                 </>
                                             )}
                                         </p>

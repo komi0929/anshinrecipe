@@ -225,7 +225,7 @@ export const useProfile = () => {
 
                 if (error) throw error;
 
-                setSavedRecipeIds(prev => prev.filter(id => id !== recipeId));
+                mutateProfile(prev => prev ? { ...prev, savedRecipeIds: prev.savedRecipeIds.filter(id => id !== recipeId) } : prev, false);
             } else {
                 // Insert
                 const { error } = await supabase
@@ -234,7 +234,7 @@ export const useProfile = () => {
 
                 if (error) throw error;
 
-                setSavedRecipeIds(prev => [...prev, recipeId]);
+                mutateProfile(prev => prev ? { ...prev, savedRecipeIds: [...prev.savedRecipeIds, recipeId] } : prev, false);
 
                 // NOTIFICATION LOGIC
                 // Fetch recipe owner
@@ -278,7 +278,7 @@ export const useProfile = () => {
 
                 if (error) throw error;
 
-                setLikedRecipeIds(prev => prev.filter(id => id !== recipeId));
+                mutateProfile(prev => prev ? { ...prev, likedRecipeIds: prev.likedRecipeIds.filter(id => id !== recipeId) } : prev, false);
             } else {
                 const { error } = await supabase
                     .from('likes')
@@ -290,7 +290,7 @@ export const useProfile = () => {
 
                 if (error) throw error;
 
-                setLikedRecipeIds(prev => [...prev, recipeId]);
+                mutateProfile(prev => prev ? { ...prev, likedRecipeIds: [...prev.likedRecipeIds, recipeId] } : prev, false);
 
                 // NOTIFICATION LOGIC
                 const { data: recipe } = await supabase

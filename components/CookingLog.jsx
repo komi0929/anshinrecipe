@@ -126,41 +126,10 @@ export const CookingLog = ({ logs = [], onAddLog, onDeleteLog, currentUserId }) 
 
                     <div style={{
                         display: 'flex',
-                        justifyContent: 'space-between',
+                        justifyContent: 'flex-end',
                         alignItems: 'center',
                         marginTop: '12px'
                     }}>
-                        <div>
-                            <span style={{
-                                fontSize: '11px',
-                                fontWeight: '600',
-                                color: '#92400e',
-                                display: 'block',
-                                marginBottom: '4px'
-                            }}>評価（任意）</span>
-                            <div style={{ display: 'flex', gap: '2px' }}>
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                    <button
-                                        key={star}
-                                        type="button"
-                                        onClick={() => setRating(rating === star ? 0 : star)}
-                                        style={{
-                                            background: 'none',
-                                            border: 'none',
-                                            padding: '2px',
-                                            cursor: 'pointer',
-                                            transition: 'transform 0.1s'
-                                        }}
-                                    >
-                                        <Star
-                                            size={20}
-                                            fill={rating >= star ? '#fbbf24' : 'none'}
-                                            color={rating >= star ? '#fbbf24' : '#fde68a'}
-                                        />
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
                         <button
                             type="submit"
                             disabled={!newLog.trim() || isSubmitting}
@@ -239,13 +208,6 @@ export const CookingLog = ({ logs = [], onAddLog, onDeleteLog, currentUserId }) 
                                     }}>
                                         {formatDate(log.created_at)}
                                     </span>
-                                    {log.rating && (
-                                        <div style={{ display: 'flex', gap: '1px' }}>
-                                            {[...Array(log.rating)].map((_, i) => (
-                                                <Star key={i} size={12} fill="#fbbf24" color="#fbbf24" />
-                                            ))}
-                                        </div>
-                                    )}
                                 </div>
                                 {onDeleteLog && (
                                     <button

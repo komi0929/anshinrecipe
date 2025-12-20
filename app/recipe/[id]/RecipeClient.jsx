@@ -274,11 +274,6 @@ const RecipeDetailPage = () => {
                         className={`action-btn ${userReaction === 'like' ? 'active text-rose-500' : ''}`}
                     >
                         <Heart size={24} fill={userReaction === 'like' ? "currentColor" : "none"} />
-                        {totalReactions > 0 && (
-                            <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] px-1 rounded-full min-w-[16px] h-[16px] flex items-center justify-center">
-                                {totalReactions}
-                            </span>
-                        )}
                     </button>
                     <button onClick={handleSave} className={`action-btn ${isSaved ? 'active' : ''}`}>
                         <Bookmark size={24} fill={isSaved ? "currentColor" : "none"} />
@@ -326,7 +321,8 @@ const RecipeDetailPage = () => {
                         <span>画像が設定されていません</span>
                     </div>
                 )}
-                {safeFor.length > 0 && (
+                {/* Only show child badges for own recipes */}
+                {user?.id === recipe.user_id && safeFor.length > 0 && (
                     <div className="hero-badges">
                         {safeFor.map(child => (
                             <span key={child.id} className="safe-badge">

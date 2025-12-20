@@ -56,6 +56,7 @@ export default function ProfilePage() {
     const [showFAQModal, setShowFAQModal] = useState(false);
     const [showAnnouncementsModal, setShowAnnouncementsModal] = useState(false);
     const [announcementTab, setAnnouncementTab] = useState('roadmap'); // 'roadmap', 'updates', 'news'
+    const [expandedFaqIndex, setExpandedFaqIndex] = useState(null); // For FAQ accordion
 
     const ALLERGEN_OPTIONS = [
         '卵', '乳', '小麦', 'えび', 'かに', 'そば', '落花生', // 特定原材料7品目
@@ -210,17 +211,10 @@ export default function ProfilePage() {
         <div className="min-h-screen bg-background pb-20">
             {/* Header Area */}
             <div className="pt-6 pb-2 px-6">
-                <h1 className="text-2xl font-bold text-text-main">プロフィール</h1>
+                <h1 className="text-2xl font-bold text-text-main">マイページ</h1>
             </div>
 
             <div className="px-4 space-y-6">
-                {/* 0. Notifications */}
-                <NotificationList
-                    notifications={notifications}
-                    onRead={markAsRead}
-                    onMarkAllRead={markAllAsRead}
-                    unreadCount={unreadCount}
-                />
 
                 {/* 1. Profile Card */}
                 <div className="bg-white rounded-[32px] p-6 shadow-sm flex items-center gap-4">
@@ -619,7 +613,7 @@ export default function ProfilePage() {
                             <h3 className="text-xl font-bold text-text-main">よくある質問 (Q&A)</h3>
                             <button onClick={() => setShowFAQModal(false)} className="text-slate-400 hover:text-slate-600">×</button>
                         </div>
-                        <div className="space-y-6">
+                        <div className="space-y-3">
                             {[
                                 { q: 'レポート投稿とは？', a: '他の人のレシピを作った際に、感想や写真を投稿できる機能です。投稿すると作者へ通知が届きます。' },
                                 { q: '非公開レシピとは？', a: '自分だけが見られるレシピです。SNSで見つけたレシピのメモ保管場所として便利です。' },
@@ -632,16 +626,27 @@ export default function ProfilePage() {
                                 { q: '退会するとデータはどうなる？', a: 'アカウントを削除すると、これまで投稿したレシピや登録したお子様の情報は即座にすべて消去されます。' },
                                 { q: 'アレルギー情報の入力ミスを見つけた', a: 'レシピの編集画面からいつでもアレルゲン情報を修正できます。正確な情報の登録をお願いします。' }
                             ].map((item, i) => (
-                                <div key={i} className="border-b border-slate-50 pb-4 last:border-none">
-                                    <div className="flex gap-2 text-primary font-bold mb-1">
-                                        <span className="shrink-0 text-orange-400">Q.</span>
-                                        <p className="text-sm">{item.q}</p>
+                                <button
+                                    key={i}
+                                    onClick={() => setExpandedFaqIndex(expandedFaqIndex === i ? null : i)}
+                                    className="w-full text-left bg-slate-50 rounded-xl p-4 transition-all hover:bg-slate-100"
+                                >
+                                    <div className="flex items-center justify-between gap-2">
+                                        <div className="flex items-start gap-2 flex-1">
+                                            <span className="shrink-0 text-orange-400 font-bold text-lg">Q.</span>
+                                            <p className="font-bold text-slate-700">{item.q}</p>
+                                        </div>
+                                        <span className={`transition-transform duration-200 text-slate-400 ${expandedFaqIndex === i ? 'rotate-180' : ''}`}>
+                                            ▼
+                                        </span>
                                     </div>
-                                    <div className="flex gap-2 text-slate-600">
-                                        <span className="shrink-0 font-bold text-slate-400">A.</span>
-                                        <p className="text-xs leading-relaxed">{item.a}</p>
-                                    </div>
-                                </div>
+                                    {expandedFaqIndex === i && (
+                                        <div className="mt-3 pt-3 border-t border-slate-200 flex gap-2 animate-in slide-in-from-top-2 duration-200">
+                                            <span className="shrink-0 font-bold text-primary text-lg">A.</span>
+                                            <p className="text-sm text-slate-600 leading-relaxed">{item.a}</p>
+                                        </div>
+                                    )}
+                                </button>
                             ))}
                         </div>
                         <Button
@@ -719,6 +724,7 @@ export default function ProfilePage() {
                             {announcementTab === 'updates' && (
                                 <div className="space-y-4">
                                     {[
+                                        { date: '2025年12月20日', title: 'UI/UXの大幅改善', desc: 'Q&Aの折りたたみ表示、ロゴサイズ調整、お問い合わせリンクの追加など多数の改善を行いました。' },
                                         { date: '2025年12月18日', title: 'UI/UXの改善', desc: 'レシピ詳細画面の画像表示、通知機能の強化、Q&Aセクションを追加しました。' },
                                         { date: '2025年12月17日', title: 'レシピ投稿機能の強化', desc: 'アレルゲン自動判定、公開設定のデフォルト化を実装しました。' },
                                         { date: '2025年12月16日', title: 'ログイン不具合の修正', desc: 'LINEログインが正常に動作しない問題を解消しました。' },
@@ -733,6 +739,15 @@ export default function ProfilePage() {
                                             <p className="text-xs text-slate-500 leading-relaxed">{update.desc}</p>
                                         </div>
                                     ))}
+                                    <div className="pt-4 border-t border-slate-100">
+                                        <p className="text-sm text-slate-500 mb-3">ご意見・ご要望をお聞かせください</p>
+                                        <button
+                                            onClick={() => { setShowAnnouncementsModal(false); setShowInquiryModal(true); }}
+                                            className="w-full py-3 bg-primary text-white rounded-xl font-bold transition-all hover:bg-orange-600"
+                                        >
+                                            📩 お問い合わせはこちら
+                                        </button>
+                                    </div>
                                 </div>
                             )}
 

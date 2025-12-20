@@ -73,9 +73,6 @@ const AddRecipeContent = () => {
     return (
         <div className="container add-recipe-page relative">
             <div className="page-header">
-                <Link href="/" className="back-button">
-                    <ArrowLeft size={24} />
-                </Link>
                 <h1 className="page-title">レシピを追加</h1>
             </div>
 
