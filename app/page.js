@@ -19,6 +19,7 @@ import { Input } from '@/components/ui/Input';
 
 // Onboarding Components - Removed per user request
 import { useNotifications } from '@/hooks/useNotifications';
+import ChildOnboardingPopup from '@/components/ChildOnboardingPopup';
 
 // Random greeting messages
 const GREETINGS = [
@@ -368,6 +369,9 @@ const RecipeListPage = () => {
     // 4. Main Feed (Logged In & Setup Complete)
     return (
         <div className="container max-w-md mx-auto min-h-screen bg-background pb-24">
+            {/* Child Registration Onboarding Popup */}
+            <ChildOnboardingPopup profile={profile} />
+
             {/* Header with Personalization */}
             <div className="pt-6 pb-4 px-4 flex items-center justify-between">
                 <div>
@@ -447,24 +451,27 @@ const RecipeListPage = () => {
                     {/* Child Selection Row */}
                     {profile?.children?.length > 0 && (
                         <div className="flex gap-2 px-4 mb-4 overflow-x-auto pb-2 scrollbar-hide">
-                            <button
-                                className={`
-                                    px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap
-                                    ${selectedChildId === null
-                                        ? 'bg-primary text-white shadow-md shadow-orange-200'
-                                        : 'bg-white text-text-sub border border-slate-100 hover:bg-slate-50'
-                                    }
-                                `}
-                                onClick={() => setSelectedChildId(null)}
-                            >
-                                全員
-                            </button>
+                            {/* Only show "全員" button if there are 2+ children */}
+                            {profile.children.length > 1 && (
+                                <button
+                                    className={`
+                                        px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap
+                                        ${selectedChildId === null
+                                            ? 'bg-primary text-white shadow-md shadow-orange-200'
+                                            : 'bg-white text-text-sub border border-slate-100 hover:bg-slate-50'
+                                        }
+                                    `}
+                                    onClick={() => setSelectedChildId(null)}
+                                >
+                                    全員
+                                </button>
+                            )}
                             {profile.children.map(child => (
                                 <button
                                     key={child.id}
                                     className={`
                                         px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap flex items-center gap-2
-                                        ${selectedChildId === child.id
+                                        ${selectedChildId === child.id || (profile.children.length === 1 && selectedChildId === null)
                                             ? 'bg-primary text-white shadow-md shadow-orange-200'
                                             : 'bg-white text-text-sub border border-slate-100 hover:bg-slate-50'
                                         }

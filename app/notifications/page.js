@@ -147,15 +147,15 @@ const NotificationsPage = () => {
                                         if (!notification.is_read) markAsRead(notification.id);
                                     }}
                                     className={`p-4 rounded-2xl transition-all cursor-pointer ${notification.is_read
-                                            ? 'bg-white border border-slate-100'
-                                            : 'bg-orange-50 border border-orange-100'
+                                        ? 'bg-white border border-slate-100'
+                                        : 'bg-orange-50 border border-orange-100'
                                         }`}
                                 >
                                     <div className="flex items-start gap-3">
                                         <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-100 flex-shrink-0">
-                                            {notification.actor?.avatar_url ? (
+                                            {notification.actor?.avatarUrl ? (
                                                 <img
-                                                    src={notification.actor.avatar_url}
+                                                    src={notification.actor.avatarUrl}
                                                     alt=""
                                                     className="w-full h-full object-cover"
                                                 />
@@ -168,23 +168,23 @@ const NotificationsPage = () => {
                                         <div className="flex-1 min-w-0">
                                             <p className="text-sm text-slate-700">
                                                 <span className="font-bold">
-                                                    {notification.actor?.display_name || notification.actor?.username || 'ユーザー'}
+                                                    {notification.actor?.displayName || 'ユーザー'}
                                                 </span>
                                                 {getNotificationMessage(notification)}
                                             </p>
                                             {notification.recipe && (
                                                 <Link
-                                                    href={`/recipe/${notification.recipe.id}`}
+                                                    href={`/recipe/${notification.recipeId}`}
                                                     className="text-xs text-primary mt-1 block truncate hover:underline"
                                                 >
                                                     {notification.recipe.title}
                                                 </Link>
                                             )}
                                             <p className="text-xs text-slate-400 mt-1">
-                                                {formatDate(notification.created_at)}
+                                                {formatDate(notification.createdAt)}
                                             </p>
                                         </div>
-                                        {!notification.is_read && (
+                                        {!notification.isRead && (
                                             <div className="w-2 h-2 bg-orange-400 rounded-full flex-shrink-0 mt-2"></div>
                                         )}
                                     </div>
@@ -220,7 +220,7 @@ const NotificationsPage = () => {
                     </div>
                 )}
             </div>
-        </div>
+        </div >
     );
 };
 

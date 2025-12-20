@@ -222,58 +222,55 @@ export const CookingLog = ({ logs = [], onAddLog, onDeleteLog, currentUserId }) 
                                 position: 'relative'
                             }}
                         >
-                            {/* Delete button */}
-                            {onDeleteLog && (
-                                <button
-                                    onClick={() => handleDelete(log.id)}
-                                    style={{
-                                        position: 'absolute',
-                                        top: '10px',
-                                        right: '10px',
-                                        padding: '4px',
-                                        borderRadius: '50%',
-                                        border: 'none',
-                                        backgroundColor: 'transparent',
-                                        cursor: 'pointer',
-                                        opacity: '0.4',
-                                        transition: 'all 0.2s'
-                                    }}
-                                    onMouseEnter={(e) => {
-                                        e.target.style.opacity = '1';
-                                        e.target.style.backgroundColor = '#fef2f2';
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.target.style.opacity = '0.4';
-                                        e.target.style.backgroundColor = 'transparent';
-                                    }}
-                                    title="削除"
-                                >
-                                    <Trash2 size={14} color="#ef4444" />
-                                </button>
-                            )}
-
                             <div style={{
                                 display: 'flex',
                                 justifyContent: 'space-between',
                                 alignItems: 'center',
                                 marginBottom: '8px'
                             }}>
-                                <span style={{
-                                    fontSize: '11px',
-                                    fontWeight: '600',
-                                    color: '#92400e',
-                                    backgroundColor: '#fef3c7',
-                                    padding: '2px 8px',
-                                    borderRadius: '4px'
-                                }}>
-                                    {formatDate(log.created_at)}
-                                </span>
-                                {log.rating && (
-                                    <div style={{ display: 'flex', gap: '1px' }}>
-                                        {[...Array(log.rating)].map((_, i) => (
-                                            <Star key={i} size={12} fill="#fbbf24" color="#fbbf24" />
-                                        ))}
-                                    </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <span style={{
+                                        fontSize: '11px',
+                                        fontWeight: '600',
+                                        color: '#92400e',
+                                        backgroundColor: '#fef3c7',
+                                        padding: '2px 8px',
+                                        borderRadius: '4px'
+                                    }}>
+                                        {formatDate(log.created_at)}
+                                    </span>
+                                    {log.rating && (
+                                        <div style={{ display: 'flex', gap: '1px' }}>
+                                            {[...Array(log.rating)].map((_, i) => (
+                                                <Star key={i} size={12} fill="#fbbf24" color="#fbbf24" />
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                                {onDeleteLog && (
+                                    <button
+                                        onClick={() => handleDelete(log.id)}
+                                        style={{
+                                            padding: '4px',
+                                            borderRadius: '50%',
+                                            border: 'none',
+                                            backgroundColor: 'transparent',
+                                            cursor: 'pointer',
+                                            opacity: '0.4',
+                                            transition: 'all 0.2s'
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            e.target.style.opacity = '1';
+                                            e.target.style.backgroundColor = '#fef2f2';
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.target.style.opacity = '0.4';
+                                            e.target.style.backgroundColor = 'transparent';
+                                        }}
+                                        title="削除"
+                                    >
+                                        <Trash2 size={14} color="#ef4444" />
+                                    </button>
                                 )}
                             </div>
                             <p style={{

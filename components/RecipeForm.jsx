@@ -429,7 +429,7 @@ export const RecipeForm = ({
             {profile?.children && profile.children.length > 0 && (
                 <div className="form-section">
                     <label className="section-label">
-                        どのお子さまのためのレシピか選択してください <span className="required">*</span>
+                        どのお子さまのためのレシピですか？ <span className="required">*</span>
                     </label>
                     <p className="section-help">複数選択可</p>
 
