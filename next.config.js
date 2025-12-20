@@ -38,6 +38,10 @@ const nextConfig = {
                 protocol: 'https',
                 hostname: 'image.delishkitchen.tv',
             },
+            {
+                protocol: 'https',
+                hostname: 'profile.line-scdn.net',
+            },
         ],
     },
 }

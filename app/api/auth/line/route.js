@@ -68,10 +68,10 @@ export async function POST(request) {
         // Debug log for pictureUrl
         console.log('LINE Profile:', { lineUserId, displayName, pictureUrl: pictureUrl || 'NOT PROVIDED' });
 
-        // Check if user already exists
+        // Check if user already exists - fetch both picture_url and avatar_url
         const { data: existingProfile } = await supabaseAdmin
             .from('profiles')
-            .select('id, picture_url')
+            .select('id, picture_url, avatar_url')
             .eq('line_user_id', lineUserId)
             .single();
 
@@ -81,12 +81,22 @@ export async function POST(request) {
             // Existing user - update profile
             userId = existingProfile.id;
 
-            // Always update avatar from LINE to ensure it's current
+            // Determine the best avatar: LINE's pictureUrl > existing avatar_url > existing picture_url
+            const bestAvatar = pictureUrl || existingProfile.avatar_url || existingProfile.picture_url;
+
+            // Always update avatar from LINE if provided, otherwise keep existing
             const updateData = {
                 display_name: displayName,
-                picture_url: pictureUrl || existingProfile.picture_url,
-                avatar_url: pictureUrl || existingProfile.picture_url,
             };
+
+            // Only update avatar fields if LINE provides a new one
+            if (pictureUrl) {
+                updateData.picture_url = pictureUrl;
+                updateData.avatar_url = pictureUrl;
+                console.log('Updating avatar with LINE pictureUrl:', pictureUrl);
+            } else {
+                console.log('LINE pictureUrl not provided, keeping existing avatar:', existingProfile.avatar_url);
+            }
 
             await supabaseAdmin
                 .from('profiles')
