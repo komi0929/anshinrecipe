@@ -1,5 +1,6 @@
 import { Zen_Maru_Gothic } from 'next/font/google'
 import { ToastProvider } from '../components/Toast'
+import { DataProvider } from '../components/DataProvider'
 import BottomNav from '../components/BottomNav'
 import SafetyBanner from '../components/SafetyBanner'
 import GoogleAnalytics from '../components/GoogleAnalytics'
@@ -58,17 +59,19 @@ export default function RootLayout({ children }) {
     return (
         <html lang="ja" className={zenMaruGothic.variable} suppressHydrationWarning>
             <body suppressHydrationWarning>
-                <ToastProvider>
-                    <div className="app-container flex flex-col min-h-screen">
-                        <SafetyBanner />
-                        <main className="flex-grow pb-16">
-                            {children}
-                        </main>
+                <DataProvider>
+                    <ToastProvider>
+                        <div className="app-container flex flex-col min-h-screen">
+                            <SafetyBanner />
+                            <main className="flex-grow pb-16">
+                                {children}
+                            </main>
 
-                        <BottomNav />
-                        <PWAInstallPrompt />
-                    </div>
-                </ToastProvider>
+                            <BottomNav />
+                            <PWAInstallPrompt />
+                        </div>
+                    </ToastProvider>
+                </DataProvider>
             </body>
         </html>
     )

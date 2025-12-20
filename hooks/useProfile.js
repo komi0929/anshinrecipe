@@ -1,131 +1,107 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import useSWR from 'swr';
 import { supabase } from '@/lib/supabaseClient';
 import { useToast } from '@/components/Toast';
 import { uploadImage } from '@/lib/imageUpload';
 
+// Global cache for auth session to prevent refetching
+let cachedSession = null;
+let sessionInitialized = false;
+
+// Fetcher function for SWR
+const fetchProfileData = async (userId) => {
+    if (!userId) return null;
+
+    const [profileRes, childrenRes, savedRes, likedRes, recipeCountRes, reportCountRes] = await Promise.all([
+        supabase.from('profiles').select('*').eq('id', userId).single(),
+        supabase.from('children').select('*').eq('user_id', userId),
+        supabase.from('saved_recipes').select('recipe_id').eq('user_id', userId),
+        supabase.from('likes').select('recipe_id').eq('user_id', userId).eq('reaction_type', 'yummy'),
+        supabase.from('recipes').select('*', { count: 'exact', head: true }).eq('user_id', userId),
+        supabase.from('tried_reports').select('*', { count: 'exact', head: true }).eq('user_id', userId),
+    ]);
+
+    const profileData = profileRes.data;
+    const childrenData = childrenRes.data || [];
+    const savedData = savedRes.data || [];
+    const likedData = likedRes.data || [];
+
+    return {
+        profile: profileData ? {
+            id: profileData.id,
+            userName: profileData.display_name || profileData.username || '',
+            avatarUrl: profileData.avatar_url || profileData.picture_url || '',
+            children: childrenData,
+            stats: {
+                recipeCount: recipeCountRes.count || 0,
+                reportCount: reportCountRes.count || 0
+            }
+        } : { id: null, userName: '', avatarUrl: '', children: [], stats: { recipeCount: 0, reportCount: 0 } },
+        savedRecipeIds: savedData.map(item => item.recipe_id),
+        likedRecipeIds: likedData.map(item => item.recipe_id),
+    };
+};
+
 export const useProfile = () => {
-    const [profile, setProfile] = useState({
-        id: null,
-        userName: '',
-        avatarUrl: '',
-        children: [],
-        stats: { recipeCount: 0, reportCount: 0 }
-    });
-    const [savedRecipeIds, setSavedRecipeIds] = useState([]);
-    const [likedRecipeIds, setLikedRecipeIds] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [user, setUser] = useState(null);
+    const [user, setUser] = useState(cachedSession?.user ?? null);
+    const [initializing, setInitializing] = useState(!sessionInitialized);
     const { addToast } = useToast();
 
+    // Use SWR for profile data - returns cached data immediately
+    const { data: profileData, mutate: mutateProfile, isLoading: swrLoading } = useSWR(
+        user?.id ? ['profile', user.id] : null,
+        ([, userId]) => fetchProfileData(userId),
+        {
+            revalidateOnFocus: false,
+            revalidateOnReconnect: false,
+            dedupingInterval: 60000, // 1 minute cache
+        }
+    );
+
+    // Derived state from SWR
+    const profile = profileData?.profile ?? { id: null, userName: '', avatarUrl: '', children: [], stats: { recipeCount: 0, reportCount: 0 } };
+    const savedRecipeIds = profileData?.savedRecipeIds ?? [];
+    const likedRecipeIds = profileData?.likedRecipeIds ?? [];
+
+    // Loading is only true during initial auth check, not SWR refetch
+    const loading = initializing || (user && !profileData && swrLoading);
+
     useEffect(() => {
-        // Get current session
+        // Get current session - use cached if available
         const getSession = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            setUser(session?.user ?? null);
-            if (session?.user) {
-                await fetchProfile(session.user.id);
-            } else {
-                setLoading(false);
+            if (sessionInitialized && cachedSession) {
+                setUser(cachedSession.user);
+                setInitializing(false);
+                return;
             }
+
+            const { data: { session } } = await supabase.auth.getSession();
+            cachedSession = session;
+            sessionInitialized = true;
+            setUser(session?.user ?? null);
+            setInitializing(false);
         };
 
         getSession();
 
         // Listen for auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            cachedSession = session;
             setUser(session?.user ?? null);
-            if (session?.user) {
-                fetchProfile(session.user.id);
-            } else {
-                setProfile({ id: null, userName: '', avatarUrl: '', children: [] });
-                setSavedRecipeIds([]);
-                setLikedRecipeIds([]);
-                setLoading(false);
+            if (!session) {
+                mutateProfile(null, false); // Clear cache on logout
             }
         });
 
         return () => subscription.unsubscribe();
-    }, []);
+    }, [mutateProfile]);
 
-    const fetchProfile = async (userId) => {
-        try {
-            setLoading(true);
-
-            // Fetch profile
-            const { data: profileData, error: profileError } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', userId)
-                .single();
-
-            if (profileError && profileError.code !== 'PGRST116') throw profileError;
-
-            // Fetch children
-            const { data: childrenData, error: childrenError } = await supabase
-                .from('children')
-                .select('*')
-                .eq('user_id', userId);
-
-            if (childrenError) throw childrenError;
-
-            // Fetch saved recipes
-            const { data: savedData, error: savedError } = await supabase
-                .from('saved_recipes')
-                .select('recipe_id')
-                .eq('user_id', userId);
-
-            // Ignore error for saved recipes (table might not exist yet if migration not run)
-            if (!savedError && savedData) {
-                setSavedRecipeIds(savedData.map(item => item.recipe_id));
-            }
-
-            // Fetch liked recipes (reaction_type = 'yummy')
-            const { data: likedData, error: likedError } = await supabase
-                .from('likes')
-                .select('recipe_id')
-                .eq('user_id', userId)
-                .eq('reaction_type', 'yummy');
-
-            if (!likedError && likedData) {
-                setLikedRecipeIds(likedData.map(item => item.recipe_id));
-            }
-
-            // Fetch stats (recipes count)
-            const { count: recipeCount, error: recipeCountError } = await supabase
-                .from('recipes')
-                .select('*', { count: 'exact', head: true })
-                .eq('user_id', userId);
-
-            // Fetch stats (tried reports count)
-            const { count: reportCount, error: reportCountError } = await supabase
-                .from('tried_reports')
-                .select('*', { count: 'exact', head: true })
-                .eq('user_id', userId);
-
-            if (profileData) {
-                setProfile({
-                    id: profileData.id,
-                    userName: profileData.display_name || profileData.username || '',
-                    avatarUrl: profileData.avatar_url || profileData.picture_url || '',
-                    children: childrenData || [],
-                    stats: {
-                        recipeCount: recipeCount || 0,
-                        reportCount: reportCount || 0
-                    }
-                });
-            }
-        } catch (error) {
-            // Silently ignore empty errors or "no rows" errors
-            const hasErrorContent = error && typeof error === 'object' && Object.keys(error).length > 0 && error.code !== 'PGRST116';
-            if (hasErrorContent) {
-                console.error('Error fetching profile:', error);
-                addToast('プロフィールの取得に失敗しました', 'error');
-            }
-            // Empty errors are normal for new users without profiles
-        } finally {
-            setLoading(false);
+    // fetchProfile is now just a cache refresh trigger
+    const fetchProfile = useCallback(async () => {
+        if (user?.id) {
+            mutateProfile();
         }
-    };
+    }, [user?.id, mutateProfile]);
 
     const updateUserName = async (name) => {
         if (!user) return;
@@ -135,7 +111,7 @@ export const useProfile = () => {
                 .upsert({ id: user.id, username: name, updated_at: new Date() });
 
             if (error) throw error;
-            setProfile(prev => ({ ...prev, userName: name }));
+            mutateProfile(prev => prev ? { ...prev, profile: { ...prev.profile, userName: name } } : prev, false);
             addToast('名前を更新しました', 'success');
         } catch (error) {
             console.error('Error updating profile:', error);
@@ -155,7 +131,7 @@ export const useProfile = () => {
 
             if (error) throw error;
 
-            setProfile(prev => ({ ...prev, avatarUrl: publicUrl }));
+            mutateProfile(prev => prev ? { ...prev, profile: { ...prev.profile, avatarUrl: publicUrl } } : prev, false);
             addToast('アイコンを更新しました', 'success');
         } catch (error) {
             console.error('Error updating avatar:', error);
@@ -183,10 +159,7 @@ export const useProfile = () => {
 
             if (error) throw error;
 
-            setProfile(prev => ({
-                ...prev,
-                children: [...prev.children, data]
-            }));
+            mutateProfile(prev => prev ? { ...prev, profile: { ...prev.profile, children: [...prev.profile.children, data] } } : prev, false);
             addToast('お子様を登録しました', 'success');
         } catch (error) {
             console.error('Error adding child:', error);
@@ -208,10 +181,7 @@ export const useProfile = () => {
 
             if (error) throw error;
 
-            setProfile(prev => ({
-                ...prev,
-                children: prev.children.map(c => c.id === id ? { ...c, ...updatedChild } : c)
-            }));
+            mutateProfile(prev => prev ? { ...prev, profile: { ...prev.profile, children: prev.profile.children.map(c => c.id === id ? { ...c, ...updatedChild } : c) } } : prev, false);
             addToast('お子様の情報を更新しました', 'success');
         } catch (error) {
             console.error('Error updating child:', error);
@@ -228,10 +198,7 @@ export const useProfile = () => {
 
             if (error) throw error;
 
-            setProfile(prev => ({
-                ...prev,
-                children: prev.children.filter(c => c.id !== id)
-            }));
+            mutateProfile(prev => prev ? { ...prev, profile: { ...prev.profile, children: prev.profile.children.filter(c => c.id !== id) } } : prev, false);
             addToast('削除しました', 'success');
         } catch (error) {
             console.error('Error deleting child:', error);
