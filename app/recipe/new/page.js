@@ -61,11 +61,17 @@ const AddRecipeContent = () => {
         }
     };
 
-    // Removed blocking loading state - show content immediately
+    // Wait for profile data to be fully loaded before rendering content
     if (profileLoading) {
         return null; // Return nothing briefly while auth is checking
     }
     if (!user) return null;
+
+    // CRITICAL: Also wait if profile has no ID yet (data still loading from SWR)
+    // This prevents the "register child" screen from flashing
+    if (!profile?.id) {
+        return null;
+    }
 
     // Check if user has no children registered
     const hasNoChildren = !profile?.children || profile.children.length === 0;
