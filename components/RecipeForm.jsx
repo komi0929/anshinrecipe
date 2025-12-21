@@ -30,6 +30,9 @@ export const RecipeForm = ({
     // New: Smart Canvas (Memo Images)
     const [memoImages, setMemoImages] = useState(initialData.memoImages || []);
 
+    // NEW FIELD: Ingredients and Steps (Merged text for display/edit)
+    const [ingredientsAndSteps, setIngredientsAndSteps] = useState('');
+
     // UI state
     const [isFetchingOgp, setIsFetchingOgp] = useState(false);
     const [ogpFetched, setOgpFetched] = useState(false);
@@ -107,6 +110,7 @@ export const RecipeForm = ({
             setIsSmartImporting(true);
             setSmartImportData(null);
             setSmartImportError(null);
+            setIngredientsAndSteps('AIが情報を読み取っています...'); // Initial feedback
 
             try {
                 // Also trigger OGP fetch if not done yet
@@ -127,13 +131,26 @@ export const RecipeForm = ({
 
                 if (result.success && result.data) {
                     setSmartImportData(result.data);
+                    // Automatically preview the text
+                    const d = result.data;
+                    const materialsText = d.ingredients && d.ingredients.length > 0 ? `【材料】\n${d.ingredients.map(i => `- ${i}`).join('\n')}` : '';
+                    const stepsText = d.steps && d.steps.length > 0 ? `【作り方】\n${d.steps.map((s, i) => `${i + 1}. ${s}`).join('\n')}` : '';
+                    const contentToAdd = [materialsText, stepsText].filter(Boolean).join('\n\n');
+
+                    if (contentToAdd) {
+                        setIngredientsAndSteps(contentToAdd);
+                    } else {
+                        setIngredientsAndSteps('うまく情報を取得できませんでした (AIが材料と作り方を見つけられませんでした)');
+                    }
+
                 } else {
-                    // API returned success but no data or error
                     console.warn('Smart Import returned no data');
+                    setIngredientsAndSteps('うまく情報を取得できませんでした');
                 }
             } catch (error) {
                 console.error('Smart Import Error:', error);
                 setSmartImportError('情報の取得に失敗しました');
+                setIngredientsAndSteps('うまく情報を取得できませんでした (通信または解析エラー)');
             } finally {
                 setIsSmartImporting(false);
             }
@@ -141,7 +158,7 @@ export const RecipeForm = ({
 
         const timer = setTimeout(() => {
             fetchSmartImport();
-        }, 1000); // 1.0s debounce after typing stops
+        }, 1200); // Slightly increased debounce
 
         return () => clearTimeout(timer);
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -161,19 +178,20 @@ export const RecipeForm = ({
         if (d.image_url && (!image || image.includes('placeholder'))) { setImage(d.image_url); appliedCount++; }
         if (d.description) { setDescription(d.description); }
 
-        // Format Memo with Ingredients and Steps
-        let newMemo = memo;
-        const materialsText = d.ingredients && d.ingredients.length > 0 ? `【材料】\n${d.ingredients.map(i => `- ${i}`).join('\n')}` : '';
-        const stepsText = d.steps && d.steps.length > 0 ? `【作り方】\n${d.steps.map((s, i) => `${i + 1}. ${s}`).join('\n')}` : '';
+        // Format Memo with Ingredients and Steps from our separate field (allowing user edits first)
+        // Or should we take what's in the text area? 
+        // Let's take what's in 'ingredientsAndSteps' if user edited it, otherwise from data.
+        // Actually, user might want to KEEP it in that field?
+        // But on submit we need to merge it.
+        // For now, let's keep the 'Apply' button behavior as merging into fields,
+        // BUT the text area is distinct. 
+        // Wait, user asked for a "column to AUTOMATICALLY WRITE TO".
+        // So the textarea IS the destination for Ingredients/Steps.
+        // We shouldn't merge it into memo anymore implicitly on 'Apply'.
+        // 'Apply' button now primarily populates Title, Image, Tags.
+        // Ingredients/Steps are ALREADY in the textarea.
 
-        const contentToAdd = [materialsText, stepsText].filter(Boolean).join('\n\n');
-
-        if (contentToAdd) {
-            setMemo(newMemo ? `${newMemo}\n\n${contentToAdd}` : contentToAdd);
-            appliedCount++;
-        }
-
-        // Add tags
+        // Let's just update the tags logic here.
         if (d.tags && Array.isArray(d.tags) && d.tags.length > 0) {
             const newTags = [...tags];
             let tagAdded = false;
@@ -190,15 +208,15 @@ export const RecipeForm = ({
             }
         }
 
-        if (appliedCount > 0) {
-            setSmartImportData(null); // Clear to hide button
-            alert('AIデータを反映しました✨\n(材料と作り方はメモ欄に追記されました)');
-        } else {
-            alert('反映できる情報が見つかりませんでした。\n(AIがレシピ情報をうまく抽出できなかった可能性があります)');
-        }
+        // We consider it "applied" if we have data.
+        setSmartImportData(null); // Clear to hide button
+        alert('AIデータを反映しました✨');
     };
 
     // ... (rest of image upload handlers)
+    // ... (handlePaste, handleMemoImageUpload, removeMemoImage, handleImageUpload, triggerFileUpload)
+
+    // PASTE HANDLER
     const handlePaste = async (e) => {
         const items = e.clipboardData.items;
         for (let i = 0; i < items.length; i++) {
@@ -266,6 +284,7 @@ export const RecipeForm = ({
         fileInputRef.current?.click();
     };
 
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -291,6 +310,12 @@ export const RecipeForm = ({
 
         setIsSubmitting(true);
         try {
+            // MERGE Ingredients/Steps into Memo for storage (since we have no dedicated DB column yet)
+            let finalMemo = memo;
+            if (ingredientsAndSteps && ingredientsAndSteps.trim()) {
+                finalMemo = memo ? `${memo}\n\n${ingredientsAndSteps}` : ingredientsAndSteps;
+            }
+
             const formData = {
                 title,
                 description,
@@ -298,11 +323,11 @@ export const RecipeForm = ({
                 sourceUrl,
                 childIds: selectedChildren,
                 scenes: selectedScenes,
-                memo,
+                memo: finalMemo, // Use merged memo
                 tags,
                 freeFromAllergens: freeFromAllergens,
                 isPublic,
-                positiveIngredients: [], // Legacy/Future support
+                positiveIngredients: [],
                 memoImages: memoImages
             };
 
@@ -318,14 +343,14 @@ export const RecipeForm = ({
     // Unsaved Changes Alert
     useEffect(() => {
         const handleBeforeUnload = (e) => {
-            if (title || image || description) {
+            if (title || image || description || ingredientsAndSteps) {
                 e.preventDefault();
                 e.returnValue = '';
             }
         };
         window.addEventListener('beforeunload', handleBeforeUnload);
         return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-    }, [title, image, description]);
+    }, [title, image, description, ingredientsAndSteps]);
 
     // Tag handlers
     const handleAddTag = (e) => {
@@ -404,34 +429,12 @@ export const RecipeForm = ({
                             onChange={(e) => {
                                 setSourceUrl(e.target.value);
                                 setOgpFetched(false);
+                                // Clear AI data when URL changes significantly? Maybe not, user might be correcting it.
                             }}
                             placeholder="https://cookpad.com/..., https://www.instagram.com/..."
                             className="form-input"
                         />
                     </div>
-                    <button
-                        type="button"
-                        onClick={fetchOgpData}
-                        disabled={!sourceUrl.trim() || isFetchingOgp}
-                        className="fetch-ogp-btn"
-                    >
-                        {isFetchingOgp ? (
-                            <>
-                                <Loader2 size={18} className="animate-spin" />
-                                <span className="hidden sm:inline">取得中...</span>
-                            </>
-                        ) : ogpFetched ? (
-                            <>
-                                <Check size={18} />
-                                <span className="hidden sm:inline">取得済み</span>
-                            </>
-                        ) : (
-                            <>
-                                <Search size={18} />
-                                <span className="hidden sm:inline">情報を読み取る</span>
-                            </>
-                        )}
-                    </button>
                 </div>
 
                 {/* Smart Import Button / Indicator */}
@@ -448,10 +451,26 @@ export const RecipeForm = ({
                             className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-bold py-3 px-4 rounded-xl shadow-lg transform transition-all hover:scale-[1.02] active:scale-95 animate-bounce-subtle"
                         >
                             <Sparkles size={20} className="text-yellow-300" />
-                            <span>AIで自動入力する（材料・手順・タグ）</span>
+                            <span>AIでその他の情報（タイトル・画像・タグ）を反映</span>
                         </button>
                     ) : null}
                 </div>
+            </div>
+
+            {/* Ingredients & Steps (Automatic Field) */}
+            <div className="form-section">
+                <label className="section-label flex items-center gap-2">
+                    <Sparkles size={16} className="text-purple-500" />
+                    材料・つくり方 (AI自動入力)
+                </label>
+                <textarea
+                    value={ingredientsAndSteps}
+                    onChange={(e) => setIngredientsAndSteps(e.target.value)}
+                    placeholder="URLを入力すると、ここにAIが読み取った材料と作り方が自動で表示されます。"
+                    className="form-textarea bg-purple-50 border-purple-200 focus:border-purple-400"
+                    rows={12}
+                    style={{ fontSize: '15px', lineHeight: '1.6' }}
+                />
             </div>
 
             {/* Basic Info Section */}
