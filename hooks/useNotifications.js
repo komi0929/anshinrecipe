@@ -25,6 +25,7 @@ export const useNotifications = (userId) => {
                     actor_id,
                     recipe_id,
                     actor:profiles!actor_id (
+                        username,
                         display_name,
                         avatar_url
                     ),
@@ -53,7 +54,7 @@ export const useNotifications = (userId) => {
                     actorId: n.actor_id,
                     recipeId: n.recipe_id,
                     actor: {
-                        displayName: n.actor?.display_name || 'ゲスト',
+                        displayName: n.actor?.username || n.actor?.display_name || 'ゲスト',
                         avatarUrl: n.actor?.avatar_url
                     },
                     recipe: n.recipe ? {
