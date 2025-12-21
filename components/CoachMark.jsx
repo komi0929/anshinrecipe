@@ -28,7 +28,7 @@ const CoachMark = ({
 
                 let style = {};
 
-                // Simple positioning logic (can be enhanced)
+                // Simple positioning logic
                 switch (position) {
                     case 'bottom':
                         style = {
@@ -37,8 +37,9 @@ const CoachMark = ({
                         };
                         break;
                     case 'top':
+                        // FIXED: Use 'top' with translateY(-100%) instead of 'bottom' property which is unreliable in scrolling containers
                         style = {
-                            bottom: (window.innerHeight - rect.top - scrollY) + 12,
+                            top: rect.top + scrollY - 12,
                             left: rect.left + scrollX + (rect.width / 2)
                         };
                         break;
@@ -65,13 +66,12 @@ const CoachMark = ({
 
     return (
         <div
-            className="absolute z-[999] pointer-events-none"
+            className={`absolute z-[999] pointer-events-none transform -translate-x-1/2 ${position === 'top' ? '-translate-y-full' : ''}`}
             style={positionStyle}
         >
             <div className={`
                 relative bg-primary text-white p-3 rounded-xl shadow-xl max-w-[240px] pointer-events-auto
                 animate-in zoom-in slide-in-from-bottom-2 duration-300
-                transform -translate-x-1/2
             `}>
                 {/* Arrow */}
                 <div className={`
