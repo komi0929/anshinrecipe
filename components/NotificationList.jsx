@@ -56,6 +56,7 @@ const NotificationList = ({ notifications, onRead, onMarkAllRead, unreadCount = 
     const getIcon = (type) => {
         switch (type) {
             case 'like': return <Heart size={18} className="text-pink-500 fill-pink-500" />;
+            case 'report_like': return <Heart size={18} className="text-pink-500 fill-pink-500" />;
             case 'save': return <Bookmark size={18} className="text-orange-500 fill-orange-500" />;
             case 'report': return <MessageCircle size={18} className="text-blue-500 fill-blue-500" />;
             default: return <Clock size={18} className="text-slate-400" />;
@@ -92,6 +93,15 @@ const NotificationList = ({ notifications, onRead, onMarkAllRead, unreadCount = 
                         <span className="text-slate-600">があなたのレシピに</span>
                         <span className="text-blue-500 font-bold">つくレポ</span>
                         <span className="text-slate-600">を投稿しました</span>
+                    </span>
+                );
+            case 'report_like':
+                return (
+                    <span>
+                        <strong className="text-slate-800">{actorName}</strong>
+                        <span className="text-slate-600">があなたのつくレポに</span>
+                        <span className="text-pink-500 font-bold">いいね！</span>
+                        <span className="text-slate-600">しました</span>
                     </span>
                 );
             default:
