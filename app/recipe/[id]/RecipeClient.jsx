@@ -92,8 +92,8 @@ const RecipeDetailPage = () => {
                 const reports = await getTriedReports(id);
                 setTriedReports(reports);
 
-                // Fetch recommendations
-                const recs = await getRecommendedRecipes(data, 6);
+                // Fetch recommendations (exclude current user's recipes)
+                const recs = await getRecommendedRecipes(data, 6, user?.id);
                 setRecommendations(recs);
 
             } catch (error) {
