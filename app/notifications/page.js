@@ -133,7 +133,12 @@ const NotificationsPage = () => {
         }
         // Navigate to recipe if available
         if (notification.recipeId || notification.recipe_id) {
-            window.location.href = `/recipe/${notification.recipeId || notification.recipe_id}`;
+            const recipeId = notification.recipeId || notification.recipe_id;
+            // Add hash for report notifications to scroll directly to reports section
+            const hash = (notification.type === 'report' || notification.type === 'report_like')
+                ? '#tried-reports'
+                : '';
+            window.location.href = `/recipe/${recipeId}${hash}`;
         }
     };
 
