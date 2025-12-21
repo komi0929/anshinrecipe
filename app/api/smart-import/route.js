@@ -43,7 +43,7 @@ export async function POST(request) {
         });
         const textContent = $('body').text().replace(/\s+/g, ' ').slice(0, 20000);
 
-        // 3. AI Extraction with Fallback
+        // 3. AI Extraction
         const prompt = `You are a recipe parser assistant. Extract recipe details from the provided HTML text and JSON-LD.
         Return a valid JSON object with the following structure:
         {
@@ -59,7 +59,8 @@ export async function POST(request) {
         Input Data: URL: ${url} JSON-LD Data: ${JSON.stringify(jsonLd)} Page Text Content: ${textContent}
         `;
 
-        const modelsToTry = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-pro", "gemini-1.0-pro"];
+        // Updated models based on user's access list (prioritizing 2.0 Flash as it's stable/fast)
+        const modelsToTry = ["gemini-2.0-flash", "gemini-2.5-flash", "gemini-flash-latest"];
 
         for (const modelName of modelsToTry) {
             try {
@@ -88,21 +89,7 @@ export async function POST(request) {
             }
         }
 
-        // All models failed - Try to list available models for debugging
-        let availableModelsList = "Unknown";
-        try {
-            const listResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
-            const listData = await listResp.json();
-            if (listData.models) {
-                availableModelsList = listData.models.map(m => m.name.replace('models/', '')).join(', ');
-            } else {
-                availableModelsList = JSON.stringify(listData);
-            }
-        } catch (listError) {
-            availableModelsList = "Could not fetch list: " + listError.message;
-        }
-
-        return NextResponse.json({ error: `ALL MODELS FAILED. Your API Key has access to: [ ${availableModelsList} ]` }, { status: 500 });
+        return NextResponse.json({ error: `AI Error: All attempts failed (Tried: ${modelsToTry.join(', ')}). Your key works but models failed.` }, { status: 500 });
 
     } catch (error) {
         return NextResponse.json({ error: `System Error: ${error.message}` }, { status: 500 });
