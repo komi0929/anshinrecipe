@@ -29,7 +29,7 @@ const fetchProfileData = async (userId) => {
     return {
         profile: profileData ? {
             id: profileData.id,
-            userName: profileData.display_name || profileData.username || '',
+            userName: profileData.username || profileData.display_name || '',
             avatarUrl: profileData.avatar_url || profileData.picture_url || '',
             children: childrenData,
             stats: {
@@ -107,8 +107,12 @@ export const useProfile = () => {
         if (!user) return;
         try {
             const { error } = await supabase
-                .from('profiles')
-                .upsert({ id: user.id, username: name, updated_at: new Date() });
+                .upsert({
+                    id: user.id,
+                    username: name,
+                    display_name: name,
+                    updated_at: new Date()
+                });
 
             if (error) throw error;
             mutateProfile(prev => prev ? { ...prev, profile: { ...prev.profile, userName: name } } : prev, false);
