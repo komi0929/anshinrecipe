@@ -1,28 +1,10 @@
 'use client'
 
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Share, Bookmark, Smartphone, ExternalLink, Copy, CheckCircle, Globe, MessageCircle, Zap } from 'lucide-react';
-import { useToast } from '@/components/Toast';
+import { ArrowLeft, Copy, CheckCircle, Smartphone, Zap } from 'lucide-react';
 
 const QuickSaveGuidePage = () => {
-    const { addToast } = useToast();
-    const [copiedBookmarklet, setCopiedBookmarklet] = useState(false);
-
-    const appUrl = 'https://anshin-recipe.vercel.app';
-    const bookmarkletCode = `javascript:(function(){window.location.href='${appUrl}/recipe/quick-save?url='+encodeURIComponent(window.location.href)})()`;
-
-    const copyBookmarklet = async () => {
-        try {
-            await navigator.clipboard.writeText(bookmarkletCode);
-            setCopiedBookmarklet(true);
-            addToast('コピーしました！', 'success');
-            setTimeout(() => setCopiedBookmarklet(false), 3000);
-        } catch (err) {
-            addToast('コピーに失敗しました', 'error');
-        }
-    };
-
     return (
         <div className="min-h-screen bg-slate-50 pb-24">
             {/* Header */}
@@ -74,89 +56,11 @@ const QuickSaveGuidePage = () => {
                     </div>
                 </div>
 
-                {/* Method 2: LINE Share */}
+                {/* Method 2: iOS Shortcut */}
                 <div className="bg-white rounded-2xl p-5 shadow-sm mb-4">
                     <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                        <span className="w-7 h-7 bg-[#06C755] text-white text-sm rounded-full flex items-center justify-center">2</span>
-                        LINEで自分に送信
-                    </h3>
-
-                    <div className="space-y-3 text-sm text-slate-600">
-                        <div className="flex gap-3">
-                            <Share size={18} className="text-[#06C755] flex-shrink-0 mt-0.5" />
-                            <p>SNSの共有ボタンから「LINE」を選択</p>
-                        </div>
-                        <div className="flex gap-3">
-                            <MessageCircle size={18} className="text-[#06C755] flex-shrink-0 mt-0.5" />
-                            <p>「Keepメモ」や自分宛てに送信</p>
-                        </div>
-                        <div className="flex gap-3">
-                            <Copy size={18} className="text-[#06C755] flex-shrink-0 mt-0.5" />
-                            <p>LINEでURLをコピー → あんしんレシピを開く</p>
-                        </div>
-                    </div>
-
-                    <p className="mt-3 text-xs text-slate-500">
-                        💡 LINEボットでの自動保存機能は近日公開予定です
-                    </p>
-                </div>
-
-                {/* Method 3: Bookmarklet */}
-                <div className="bg-white rounded-2xl p-5 shadow-sm mb-4">
-                    <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                        <span className="w-7 h-7 bg-blue-500 text-white text-sm rounded-full flex items-center justify-center">3</span>
-                        ブックマークレット（Webブラウザ用）
-                    </h3>
-
-                    <p className="text-sm text-slate-600 mb-4">
-                        ブラウザでレシピサイトを見ている時に、ブックマークから1タップで保存できます。
-                    </p>
-
-                    <div className="space-y-3">
-                        <div className="bg-slate-100 p-3 rounded-lg">
-                            <p className="text-xs text-slate-500 mb-2">以下をコピーしてブックマークに追加:</p>
-                            <code className="text-xs break-all text-slate-700 font-mono">
-                                {bookmarkletCode}
-                            </code>
-                        </div>
-
-                        <button
-                            onClick={copyBookmarklet}
-                            className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all ${copiedBookmarklet
-                                    ? 'bg-green-500 text-white'
-                                    : 'bg-blue-500 text-white hover:bg-blue-600'
-                                }`}
-                        >
-                            {copiedBookmarklet ? (
-                                <>
-                                    <CheckCircle size={18} />
-                                    コピーしました！
-                                </>
-                            ) : (
-                                <>
-                                    <Copy size={18} />
-                                    コードをコピー
-                                </>
-                            )}
-                        </button>
-                    </div>
-
-                    <div className="mt-4 p-3 bg-blue-50 rounded-xl text-xs text-blue-700">
-                        <p className="font-medium mb-1">設定方法:</p>
-                        <ol className="list-decimal list-inside space-y-1">
-                            <li>上のコードをコピー</li>
-                            <li>ブラウザで任意のページをブックマーク</li>
-                            <li>ブックマークを編集し、URLをコピーしたコードに置き換え</li>
-                            <li>名前を「あんしんレシピに保存」などに変更</li>
-                        </ol>
-                    </div>
-                </div>
-
-                {/* Method 4: iOS Shortcut */}
-                <div className="bg-white rounded-2xl p-5 shadow-sm mb-4">
-                    <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                        <span className="w-7 h-7 bg-purple-500 text-white text-sm rounded-full flex items-center justify-center">4</span>
-                        iOSショートカット
+                        <span className="w-7 h-7 bg-purple-500 text-white text-sm rounded-full flex items-center justify-center">2</span>
+                        iOSショートカット（iPhone向け）
                     </h3>
 
                     <p className="text-sm text-slate-600 mb-4">
@@ -172,10 +76,10 @@ const QuickSaveGuidePage = () => {
                     </Link>
                 </div>
 
-                {/* Android Users */}
+                {/* Method 3: Android PWA */}
                 <div className="bg-white rounded-2xl p-5 shadow-sm mb-4">
                     <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                        <span className="w-7 h-7 bg-emerald-500 text-white text-sm rounded-full flex items-center justify-center">5</span>
+                        <span className="w-7 h-7 bg-emerald-500 text-white text-sm rounded-full flex items-center justify-center">3</span>
                         Androidユーザー向け
                     </h3>
 
