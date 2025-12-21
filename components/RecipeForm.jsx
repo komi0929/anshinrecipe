@@ -6,6 +6,7 @@ import { Loader2, Link as LinkIcon, Search, Check, X, ImagePlus, Save, Globe, Lo
 import { uploadImage } from '@/lib/imageUpload';
 import { MEAL_SCENES, SCENE_ICONS } from '@/lib/constants';
 import { SmartEmbed } from '@/components/SmartEmbed'; // Import SmartEmbed
+import SmartImportOverlay from './SmartImportOverlay'; // Import SmartImportOverlay
 import './RecipeForm.css';
 
 export const RecipeForm = ({
@@ -45,6 +46,7 @@ export const RecipeForm = ({
     // Smart Import State
     const [isSmartImporting, setIsSmartImporting] = useState(false);
     const [smartImportError, setSmartImportError] = useState(null);
+    const [showOverlay, setShowOverlay] = useState(false); // New state for overlay
 
     // Auto-calculate allergens from selected children
     useEffect(() => {
@@ -119,7 +121,11 @@ export const RecipeForm = ({
             setDescription('');
             setTags([]); // Clear tags
             setIngredientsAndSteps(''); // Clear ingredients
+            setIngredientsAndSteps(''); // Clear ingredients
             setShowIngredientsField(true); // Show field immediately with loading state
+
+            // Start Overlay & Import Process
+            setShowOverlay(true);
             setIsSmartImporting(true);
             setSmartImportError(null);
             setOgpFetched(false); // Reset OGP state
@@ -452,6 +458,12 @@ export const RecipeForm = ({
                     <span>{isEditMode ? '変更を保存' : 'レシピを保存'}</span>
                 </button>
             </div>
+            {/* Smart Import Overlay */}
+            <SmartImportOverlay
+                isVisible={showOverlay}
+                onRunning={isSmartImporting}
+                onComplete={() => setShowOverlay(false)}
+            />
         </form >
     );
 };
