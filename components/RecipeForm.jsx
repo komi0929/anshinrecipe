@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, Link as LinkIcon, Search, Check, X, ImagePlus, Save, Globe, Lock } from 'lucide-react';
+import { Loader2, Link as LinkIcon, Search, Check, X, ImagePlus, Save, Globe, Lock, Sparkles, BrainCircuit } from 'lucide-react';
 import { uploadImage } from '@/lib/imageUpload';
 import { MEAL_SCENES, SCENE_ICONS } from '@/lib/constants';
 import './RecipeForm.css';
@@ -30,11 +30,159 @@ export const RecipeForm = ({
     // New: Smart Canvas (Memo Images)
     const [memoImages, setMemoImages] = useState(initialData.memoImages || []);
 
-    // ALLERGEN_OPTIONS moved to useMemo for filtering based on selected children
+    // UI state
+    const [isFetchingOgp, setIsFetchingOgp] = useState(false);
+    const [ogpFetched, setOgpFetched] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
+    const fileInputRef = useRef(null);
 
-    // ... (auto-calculate allergens, etc.)
+    // Smart Import State
+    const [smartImportData, setSmartImportData] = useState(null);
+    const [isSmartImporting, setIsSmartImporting] = useState(false);
+    const [smartImportError, setSmartImportError] = useState(null);
 
-    // Handle paste in memo area
+    // Auto-calculate allergens from selected children
+    useEffect(() => {
+        if (!isEditMode && selectedChildren.length > 0 && profile?.children) {
+            const selectedKids = profile.children.filter(c => selectedChildren.includes(c.id));
+            const allergensSet = new Set();
+            selectedKids.forEach(kid => {
+                kid.allergens?.forEach(a => allergensSet.add(a));
+            });
+            setFreeFromAllergens(Array.from(allergensSet));
+        } else if (!isEditMode && selectedChildren.length === 0) {
+            setFreeFromAllergens([]);
+        }
+    }, [selectedChildren, isEditMode, profile?.children]);
+
+    // Auto-select child if only one exists (only in create mode)
+    useEffect(() => {
+        if (!isEditMode && profile?.children?.length === 1 && selectedChildren.length === 0) {
+            setSelectedChildren([profile.children[0].id]);
+        }
+    }, [profile, selectedChildren.length, isEditMode]);
+
+    // Handle OGP Fetch
+    const fetchOgpData = async () => {
+        if (!sourceUrl.trim()) return;
+
+        setIsFetchingOgp(true);
+        try {
+            const response = await fetch('/api/ogp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: sourceUrl })
+            });
+
+            if (!response.ok) throw new Error('Failed to fetch OGP data');
+
+            const data = await response.json();
+
+            // Auto-fill basic data for immediate feedback
+            if (data.title && !title) setTitle(data.title);
+            if (data.image && !image) setImage(data.image);
+            if (data.description && !description) setDescription(data.description);
+
+            setOgpFetched(true);
+        } catch (error) {
+            console.error('OGP fetch error:', error);
+        } finally {
+            setIsFetchingOgp(false);
+        }
+    };
+
+    // Handle Smart Import (AI Analysis) - Background Process
+    useEffect(() => {
+        const fetchSmartImport = async () => {
+            if (!sourceUrl.trim() || sourceUrl.length < 10) return;
+
+            // Only convert valid URLs
+            try {
+                new URL(sourceUrl);
+            } catch (e) {
+                return;
+            }
+
+            setIsSmartImporting(true);
+            setSmartImportData(null);
+            setSmartImportError(null);
+
+            try {
+                // Also trigger OGP fetch if not done yet
+                if (!ogpFetched && !title) {
+                    fetchOgpData();
+                }
+
+                const response = await fetch('/api/smart-import', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: sourceUrl })
+                });
+
+                if (!response.ok) throw new Error('AI解析に失敗しました');
+
+                const result = await response.json();
+                if (result.success && result.data) {
+                    setSmartImportData(result.data);
+                }
+            } catch (error) {
+                // Only log error, don't show to user unless manually requested
+                // console.error('Smart Import Error:', error); 
+                // Silent fail for background process
+            } finally {
+                setIsSmartImporting(false);
+            }
+        };
+
+        const timer = setTimeout(() => {
+            fetchSmartImport();
+        }, 1000); // 1.0s debounce after typing stops
+
+        return () => clearTimeout(timer);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [sourceUrl]);
+
+    const applySmartImportData = () => {
+        if (!smartImportData) return;
+
+        const d = smartImportData;
+
+        // Intelligent overwrite: only if empty or heavily preferred
+        if (d.title) setTitle(d.title);
+        // Prefer extracting a clean image if OGP failed or this is better
+        if (d.image_url && (!image || image.includes('placeholder'))) setImage(d.image_url);
+        if (d.description) setDescription(d.description);
+
+        // Format Memo with Ingredients and Steps
+        let newMemo = memo;
+        const materialsText = d.ingredients && d.ingredients.length > 0 ? `【材料】\n${d.ingredients.map(i => `- ${i}`).join('\n')}` : '';
+        const stepsText = d.steps && d.steps.length > 0 ? `【作り方】\n${d.steps.map((s, i) => `${i + 1}. ${s}`).join('\n')}` : '';
+
+        const contentToAdd = [materialsText, stepsText].filter(Boolean).join('\n\n');
+
+        if (contentToAdd) {
+            // If memo is empty, just set it. If not, append.
+            setMemo(newMemo ? `${newMemo}\n\n${contentToAdd}` : contentToAdd);
+        }
+
+        // Add tags (avoid duplicates)
+        if (d.tags && Array.isArray(d.tags)) {
+            const newTags = [...tags];
+            d.tags.forEach(tag => {
+                const cleanTag = tag.replace(/^#/, ''); // Remove # if present
+                if (!newTags.includes(cleanTag)) {
+                    newTags.push(cleanTag);
+                }
+            });
+            setTags(newTags);
+        }
+
+        setSmartImportData(null); // Clear to hide button
+        alert('AIデータを反映しました✨');
+    };
+
+    // ... (rest of image upload handlers)
     const handlePaste = async (e) => {
         const items = e.clipboardData.items;
         for (let i = 0; i < items.length; i++) {
@@ -77,140 +225,6 @@ export const RecipeForm = ({
 
     const removeMemoImage = (index) => {
         setMemoImages(prev => prev.filter((_, i) => i !== index));
-    };
-
-    // UI state
-
-    // Auto-calculate allergens from selected children
-    useEffect(() => {
-        if (!isEditMode && selectedChildren.length > 0 && profile?.children) {
-            const selectedKids = profile.children.filter(c => selectedChildren.includes(c.id));
-            const allergensSet = new Set();
-            selectedKids.forEach(kid => {
-                kid.allergens?.forEach(a => allergensSet.add(a));
-            });
-            // ユーザーが手動で削った分を尊重しつつ、選択中の子供たちの全アレルゲンを表示
-            // ただし、初期状態や子供の変更時に連動させる
-            setFreeFromAllergens(Array.from(allergensSet));
-        } else if (!isEditMode && selectedChildren.length === 0) {
-            setFreeFromAllergens([]);
-        }
-    }, [selectedChildren, isEditMode, profile?.children]);
-
-    // UI state
-    const [isFetchingOgp, setIsFetchingOgp] = useState(false);
-    const [ogpFetched, setOgpFetched] = useState(false);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isUploading, setIsUploading] = useState(false);
-    const fileInputRef = useRef(null);
-
-    // Auto-select child if only one exists (only in create mode)
-    useEffect(() => {
-        if (!isEditMode && profile?.children?.length === 1 && selectedChildren.length === 0) {
-            setSelectedChildren([profile.children[0].id]);
-        }
-    }, [profile, selectedChildren.length, isEditMode]);
-
-    const fetchOgpData = async () => {
-        if (!sourceUrl.trim()) return;
-
-        setIsFetchingOgp(true);
-        try {
-            const response = await fetch('/api/ogp', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url: sourceUrl })
-            });
-
-            if (!response.ok) throw new Error('Failed to fetch OGP data');
-
-            const data = await response.json();
-
-            // Auto-fill title and image if not already set (or confirm overwrite?)
-            // For now, simple overwrite logic as per original
-            if (data.title) setTitle(data.title);
-            if (data.image) setImage(data.image);
-            if (data.description) setDescription(data.description);
-
-            setOgpFetched(true);
-        } catch (error) {
-            console.error('OGP fetch error:', error);
-            // Don't alert on auto-fetch failure to avoid annoying user if URL is just text
-            if (!isSubmitting) {
-                // Silent fail or optional UI indication? 
-                // Keeping alert for manual trigger, but maybe suppress for auto?
-                // For now, we'll keep it simple. If it was triggered automatically, maybe we shouldn't alert?
-                // But we can't easily distinguish here without passing a flag.
-                // Let's assume manual click for now for the alert, 
-                // but for auto-fetch, users might be confused if nothing happens and error pops up.
-                // Let's rely on standard error handling.
-            }
-        } finally {
-            setIsFetchingOgp(false);
-        }
-    };
-
-    // Auto-fetch OGP on mount if URL is provided via Share Target (and no image yet)
-    useEffect(() => {
-        if (initialData.sourceUrl && !initialData.image) {
-            fetchOgpData();
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
-    const toggleChild = (childId) => {
-        const isSelected = selectedChildren.includes(childId);
-        let newSelected = isSelected
-            ? selectedChildren.filter(id => id !== childId)
-            : [...selectedChildren, childId];
-
-        setSelectedChildren(newSelected);
-
-        // Auto-add allergens for newly selected child
-        if (!isSelected && profile?.children) {
-            // アレルゲンの自動追加ロジックはuseEffectで行うため、ここでは何もしない
-        }
-    };
-
-    const toggleAllergen = (allergen) => {
-        setFreeFromAllergens(prev => {
-            if (prev.includes(allergen)) {
-                return prev.filter(a => a !== allergen);
-            }
-            // Manual addition is disabled
-            return prev;
-        });
-    };
-
-    const toggleScene = (scene) => {
-        setSelectedScenes(prev =>
-            prev.includes(scene)
-                ? prev.filter(s => s !== scene)
-                : [...prev, scene]
-        );
-    };
-
-    const addCustomScene = () => {
-        if (customScene.trim() && !selectedScenes.includes(customScene.trim())) {
-            setSelectedScenes([...selectedScenes, customScene.trim()]);
-            setCustomScene('');
-        }
-    };
-
-    const removeScene = (sceneToRemove) => {
-        setSelectedScenes(selectedScenes.filter(scene => scene !== sceneToRemove));
-    };
-
-    const handleAddTag = (e) => {
-        e.preventDefault();
-        if (tagInput.trim() && !tags.includes(tagInput.trim())) {
-            setTags([...tags, tagInput.trim()]);
-            setTagInput('');
-        }
-    };
-
-    const removeTag = (tagToRemove) => {
-        setTags(tags.filter(tag => tag !== tagToRemove));
     };
 
     const handleImageUpload = async (e) => {
@@ -297,6 +311,57 @@ export const RecipeForm = ({
         return () => window.removeEventListener('beforeunload', handleBeforeUnload);
     }, [title, image, description]);
 
+    // Tag handlers
+    const handleAddTag = (e) => {
+        e.preventDefault();
+        if (tagInput.trim() && !tags.includes(tagInput.trim())) {
+            setTags([...tags, tagInput.trim()]);
+            setTagInput('');
+        }
+    };
+
+    const removeTag = (tagToRemove) => {
+        setTags(tags.filter(tag => tag !== tagToRemove));
+    };
+
+    // Allergen toggles
+    const toggleAllergen = (allergen) => {
+        setFreeFromAllergens(prev => {
+            if (prev.includes(allergen)) {
+                return prev.filter(a => a !== allergen);
+            }
+            return prev;
+        });
+    };
+
+    const toggleChild = (childId) => {
+        const isSelected = selectedChildren.includes(childId);
+        let newSelected = isSelected
+            ? selectedChildren.filter(id => id !== childId)
+            : [...selectedChildren, childId];
+
+        setSelectedChildren(newSelected);
+    };
+
+    const toggleScene = (scene) => {
+        setSelectedScenes(prev =>
+            prev.includes(scene)
+                ? prev.filter(s => s !== scene)
+                : [...prev, scene]
+        );
+    };
+
+    const addCustomScene = () => {
+        if (customScene.trim() && !selectedScenes.includes(customScene.trim())) {
+            setSelectedScenes([...selectedScenes, customScene.trim()]);
+            setCustomScene('');
+        }
+    };
+
+    const removeScene = (sceneToRemove) => {
+        setSelectedScenes(selectedScenes.filter(scene => scene !== sceneToRemove));
+    };
+
     return (
         <form onSubmit={handleSubmit} className="recipe-form">
             {/* OGP Loading Overlay */}
@@ -352,6 +417,25 @@ export const RecipeForm = ({
                         )}
                     </button>
                 </div>
+
+                {/* Smart Import Button / Indicator */}
+                <div className="smart-import-area mt-2">
+                    {isSmartImporting ? (
+                        <div className="flex items-center gap-2 text-sm text-blue-600 bg-blue-50 p-2 rounded-lg animate-pulse">
+                            <BrainCircuit size={16} />
+                            <span>AIが詳細情報を解析中...そのままお待ちください</span>
+                        </div>
+                    ) : smartImportData ? (
+                        <button
+                            type="button"
+                            onClick={applySmartImportData}
+                            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-bold py-3 px-4 rounded-xl shadow-lg transform transition-all hover:scale-[1.02] active:scale-95 animate-bounce-subtle"
+                        >
+                            <Sparkles size={20} className="text-yellow-300" />
+                            <span>AIで自動入力する（材料・手順・タグ）</span>
+                        </button>
+                    ) : null}
+                </div>
             </div>
 
             {/* Basic Info Section */}
@@ -368,7 +452,7 @@ export const RecipeForm = ({
                     />
                 </div>
 
-                {/* Image Section - Always visible */}
+                {/* Image Section */}
                 <div className="form-group" id="recipe-form-image-area">
                     <label>レシピ画像 <span className="required">*</span></label>
                     {isFetchingOgp ? (
@@ -540,13 +624,13 @@ export const RecipeForm = ({
 
             {/* Memo */}
             <div className="form-section">
-                <label className="section-label">おすすめポイント</label>
+                <label className="section-label">おすすめポイント・メモ</label>
                 <textarea
                     value={memo}
                     onChange={(e) => setMemo(e.target.value)}
-                    placeholder="このレシピのおすすめポイントを書きましょう"
+                    placeholder="【材料】や【作り方】など、メモしておきたいことを書きましょう"
                     className="form-textarea"
-                    rows={4}
+                    rows={8}
                 />
             </div >
 
