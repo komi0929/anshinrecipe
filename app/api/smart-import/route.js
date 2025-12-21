@@ -15,8 +15,6 @@ export async function POST(request) {
 
         if (!url) return NextResponse.json({ error: 'URL is required' }, { status: 400 });
 
-        console.log('Smart Import processing (Gemini):', url);
-
         // 1. Fetch HTML content
         let html = '';
         try {
@@ -30,7 +28,6 @@ export async function POST(request) {
             if (!response.ok) return NextResponse.json({ error: `Could not access the website (Status: ${response.status}).` }, { status: 400 });
             html = await response.text();
         } catch (error) {
-            console.error('Fetch error:', error);
             return NextResponse.json({ error: `Connection failed: ${error.message}` }, { status: 500 });
         }
 
@@ -58,20 +55,11 @@ export async function POST(request) {
             "tags": ["#Tag1", "#Tag2", "#Tag3"],
             "servings": "2 servings"
         }
-        Rules for "tags":
-        1. Generate exactly 3 tags.
-        2. Tags should be relevant for search.
-        3. Start each tag with '#'.
         IMPORTANT: Return ONLY the JSON object. Do not wrap in markdown.
-        
-        Input Data:
-        URL: ${url}
-        JSON-LD Data: ${JSON.stringify(jsonLd)}
-        Page Text Content: ${textContent}
+        Input Data: URL: ${url} JSON-LD Data: ${JSON.stringify(jsonLd)} Page Text Content: ${textContent}
         `;
 
-        const modelsToTry = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-pro"];
-        let lastError = null;
+        const modelsToTry = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-pro", "gemini-1.0-pro"];
 
         for (const modelName of modelsToTry) {
             try {
@@ -80,38 +68,43 @@ export async function POST(request) {
                 const result = await model.generateContent(prompt);
                 let responseText = result.response.text();
 
-                console.log(`Success with ${modelName}`);
-
                 // Sanitize
                 responseText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
                 let data;
                 try {
                     data = JSON.parse(responseText);
                 } catch (e) {
-                    // Regex fallback
                     const jsonMatch = responseText.match(/\{[\s\S]*\}/);
                     if (jsonMatch) data = JSON.parse(jsonMatch[0]);
                     else throw e;
                 }
-
                 return NextResponse.json({ success: true, data: data });
 
             } catch (e) {
                 console.warn(`Failed with ${modelName}:`, e.message);
-                lastError = e;
-                // If it's a 404 (Not Found) or 400 (Bad Request), try next model.
-                // If it's 401 (Unauthorized), abort immediately as key is wrong.
                 if (e.message.includes('401') || e.message.includes('API Key')) {
                     return NextResponse.json({ error: 'Invalid API Key. Please check your Google AI Studio key.' }, { status: 500 });
                 }
             }
         }
 
-        // All models failed
-        return NextResponse.json({ error: `AI Error: All models failed. Last error: ${lastError?.message}` }, { status: 500 });
+        // All models failed - Try to list available models for debugging
+        let availableModelsList = "Unknown";
+        try {
+            const listResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+            const listData = await listResp.json();
+            if (listData.models) {
+                availableModelsList = listData.models.map(m => m.name.replace('models/', '')).join(', ');
+            } else {
+                availableModelsList = JSON.stringify(listData);
+            }
+        } catch (listError) {
+            availableModelsList = "Could not fetch list: " + listError.message;
+        }
+
+        return NextResponse.json({ error: `ALL MODELS FAILED. Your API Key has access to: [ ${availableModelsList} ]` }, { status: 500 });
 
     } catch (error) {
-        console.error('Smart Import System Error:', error);
         return NextResponse.json({ error: `System Error: ${error.message}` }, { status: 500 });
     }
 }
