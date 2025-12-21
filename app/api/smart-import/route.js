@@ -21,14 +21,62 @@ export async function POST(request) {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 8000);
             const response = await fetch(url, {
-                headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36' },
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                    'Accept-Language': 'en-US,en;q=0.5'
+                },
                 signal: controller.signal
             });
             clearTimeout(timeoutId);
-            if (!response.ok) return NextResponse.json({ error: `Could not access the website (Status: ${response.status}).` }, { status: 400 });
-            html = await response.text();
+
+            if (!response.ok) {
+                // Fallback for YouTube Blocking (429/403)
+                if (url.match(/(youtube\.com|youtu\.be)/)) {
+                    console.warn(`YouTube scrape blocked (${response.status}), trying oEmbed...`);
+                    const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`;
+                    const oembedRes = await fetch(oembedUrl);
+                    if (oembedRes.ok) {
+                        const oData = await oembedRes.json();
+                        // Construct minimal HTML for the parser to consume
+                        html = `
+                            <html>
+                                <head>
+                                    <title>${oData.title}</title>
+                                    <meta name="description" content="YouTube Video by ${oData.author_name}. (Description unavailable due to bot protection)">
+                                    <meta property="og:image" content="${oData.thumbnail_url}">
+                                </head>
+                                <body>
+                                    <h1>${oData.title}</h1>
+                                    <p>Author: ${oData.author_name}</p>
+                                </body>
+                            </html>
+                        `;
+                    } else {
+                        throw new Error(`YouTube oEmbed also failed: ${oembedRes.status}`);
+                    }
+                } else {
+                    return NextResponse.json({ error: `Could not access the website (Status: ${response.status}).` }, { status: 400 });
+                }
+            } else {
+                html = await response.text();
+            }
         } catch (error) {
-            return NextResponse.json({ error: `Connection failed: ${error.message}` }, { status: 500 });
+            // If main fetch failed (network) and it's YouTube, LAST CHANCE try oEmbed
+            if (url.match(/(youtube\.com|youtu\.be)/)) {
+                try {
+                    const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`;
+                    const oembedRes = await fetch(oembedUrl);
+                    if (oembedRes.ok) {
+                        const oData = await oembedRes.json();
+                        html = `<html><head><title>${oData.title}</title><meta name="description" content="Video by ${oData.author_name}"></head><body><h1>${oData.title}</h1></body></html>`;
+                    } else { throw error; }
+                } catch (e) {
+                    return NextResponse.json({ error: `Connection failed: ${error.message}` }, { status: 500 });
+                }
+            } else {
+                return NextResponse.json({ error: `Connection failed: ${error.message}` }, { status: 500 });
+            }
         }
 
         // 2. Parsed Data Prep
