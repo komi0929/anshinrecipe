@@ -2,7 +2,6 @@ import { Zen_Maru_Gothic } from 'next/font/google'
 import { ToastProvider } from '../components/Toast'
 import { DataProvider } from '../components/DataProvider'
 import BottomNav from '../components/BottomNav'
-import SafetyBanner from '../components/SafetyBanner'
 import GoogleAnalytics from '../components/GoogleAnalytics'
 import './globals.css'
 
@@ -63,7 +62,6 @@ export default function RootLayout({ children }) {
                     <GoogleAnalytics GA_MEASUREMENT_ID={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
                     <ToastProvider>
                         <div className="app-container flex flex-col min-h-screen">
-                            <SafetyBanner />
                             <main className="flex-grow pb-16">
                                 {children}
                             </main>
