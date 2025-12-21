@@ -88,7 +88,9 @@ const RecipeListPage = () => {
                         .select(`
                             recipe:recipes (
                                 *,
-                                profiles:user_id(username, avatar_url)
+                                profiles:user_id(username, avatar_url),
+                                likes (id),
+                                saved_recipes (id)
                             )
                         `)
                         .eq('user_id', user.id)
@@ -106,15 +108,20 @@ const RecipeListPage = () => {
                             author: item.recipe.profiles,
                             userId: item.recipe.user_id,
                             createdAt: item.recipe.created_at,
-                            like_count: item.recipe.like_count || 0,
-                            save_count: item.recipe.save_count || 0,
+                            likeCount: item.recipe.likes?.length || 0,
+                            saveCount: item.recipe.saved_recipes?.length || 0,
                         }));
                         setTabRecipes(formatted);
                     }
                 } else if (activeTab === 'mine') {
                     const { data } = await supabase
                         .from('recipes')
-                        .select('*, profiles:user_id(username, avatar_url)')
+                        .select(`
+                            *,
+                            profiles:user_id(username, avatar_url),
+                            likes (id),
+                            saved_recipes (id)
+                        `)
                         .eq('user_id', user.id)
                         .order('created_at', { ascending: false });
 
@@ -131,8 +138,8 @@ const RecipeListPage = () => {
                             userId: r.user_id,
                             createdAt: r.created_at,
                             sourceUrl: r.source_url,
-                            like_count: r.like_count || 0,
-                            save_count: r.save_count || 0,
+                            likeCount: r.likes?.length || 0,
+                            saveCount: r.saved_recipes?.length || 0,
                         }));
                         setTabRecipes(formatted);
                     }
