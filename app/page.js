@@ -307,11 +307,11 @@ const RecipeListPage = () => {
                                 />
                             </div>
                             <h3 className="text-lg font-bold text-slate-800 mb-2">
-                                アレルギー情報を簡単メモ
+                                レシピを簡単メモ
                             </h3>
                             <p className="text-sm text-slate-500 leading-relaxed">
-                                食べられる食材やアレルギー情報を<br />
-                                プロフィールにサッと記録できます
+                                アレルギー対応のレシピを<br />
+                                サッと記録できます
                             </p>
                         </div>
 
