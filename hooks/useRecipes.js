@@ -24,7 +24,8 @@ export const useRecipes = () => {
                     ),
                     cooking_logs (id, content, rating, created_at, user_id),
                     recipe_images (id, image_url),
-                    likes (id)
+                    likes (id),
+                    saved_recipes (id)
                 `)
                 .order('created_at', { ascending: false });
 
@@ -48,6 +49,7 @@ export const useRecipes = () => {
                 userId: recipe.user_id,
                 createdAt: recipe.created_at,
                 likeCount: recipe.likes?.length || 0,
+                saveCount: recipe.saved_recipes?.length || 0,
                 // New fields
                 logs: recipe.cooking_logs || [],
                 memoImages: recipe.recipe_images || []

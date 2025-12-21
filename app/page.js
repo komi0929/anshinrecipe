@@ -107,6 +107,7 @@ const RecipeListPage = () => {
                             userId: item.recipe.user_id,
                             createdAt: item.recipe.created_at,
                             like_count: item.recipe.like_count || 0,
+                            save_count: item.recipe.save_count || 0,
                         }));
                         setTabRecipes(formatted);
                     }
@@ -131,6 +132,7 @@ const RecipeListPage = () => {
                             createdAt: r.created_at,
                             sourceUrl: r.source_url,
                             like_count: r.like_count || 0,
+                            save_count: r.save_count || 0,
                         }));
                         setTabRecipes(formatted);
                     }
@@ -221,6 +223,10 @@ const RecipeListPage = () => {
                 const dateA = new Date(a.created_at || a.createdAt || 0);
                 const dateB = new Date(b.created_at || b.createdAt || 0);
                 if (dateB - dateA !== 0) return dateB - dateA;
+            } else if (sortOrder === 'saves') {
+                const aSaves = a.save_count || a.saveCount || 0;
+                const bSaves = b.save_count || b.saveCount || 0;
+                if (bSaves - aSaves !== 0) return bSaves - aSaves;
             }
 
             // 3. Newest as secondary or primary sort
@@ -450,6 +456,12 @@ const RecipeListPage = () => {
                             className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${sortOrder === 'likes' ? 'bg-primary text-white shadow-sm' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
                         >
                             ❤️ いいね！順
+                        </button>
+                        <button
+                            onClick={() => setSortOrder(sortOrder === 'saves' ? null : 'saves')}
+                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${sortOrder === 'saves' ? 'bg-primary text-white shadow-sm' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                        >
+                            📚 保存数順
                         </button>
                     </div>
 
