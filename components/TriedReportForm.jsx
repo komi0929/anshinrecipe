@@ -100,7 +100,7 @@ const TriedReportForm = ({ recipeId, userId, onSuccess, onCancel }) => {
     return (
         <div className="tried-report-form">
             <div className="form-header">
-                <h3>試してみたレポート</h3>
+                <h3>つくってみたレポート</h3>
                 {onCancel && (
                     <button type="button" onClick={onCancel} className="close-btn">
                         <X size={20} />

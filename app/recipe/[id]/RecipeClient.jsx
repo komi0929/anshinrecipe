@@ -447,7 +447,7 @@ const RecipeDetailPage = () => {
                 {/* Tried Reports Section */}
                 <div className="detail-section tried-reports-section" id="tried-reports">
                     <div className="section-header-with-action">
-                        <h3>試してみたレポート ({triedReports.length})</h3>
+                        <h3>つくってみたレポート ({triedReports.length})</h3>
                         {user && (
                             <button
                                 onClick={() => setShowReportForm(!showReportForm)}
