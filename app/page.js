@@ -143,6 +143,19 @@ const RecipeListPage = () => {
         fetchTabData();
     }, [activeTab, user, recipes]);
 
+    // GA Search Tracking
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (searchTerm && searchTerm.length > 1) {
+                if (typeof window !== 'undefined' && window.gtag) {
+                    window.gtag('event', 'search', { search_term: searchTerm });
+                }
+            }
+        }, 2000); // 2 seconds debounce
+
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
+
     // Unified Safety Check & Filter Logic
     const processedRecipes = React.useMemo(() => {
         return tabRecipes.map(recipe => {

@@ -60,6 +60,7 @@ export default function RootLayout({ children }) {
         <html lang="ja" className={zenMaruGothic.variable} suppressHydrationWarning>
             <body suppressHydrationWarning>
                 <DataProvider>
+                    <GoogleAnalytics GA_MEASUREMENT_ID={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
                     <ToastProvider>
                         <div className="app-container flex flex-col min-h-screen">
                             <SafetyBanner />
