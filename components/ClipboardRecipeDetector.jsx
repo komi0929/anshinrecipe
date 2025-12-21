@@ -4,12 +4,14 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { X, Link2, Plus, Loader2 } from 'lucide-react';
 import { useProfile } from '@/hooks/useProfile';
+import { useRecipes } from '@/hooks/useRecipes';
 
 const ClipboardRecipeDetector = () => {
     const [detectedUrl, setDetectedUrl] = useState(null);
     const [isVisible, setIsVisible] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const { user } = useProfile();
+    const { recipes } = useRecipes(); // Get existing recipes to check for duplicates
     const router = useRouter();
 
     useEffect(() => {
@@ -40,6 +42,8 @@ const ClipboardRecipeDetector = () => {
                     /kurashiru\.com/,
                     /delishkitchen\.tv/,
                     /macaroni-noodle\.jp/,
+                    /youtube\.com/,
+                    /youtu\.be/,
                     /recipe\./,
                     /レシピ/,
                 ];
@@ -50,6 +54,17 @@ const ClipboardRecipeDetector = () => {
 
                     // Check if this is the same URL we already prompted for
                     if (url === lastUrl) return;
+
+                    // Check if this URL is already registered in user's recipes
+                    const isAlreadyRegistered = recipes?.some(recipe =>
+                        recipe.source_url && recipe.source_url.includes(url.replace(/https?:\/\/(www\.)?/, '').split('/')[0])
+                    );
+
+                    if (isAlreadyRegistered) {
+                        console.log('URL already registered, skipping prompt');
+                        localStorage.setItem('clipboard-last-url', url);
+                        return;
+                    }
 
                     // Check if it matches recipe patterns
                     const isRecipeUrl = recipePatterns.some(pattern => pattern.test(url));
@@ -72,13 +87,13 @@ const ClipboardRecipeDetector = () => {
         const timer = setTimeout(checkClipboard, 1500);
 
         return () => clearTimeout(timer);
-    }, [user]);
+    }, [user, recipes]);
 
     const handleSave = () => {
         if (!detectedUrl) return;
 
-        // Navigate to quick-save with the URL
-        router.push(`/recipe/quick-save?url=${encodeURIComponent(detectedUrl)}`);
+        // Navigate to recipe/new with the URL pre-filled (proper registration flow)
+        router.push(`/recipe/new?url=${encodeURIComponent(detectedUrl)}`);
         setIsVisible(false);
     };
 
@@ -133,3 +148,4 @@ const ClipboardRecipeDetector = () => {
 };
 
 export default ClipboardRecipeDetector;
+
