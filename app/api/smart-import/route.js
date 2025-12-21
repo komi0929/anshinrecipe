@@ -2,11 +2,82 @@ import { NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import * as cheerio from 'cheerio';
 
+// ========== HELPER: OGP Data Extraction (Same logic as api/ogp) ==========
+async function getOgpData(url) {
+    let result = { title: null, image: null, description: null };
+
+    // YouTube: Use oEmbed (RELIABLE)
+    if (url.match(/(youtube\.com|youtu\.be)/)) {
+        try {
+            const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`;
+            const res = await fetch(oembedUrl);
+            if (res.ok) {
+                const data = await res.json();
+                result.title = data.title;
+                // Try maxres, fallback to hq
+                result.image = data.thumbnail_url?.replace('hqdefault', 'maxresdefault') || data.thumbnail_url;
+                result.description = `Video by ${data.author_name}`;
+            }
+        } catch (e) { console.warn('YouTube OGP fail', e); }
+        return result;
+    }
+
+    // TikTok: Use oEmbed (RELIABLE)
+    if (url.match(/tiktok\.com/)) {
+        try {
+            const oembedUrl = `https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`;
+            const res = await fetch(oembedUrl);
+            if (res.ok) {
+                const data = await res.json();
+                result.title = data.title;
+                result.image = data.thumbnail_url;
+                result.description = `Video by ${data.author_name}`;
+            }
+        } catch (e) { console.warn('TikTok OGP fail', e); }
+        return result;
+    }
+
+    // Instagram: oEmbed DEPRECATED. Use Googlebot scrape.
+    // General: Scrape OGP tags with Googlebot UA
+    try {
+        const controller = new AbortController();
+        setTimeout(() => controller.abort(), 8000);
+        const res = await fetch(url, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+                'Accept': 'text/html'
+            },
+            signal: controller.signal
+        });
+        if (res.ok) {
+            const html = await res.text();
+            const $ = cheerio.load(html);
+            result.title = $('meta[property="og:title"]').attr('content') ||
+                $('meta[name="twitter:title"]').attr('content') ||
+                $('title').text() || null;
+            result.image = $('meta[property="og:image"]').attr('content') ||
+                $('meta[name="twitter:image"]').attr('content') || null;
+            result.description = $('meta[property="og:description"]').attr('content') ||
+                $('meta[name="description"]').attr('content') || null;
+
+            // Make image absolute if relative
+            if (result.image && !result.image.startsWith('http')) {
+                try {
+                    const urlObj = new URL(url);
+                    result.image = new URL(result.image, urlObj.origin).href;
+                } catch (e) { }
+            }
+        }
+    } catch (e) { console.warn('General OGP fail', e); }
+
+    return result;
+}
+
+// ========== MAIN HANDLER ==========
 export async function POST(request) {
     try {
         const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
         if (!apiKey) {
-            console.error('API Key missing');
             return NextResponse.json({ error: 'Server Error: API Key is not configured.' }, { status: 500 });
         }
 
@@ -15,156 +86,73 @@ export async function POST(request) {
 
         if (!url) return NextResponse.json({ error: 'URL is required' }, { status: 400 });
 
-        // 1. Fetch HTML content
+        // ===== STEP 1: Get OGP Data (Title/Image) - RELIABLE =====
+        console.log('Fetching OGP data for:', url);
+        const ogpData = await getOgpData(url);
+        console.log('OGP Result:', ogpData);
+
+        // ===== STEP 2: Try to Scrape HTML for Ingredients (Best Effort) =====
         let html = '';
-        let oData = null; // Store oEmbed data for reliable fallback/override
-
-        const fetchWithUA = async (userAgent) => {
+        try {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 8000);
-            try {
-                const res = await fetch(url, {
-                    headers: {
-                        'User-Agent': userAgent,
-                        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                        'Accept-Language': 'ja,en-US;q=0.9,en;q=0.8'
-                    },
-                    signal: controller.signal
-                });
-                clearTimeout(timeoutId);
-                return res;
-            } catch (e) {
-                clearTimeout(timeoutId);
-                return null;
-            }
-        };
-
-        // PARALLEL STRATEGY for YouTube/Instagram: Fetch oEmbed (Reliable) + HTML (for Text)
-        // User requested: "Traditional method (Safe) for Title/Image, Scrape for Ingredients"
-        if (url.match(/(youtube\.com|youtu\.be)/)) {
-            console.log('YouTube detected: Fetching oEmbed for guaranteed metadata...');
-            try {
-                // Fetch oEmbed
-                const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`;
-                const oRes = await fetch(oembedUrl);
-                if (oRes.ok) {
-                    oData = await oRes.json();
-                }
-            } catch (e) {
-                console.warn('YouTube oEmbed fetch failed', e);
-            }
-        } else if (url.match(/(instagram\.com|instagr\.am)/)) {
-            console.log('Instagram detected: Fetching oEmbed...');
-            try {
-                // Instagram Legacy oEmbed
-                const oembedUrl = `https://api.instagram.com/oembed?url=${encodeURIComponent(url)}&format=json`;
-                const oRes = await fetch(oembedUrl);
-                if (oRes.ok) {
-                    oData = await oRes.json();
-                }
-            } catch (e) {
-                console.warn('Instagram oEmbed fetch failed', e);
-            }
-        }
-
-        // Fetch HTML (for Description/Ingredients)
-        // Use Googlebot specifically for Instagram to bypass login wall
-        let ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36';
-        if (url.match(/(instagram\.com|instagr\.am)/)) {
-            ua = 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)';
-        }
-
-        let response = await fetchWithUA(ua);
-
-        // Retry with Googlebot if 403 (Optional, but sometimes helps get DESCRIPTION. Risky for Title, but we have oData now!)
-        if (!response || !response.ok) {
-            console.log('Standard fetch failed, trying Googlebot...');
-            response = await fetchWithUA('Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)');
-        }
-
-        if (response && response.ok) {
-            html = await response.text();
-
-            // Check for "Soft 403" / Consent Page
-            if (html.includes('<title>YouTube</title>')) {
-                console.warn('YouTube Consent Page detected. Scraped content is likely invalid.');
-                // If we have oData, we can survive. If not, we failed.
-                if (!oData) {
-                    // If both failed, we really failed.
-                    // But usually oEmbed succeeds.
-                }
-                // Do NOT use this HTML for text content if it's just "Before you continue..."
-                if (!html.includes('ytInitialPlayerResponse')) {
-                    html = ''; // Discard garbage HTML
+            setTimeout(() => controller.abort(), 8000);
+            const res = await fetch(url, {
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+                    'Accept': 'text/html'
+                },
+                signal: controller.signal
+            });
+            if (res.ok) {
+                html = await res.text();
+                // YouTube Consent Page Check
+                if (html.includes('<title>YouTube</title>') && !html.includes('ytInitialPlayerResponse')) {
+                    html = ''; // Garbage
                 }
             }
-        } else {
-            // If HTML fetch completely failed, and it's not YouTube (where oEmbed might save us)
-            if (!url.match(/(youtube\.com|youtu\.be)/) || !oData) {
-                return NextResponse.json({ error: `Could not access the website (Status: ${response ? response.status : 'Conn Error'}).` }, { status: 400 });
-            }
-        }
+        } catch (e) { console.warn('HTML scrape failed', e); }
 
-        // 2. Parsed Data Prep
+        // ===== STEP 3: Parse Content for AI =====
         const $ = cheerio.load(html || '<html></html>');
         $('script, style, nav, footer').remove();
+
         let jsonLd = {};
         $('script[type="application/ld+json"]').each((i, elem) => {
             try {
                 const data = JSON.parse($(elem).html());
-                if (data['@type'] === 'Recipe' || Array.isArray(data) && data.find(item => item['@type'] === 'Recipe')) jsonLd = data;
+                if (data['@type'] === 'Recipe' || (Array.isArray(data) && data.find(item => item['@type'] === 'Recipe'))) jsonLd = data;
             } catch (e) { }
         });
 
-        // SPECIAL HANDLING FOR YOUTUBE
-        let specialDescription = '';
+        // YouTube: Deep parse for description
+        let specialDescription = ogpData.description || '';
         if (url.match(/(youtube\.com|youtu\.be)/)) {
-            if (oData) {
-                // Always include oEmbed title in context
-                specialDescription = `VERIFIED TITLE: ${oData.title}\nVERIFIED AUTHOR: ${oData.author_name}\n`;
-            }
-
-            // Try to extract from Meta
-            specialDescription += $('meta[name="description"]').attr('content') ||
-                $('meta[property="og:description"]').attr('content') || '';
-
-            // Deep Parse for Description (Ingredients)
             try {
                 const scriptMatch = html.match(/ytInitialPlayerResponse\s*=\s*({.+?});/);
                 if (scriptMatch && scriptMatch[1]) {
                     const ytData = JSON.parse(scriptMatch[1]);
                     const desc = ytData.videoDetails?.shortDescription;
-                    if (desc) {
-                        specialDescription += "\nFULL VIDEO DESCRIPTION:\n" + desc;
-                    }
+                    if (desc) specialDescription += "\n" + desc;
                 }
-            } catch (e) {
-                console.warn('Failed to parse ytInitialPlayerResponse', e);
-            }
+            } catch (e) { }
         }
 
         const textContent = (specialDescription + '\n' + $('body').text()).replace(/\s+/g, ' ').slice(0, 20000);
 
-        // 3. AI Extraction
-        const prompt = `You are a recipe parser assistant.
+        // ===== STEP 4: AI Extraction =====
+        const prompt = `You are a recipe parser. Extract data from text.
         
-        Rules:
-        - Extract "ingredients" and "steps" as arrays of strings.
-        - Generate 3-5 relevant "tags" (Japanese) based on the recipe.
-        - If NO ingredients found, return empty array "[]".
-        
-        Return a valid JSON object:
+        Return JSON:
         {
             "title": "Recipe Title",
             "description": "Short description",
-            "image_url": "URL of the main food image",
-            "ingredients": ["Ingredient 1", "Ingredient 2"],
-            "steps": ["Step 1", "Step 2"],
+            "image_url": "URL or null",
+            "ingredients": ["Ingredient 1"],
+            "steps": ["Step 1"],
             "tags": ["Tag1", "Tag2"],
             "servings": "2 servings"
         }
         
-        Input Data:
         URL: ${url}
         JSON-LD: ${JSON.stringify(jsonLd)}
         Text: ${textContent}
@@ -174,13 +162,11 @@ export async function POST(request) {
 
         for (const modelName of modelsToTry) {
             try {
-                console.log(`Attempting with model: ${modelName}`);
+                console.log(`Trying model: ${modelName}`);
                 const model = genAI.getGenerativeModel({ model: modelName });
                 const result = await model.generateContent(prompt);
-                let responseText = result.response.text();
+                let responseText = result.response.text().replace(/```json/g, '').replace(/```/g, '').trim();
 
-                // Sanitize
-                responseText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
                 let data;
                 try {
                     data = JSON.parse(responseText);
@@ -189,45 +175,38 @@ export async function POST(request) {
                     if (jsonMatch) data = JSON.parse(jsonMatch[0]);
                     else throw e;
                 }
-                // --- CRITICAL OVERRIDE ---
-                // If we have verified oEmbed data, FORCE it to overwrite AI hallucinations or garbage
-                if (oData) {
-                    data.title = oData.title; // Force reliable title
-                    // oEmbed thumbnail is usually mqdefault or hqdefault. Try to upgrade to maxres.
-                    const maxRes = oData.thumbnail_url?.replace('hqdefault', 'maxresdefault');
-                    data.image_url = maxRes || oData.thumbnail_url;
-                }
-                // -------------------------
+
+                // ===== CRITICAL: MERGE OGP Data (Always Override with Reliable Data) =====
+                if (ogpData.title) data.title = ogpData.title;
+                if (ogpData.image) data.image_url = ogpData.image;
 
                 return NextResponse.json({ success: true, data: data });
 
             } catch (e) {
-                console.warn(`Failed with ${modelName}:`, e.message);
-                if (e.message.includes('401') || e.message.includes('API Key')) {
-                    return NextResponse.json({ error: 'Invalid API Key. Please check your Google AI Studio key.' }, { status: 500 });
-                }
+                console.warn(`Model ${modelName} failed:`, e.message);
             }
         }
 
-        // If all AI models failed, but we have oData, RETURN IT!
-        if (oData) {
+        // ===== FALLBACK: Return OGP Data Only =====
+        if (ogpData.title || ogpData.image) {
             return NextResponse.json({
                 success: true,
                 data: {
-                    title: oData.title,
-                    image_url: oData.thumbnail_url?.replace('hqdefault', 'maxresdefault'),
-                    description: `Video by ${oData.author_name}`,
+                    title: ogpData.title || 'Untitled',
+                    image_url: ogpData.image,
+                    description: ogpData.description || '',
                     ingredients: [],
                     steps: [],
-                    tags: [oData.title], // Fallback tag
+                    tags: [],
                     servings: ''
                 }
             });
         }
 
-        return NextResponse.json({ error: `AI Error: All attempts failed (Tried: ${modelsToTry.join(', ')}). Your key works but models failed.` }, { status: 500 });
+        return NextResponse.json({ error: 'Could not extract any data from URL.' }, { status: 400 });
 
     } catch (error) {
+        console.error('Smart Import Error:', error);
         return NextResponse.json({ error: `System Error: ${error.message}` }, { status: 500 });
     }
 }
