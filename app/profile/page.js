@@ -8,7 +8,7 @@ import Image from 'next/image';
 import {
     User, Settings, FileText, HelpCircle, LogOut,
     Trash2, ChevronRight, Camera, Plus, MapPin,
-    ShieldAlert, Info, Mail, Pencil, Loader2, Award, MessageCircle
+    ShieldAlert, Info, Mail, Pencil, Loader2, Award, MessageCircle, Zap
 } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { Footer } from '@/components/Footer';
@@ -439,7 +439,29 @@ export default function ProfilePage() {
                     </div>
                 </div>
 
-                {/* 4. Account Actions */}
+                {/* 4. Quick Save Guide */}
+                <div>
+                    <h3 className="text-sm font-bold text-text-sub mb-3 ml-2">便利な使い方</h3>
+                    <div className="bg-white rounded-[24px] overflow-hidden shadow-sm">
+                        <Link
+                            href="/quick-save-guide"
+                            className="w-full p-4 flex items-center justify-between border-b border-slate-50 last:border-none hover:bg-slate-50 transition-colors"
+                        >
+                            <div className="flex items-center gap-3 text-text-main">
+                                <div className="w-8 h-8 bg-gradient-to-br from-orange-400 to-amber-500 rounded-full flex items-center justify-center">
+                                    <Zap size={16} className="text-white" />
+                                </div>
+                                <div>
+                                    <span className="font-medium">SNSからかんたん保存</span>
+                                    <p className="text-xs text-slate-400">Instagram・TikTokからワンタップ</p>
+                                </div>
+                            </div>
+                            <ChevronRight className="text-slate-300" size={20} />
+                        </Link>
+                    </div>
+                </div>
+
+                {/* 5. Account Actions */}
                 <div>
                     <h3 className="text-sm font-bold text-text-sub mb-3 ml-2">アカウント</h3>
                     <div className="bg-white rounded-[24px] overflow-hidden shadow-sm mb-4">
