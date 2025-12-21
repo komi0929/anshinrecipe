@@ -9,10 +9,31 @@ export async function POST(request) {
             return NextResponse.json({ error: 'URL is required' }, { status: 400 });
         }
 
+        // --- SPECIAL HANDLING: YouTube (oEmbed) ---
+        // YouTube often blocks scrapers or requires consents, but oEmbed is public and reliable.
+        if (url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/)) {
+            try {
+                const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`;
+                const oembedRes = await fetch(oembedUrl);
+                if (oembedRes.ok) {
+                    const data = await oembedRes.json();
+                    return NextResponse.json({
+                        title: data.title,
+                        image: data.thumbnail_url?.replace('hqdefault', 'maxresdefault'), // Try to get HD thumbnail
+                        description: `YouTube Video by ${data.author_name}`, // oEmbed doesn't give full description
+                        site_name: 'YouTube'
+                    });
+                }
+            } catch (e) {
+                console.warn('YouTube oEmbed failed, falling back to scraper', e);
+            }
+        }
+
+        // --- STANDARD SCRAPING ---
         // Fetch the HTML content
         const response = await fetch(url, {
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
             }
         });
 
@@ -42,13 +63,17 @@ export async function POST(request) {
         };
 
         // Clean up the data
-        ogpData.title = ogpData.title.trim();
-        ogpData.description = ogpData.description.trim();
+        ogpData.title = ogpData.title.trim() || '';
+        ogpData.description = ogpData.description.trim() || '';
 
         // Make image URL absolute if it's relative
         if (ogpData.image && !ogpData.image.startsWith('http')) {
-            const urlObj = new URL(url);
-            ogpData.image = new URL(ogpData.image, urlObj.origin).href;
+            try {
+                const urlObj = new URL(url);
+                ogpData.image = new URL(ogpData.image, urlObj.origin).href;
+            } catch (e) {
+                console.warn('Failed to resolve relative image URL', e);
+            }
         }
 
         return NextResponse.json(ogpData);

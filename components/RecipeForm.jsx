@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Loader2, Link as LinkIcon, Search, Check, X, ImagePlus, Save, Globe, Lock, Sparkles, BrainCircuit, AlertCircle } from 'lucide-react';
 import { uploadImage } from '@/lib/imageUpload';
 import { MEAL_SCENES, SCENE_ICONS } from '@/lib/constants';
+import { SmartEmbed } from '@/components/SmartEmbed'; // Import SmartEmbed
 import './RecipeForm.css';
 
 export const RecipeForm = ({
@@ -84,6 +85,7 @@ export const RecipeForm = ({
 
             // Auto-fill basic data for immediate feedback
             if (data.title && !title) setTitle(data.title);
+            // Prefer max resolution thumbnail for YouTube
             if (data.image && !image) setImage(data.image);
             if (data.description && !description) setDescription(data.description);
 
@@ -151,34 +153,47 @@ export const RecipeForm = ({
 
                     if (contentToAdd) {
                         setIngredientsAndSteps(contentToAdd);
-                        setShowIngredientsField(true); // Ensure visible
+                        setShowIngredientsField(true);
                     } else {
-                        // Success but no specific content? hide or show empty? 
-                        // User said: "information could be retrieved -> pasted state"
-                        // If empty, maybe treat as fail?
+                        // Keep visible if success but empty? Or hide?
+                        // User said "If failed -> hide". If success -> keep.
+                        // But if empty success, it's effectively useless.
+                        // But maybe OGP/Video embed is enough.
                         setShowIngredientsField(false);
                     }
 
-                    // Tags
+                    // Tags - FIX: Use functional update to ensure fresh state
                     if (d.tags && Array.isArray(d.tags) && d.tags.length > 0) {
-                        const newTags = [...tags];
-                        d.tags.forEach(tag => {
-                            const cleanTag = tag.replace(/^#/, '');
-                            if (!newTags.includes(cleanTag)) {
-                                newTags.push(cleanTag);
-                            }
+                        setTags(prevTags => {
+                            const newTags = [...prevTags];
+                            let changed = false;
+
+                            // Helper for unique add
+                            const addUnique = (t) => {
+                                const clean = t.replace(/^#/, '').trim();
+                                if (clean && !newTags.includes(clean)) {
+                                    newTags.push(clean);
+                                    changed = true;
+                                }
+                            };
+
+                            // Add AI tags
+                            d.tags.forEach(addUnique);
+
+                            // If we didn't have allergens tags yet, maybe add them? (Assuming AI does it)
+                            // If user already selected Children with Allergens, maybe add "Allergy Friendly"?
+                            // (Leaving logic simple for now)
+
+                            return changed ? newTags : prevTags;
                         });
-                        setTags(newTags);
                     }
 
                 } else {
                     console.warn('Smart Import returned no data');
-                    // Case: Success=true but no data? Treat as fail.
                     setSmartImportError('解析できましたが、有効な情報が見つかりませんでした');
                 }
             } catch (error) {
                 console.error('Smart Import Error:', error);
-                // User said: "If failed, announce it, then the field disappears"
                 setSmartImportError(`うまく情報を取得できませんでした (${error.message})`);
             } finally {
                 setIsSmartImporting(false);
@@ -196,15 +211,9 @@ export const RecipeForm = ({
     // Handle Error State visibility logic
     useEffect(() => {
         if (smartImportError) {
-            // Show error briefly, then hide field
-            // Actually user said: "announce it, then the field disappears"
-            // We can let the error message sit in the field for a moment?
-            // Or verify if we should just alert().
-            // Let's keep the field visible IF there is an error, so user can see WHY.
-            // OR, maybe hide it after 5 seconds?
             const hideTimer = setTimeout(() => {
                 setShowIngredientsField(false);
-                setSmartImportError(null); // Clear error state too so it doesn't linger
+                setSmartImportError(null);
             }, 5000);
             return () => clearTimeout(hideTimer);
         }
@@ -289,9 +298,7 @@ export const RecipeForm = ({
 
         setIsSubmitting(true);
         try {
-            // MERGE Ingredients/Steps into Memo
             let finalMemo = memo;
-            // Only append if it's not the loading/error message
             if (ingredientsAndSteps && ingredientsAndSteps.trim() && showIngredientsField && !isSmartImporting) {
                 finalMemo = memo ? `${memo}\n\n${ingredientsAndSteps}` : ingredientsAndSteps;
             }
@@ -335,7 +342,6 @@ export const RecipeForm = ({
     // Tag handlers
     const handleAddTag = (e) => { e.preventDefault(); if (tagInput.trim() && !tags.includes(tagInput.trim())) { setTags([...tags, tagInput.trim()]); setTagInput(''); } };
     const removeTag = (tagToRemove) => { setTags(tags.filter(tag => tag !== tagToRemove)); };
-    // Allergen/Child/Scene toggles
     const toggleAllergen = (allergen) => { setFreeFromAllergens(prev => { if (prev.includes(allergen)) { return prev.filter(a => a !== allergen); } return prev; }); };
     const toggleChild = (childId) => { const isSelected = selectedChildren.includes(childId); let newSelected = isSelected ? selectedChildren.filter(id => id !== childId) : [...selectedChildren, childId]; setSelectedChildren(newSelected); };
     const toggleScene = (scene) => { setSelectedScenes(prev => prev.includes(scene) ? prev.filter(s => s !== scene) : [...prev, scene]); };
@@ -344,15 +350,11 @@ export const RecipeForm = ({
 
     return (
         <form onSubmit={handleSubmit} className="recipe-form">
-            {/* OGP Loading Overlay - KEEP THIS for initial feedback? Or rely on AI field? 
-                User said "Instant reflection of title/image". OGP is good for that. 
+            {/* OGP Loading Overlay - User wants "Instant title/image", removing overlay helps responsiveness feeling. 
+                But OGP takes 1-2s. Let's keep a subtle spinner on the field itself if possible, but the overlay is "safest" for feedback.
+                Actually, removing full-screen overlay for better "instant" flow, relying on skeleton/spinner in fields.
             */}
-            {isFetchingOgp && (
-                <div className="ogp-loading-overlay">
-                    <div className="loading-spinner"></div>
-                    <span className="loading-text">URLから情報を取得しています...</span>
-                </div>
-            )}
+            {/* Overlay Removed as per UX request for "Zero-click" feeling, making it background activity mostly */}
 
             {/* URL Input Section */}
             <div className="form-section url-section" id="recipe-form-url-input">
@@ -371,11 +373,21 @@ export const RecipeForm = ({
                 </div>
             </div>
 
+            {/* Smart Embed Preview (New Placement) */}
+            {sourceUrl && (
+                <div className="w-full max-w-md mx-auto">
+                    <SmartEmbed url={sourceUrl} />
+                </div>
+            )}
+
             {/* Basic Info Section (Title & Image) */}
             <div className="form-section">
                 <div className="form-group">
                     <label>レシピ名 <span className="required">*</span></label>
-                    <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="例: 米粉のパンケーキ" required className="form-input" />
+                    <div className="relative">
+                        <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="例: 米粉のパンケーキ" required className="form-input" />
+                        {isFetchingOgp && <Loader2 size={16} className="absolute right-3 top-3 animate-spin text-gray-400" />}
+                    </div>
                 </div>
 
                 <div className="form-group" id="recipe-form-image-area">
