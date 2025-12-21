@@ -64,7 +64,7 @@ const NotificationList = ({ notifications, onRead, onMarkAllRead, unreadCount = 
     };
 
     const getMessage = (notification) => {
-        const actorName = notification.actor?.displayName || notification.actor?.display_name || notification.actor?.username || '誰か';
+        const actorName = notification.actor?.displayName || notification.actor?.username || notification.actor?.display_name || '誰か';
         const recipeTitle = notification.recipe?.title || 'レシピ';
 
         switch (notification.type) {

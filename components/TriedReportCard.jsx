@@ -72,7 +72,7 @@ const TriedReportCard = ({ report, currentUserId, onDelete }) => {
                     )}
                     <div className="user-details">
                         <span className="username">
-                            {(report.author?.display_name || report.author?.username || report.profiles?.display_name || report.profiles?.username || 'ゲスト')}
+                            {(report.author?.username || report.author?.display_name || report.profiles?.username || report.profiles?.display_name || 'ゲスト')}
                         </span>
                         <span className="timestamp">
                             {formatDate(report.createdAt || report.created_at)}

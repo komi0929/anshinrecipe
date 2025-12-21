@@ -345,7 +345,7 @@ const RecipeDetailPage = () => {
                                 <UserIcon size={16} />
                             </div>
                         )}
-                        <span className="author-name">{recipe.profiles?.display_name || recipe.profiles?.username || 'ゲスト'}</span>
+                        <span className="author-name">{recipe.profiles?.username || recipe.profiles?.display_name || 'ゲスト'}</span>
                     </div>
                     <div className="date-info">
                         <Clock size={14} />
