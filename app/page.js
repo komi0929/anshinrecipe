@@ -106,6 +106,7 @@ const RecipeListPage = () => {
                             author: item.recipe.profiles,
                             userId: item.recipe.user_id,
                             createdAt: item.recipe.created_at,
+                            like_count: item.recipe.like_count || 0,
                         }));
                         setTabRecipes(formatted);
                     }
@@ -128,7 +129,8 @@ const RecipeListPage = () => {
                             author: r.profiles,
                             userId: r.user_id,
                             createdAt: r.created_at,
-                            sourceUrl: r.source_url
+                            sourceUrl: r.source_url,
+                            like_count: r.like_count || 0,
                         }));
                         setTabRecipes(formatted);
                     }
