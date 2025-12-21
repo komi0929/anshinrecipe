@@ -90,7 +90,7 @@ const RecipeListPage = () => {
                                 *,
                                 profiles:user_id(username, avatar_url),
                                 likes (id),
-                                saved_recipes (id)
+                                saved_recipes!recipe_id (id)
                             )
                         `)
                         .eq('user_id', user.id)
@@ -120,7 +120,7 @@ const RecipeListPage = () => {
                             *,
                             profiles:user_id(username, avatar_url),
                             likes (id),
-                            saved_recipes (id)
+                            saved_recipes!recipe_id (id)
                         `)
                         .eq('user_id', user.id)
                         .order('created_at', { ascending: false });
