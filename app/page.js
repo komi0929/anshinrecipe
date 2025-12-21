@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/Input';
 // Onboarding Components - Removed per user request
 import { useNotifications } from '@/hooks/useNotifications';
 import ChildOnboardingPopup from '@/components/ChildOnboardingPopup';
+import PWAInstallPrompt from '@/components/PWAInstallPrompt';
 
 // Random greeting messages
 const GREETINGS = [
@@ -428,6 +429,9 @@ const RecipeListPage = () => {
         <div className="container max-w-md mx-auto min-h-screen bg-background pb-24">
             {/* Child Registration Onboarding Popup */}
             <ChildOnboardingPopup profile={profile} />
+
+            {/* PWA Install Prompt */}
+            <PWAInstallPrompt />
 
             {/* Header with Personalization */}
             <div className="pt-6 pb-4 px-4 flex items-center justify-between">
