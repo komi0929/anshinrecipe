@@ -17,66 +17,61 @@ export async function POST(request) {
 
         // 1. Fetch HTML content
         let html = '';
-        try {
+        let useOembedFallback = false;
+        let oData = null;
+
+        const fetchWithUA = async (userAgent) => {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 8000);
-            const response = await fetch(url, {
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                    'Accept-Language': 'en-US,en;q=0.5'
-                },
-                signal: controller.signal
-            });
-            clearTimeout(timeoutId);
-
-            if (!response.ok) {
-                // Fallback for YouTube Blocking (429/403)
-                if (url.match(/(youtube\.com|youtu\.be)/)) {
-                    console.warn(`YouTube scrape blocked (${response.status}), trying oEmbed...`);
-                    const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`;
-                    const oembedRes = await fetch(oembedUrl);
-                    if (oembedRes.ok) {
-                        const oData = await oembedRes.json();
-                        // Construct minimal HTML for the parser to consume
-                        html = `
-                            <html>
-                                <head>
-                                    <title>${oData.title}</title>
-                                    <meta name="description" content="YouTube Video by ${oData.author_name}. (Description unavailable due to bot protection)">
-                                    <meta property="og:image" content="${oData.thumbnail_url}">
-                                </head>
-                                <body>
-                                    <h1>${oData.title}</h1>
-                                    <p>Author: ${oData.author_name}</p>
-                                </body>
-                            </html>
-                        `;
-                    } else {
-                        throw new Error(`YouTube oEmbed also failed: ${oembedRes.status}`);
-                    }
-                } else {
-                    return NextResponse.json({ error: `Could not access the website (Status: ${response.status}).` }, { status: 400 });
-                }
-            } else {
-                html = await response.text();
+            try {
+                const res = await fetch(url, {
+                    headers: {
+                        'User-Agent': userAgent,
+                        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                        'Accept-Language': 'ja,en-US;q=0.9,en;q=0.8' // Request Japanese
+                    },
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+                return res;
+            } catch (e) {
+                clearTimeout(timeoutId);
+                return null;
             }
-        } catch (error) {
-            // If main fetch failed (network) and it's YouTube, LAST CHANCE try oEmbed
+        };
+
+        // Attempt 1: Standard Browser
+        let response = await fetchWithUA('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
+
+        // Attempt 2: Googlebot (if 1 failed or 403)
+        if (!response || !response.ok) {
+            console.log('Standard fetch failed, trying Googlebot...');
+            response = await fetchWithUA('Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)');
+        }
+
+        if (!response || !response.ok) {
+            // Attempt 3: oEmbed (Last Resort)
             if (url.match(/(youtube\.com|youtu\.be)/)) {
+                console.warn(`YouTube scrape blocked, using oEmbed...`);
                 try {
                     const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`;
                     const oembedRes = await fetch(oembedUrl);
                     if (oembedRes.ok) {
-                        const oData = await oembedRes.json();
-                        html = `<html><head><title>${oData.title}</title><meta name="description" content="Video by ${oData.author_name}"></head><body><h1>${oData.title}</h1></body></html>`;
-                    } else { throw error; }
+                        oData = await oembedRes.json();
+                        useOembedFallback = true;
+                        // Mock HTML not needed if we handle oEmbed logic specially
+                        html = '';
+                    } else {
+                        throw new Error(`YouTube oEmbed also failed: ${oembedRes.status}`);
+                    }
                 } catch (e) {
-                    return NextResponse.json({ error: `Connection failed: ${error.message}` }, { status: 500 });
+                    return NextResponse.json({ error: `Could not access the contents (Status: ${response ? response.status : 'Conn Error'}).` }, { status: 400 });
                 }
             } else {
-                return NextResponse.json({ error: `Connection failed: ${error.message}` }, { status: 500 });
+                return NextResponse.json({ error: `Could not access the website (Status: ${response ? response.status : 'Conn Error'}).` }, { status: 400 });
             }
+        } else {
+            html = await response.text();
         }
 
         // 2. Parsed Data Prep
@@ -90,23 +85,49 @@ export async function POST(request) {
             } catch (e) { }
         });
 
-        // SPECIAL HANDLING FOR YOUTUBE: Extract description from meta tag (often contains ingredients)
+        // SPECIAL HANDLING FOR YOUTUBE
         let specialDescription = '';
-        if (url.includes('youtube.com') || url.includes('youtu.be')) {
-            specialDescription = $('meta[name="description"]').attr('content') ||
-                $('meta[property="og:description"]').attr('content') || '';
+        if (url.match(/(youtube\.com|youtu\.be)/)) {
+            if (useOembedFallback && oData) {
+                // We only have Title/Author.
+                specialDescription = `Title: ${oData.title}\nAuthor: ${oData.author_name}\n(Description unavailable - blocked)`;
+            } else {
+                // Try to extract from Meta
+                specialDescription = $('meta[name="description"]').attr('content') ||
+                    $('meta[property="og:description"]').attr('content') || '';
+
+                // CRITICAL: Try to extract from JSON in Script (ytInitialPlayerResponse)
+                // This is where the full description lives!
+                try {
+                    const scriptMatch = html.match(/ytInitialPlayerResponse\s*=\s*({.+?});/);
+                    if (scriptMatch && scriptMatch[1]) {
+                        const ytData = JSON.parse(scriptMatch[1]);
+                        const desc = ytData.videoDetails?.shortDescription;
+                        if (desc) {
+                            specialDescription += "\nFULL VIDEO DESCRIPTION:\n" + desc;
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Failed to parse ytInitialPlayerResponse', e);
+                }
+            }
         }
 
         const textContent = (specialDescription + '\n' + $('body').text()).replace(/\s+/g, ' ').slice(0, 20000);
 
-        // 3. AI Extraction
-        const prompt = `You are a recipe parser assistant. Extract recipe details from the provided HTML text and JSON-LD.
+        // If we are strictly on oEmbed and have NO text, we should probably SKIP Gemini or warn it?
+        // Actually, Gemini can still tag based on "Pancake Recipe" title.
+        // But if we want to GUARANTEE no 500 loop, we should check if data is empty.
 
+        // 3. AI Extraction
+        const prompt = `You are a recipe parser assistant. Extract recipe details from the HTML/Text provided.
+        
         Rules:
         - Extract "ingredients" and "steps" as arrays of strings.
-        - Generate 3-5 relevant "tags" (Japanese) based on the recipe (e.g., Main Ingredient, Genre, Cooking Time, Difficulty).
-        - If the content is a video description (YouTube), parsing the text for ingredients and steps is PRIORITY.
-
+        - Generate 3-5 relevant "tags" (Japanese) based on the recipe (e.g., Main Ingredient, Genre, Cooking Time).
+        - If content is sparse (e.g. only Title), try to infer tags from Title.
+        - If NO ingredients found, return empty array "[]". DO NOT FAIL.
+        
         Return a valid JSON object with this EXACT structure:
         {
             "title": "Recipe Title",
@@ -118,7 +139,7 @@ export async function POST(request) {
             "servings": "2 servings"
         }
         IMPORTANT: Return ONLY the JSON object. Do not wrap in markdown.
-
+        
         Input Data:
         URL: ${url}
         JSON-LD Data: ${JSON.stringify(jsonLd)}
