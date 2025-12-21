@@ -39,7 +39,7 @@ export async function POST(request) {
             }
         };
 
-        // PARALLEL STRATEGY for YouTube: Fetch oEmbed (Reliable) + HTML (for Text)
+        // PARALLEL STRATEGY for YouTube/Instagram: Fetch oEmbed (Reliable) + HTML (for Text)
         // User requested: "Traditional method (Safe) for Title/Image, Scrape for Ingredients"
         if (url.match(/(youtube\.com|youtu\.be)/)) {
             console.log('YouTube detected: Fetching oEmbed for guaranteed metadata...');
@@ -51,12 +51,30 @@ export async function POST(request) {
                     oData = await oRes.json();
                 }
             } catch (e) {
-                console.warn('oEmbed fetch failed', e);
+                console.warn('YouTube oEmbed fetch failed', e);
+            }
+        } else if (url.match(/(instagram\.com|instagr\.am)/)) {
+            console.log('Instagram detected: Fetching oEmbed...');
+            try {
+                // Instagram Legacy oEmbed
+                const oembedUrl = `https://api.instagram.com/oembed?url=${encodeURIComponent(url)}&format=json`;
+                const oRes = await fetch(oembedUrl);
+                if (oRes.ok) {
+                    oData = await oRes.json();
+                }
+            } catch (e) {
+                console.warn('Instagram oEmbed fetch failed', e);
             }
         }
 
         // Fetch HTML (for Description/Ingredients)
-        let response = await fetchWithUA('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
+        // Use Googlebot specifically for Instagram to bypass login wall
+        let ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36';
+        if (url.match(/(instagram\.com|instagr\.am)/)) {
+            ua = 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)';
+        }
+
+        let response = await fetchWithUA(ua);
 
         // Retry with Googlebot if 403 (Optional, but sometimes helps get DESCRIPTION. Risky for Title, but we have oData now!)
         if (!response || !response.ok) {
