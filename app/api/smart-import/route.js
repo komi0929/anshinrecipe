@@ -41,22 +41,40 @@ export async function POST(request) {
                 if (data['@type'] === 'Recipe' || Array.isArray(data) && data.find(item => item['@type'] === 'Recipe')) jsonLd = data;
             } catch (e) { }
         });
-        const textContent = $('body').text().replace(/\s+/g, ' ').slice(0, 20000);
+
+        // SPECIAL HANDLING FOR YOUTUBE: Extract description from meta tag (often contains ingredients)
+        let specialDescription = '';
+        if (url.includes('youtube.com') || url.includes('youtu.be')) {
+            specialDescription = $('meta[name="description"]').attr('content') ||
+                $('meta[property="og:description"]').attr('content') || '';
+        }
+
+        const textContent = (specialDescription + '\n' + $('body').text()).replace(/\s+/g, ' ').slice(0, 20000);
 
         // 3. AI Extraction
         const prompt = `You are a recipe parser assistant. Extract recipe details from the provided HTML text and JSON-LD.
-        Return a valid JSON object with the following structure:
+
+        Rules:
+        - Extract "ingredients" and "steps" as arrays of strings.
+        - Generate 3-5 relevant "tags" (Japanese) based on the recipe (e.g., Main Ingredient, Genre, Cooking Time, Difficulty).
+        - If the content is a video description (YouTube), parsing the text for ingredients and steps is PRIORITY.
+
+        Return a valid JSON object with this EXACT structure:
         {
             "title": "Recipe Title",
             "description": "Short description",
             "image_url": "URL of the main food image",
             "ingredients": ["Ingredient 1", "Ingredient 2"],
             "steps": ["Step 1", "Step 2"],
-            "tags": ["#Tag1", "#Tag2", "#Tag3"],
+            "tags": ["Tag1", "Tag2", "Tag3"],
             "servings": "2 servings"
         }
         IMPORTANT: Return ONLY the JSON object. Do not wrap in markdown.
-        Input Data: URL: ${url} JSON-LD Data: ${JSON.stringify(jsonLd)} Page Text Content: ${textContent}
+
+        Input Data:
+        URL: ${url}
+        JSON-LD Data: ${JSON.stringify(jsonLd)}
+        Page Text Content (Description First): ${textContent}
         `;
 
         // Updated models based on user's access list (prioritizing 2.0 Flash as it's stable/fast)

@@ -112,17 +112,21 @@ export const RecipeForm = ({
                 return;
             }
 
-            // Start Analysis
+            // RESET FORM DATA ON NEW URL DETECTION
+            // User requested: "When URL is pasted/changed, reset information immediately"
+            setTitle(''); // Clear title
+            setImage('');
+            setDescription('');
+            setTags([]); // Clear tags
+            setIngredientsAndSteps(''); // Clear ingredients
+            setShowIngredientsField(true); // Show field immediately with loading state
             setIsSmartImporting(true);
             setSmartImportError(null);
-            setShowIngredientsField(true); // Show field immediately
-            setIngredientsAndSteps(''); // Clear previous
+            setOgpFetched(false); // Reset OGP state
 
             try {
-                // Also trigger OGP fetch if not done yet
-                if (!ogpFetched && !title) {
-                    fetchOgpData();
-                }
+                // Trigger OGP fetch
+                fetchOgpData();
 
                 const response = await fetch('/api/smart-import', {
                     method: 'POST',
@@ -155,36 +159,14 @@ export const RecipeForm = ({
                         setIngredientsAndSteps(contentToAdd);
                         setShowIngredientsField(true);
                     } else {
-                        // Keep visible if success but empty? Or hide?
-                        // User said "If failed -> hide". If success -> keep.
-                        // But if empty success, it's effectively useless.
-                        // But maybe OGP/Video embed is enough.
                         setShowIngredientsField(false);
                     }
 
                     // Tags - FIX: Use functional update to ensure fresh state
                     if (d.tags && Array.isArray(d.tags) && d.tags.length > 0) {
                         setTags(prevTags => {
-                            const newTags = [...prevTags];
-                            let changed = false;
-
-                            // Helper for unique add
-                            const addUnique = (t) => {
-                                const clean = t.replace(/^#/, '').trim();
-                                if (clean && !newTags.includes(clean)) {
-                                    newTags.push(clean);
-                                    changed = true;
-                                }
-                            };
-
-                            // Add AI tags
-                            d.tags.forEach(addUnique);
-
-                            // If we didn't have allergens tags yet, maybe add them? (Assuming AI does it)
-                            // If user already selected Children with Allergens, maybe add "Allergy Friendly"?
-                            // (Leaving logic simple for now)
-
-                            return changed ? newTags : prevTags;
+                            const uniqueTags = new Set(d.tags.map(t => t.replace(/^#/, '').trim()));
+                            return Array.from(uniqueTags);
                         });
                     }
 
