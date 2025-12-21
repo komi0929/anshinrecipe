@@ -89,7 +89,7 @@ const RecipeListPage = () => {
                             recipe:recipes (
                                 *,
                                 profiles:user_id(username, avatar_url),
-                                likes (id),
+                                likes!recipe_id (id),
                                 saved_recipes!recipe_id (id)
                             )
                         `)
@@ -119,7 +119,7 @@ const RecipeListPage = () => {
                         .select(`
                             *,
                             profiles:user_id(username, avatar_url),
-                            likes (id),
+                            likes!recipe_id (id),
                             saved_recipes!recipe_id (id)
                         `)
                         .eq('user_id', user.id)

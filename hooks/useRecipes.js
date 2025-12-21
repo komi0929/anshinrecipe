@@ -24,7 +24,7 @@ export const useRecipes = () => {
                     ),
                     cooking_logs (id, content, rating, created_at, user_id),
                     recipe_images (id, image_url),
-                    likes (id),
+                    likes!recipe_id (id),
                     saved_recipes!recipe_id (id)
                 `)
                 .order('created_at', { ascending: false });
