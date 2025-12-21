@@ -2,11 +2,17 @@ import { NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import * as cheerio from 'cheerio';
 
-// Initialize Gemini client
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY);
-
 export async function POST(request) {
     try {
+        const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+        if (!apiKey) {
+            console.error('API Key missing');
+            return NextResponse.json({ error: 'Server Error: API Key is not configured.' }, { status: 500 });
+        }
+
+        // Initialize Gemini client inside the handler (safer for hot reloads/env updates)
+        const genAI = new GoogleGenerativeAI(apiKey);
+
         const { url } = await request.json();
 
         if (!url) {
@@ -17,6 +23,7 @@ export async function POST(request) {
 
         // 1. Fetch HTML content
         let html = '';
+        let fetchStatus = 0;
         try {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 8000); // 8s timeout
@@ -29,18 +36,26 @@ export async function POST(request) {
             });
 
             clearTimeout(timeoutId);
+            fetchStatus = response.status;
 
             if (!response.ok) {
                 console.warn('Fetch failed:', response.status);
+                // Return specific error if fetch failed (often 403/404)
+                return NextResponse.json({ error: `Could not access the website (Status: ${response.status}). The site might be blocking access.` }, { status: 400 });
             } else {
                 html = await response.text();
             }
         } catch (error) {
             console.error('Fetch error:', error);
+            return NextResponse.json({ error: `Connection failed: ${error.message}` }, { status: 500 });
         }
 
         // 2. Extract Text Content using Cheerio
-        const $ = cheerio.load(html || '<html><body></body></html>');
+        if (!html) {
+            return NextResponse.json({ error: 'Retrieved empty content from URL.' }, { status: 400 });
+        }
+
+        const $ = cheerio.load(html);
 
         // Remove scripts, styles, and non-content
         $('script').remove();
@@ -71,7 +86,6 @@ export async function POST(request) {
         // 3. Call Gemini 1.5 Flash to Parse/Extract
         const model = genAI.getGenerativeModel({
             model: "gemini-1.5-flash",
-            // generationConfig: { responseMimeType: "application/json" } // Removed strict json mode as it might cause issues if model adds backticks
         });
 
         const prompt = `You are a recipe parser assistant. Extract recipe details from the provided HTML text and JSON-LD.
@@ -102,33 +116,39 @@ export async function POST(request) {
         Page Text Content: ${textContent}
         `;
 
-        const result = await model.generateContent(prompt);
-        let responseText = result.response.text();
-
-        console.log('Gemini Raw Response:', responseText);
-
-        // Sanitize markdown backticks just in case
-        responseText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
-
-        let data;
         try {
-            data = JSON.parse(responseText);
-        } catch (e) {
-            console.error('JSON Parse Error:', e);
-            // Fallback attempt: try to find JSON object with regex if mixed content
-            const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-            if (jsonMatch) {
-                try {
-                    data = JSON.parse(jsonMatch[0]);
-                } catch (e2) { }
+            const result = await model.generateContent(prompt);
+            let responseText = result.response.text();
+
+            console.log('Gemini Raw Response:', responseText);
+
+            // Sanitize markdown backticks just in case
+            responseText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+
+            let data;
+            try {
+                data = JSON.parse(responseText);
+            } catch (e) {
+                console.error('JSON Parse Error:', e);
+                // Fallback attempt: try to find JSON object with regex if mixed content
+                const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+                if (jsonMatch) {
+                    try {
+                        data = JSON.parse(jsonMatch[0]);
+                    } catch (e2) { }
+                }
+                if (!data) throw new Error('Failed to parse AI response JSON');
             }
-            if (!data) throw new Error('Failed to parse AI response');
+
+            return NextResponse.json({ success: true, data: data });
+
+        } catch (geminiError) {
+            console.error('Gemini API Error:', geminiError);
+            return NextResponse.json({ error: `AI Error: ${geminiError.message}` }, { status: 500 });
         }
 
-        return NextResponse.json({ success: true, data: data });
-
     } catch (error) {
-        console.error('Smart Import API Error (Gemini):', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        console.error('Smart Import API Critical Error:', error);
+        return NextResponse.json({ error: `System Error: ${error.message}` }, { status: 500 });
     }
 }

@@ -124,7 +124,10 @@ export const RecipeForm = ({
                     body: JSON.stringify({ url: sourceUrl })
                 });
 
-                if (!response.ok) throw new Error('AI解析に失敗しました');
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `Error ${response.status}`);
+                }
 
                 const result = await response.json();
                 console.log('Smart Import Result:', result); // Debug log
@@ -145,12 +148,13 @@ export const RecipeForm = ({
 
                 } else {
                     console.warn('Smart Import returned no data');
-                    setIngredientsAndSteps('うまく情報を取得できませんでした');
+                    setIngredientsAndSteps('うまく情報を取得できませんでした (データなし)');
                 }
             } catch (error) {
                 console.error('Smart Import Error:', error);
                 setSmartImportError('情報の取得に失敗しました');
-                setIngredientsAndSteps('うまく情報を取得できませんでした (通信または解析エラー)');
+                // SHOW THE RAW ERROR MESSAGE TO THE USER
+                setIngredientsAndSteps(`エラー詳細: ${error.message}`);
             } finally {
                 setIsSmartImporting(false);
             }
@@ -312,7 +316,7 @@ export const RecipeForm = ({
         try {
             // MERGE Ingredients/Steps into Memo for storage (since we have no dedicated DB column yet)
             let finalMemo = memo;
-            if (ingredientsAndSteps && ingredientsAndSteps.trim()) {
+            if (ingredientsAndSteps && ingredientsAndSteps.trim() && !ingredientsAndSteps.startsWith('詳細エラー')) {
                 finalMemo = memo ? `${memo}\n\n${ingredientsAndSteps}` : ingredientsAndSteps;
             }
 
