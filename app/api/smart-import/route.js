@@ -22,18 +22,52 @@ async function getOgpData(url) {
         return result;
     }
 
-    // TikTok: Use oEmbed (RELIABLE)
-    if (url.match(/tiktok\.com/)) {
+    // TikTok: Use oEmbed (RELIABLE) - includes short URLs (vm.tiktok.com)
+    if (url.match(/(tiktok\.com|vm\.tiktok\.com|m\.tiktok\.com)/)) {
         try {
             const oembedUrl = `https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`;
-            const res = await fetch(oembedUrl);
+            const res = await fetch(oembedUrl, {
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                }
+            });
             if (res.ok) {
                 const data = await res.json();
                 result.title = data.title;
                 result.image = data.thumbnail_url;
                 result.description = `Video by ${data.author_name}`;
+                // If we got data, return it
+                if (result.title || result.image) {
+                    return result;
+                }
             }
-        } catch (e) { console.warn('TikTok OGP fail', e); }
+        } catch (e) {
+            console.warn('TikTok oEmbed fail, trying Googlebot scrape...', e);
+        }
+
+        // Fallback: Googlebot scrape for TikTok OGP
+        try {
+            const controller = new AbortController();
+            setTimeout(() => controller.abort(), 8000);
+            const res = await fetch(url, {
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+                    'Accept': 'text/html'
+                },
+                signal: controller.signal
+            });
+            if (res.ok) {
+                const html = await res.text();
+                const $ = cheerio.load(html);
+                result.title = $('meta[property="og:title"]').attr('content') ||
+                    $('meta[name="twitter:title"]').attr('content') ||
+                    $('title').text() || null;
+                result.image = $('meta[property="og:image"]').attr('content') ||
+                    $('meta[name="twitter:image"]').attr('content') || null;
+                result.description = $('meta[property="og:description"]').attr('content') || null;
+            }
+        } catch (e) { console.warn('TikTok Googlebot scrape fail', e); }
+
         return result;
     }
 
