@@ -123,13 +123,17 @@ export const RecipeForm = ({
                 if (!response.ok) throw new Error('AI解析に失敗しました');
 
                 const result = await response.json();
+                console.log('Smart Import Result:', result); // Debug log
+
                 if (result.success && result.data) {
                     setSmartImportData(result.data);
+                } else {
+                    // API returned success but no data or error
+                    console.warn('Smart Import returned no data');
                 }
             } catch (error) {
-                // Only log error, don't show to user unless manually requested
-                // console.error('Smart Import Error:', error); 
-                // Silent fail for background process
+                console.error('Smart Import Error:', error);
+                setSmartImportError('情報の取得に失敗しました');
             } finally {
                 setIsSmartImporting(false);
             }
@@ -144,15 +148,18 @@ export const RecipeForm = ({
     }, [sourceUrl]);
 
     const applySmartImportData = () => {
-        if (!smartImportData) return;
+        if (!smartImportData) {
+            alert('AIデータが見つかりませんでした');
+            return;
+        }
 
         const d = smartImportData;
+        let appliedCount = 0;
 
-        // Intelligent overwrite: only if empty or heavily preferred
-        if (d.title) setTitle(d.title);
-        // Prefer extracting a clean image if OGP failed or this is better
-        if (d.image_url && (!image || image.includes('placeholder'))) setImage(d.image_url);
-        if (d.description) setDescription(d.description);
+        // Intelligent overwrite
+        if (d.title) { setTitle(d.title); appliedCount++; }
+        if (d.image_url && (!image || image.includes('placeholder'))) { setImage(d.image_url); appliedCount++; }
+        if (d.description) { setDescription(d.description); }
 
         // Format Memo with Ingredients and Steps
         let newMemo = memo;
@@ -162,24 +169,33 @@ export const RecipeForm = ({
         const contentToAdd = [materialsText, stepsText].filter(Boolean).join('\n\n');
 
         if (contentToAdd) {
-            // If memo is empty, just set it. If not, append.
             setMemo(newMemo ? `${newMemo}\n\n${contentToAdd}` : contentToAdd);
+            appliedCount++;
         }
 
-        // Add tags (avoid duplicates)
-        if (d.tags && Array.isArray(d.tags)) {
+        // Add tags
+        if (d.tags && Array.isArray(d.tags) && d.tags.length > 0) {
             const newTags = [...tags];
+            let tagAdded = false;
             d.tags.forEach(tag => {
                 const cleanTag = tag.replace(/^#/, ''); // Remove # if present
                 if (!newTags.includes(cleanTag)) {
                     newTags.push(cleanTag);
+                    tagAdded = true;
                 }
             });
-            setTags(newTags);
+            if (tagAdded) {
+                setTags(newTags);
+                appliedCount++;
+            }
         }
 
-        setSmartImportData(null); // Clear to hide button
-        alert('AIデータを反映しました✨');
+        if (appliedCount > 0) {
+            setSmartImportData(null); // Clear to hide button
+            alert('AIデータを反映しました✨\n(材料と作り方はメモ欄に追記されました)');
+        } else {
+            alert('反映できる情報が見つかりませんでした。\n(AIがレシピ情報をうまく抽出できなかった可能性があります)');
+        }
     };
 
     // ... (rest of image upload handlers)

@@ -71,7 +71,7 @@ export async function POST(request) {
         // 3. Call Gemini 1.5 Flash to Parse/Extract
         const model = genAI.getGenerativeModel({
             model: "gemini-1.5-flash",
-            generationConfig: { responseMimeType: "application/json" }
+            // generationConfig: { responseMimeType: "application/json" } // Removed strict json mode as it might cause issues if model adds backticks
         });
 
         const prompt = `You are a recipe parser assistant. Extract recipe details from the provided HTML text and JSON-LD.
@@ -93,6 +93,8 @@ export async function POST(request) {
         2. Tags should be relevant for search (e.g. main ingredient like '#鶏肉', usage scene like '#お弁当', or feature like '#時短').
         3. Start each tag with '#'.
         
+        IMPORTANT: Return ONLY the JSON object. Do not wrap in markdown code blocks.
+        
         Input Data:
         URL: ${url}
         JSON-LD Data: ${JSON.stringify(jsonLd)}
@@ -101,8 +103,27 @@ export async function POST(request) {
         `;
 
         const result = await model.generateContent(prompt);
-        const responseText = result.response.text();
-        const data = JSON.parse(responseText);
+        let responseText = result.response.text();
+
+        console.log('Gemini Raw Response:', responseText);
+
+        // Sanitize markdown backticks just in case
+        responseText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+
+        let data;
+        try {
+            data = JSON.parse(responseText);
+        } catch (e) {
+            console.error('JSON Parse Error:', e);
+            // Fallback attempt: try to find JSON object with regex if mixed content
+            const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+                try {
+                    data = JSON.parse(jsonMatch[0]);
+                } catch (e2) { }
+            }
+            if (!data) throw new Error('Failed to parse AI response');
+        }
 
         return NextResponse.json({ success: true, data: data });
 
