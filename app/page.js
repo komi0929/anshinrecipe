@@ -450,23 +450,23 @@ const RecipeListPage = () => {
                     </div>
 
                     {/* Sort Toggle */}
-                    <div className="flex items-center justify-end gap-2 px-4 mb-3">
-                        <span className="text-xs text-slate-400 mr-1">並び替え:</span>
+                    <div className="flex items-center gap-2 px-4 mb-3 overflow-x-auto pb-1 scrollbar-hide">
+                        <span className="text-xs text-slate-400 whitespace-nowrap">並び替え:</span>
                         <button
                             onClick={() => setSortOrder(sortOrder === 'newest' ? null : 'newest')}
-                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${sortOrder === 'newest' ? 'bg-primary text-white shadow-sm' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap flex-shrink-0 ${sortOrder === 'newest' ? 'bg-primary text-white shadow-sm' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
                         >
                             🕐 新着順
                         </button>
                         <button
                             onClick={() => setSortOrder(sortOrder === 'likes' ? null : 'likes')}
-                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${sortOrder === 'likes' ? 'bg-primary text-white shadow-sm' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap flex-shrink-0 ${sortOrder === 'likes' ? 'bg-primary text-white shadow-sm' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
                         >
                             ❤️ いいね！順
                         </button>
                         <button
                             onClick={() => setSortOrder(sortOrder === 'saves' ? null : 'saves')}
-                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${sortOrder === 'saves' ? 'bg-primary text-white shadow-sm' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap flex-shrink-0 ${sortOrder === 'saves' ? 'bg-primary text-white shadow-sm' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
                         >
                             📚 保存数順
                         </button>
