@@ -101,11 +101,8 @@ export async function POST(request) {
             const url = extractUrl(messageText);
 
             if (!url) {
-                // No URL found - send help message
-                await replyMessage(replyToken, {
-                    type: 'text',
-                    text: '🍳 レシピのURLを送ってね！\n\nInstagramやTikTokのレシピURLをそのまま送信すると、あんしんレシピに保存できます。'
-                });
+                // No URL found - DO NOT reply (allow human support to handle)
+                // This ensures customer support messages are not interrupted by bot
                 continue;
             }
 
