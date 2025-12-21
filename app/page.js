@@ -324,6 +324,12 @@ const RecipeListPage = () => {
 
     // 3. Logged In but No Children -> Onboarding Wizard
     // 3. Show empty state for logged-in users without children
+    // CRITICAL: Wait for profile data to be fully loaded (profile.id exists)
+    // This prevents incorrect flash of "register child" screen
+    if (profileLoading || !profile?.id) {
+        return null; // Wait for profile data to fully load
+    }
+
     if (profile?.children?.length === 0) {
         return (
             <div className="container max-w-md mx-auto min-h-screen bg-background pb-20">
