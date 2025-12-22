@@ -278,123 +278,125 @@ const RecipeListPage = () => {
     }
 
     // 2. Not Logged In -> Original Landing Page
+    // 2. Not Logged In -> Original Landing Page
     if (!user) {
         return (
             <div className="min-h-screen flex flex-col bg-gradient-to-b from-orange-50 to-white">
-                <div className="flex-1 flex flex-col items-center px-4 py-6 max-w-[480px] mx-auto w-full">
-                    {/* Hero Section - Compact */}
-                    <div className="text-center mb-4 w-full">
-                        <div className="flex justify-center mb-3">
+                <div className="flex-1 flex flex-col items-center px-4 py-8 max-w-[480px] mx-auto w-full">
+                    {/* Hero Section */}
+                    <div className="text-center mb-6 w-full">
+                        <div className="flex justify-center mb-4">
                             <Image
                                 src="/logo.png"
                                 alt="あんしんレシピ"
-                                width={280}
-                                height={70}
+                                width={320}
+                                height={80}
                                 priority
-                                className="w-[160px] h-auto object-contain"
+                                className="w-[280px] h-auto object-contain"
                             />
                         </div>
-                        <h2 className="text-base font-bold text-slate-700 leading-snug">
+                        <h2 className="text-lg font-bold text-slate-700 leading-snug">
                             アレルギーっ子が笑顔になれる
-                            <span className="text-primary"> みんなのレシピ帳</span>
+                            <span className="text-primary block text-xl mt-1">みんなのレシピ帳</span>
                         </h2>
                     </div>
 
-                    {/* Feature Cards - 2x2 Grid */}
-                    <div className="w-full grid grid-cols-2 gap-3 mb-4">
-                        {/* Card 1: Memo */}
-                        <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center text-center">
-                            <div className="w-16 h-16 mb-2 relative">
-                                <Image
-                                    src="/features/memo.png"
-                                    alt="簡単メモ"
-                                    fill
-                                    className="object-contain"
-                                />
+                    {/* Feature Cards - Masonry Layout */}
+                    <div className="w-full grid grid-cols-2 gap-3 mb-6">
+                        {/* Left Column */}
+                        <div className="flex flex-col gap-3">
+                            {/* Card 1: Memo (Large) */}
+                            <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center text-center h-[200px] justify-center relative overflow-hidden group">
+                                <div className="absolute top-0 left-0 w-full h-1 bg-orange-400 opacity-80"></div>
+                                <div className="w-20 h-20 mb-3 relative group-hover:scale-110 transition-transform duration-300">
+                                    <Image
+                                        src="/features/memo.png"
+                                        alt="簡単メモ"
+                                        fill
+                                        className="object-contain"
+                                    />
+                                </div>
+                                <h3 className="text-base font-black text-slate-800 mb-1">
+                                    レシピを簡単メモ
+                                </h3>
+                                <p className="text-xs font-bold text-slate-500 leading-tight">
+                                    アレルギー対応レシピを<br />サッと記録
+                                </p>
                             </div>
-                            <h3 className="text-sm font-bold text-slate-800 mb-1">
-                                レシピを簡単メモ
-                            </h3>
-                            <p className="text-xs text-slate-500 leading-relaxed">
-                                アレルギー対応レシピを<br />サッと記録
-                            </p>
+
+                            {/* Card 3: Connect (Small) */}
+                            <div className="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center text-center h-[140px] justify-center group">
+                                <div className="w-12 h-12 mb-2 relative group-hover:scale-110 transition-transform duration-300">
+                                    <Image
+                                        src="/features/connect.png"
+                                        alt="感謝を伝える"
+                                        fill
+                                        className="object-contain"
+                                    />
+                                </div>
+                                <h3 className="text-sm font-black text-slate-800 mb-1">
+                                    感謝を伝える
+                                </h3>
+                                <p className="text-[10px] font-bold text-slate-500 leading-tight">
+                                    「助かった！」を<br />気軽に送信
+                                </p>
+                            </div>
                         </div>
 
-                        {/* Card 2: Share */}
-                        <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center text-center">
-                            <div className="w-16 h-16 mb-2 relative">
-                                <Image
-                                    src="/features/share.png"
-                                    alt="レシピ共有"
-                                    fill
-                                    className="object-contain"
-                                />
+                        {/* Right Column */}
+                        <div className="flex flex-col gap-3">
+                            {/* Card 4: AI Import (Small - Swapped to Top) */}
+                            <div className="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center text-center h-[140px] justify-center group">
+                                <div className="w-12 h-12 mb-2 flex items-center justify-center text-4xl group-hover:scale-110 transition-transform duration-300">
+                                    ✨
+                                </div>
+                                <h3 className="text-sm font-black text-slate-800 mb-1">
+                                    AIでかんたん登録
+                                </h3>
+                                <p className="text-[10px] font-bold text-slate-500 leading-tight">
+                                    URLを貼るだけで<br />レシピを自動取得
+                                </p>
                             </div>
-                            <h3 className="text-sm font-bold text-slate-800 mb-1">
-                                安心レシピを共有
-                            </h3>
-                            <p className="text-xs text-slate-500 leading-relaxed">
-                                工夫したレシピを<br />みんなにシェア
-                            </p>
-                        </div>
 
-                        {/* Card 3: Connect */}
-                        <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center text-center">
-                            <div className="w-16 h-16 mb-2 relative">
-                                <Image
-                                    src="/features/connect.png"
-                                    alt="感謝を伝える"
-                                    fill
-                                    className="object-contain"
-                                />
+                            {/* Card 2: Share (Large - Swapped to Bottom) */}
+                            <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center text-center h-[200px] justify-center relative overflow-hidden group">
+                                <div className="absolute top-0 left-0 w-full h-1 bg-pink-400 opacity-80"></div>
+                                <div className="w-20 h-20 mb-3 relative group-hover:scale-110 transition-transform duration-300">
+                                    <Image
+                                        src="/features/share.png"
+                                        alt="レシピ共有"
+                                        fill
+                                        className="object-contain"
+                                    />
+                                </div>
+                                <h3 className="text-base font-black text-slate-800 mb-1">
+                                    安心レシピを共有
+                                </h3>
+                                <p className="text-xs font-bold text-slate-500 leading-tight">
+                                    工夫したレシピを<br />みんなにシェア
+                                </p>
                             </div>
-                            <h3 className="text-sm font-bold text-slate-800 mb-1">
-                                感謝を伝える
-                            </h3>
-                            <p className="text-xs text-slate-500 leading-relaxed">
-                                「助かった！」を<br />気軽に送信
-                            </p>
-                        </div>
-
-                        {/* Card 4: AI Import */}
-                        <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center text-center">
-                            <div className="w-16 h-16 mb-2 flex items-center justify-center text-4xl">
-                                ✨
-                            </div>
-                            <h3 className="text-sm font-bold text-slate-800 mb-1">
-                                AIでかんたん登録
-                            </h3>
-                            <p className="text-xs text-slate-500 leading-relaxed">
-                                URLを貼るだけで<br />レシピを自動取得
-                            </p>
                         </div>
                     </div>
 
                     {/* CTA Section */}
-                    <div className="w-full bg-white/90 backdrop-blur-sm rounded-2xl p-5 shadow-md border border-orange-100 mb-4">
+                    <div className="w-full bg-white/90 backdrop-blur-sm rounded-3xl p-6 shadow-lg border-2 border-orange-100 mb-4 transform hover:scale-[1.02] transition-all duration-300">
                         <div className="flex flex-col items-center gap-3">
-                            <p className="text-center text-slate-700 font-bold text-sm">
+                            <p className="text-center text-slate-700 font-bold text-base mb-1">
                                 LINEアカウントで今すぐ始めましょう
                             </p>
+
+                            {/* Team Link - Repositioned Here */}
+                            <Link href="/team" className="flex items-center gap-1 text-orange-500 font-bold text-sm bg-orange-50 px-3 py-1 rounded-full mb-1 hover:bg-orange-100 transition-colors">
+                                <span>👋 だれがやってるの？</span>
+                            </Link>
+
                             <LineLoginButton />
-                            <p className="text-center text-slate-400 text-[10px]">
-                                ログインをもって <Link href="/terms" className="text-slate-500 underline">利用規約</Link>・<Link href="/privacy" className="text-slate-500 underline">プライバシーポリシー</Link> に同意とみなします
+
+                            <p className="text-center text-slate-400 text-[10px] mt-1">
+                                ログインをもって利用規約・プライバシーポリシーに同意とみなします
                             </p>
                         </div>
-                    </div>
-
-                    {/* Story Links */}
-                    <div className="flex gap-4 text-sm">
-                        <Link href="/about" className="flex items-center gap-1 text-slate-500 hover:text-orange-500 transition-colors">
-                            <span>📖</span>
-                            <span>が生まれるまで</span>
-                            <span>→</span>
-                        </Link>
-                        <Link href="/team" className="flex items-center gap-1 text-slate-500 hover:text-orange-500 transition-colors">
-                            <span>👋</span>
-                            <span>だれがやってるの？</span>
-                            <span>→</span>
-                        </Link>
                     </div>
                 </div>
             </div>
