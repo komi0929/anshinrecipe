@@ -8,7 +8,7 @@ import Image from 'next/image';
 import {
     User, Settings, FileText, HelpCircle, LogOut,
     Trash2, ChevronRight, Camera, Plus, MapPin,
-    ShieldAlert, Info, Mail, Pencil, Loader2, Award, MessageCircle, Zap, Smartphone
+    ShieldAlert, Info, Mail, Pencil, Loader2, Award, MessageCircle, Zap, Smartphone, Users
 } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { Footer } from '@/components/Footer';
@@ -436,6 +436,16 @@ export default function ProfilePage() {
                             </div>
                             <ChevronRight className="text-slate-300" size={20} />
                         </button>
+                        <Link
+                            href="/team"
+                            className="w-full p-4 flex items-center justify-between border-b border-slate-50 last:border-none hover:bg-slate-50 transition-colors"
+                        >
+                            <div className="flex items-center gap-3 text-text-main">
+                                <Users size={20} className="text-slate-400" />
+                                <span>だれがやってるの？</span>
+                            </div>
+                            <ChevronRight className="text-slate-300" size={20} />
+                        </Link>
                     </div>
                 </div>
 

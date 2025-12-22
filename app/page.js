@@ -280,47 +280,31 @@ const RecipeListPage = () => {
     // 2. Not Logged In -> Original Landing Page
     if (!user) {
         return (
-            <div className="min-h-screen flex flex-col bg-[#fcfcfc] pb-10">
-                <style jsx global>{`
-                    @keyframes fadeInUp {
-                        from { opacity: 0; transform: translateY(20px); }
-                        to { opacity: 1; transform: translateY(0); }
-                    }
-                    .animate-fade-in-up {
-                        animation: fadeInUp 0.6s ease-out forwards;
-                        opacity: 0;
-                    }
-                    .delay-100 { animation-delay: 0.1s; }
-                    .delay-200 { animation-delay: 0.2s; }
-                    .delay-300 { animation-delay: 0.3s; }
-                    .delay-400 { animation-delay: 0.4s; }
-                `}</style>
-
-                <div className="flex-1 flex flex-col items-center p-6 max-w-[480px] mx-auto w-full">
-                    {/* Hero Section */}
-                    <div className="text-center mb-10 w-full animate-fade-in-up">
-                        <div className="flex justify-center mb-6">
+            <div className="min-h-screen flex flex-col bg-gradient-to-b from-orange-50 to-white">
+                <div className="flex-1 flex flex-col items-center px-4 py-6 max-w-[480px] mx-auto w-full">
+                    {/* Hero Section - Compact */}
+                    <div className="text-center mb-4 w-full">
+                        <div className="flex justify-center mb-3">
                             <Image
                                 src="/logo.png"
                                 alt="あんしんレシピ"
-                                width={360}
-                                height={90}
+                                width={280}
+                                height={70}
                                 priority
-                                className="w-[220px] h-auto object-contain drop-shadow-sm"
+                                className="w-[160px] h-auto object-contain"
                             />
                         </div>
-
-                        <h2 className="text-xl font-bold text-slate-700 leading-relaxed">
-                            アレルギーっ子が笑顔になれる<br />
-                            <span className="text-primary text-2xl">みんなのレシピ帳</span>
+                        <h2 className="text-base font-bold text-slate-700 leading-snug">
+                            アレルギーっ子が笑顔になれる
+                            <span className="text-primary"> みんなのレシピ帳</span>
                         </h2>
                     </div>
 
-                    {/* Feature Cards */}
-                    <div className="w-full flex flex-col gap-6 mb-12">
+                    {/* Feature Cards - 2x2 Grid */}
+                    <div className="w-full grid grid-cols-2 gap-3 mb-4">
                         {/* Card 1: Memo */}
-                        <div className="bg-white p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 animate-fade-in-up delay-100 flex flex-col items-center text-center">
-                            <div className="w-32 h-32 mb-4 relative">
+                        <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center text-center">
+                            <div className="w-16 h-16 mb-2 relative">
                                 <Image
                                     src="/features/memo.png"
                                     alt="簡単メモ"
@@ -328,18 +312,17 @@ const RecipeListPage = () => {
                                     className="object-contain"
                                 />
                             </div>
-                            <h3 className="text-lg font-bold text-slate-800 mb-2">
+                            <h3 className="text-sm font-bold text-slate-800 mb-1">
                                 レシピを簡単メモ
                             </h3>
-                            <p className="text-sm text-slate-500 leading-relaxed">
-                                アレルギー対応のレシピを<br />
-                                サッと記録できます
+                            <p className="text-xs text-slate-500 leading-relaxed">
+                                アレルギー対応レシピを<br />サッと記録
                             </p>
                         </div>
 
                         {/* Card 2: Share */}
-                        <div className="bg-white p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 animate-fade-in-up delay-200 flex flex-col items-center text-center">
-                            <div className="w-32 h-32 mb-4 relative">
+                        <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center text-center">
+                            <div className="w-16 h-16 mb-2 relative">
                                 <Image
                                     src="/features/share.png"
                                     alt="レシピ共有"
@@ -347,18 +330,17 @@ const RecipeListPage = () => {
                                     className="object-contain"
                                 />
                             </div>
-                            <h3 className="text-lg font-bold text-slate-800 mb-2">
+                            <h3 className="text-sm font-bold text-slate-800 mb-1">
                                 安心レシピを共有
                             </h3>
-                            <p className="text-sm text-slate-500 leading-relaxed">
-                                工夫したレシピを投稿して<br />
-                                同じ悩みを持つパパ・ママにシェア
+                            <p className="text-xs text-slate-500 leading-relaxed">
+                                工夫したレシピを<br />みんなにシェア
                             </p>
                         </div>
 
                         {/* Card 3: Connect */}
-                        <div className="bg-white p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 animate-fade-in-up delay-300 flex flex-col items-center text-center">
-                            <div className="w-32 h-32 mb-4 relative mb-2">
+                        <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center text-center">
+                            <div className="w-16 h-16 mb-2 relative">
                                 <Image
                                     src="/features/connect.png"
                                     alt="感謝を伝える"
@@ -366,32 +348,53 @@ const RecipeListPage = () => {
                                     className="object-contain"
                                 />
                             </div>
-                            <h3 className="text-lg font-bold text-slate-800 mb-2">
-                                感謝を伝えられる
+                            <h3 className="text-sm font-bold text-slate-800 mb-1">
+                                感謝を伝える
                             </h3>
-                            <p className="text-sm text-slate-500 leading-relaxed">
-                                「助かった！」「美味しかった！」<br />
-                                の気持ちをスタンプで気軽に送信
+                            <p className="text-xs text-slate-500 leading-relaxed">
+                                「助かった！」を<br />気軽に送信
+                            </p>
+                        </div>
+
+                        {/* Card 4: AI Import */}
+                        <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center text-center">
+                            <div className="w-16 h-16 mb-2 flex items-center justify-center text-4xl">
+                                ✨
+                            </div>
+                            <h3 className="text-sm font-bold text-slate-800 mb-1">
+                                AIでかんたん登録
+                            </h3>
+                            <p className="text-xs text-slate-500 leading-relaxed">
+                                URLを貼るだけで<br />レシピを自動取得
                             </p>
                         </div>
                     </div>
 
                     {/* CTA Section */}
-                    <div className="w-full bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-lg border border-orange-100 animate-fade-in-up delay-400 sticky bottom-4">
-                        <div className="flex flex-col items-center gap-4">
-                            <p className="text-center text-slate-700 font-bold text-base">
-                                LINEアカウントで<br />
-                                今すぐ始めましょう
+                    <div className="w-full bg-white/90 backdrop-blur-sm rounded-2xl p-5 shadow-md border border-orange-100 mb-4">
+                        <div className="flex flex-col items-center gap-3">
+                            <p className="text-center text-slate-700 font-bold text-sm">
+                                LINEアカウントで今すぐ始めましょう
                             </p>
-
-                            <div className="w-full flex justify-center scale-110 transform transition-transform hover:scale-115">
-                                <LineLoginButton />
-                            </div>
-
-                            <p className="text-center text-slate-400 text-[10px] mt-2">
+                            <LineLoginButton />
+                            <p className="text-center text-slate-400 text-[10px]">
                                 ログインをもって <Link href="/terms" className="text-slate-500 underline">利用規約</Link>・<Link href="/privacy" className="text-slate-500 underline">プライバシーポリシー</Link> に同意とみなします
                             </p>
                         </div>
+                    </div>
+
+                    {/* Story Links */}
+                    <div className="flex gap-4 text-sm">
+                        <Link href="/about" className="flex items-center gap-1 text-slate-500 hover:text-orange-500 transition-colors">
+                            <span>📖</span>
+                            <span>が生まれるまで</span>
+                            <span>→</span>
+                        </Link>
+                        <Link href="/team" className="flex items-center gap-1 text-slate-500 hover:text-orange-500 transition-colors">
+                            <span>👋</span>
+                            <span>だれがやってるの？</span>
+                            <span>→</span>
+                        </Link>
                     </div>
                 </div>
             </div>
