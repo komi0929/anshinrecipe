@@ -46,34 +46,42 @@ const SmartImportOverlay = ({ isVisible, onRunning, onComplete }) => {
     return (
         <div className="fixed inset-0 z-[9999] bg-white/95 backdrop-blur-sm flex flex-col items-center justify-center animate-fade-in">
             <div className="relative flex flex-col items-center">
-                {/* Branding Icon / Logo Area */}
-                <div className="w-40 h-40 bg-white rounded-full flex items-center justify-center mb-8 shadow-2xl shadow-orange-200/50 p-2 animate-bounce">
-                    <img src="/images/baby-chef.png" alt="Baby Chef" className="w-full h-full object-contain" />
-                </div>
+                {/* Cute Bouncy Number Container */}
+                {status === 'counting' && (
+                    <div className="w-56 h-56 bg-gradient-to-br from-orange-100 to-pink-50 rounded-full flex items-center justify-center mb-8 shadow-xl shadow-orange-100 relative animate-bounce font-sans">
+                        {/* Decorations */}
+                        <span className="absolute top-4 right-8 text-2xl text-yellow-400 animate-pulse">✨</span>
+                        <span className="absolute bottom-6 left-8 text-2xl text-pink-300 animate-pulse" style={{ animationDelay: '0.5s' }}>💖</span>
 
-                {/* Status Text & Counter */}
-                <div className="text-center">
+                        {/* The Number */}
+                        <div className="text-9xl font-black text-transparent bg-clip-text bg-gradient-to-br from-orange-500 to-pink-500 tracking-tighter animate-pop-in drop-shadow-sm" key={count}>
+                            {count}
+                        </div>
+                    </div>
+                )}
+
+                {/* Status Text - Independent of number container */}
+                <div className="text-center h-24">
                     {status === 'counting' && (
-                        <>
-                            <div className="text-8xl font-black text-orange-500 mb-4 font-mono tracking-tighter animate-pop-in drop-shadow-sm" key={count}>
-                                {count}
-                            </div>
-                            <p className="text-slate-600 font-bold text-xl animate-pulse">
-                                おいしいレシピにな～れ！✨
-                            </p>
-                        </>
+                        <p className="text-slate-600 font-bold text-2xl animate-pulse">
+                            おいしいレシピにな～れ！✨
+                        </p>
                     )}
 
                     {status === 'finalizing' && (
-                        <div className="animate-zoom-in">
-                            <Loader2 className="w-16 h-16 text-orange-400 animate-spin mx-auto mb-6" />
+                        <div className="animate-zoom-in flex flex-col items-center">
+                            <div className="w-56 h-56 flex items-center justify-center mb-8">
+                                <Loader2 className="w-24 h-24 text-orange-400 animate-spin" />
+                            </div>
                             <p className="text-slate-700 font-bold text-2xl">あとちょっと！🍳</p>
                         </div>
                     )}
 
                     {status === 'done' && (
-                        <div className="animate-zoom-in">
-                            <CheckCircle2 className="w-20 h-20 text-green-500 mx-auto mb-6" />
+                        <div className="animate-zoom-in flex flex-col items-center">
+                            <div className="w-56 h-56 flex items-center justify-center mb-8">
+                                <CheckCircle2 className="w-32 h-32 text-green-500" />
+                            </div>
                             <h3 className="text-3xl font-bold text-slate-800">準備OK！🎉</h3>
                         </div>
                     )}
