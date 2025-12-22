@@ -417,7 +417,7 @@ const RecipeListPage = () => {
 
     if (profile?.children?.length === 0) {
         return (
-            <div className="container max-w-md mx-auto min-h-screen bg-background pb-20">
+            <div className="container max-w-md mx-auto min-h-screen bg-background">
                 <div className="pt-6 pb-4 px-4 text-center">
                     <h1 className="flex justify-center">
                         <Image
@@ -456,7 +456,7 @@ const RecipeListPage = () => {
 
     // 4. Main Feed (Logged In & Setup Complete)
     return (
-        <div className="container max-w-md mx-auto min-h-screen bg-background pb-24">
+        <div className="container max-w-md mx-auto min-h-screen bg-background">
             {/* Child Registration Onboarding Popup */}
             <ChildOnboardingPopup profile={profile} />
 

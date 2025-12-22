@@ -74,7 +74,7 @@ export default function ProfilePage() {
     // Show skeleton while loading - prevents blank flash
     if (loading || !user) {
         return (
-            <div className="min-h-screen bg-background pb-20">
+            <div className="min-h-screen bg-background">
                 <div className="pt-6 pb-2 px-6">
                     <div className="h-8 w-32 bg-slate-200 rounded-lg animate-pulse" />
                 </div>
@@ -208,7 +208,7 @@ export default function ProfilePage() {
     };
 
     return (
-        <div className="min-h-screen bg-background pb-20">
+        <div className="min-h-screen bg-background">
             {/* Header Area */}
             <div className="pt-6 pb-2 px-6">
                 <h1 className="text-2xl font-bold text-text-main">マイページ</h1>

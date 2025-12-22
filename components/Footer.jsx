@@ -6,7 +6,7 @@ import './Footer.css';
 
 export const Footer = ({ showLinks = true }) => {
     return (
-        <footer className="w-full bg-slate-50 border-t border-slate-200 py-8 pb-16 mt-auto">
+        <footer className="w-full bg-slate-50 border-t border-slate-200 py-8 mt-auto">
             <div className="container mx-auto px-4 text-center">
                 {showLinks && (
                     <div className="flex flex-row flex-wrap justify-center items-center gap-6 mb-8 text-sm text-slate-600">

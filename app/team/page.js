@@ -8,7 +8,7 @@ import { useProfile } from '@/hooks/useProfile';
 const TeamPage = () => {
     const { user } = useProfile();
     return (
-        <div className="min-h-screen bg-slate-50 pb-24">
+        <div className="min-h-screen bg-slate-50">
             {/* Header */}
             <div className="bg-white border-b sticky top-0 z-10">
                 <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-3">
