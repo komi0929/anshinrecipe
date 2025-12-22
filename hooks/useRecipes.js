@@ -196,8 +196,10 @@ export const useRecipes = () => {
                 child_ids: recipe.childIds || [],
                 scenes: recipe.scenes || [],
                 memo: recipe.memo || '',
-                is_public: recipe.isPublic
+                is_public: recipe.isPublic === true // Ensure boolean
             };
+
+            console.log('Creating recipe with data:', { ...newRecipe, is_public: newRecipe.is_public, isPublicType: typeof newRecipe.is_public });
 
             const { data, error } = await supabase
                 .from('recipes')
@@ -205,7 +207,10 @@ export const useRecipes = () => {
                 .select()
                 .single();
 
-            if (error) throw error;
+            if (error) {
+                console.error('Supabase insert error:', error);
+                throw error;
+            }
 
             addToast('レシピを投稿しました', 'success');
 
@@ -232,7 +237,8 @@ export const useRecipes = () => {
             return data;
         } catch (error) {
             console.error('Error adding recipe:', error);
-            addToast('投稿に失敗しました', 'error');
+            console.error('Error details:', JSON.stringify(error, null, 2));
+            addToast(`投稿に失敗しました: ${error.message || 'Unknown error'}`, 'error');
             throw error;
         }
     };
