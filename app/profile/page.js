@@ -474,7 +474,7 @@ export default function ProfilePage() {
                     <h3 className="text-sm font-bold text-text-sub mb-3 ml-2">便利な使い方</h3>
                     <div className="bg-white rounded-[24px] overflow-hidden shadow-sm">
                         <Link
-                            href="/quick-save-guide#pwa-install"
+                            href="/quick-save-guide"
                             className="w-full p-4 flex items-center justify-between hover:bg-slate-50 transition-colors border-b border-slate-50 bg-emerald-50/10"
                         >
                             <div className="flex items-center gap-3 text-text-main">
@@ -492,7 +492,7 @@ export default function ProfilePage() {
                             <ChevronRight className="text-emerald-300" size={20} />
                         </Link>
                         <Link
-                            href="/quick-save-guide#sns-save"
+                            href="/sns-save-guide"
                             className="w-full p-4 flex items-center justify-between hover:bg-slate-50 transition-colors"
                         >
                             <div className="flex items-center gap-3 text-text-main">
