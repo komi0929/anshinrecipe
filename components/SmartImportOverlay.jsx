@@ -44,7 +44,7 @@ const SmartImportOverlay = ({ isVisible, onRunning, onComplete }) => {
     if (!isVisible) return null;
 
     return (
-        <div className="absolute inset-0 z-50 bg-white/95 backdrop-blur-sm flex flex-col items-center justify-center rounded-3xl animate-in fade-in duration-300">
+        <div className="absolute inset-0 z-50 bg-white/95 backdrop-blur-sm flex flex-col items-center justify-center rounded-3xl animate-fade-in">
             <div className="relative flex flex-col items-center">
                 {/* Branding Icon / Logo Area */}
                 <div className="w-24 h-24 bg-gradient-to-br from-orange-100 to-amber-50 rounded-full flex items-center justify-center mb-6 shadow-xl shadow-orange-100/50">
@@ -57,7 +57,7 @@ const SmartImportOverlay = ({ isVisible, onRunning, onComplete }) => {
                 <div className="text-center">
                     {status === 'counting' && (
                         <>
-                            <div className="text-6xl font-black text-slate-800 mb-2 font-mono tracking-tighter animate-in zoom-in duration-300 key={count}">
+                            <div className="text-6xl font-black text-slate-800 mb-2 font-mono tracking-tighter animate-zoom-in" key={count}>
                                 {count}
                             </div>
                             <p className="text-slate-500 font-medium">レシピを読み込んでいます...</p>
@@ -72,7 +72,7 @@ const SmartImportOverlay = ({ isVisible, onRunning, onComplete }) => {
                     )}
 
                     {status === 'done' && (
-                        <div className="animate-in zoom-in duration-300">
+                        <div className="animate-zoom-in">
                             <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4" />
                             <h3 className="text-2xl font-bold text-slate-800">準備完了！</h3>
                         </div>
