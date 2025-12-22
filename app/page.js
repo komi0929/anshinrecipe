@@ -258,8 +258,24 @@ const RecipeListPage = () => {
     // VIEW STATE MANAGEMENT
     // ----------------------------------------------------
 
-    // Removed blocking loading state - content will render immediately
-    // with skeleton placeholders where needed
+    // 1. Auth Loading - Show minimal loading to prevent flash
+    if (profileLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-[#fcfcfc]">
+                <div className="text-center">
+                    <Image
+                        src="/logo.png"
+                        alt="あんしんレシピ"
+                        width={180}
+                        height={45}
+                        priority
+                        className="mx-auto mb-4 opacity-60"
+                    />
+                    <div className="w-6 h-6 border-2 border-orange-400 border-t-transparent rounded-full animate-spin mx-auto" />
+                </div>
+            </div>
+        );
+    }
 
     // 2. Not Logged In -> Original Landing Page
     if (!user) {

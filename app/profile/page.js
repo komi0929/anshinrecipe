@@ -8,7 +8,7 @@ import Image from 'next/image';
 import {
     User, Settings, FileText, HelpCircle, LogOut,
     Trash2, ChevronRight, Camera, Plus, MapPin,
-    ShieldAlert, Info, Mail, Pencil, Loader2, Award, MessageCircle, Zap
+    ShieldAlert, Info, Mail, Pencil, Loader2, Award, MessageCircle, Zap, Smartphone
 } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { Footer } from '@/components/Footer';
@@ -445,7 +445,7 @@ export default function ProfilePage() {
                     <div className="bg-white rounded-[24px] overflow-hidden shadow-sm">
                         <Link
                             href="/quick-save-guide"
-                            className="w-full p-4 flex items-center justify-between border-b border-slate-50 last:border-none hover:bg-slate-50 transition-colors"
+                            className="w-full p-4 flex items-center justify-between border-b border-slate-50 hover:bg-slate-50 transition-colors"
                         >
                             <div className="flex items-center gap-3 text-text-main">
                                 <div className="w-8 h-8 bg-gradient-to-br from-orange-400 to-amber-500 rounded-full flex items-center justify-center">
@@ -454,6 +454,21 @@ export default function ProfilePage() {
                                 <div>
                                     <span className="font-medium">SNSからかんたん保存</span>
                                     <p className="text-xs text-slate-400">Instagram・TikTokからワンタップ</p>
+                                </div>
+                            </div>
+                            <ChevronRight className="text-slate-300" size={20} />
+                        </Link>
+                        <Link
+                            href="/quick-save-guide"
+                            className="w-full p-4 flex items-center justify-between hover:bg-slate-50 transition-colors"
+                        >
+                            <div className="flex items-center gap-3 text-text-main">
+                                <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full flex items-center justify-center">
+                                    <Smartphone size={16} className="text-white" />
+                                </div>
+                                <div>
+                                    <span className="font-medium">ホーム画面に追加</span>
+                                    <p className="text-xs text-slate-400">アプリのようにすぐ開ける！</p>
                                 </div>
                             </div>
                             <ChevronRight className="text-slate-300" size={20} />

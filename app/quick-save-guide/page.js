@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Copy, CheckCircle, Smartphone, Zap } from 'lucide-react';
+import { ArrowLeft, Copy, CheckCircle, Smartphone, Zap, Plus, Download, Settings } from 'lucide-react';
 
 const QuickSaveGuidePage = () => {
     return (
@@ -56,44 +56,52 @@ const QuickSaveGuidePage = () => {
                     </div>
                 </div>
 
-                {/* Method 2: iOS Shortcut */}
+                {/* Method 2: Android PWA (moved up) */}
                 <div className="bg-white rounded-2xl p-5 shadow-sm mb-4">
                     <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                        <span className="w-7 h-7 bg-purple-500 text-white text-sm rounded-full flex items-center justify-center">2</span>
-                        iOSショートカット（iPhone向け）
+                        <span className="w-7 h-7 bg-emerald-500 text-white text-sm rounded-full flex items-center justify-center">2</span>
+                        ホーム画面に追加する
                     </h3>
 
                     <p className="text-sm text-slate-600 mb-4">
-                        iPhoneの「ショートカット」アプリで共有メニューに追加できます。
+                        ホーム画面に追加すると、アプリのようにすぐに開けます。
+                        Androidでは共有メニューに「あんしんレシピ」が表示されるようになります。
                     </p>
 
-                    <Link
-                        href="/shortcut-guide"
-                        className="flex items-center justify-center gap-2 w-full bg-purple-500 text-white py-3 rounded-xl font-bold text-sm hover:bg-purple-600 transition-all"
-                    >
-                        <Smartphone size={18} />
-                        設定方法を見る
-                    </Link>
+                    <div className="p-4 bg-emerald-50 rounded-xl text-sm text-emerald-700 mb-3">
+                        <p className="font-bold mb-2 flex items-center gap-2"><Smartphone size={16} /> iPhone / Safariの場合:</p>
+                        <ol className="list-decimal list-inside space-y-1 text-xs">
+                            <li>画面下の共有ボタン（□に↑）をタップ</li>
+                            <li>「ホーム画面に追加」を選択</li>
+                            <li>「追加」をタップして完了！</li>
+                        </ol>
+                    </div>
+
+                    <div className="p-4 bg-blue-50 rounded-xl text-sm text-blue-700">
+                        <p className="font-bold mb-2 flex items-center gap-2"><Settings size={16} /> Android / Chromeの場合:</p>
+                        <ol className="list-decimal list-inside space-y-1 text-xs">
+                            <li>右上のメニュー（⋮）をタップ</li>
+                            <li>「ホーム画面に追加」または「アプリをインストール」を選択</li>
+                            <li>インストール後、InstagramなどでURL共有時に「あんしんレシピ」を選べます</li>
+                        </ol>
+                    </div>
                 </div>
 
-                {/* Method 3: Android PWA */}
-                <div className="bg-white rounded-2xl p-5 shadow-sm mb-4">
+                {/* Method 3: iOS Shortcut (moved down, marked as in development) */}
+                <div className="bg-white rounded-2xl p-5 shadow-sm mb-4 opacity-75">
                     <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                        <span className="w-7 h-7 bg-emerald-500 text-white text-sm rounded-full flex items-center justify-center">3</span>
-                        Androidユーザー向け
+                        <span className="w-7 h-7 bg-slate-400 text-white text-sm rounded-full flex items-center justify-center">3</span>
+                        iOSショートカット（開発中）
+                        <span className="ml-2 text-xs bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full">Coming Soon</span>
                     </h3>
 
-                    <p className="text-sm text-slate-600 mb-4">
-                        PWAをインストールすると、SNSの共有メニューに「あんしんレシピ」が表示されます。
+                    <p className="text-sm text-slate-500 mb-4">
+                        iPhoneの「ショートカット」アプリで共有メニューに追加できる機能を準備中です。
+                        しばらくお待ちください。
                     </p>
 
-                    <div className="p-3 bg-emerald-50 rounded-xl text-xs text-emerald-700">
-                        <p className="font-medium mb-1">手順:</p>
-                        <ol className="list-decimal list-inside space-y-1">
-                            <li>Chromeでこのアプリを開く</li>
-                            <li>メニュー → 「ホーム画面に追加」</li>
-                            <li>InstagramなどでURL共有時に「あんしんレシピ」を選択</li>
-                        </ol>
+                    <div className="p-3 bg-slate-100 rounded-xl text-xs text-slate-500">
+                        現在は方法1または2をご利用ください。
                     </div>
                 </div>
 
