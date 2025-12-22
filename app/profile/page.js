@@ -300,7 +300,11 @@ export default function ProfilePage() {
                                 )}
                             </div>
                             <span className={`text-[11px] font-bold ${profile.stats?.recipeCount > 0 ? 'text-text-main' : 'text-slate-400'}`}>初投稿</span>
-                            <span className={`text-[10px] ${profile.stats?.recipeCount > 0 ? 'text-amber-500' : 'text-slate-300'}`}>{profile.stats?.recipeCount > 0 ? '獲得済み' : '未獲得'}</span>
+                            <span className={`text-[10px] text-center leading-tight ${profile.stats?.recipeCount > 0 ? 'text-amber-500' : 'text-slate-300'}`}>
+                                {profile.stats?.recipeCount > 0 ? '獲得済み' : (
+                                    <>レシピ投稿<br />あと1回</>
+                                )}
+                            </span>
                         </div>
 
                         <div className="flex flex-col items-center min-w-[72px]">
@@ -313,7 +317,11 @@ export default function ProfilePage() {
                                 )}
                             </div>
                             <span className={`text-[11px] font-bold ${profile.stats?.reportCount > 0 ? 'text-text-main' : 'text-slate-400'}`}>初レポート</span>
-                            <span className={`text-[10px] ${profile.stats?.reportCount > 0 ? 'text-amber-500' : 'text-slate-300'}`}>{profile.stats?.reportCount > 0 ? '獲得済み' : '未獲得'}</span>
+                            <span className={`text-[10px] text-center leading-tight ${profile.stats?.reportCount > 0 ? 'text-amber-500' : 'text-slate-300'}`}>
+                                {profile.stats?.reportCount > 0 ? '獲得済み' : (
+                                    <>レポ投稿<br />あと1回</>
+                                )}
+                            </span>
                         </div>
 
                         {/* NEW BADGES */}
@@ -327,7 +335,11 @@ export default function ProfilePage() {
                                 )}
                             </div>
                             <span className={`text-[11px] font-bold ${likedRecipeIds?.length >= 10 ? 'text-text-main' : 'text-slate-400'}`}>食通</span>
-                            <span className={`text-[10px] ${likedRecipeIds?.length >= 10 ? 'text-amber-500' : 'text-slate-300'}`}>{likedRecipeIds?.length >= 10 ? '獲得済み' : 'あと' + (10 - (likedRecipeIds?.length || 0)) + '回'}</span>
+                            <span className={`text-[10px] text-center leading-tight ${likedRecipeIds?.length >= 10 ? 'text-amber-500' : 'text-slate-300'}`}>
+                                {likedRecipeIds?.length >= 10 ? '獲得済み' : (
+                                    <>いいね！<br />あと{(10 - (likedRecipeIds?.length || 0))}回</>
+                                )}
+                            </span>
                         </div>
 
                         <div className="flex flex-col items-center min-w-[72px]">
@@ -340,7 +352,11 @@ export default function ProfilePage() {
                                 )}
                             </div>
                             <span className={`text-[11px] font-bold ${profile.stats?.recipeCount >= 10 ? 'text-text-main' : 'text-slate-400'}`}>シェフ</span>
-                            <span className={`text-[10px] ${profile.stats?.recipeCount >= 10 ? 'text-amber-500' : 'text-slate-300'}`}>{profile.stats?.recipeCount >= 10 ? '獲得済み' : 'あと' + (10 - (profile.stats?.recipeCount || 0)) + '投稿'}</span>
+                            <span className={`text-[10px] text-center leading-tight ${profile.stats?.recipeCount >= 10 ? 'text-amber-500' : 'text-slate-300'}`}>
+                                {profile.stats?.recipeCount >= 10 ? '獲得済み' : (
+                                    <>レシピ投稿<br />あと{(10 - (profile.stats?.recipeCount || 0))}回</>
+                                )}
+                            </span>
                         </div>
 
                         <div className="flex flex-col items-center min-w-[72px]">
@@ -353,7 +369,11 @@ export default function ProfilePage() {
                                 )}
                             </div>
                             <span className={`text-[11px] font-bold ${profile.stats?.reportCount >= 5 ? 'text-text-main' : 'text-slate-400'}`}>レポーター</span>
-                            <span className={`text-[10px] ${profile.stats?.reportCount >= 5 ? 'text-amber-500' : 'text-slate-300'}`}>{profile.stats?.reportCount >= 5 ? '獲得済み' : 'あと' + (5 - (profile.stats?.reportCount || 0)) + '回'}</span>
+                            <span className={`text-[10px] text-center leading-tight ${profile.stats?.reportCount >= 5 ? 'text-amber-500' : 'text-slate-300'}`}>
+                                {profile.stats?.reportCount >= 5 ? '獲得済み' : (
+                                    <>レポ投稿<br />あと{(5 - (profile.stats?.reportCount || 0))}回</>
+                                )}
+                            </span>
                         </div>
                     </div>
                 </div>
