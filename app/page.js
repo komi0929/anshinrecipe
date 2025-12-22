@@ -50,7 +50,7 @@ const RecipeListPage = () => {
     const [activeTab, setActiveTab] = useState(tabFromUrl || 'recommend'); // 'recommend', 'saved', 'mine'
     const [tabRecipes, setTabRecipes] = useState([]);
     const [tabLoading, setTabLoading] = useState(false);
-    const [sortOrder, setSortOrder] = useState(null); // null, 'newest', or 'likes'
+    const [sortOrder, setSortOrder] = useState('newest'); // 'newest', 'likes', or 'saves' - Default is newest
     const { unreadCount } = useNotifications(user?.id);
 
     // Update activeTab when URL changes
@@ -228,6 +228,10 @@ const RecipeListPage = () => {
                 const aLikes = a.like_count || a.likeCount || 0;
                 const bLikes = b.like_count || b.likeCount || 0;
                 if (bLikes - aLikes !== 0) return bLikes - aLikes;
+                // Secondary sort by saves when likes are equal
+                const aSaves = a.save_count || a.saveCount || 0;
+                const bSaves = b.save_count || b.saveCount || 0;
+                if (bSaves - aSaves !== 0) return bSaves - aSaves;
             } else if (sortOrder === 'newest') {
                 const dateA = new Date(a.created_at || a.createdAt || 0);
                 const dateB = new Date(b.created_at || b.createdAt || 0);
