@@ -2,22 +2,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import {
-    Shield, Trash2, ExternalLink, CheckCircle, XCircle, AlertTriangle, RefreshCw,
-    Users, BookOpen, Bookmark, Heart, MessageSquare, Baby, TrendingUp, TrendingDown, Minus, Zap, BarChart3
-} from 'lucide-react';
-import Link from 'next/link';
-import { useToast } from '@/components/Toast';
 
 const AdminPage = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [pin, setPin] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [analytics, setAnalytics] = useState(null);
+    const [stats, setStats] = useState(null);
     const [reports, setReports] = useState([]);
     const [triedReports, setTriedReports] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [stats, setStats] = useState(null);
-    const [analytics, setAnalytics] = useState(null);
-    const { addToast } = useToast();
 
     useEffect(() => {
         const sessionPin = sessionStorage.getItem('admin_pin');
@@ -33,339 +26,351 @@ const AdminPage = () => {
             setIsAuthenticated(true);
             sessionStorage.setItem('admin_pin', pin);
             fetchAllData();
-            addToast('管理者としてログインしました', 'success');
-        } else {
-            addToast('PINコードが間違っています', 'error');
         }
     };
 
     const fetchAllData = async () => {
         setLoading(true);
         try {
-            // 1. Fetch Analytics Data
-            const analyticsRes = await fetch('/api/admin/analytics');
-            if (analyticsRes.ok) {
-                const analyticsData = await analyticsRes.json();
-                setAnalytics(analyticsData);
-            }
+            const [analyticsRes, statsRes] = await Promise.all([
+                fetch('/api/admin/analytics'),
+                fetch('/api/admin/stats')
+            ]);
+            if (analyticsRes.ok) setAnalytics(await analyticsRes.json());
+            if (statsRes.ok) setStats(await statsRes.json());
 
-            // 2. Fetch Stats from API
-            const statsRes = await fetch('/api/admin/stats');
-            if (statsRes.ok) {
-                const statsData = await statsRes.json();
-                setStats(statsData);
-            }
-
-            // 3. Fetch Inappropriate Reports
             const { data: reportData } = await supabase
                 .from('reports')
-                .select(`*, recipe:recipes!recipe_id (id, title, image_url, user_id), reporter:profiles!reporter_id (username)`)
+                .select(`*, recipe:recipes!recipe_id (id, title, image_url), reporter:profiles!reporter_id (username)`)
+                .eq('status', 'pending')
                 .order('created_at', { ascending: false });
             setReports(reportData || []);
 
-            // 4. Fetch Tried Reports
             const { data: triedData } = await supabase
                 .from('tried_reports')
                 .select(`*, recipe:recipes!recipe_id (id, title), user:profiles!user_id (username)`)
                 .order('created_at', { ascending: false })
-                .limit(10);
+                .limit(8);
             setTriedReports(triedData || []);
-
         } catch (error) {
-            console.error('Error fetching data:', error);
-            addToast('データの取得に失敗しました', 'error');
+            console.error('Fetch error:', error);
         } finally {
             setLoading(false);
         }
     };
 
     const handleDeleteRecipe = async (recipeId, reportId) => {
-        if (!confirm('このレシピを本当に削除しますか？')) return;
-        try {
-            await supabase.from('recipes').delete().eq('id', recipeId);
-            await supabase.from('reports').update({ status: 'resolved' }).eq('id', reportId);
-            addToast('削除しました', 'success');
-            fetchAllData();
-        } catch (error) {
-            addToast('削除に失敗しました', 'error');
-        }
+        if (!confirm('削除しますか？')) return;
+        await supabase.from('recipes').delete().eq('id', recipeId);
+        await supabase.from('reports').update({ status: 'resolved' }).eq('id', reportId);
+        fetchAllData();
     };
 
-    const handleDismissReport = async (reportId) => {
-        try {
-            await supabase.from('reports').update({ status: 'dismissed' }).eq('id', reportId);
-            addToast('却下しました', 'success');
-            fetchAllData();
-        } catch (error) {
-            addToast('更新に失敗しました', 'error');
-        }
+    const handleDismiss = async (reportId) => {
+        await supabase.from('reports').update({ status: 'dismissed' }).eq('id', reportId);
+        fetchAllData();
     };
 
-    // Trend indicator
-    const TrendBadge = ({ today, yesterday }) => {
-        const diff = today - yesterday;
-        if (diff > 0) return <span className="text-green-600 text-xs flex items-center gap-0.5"><TrendingUp size={12} />+{diff}</span>;
-        if (diff < 0) return <span className="text-red-600 text-xs flex items-center gap-0.5"><TrendingDown size={12} />{diff}</span>;
-        return <span className="text-slate-400 text-xs flex items-center gap-0.5"><Minus size={12} />±0</span>;
-    };
-
+    // Login Screen
     if (!isAuthenticated) {
         return (
-            <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
-                <form onSubmit={handleLogin} className="bg-white p-8 rounded-xl shadow-lg w-full max-w-sm">
-                    <div className="flex justify-center mb-6">
-                        <div className="bg-slate-100 p-4 rounded-full">
-                            <Shield size={48} className="text-slate-700" />
-                        </div>
-                    </div>
-                    <h1 className="text-2xl font-bold text-center mb-6 text-slate-800">管理画面</h1>
+            <div style={{
+                minHeight: '100vh',
+                background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+            }}>
+                <form onSubmit={handleLogin} style={{
+                    background: '#0f0f23',
+                    padding: '48px',
+                    borderRadius: '16px',
+                    width: '380px',
+                    boxShadow: '0 25px 50px rgba(0,0,0,0.5)'
+                }}>
+                    <h1 style={{ color: '#fff', fontSize: '24px', fontWeight: 700, marginBottom: '32px', textAlign: 'center' }}>
+                        🔐 Admin Dashboard
+                    </h1>
                     <input
                         type="password"
                         value={pin}
                         onChange={(e) => setPin(e.target.value)}
-                        placeholder="管理者PINコード"
-                        className="w-full p-3 border border-slate-300 rounded-lg text-center text-lg tracking-widest mb-4"
+                        placeholder="Enter PIN"
+                        style={{
+                            width: '100%',
+                            padding: '16px',
+                            background: '#1a1a2e',
+                            border: '1px solid #333',
+                            borderRadius: '8px',
+                            color: '#fff',
+                            fontSize: '18px',
+                            textAlign: 'center',
+                            letterSpacing: '8px',
+                            marginBottom: '16px',
+                            outline: 'none'
+                        }}
                         autoFocus
                     />
-                    <button type="submit" className="w-full bg-slate-800 text-white py-3 rounded-lg font-bold hover:bg-slate-700">
-                        認証
+                    <button type="submit" style={{
+                        width: '100%',
+                        padding: '16px',
+                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        border: 'none',
+                        borderRadius: '8px',
+                        color: '#fff',
+                        fontSize: '16px',
+                        fontWeight: 600,
+                        cursor: 'pointer'
+                    }}>
+                        ログイン
                     </button>
                 </form>
             </div>
         );
     }
 
-    return (
-        <div className="min-h-screen bg-slate-100">
-            {/* Header */}
-            <div className="bg-white shadow-sm border-b sticky top-0 z-10">
-                <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
-                    <h1 className="font-bold text-lg flex items-center gap-2 text-slate-800">
-                        <Shield size={20} />
-                        あんしんレシピ 管理画面
-                    </h1>
-                    <div className="flex items-center gap-4">
-                        <span className="text-xs text-slate-500">
-                            {new Date().toLocaleString('ja-JP', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                        <button onClick={fetchAllData} disabled={loading} className="p-2 hover:bg-slate-100 rounded-full">
-                            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-                        </button>
-                        <a href="https://analytics.google.com/" target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline">
-                            GA4
-                        </a>
-                        <button
-                            onClick={() => { setIsAuthenticated(false); sessionStorage.removeItem('admin_pin'); }}
-                            className="text-xs text-red-500 hover:text-red-700"
-                        >
-                            ログアウト
-                        </button>
-                    </div>
-                </div>
-            </div>
+    // Dashboard
+    const d = analytics?.daily || {};
+    const t = analytics?.totals || {};
+    const f = analytics?.funnel || {};
+    const w = analytics?.weekly?.usersByDay || [];
 
-            <div className="max-w-7xl mx-auto p-6">
-                {/* Daily KPIs Row */}
-                <div className="grid grid-cols-6 gap-4 mb-6">
+    return (
+        <div style={{
+            minHeight: '100vh',
+            background: 'linear-gradient(135deg, #0f0f23 0%, #1a1a2e 100%)',
+            color: '#e0e0e0',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+        }}>
+            {/* Header */}
+            <header style={{
+                background: 'rgba(15,15,35,0.9)',
+                backdropFilter: 'blur(10px)',
+                borderBottom: '1px solid #2a2a4a',
+                padding: '16px 32px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                position: 'sticky',
+                top: 0,
+                zIndex: 100
+            }}>
+                <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#fff' }}>
+                    📊 あんしんレシピ Dashboard
+                </h1>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+                    <span style={{ color: '#888', fontSize: '13px' }}>
+                        {new Date().toLocaleString('ja-JP')}
+                    </span>
+                    <button onClick={fetchAllData} disabled={loading} style={{
+                        background: '#2a2a4a',
+                        border: 'none',
+                        padding: '8px 16px',
+                        borderRadius: '6px',
+                        color: '#fff',
+                        cursor: 'pointer',
+                        fontSize: '13px'
+                    }}>
+                        {loading ? '⏳' : '🔄'} Refresh
+                    </button>
+                    <a href="https://analytics.google.com/" target="_blank" rel="noopener noreferrer" style={{
+                        color: '#667eea',
+                        textDecoration: 'none',
+                        fontSize: '13px'
+                    }}>
+                        GA4 →
+                    </a>
+                    <button onClick={() => { setIsAuthenticated(false); sessionStorage.removeItem('admin_pin'); }} style={{
+                        background: 'transparent',
+                        border: '1px solid #444',
+                        padding: '8px 16px',
+                        borderRadius: '6px',
+                        color: '#888',
+                        cursor: 'pointer',
+                        fontSize: '13px'
+                    }}>
+                        Logout
+                    </button>
+                </div>
+            </header>
+
+            <main style={{ padding: '32px', maxWidth: '1600px', margin: '0 auto' }}>
+                {/* KPI Cards */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '20px', marginBottom: '32px' }}>
                     {[
-                        { icon: Users, label: '新規登録', key: 'newUsers', color: 'blue' },
-                        { icon: BookOpen, label: 'レシピ投稿', key: 'recipes', color: 'green' },
-                        { icon: Bookmark, label: '保存', key: 'saves', color: 'orange' },
-                        { icon: Heart, label: 'いいね！', key: 'likes', color: 'pink' },
-                        { icon: MessageSquare, label: 'つくれぽ', key: 'tried', color: 'purple' },
-                        { icon: Baby, label: '登録子供', key: null, color: 'slate', total: analytics?.totals?.children }
-                    ].map(({ icon: Icon, label, key, color, total }) => (
-                        <div key={label} className="bg-white rounded-xl p-4 shadow-sm">
-                            <div className="flex items-center justify-between mb-2">
-                                <Icon size={16} className={`text-${color}-500`} />
-                                {key && analytics?.daily?.[key] && (
-                                    <TrendBadge today={analytics.daily[key].today} yesterday={analytics.daily[key].yesterday} />
-                                )}
+                        { label: '新規登録', today: d.newUsers?.today, yesterday: d.newUsers?.yesterday, icon: '👤', color: '#667eea' },
+                        { label: 'レシピ投稿', today: d.recipes?.today, yesterday: d.recipes?.yesterday, icon: '📝', color: '#10b981' },
+                        { label: '保存', today: d.saves?.today, yesterday: d.saves?.yesterday, icon: '🔖', color: '#f59e0b' },
+                        { label: 'いいね', today: d.likes?.today, yesterday: d.likes?.yesterday, icon: '❤️', color: '#ef4444' },
+                        { label: 'つくれぽ', today: d.tried?.today, yesterday: d.tried?.yesterday, icon: '✨', color: '#8b5cf6' }
+                    ].map(kpi => {
+                        const diff = (kpi.today ?? 0) - (kpi.yesterday ?? 0);
+                        return (
+                            <div key={kpi.label} style={{
+                                background: 'linear-gradient(145deg, #1a1a2e, #16213e)',
+                                borderRadius: '16px',
+                                padding: '24px',
+                                border: '1px solid #2a2a4a'
+                            }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                                    <span style={{ fontSize: '24px' }}>{kpi.icon}</span>
+                                    <span style={{
+                                        fontSize: '12px',
+                                        padding: '4px 8px',
+                                        borderRadius: '12px',
+                                        background: diff > 0 ? 'rgba(16,185,129,0.2)' : diff < 0 ? 'rgba(239,68,68,0.2)' : 'rgba(100,100,100,0.2)',
+                                        color: diff > 0 ? '#10b981' : diff < 0 ? '#ef4444' : '#888'
+                                    }}>
+                                        {diff > 0 ? `+${diff}` : diff < 0 ? diff : '±0'}
+                                    </span>
+                                </div>
+                                <div style={{ fontSize: '36px', fontWeight: 700, color: '#fff', marginBottom: '4px' }}>
+                                    {kpi.today ?? 0}
+                                </div>
+                                <div style={{ fontSize: '13px', color: '#888' }}>{kpi.label}</div>
                             </div>
-                            <div className="text-2xl font-bold text-slate-800">
-                                {key ? (analytics?.daily?.[key]?.today ?? '-') : (total ?? '-')}
-                            </div>
-                            <div className="text-xs text-slate-500">{label}</div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
 
                 {/* Main Grid */}
-                <div className="grid grid-cols-3 gap-6">
-                    {/* Column 1: Funnel + Totals */}
-                    <div className="space-y-6">
-                        {/* Totals */}
-                        <div className="bg-white rounded-xl p-5 shadow-sm">
-                            <h2 className="text-sm font-bold text-slate-600 mb-4">📈 累計</h2>
-                            <div className="grid grid-cols-3 gap-3 text-center">
-                                <div>
-                                    <div className="text-2xl font-bold text-slate-800">{analytics?.totals?.users ?? '-'}</div>
-                                    <div className="text-xs text-slate-500">ユーザー</div>
-                                </div>
-                                <div>
-                                    <div className="text-2xl font-bold text-slate-800">{analytics?.totals?.recipes ?? '-'}</div>
-                                    <div className="text-xs text-slate-500">レシピ</div>
-                                </div>
-                                <div>
-                                    <div className="text-2xl font-bold text-slate-800">{analytics?.totals?.children ?? '-'}</div>
-                                    <div className="text-xs text-slate-500">お子様</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Funnel */}
-                        <div className="bg-white rounded-xl p-5 shadow-sm">
-                            <h2 className="text-sm font-bold text-slate-600 mb-4">🔄 ファネル</h2>
-                            <div className="space-y-2">
-                                {[
-                                    { label: '登録', value: analytics?.funnel?.registered, color: 'bg-blue-500' },
-                                    { label: '子供登録', value: analytics?.funnel?.childAdded, color: 'bg-green-500' },
-                                    { label: '初保存', value: analytics?.funnel?.firstSave, color: 'bg-orange-500' },
-                                    { label: '初投稿', value: analytics?.funnel?.firstRecipe, color: 'bg-pink-500' }
-                                ].map((step, i, arr) => {
-                                    const max = arr[0].value || 1;
-                                    const pct = Math.round((step.value / max) * 100) || 0;
-                                    return (
-                                        <div key={step.label}>
-                                            <div className="flex justify-between text-xs mb-1">
-                                                <span className="text-slate-600">{step.label}</span>
-                                                <span className="font-bold">{step.value ?? '-'}</span>
-                                            </div>
-                                            <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                                                <div className={`h-full ${step.color}`} style={{ width: `${pct}%` }} />
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-
-                        {/* Smart Import */}
-                        <div className="bg-white rounded-xl p-5 shadow-sm">
-                            <h2 className="text-sm font-bold text-slate-600 mb-3">🛠️ Smart Import</h2>
-                            <div className="flex justify-between items-center">
-                                <div className="text-xs text-slate-500">過去7日</div>
-                                <div className="text-right">
-                                    <div className="font-bold text-slate-800">
-                                        {analytics?.features?.smartImport?.successes ?? 0} / {analytics?.features?.smartImport?.starts ?? 0}
-                                    </div>
-                                    <div className="text-xs text-slate-500">
-                                        成功率: {analytics?.features?.smartImport?.starts > 0
-                                            ? Math.round((analytics.features.smartImport.successes / analytics.features.smartImport.starts) * 100)
-                                            : 0}%
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Column 2: Reports */}
-                    <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-                        <div className="p-4 border-b flex items-center justify-between">
-                            <h2 className="font-bold text-slate-800 flex items-center gap-2">
-                                <AlertTriangle size={16} className="text-red-500" />
-                                通報 ({reports.filter(r => r.status === 'pending').length})
-                            </h2>
-                        </div>
-                        <div className="max-h-96 overflow-y-auto">
-                            {reports.filter(r => r.status === 'pending').length === 0 ? (
-                                <div className="p-8 text-center text-slate-400 text-sm">未対応の通報はありません</div>
-                            ) : (
-                                reports.filter(r => r.status === 'pending').map(report => (
-                                    <div key={report.id} className="p-4 border-b hover:bg-slate-50">
-                                        <div className="flex gap-3">
-                                            <img src={report.recipe?.image_url || '/placeholder.png'} className="w-12 h-12 rounded object-cover" />
-                                            <div className="flex-1 min-w-0">
-                                                <div className="text-sm font-bold text-slate-800 truncate">{report.recipe?.title}</div>
-                                                <div className="text-xs text-red-500 mt-1">{report.reason}</div>
-                                                <div className="flex gap-2 mt-2">
-                                                    <button onClick={() => handleDeleteRecipe(report.recipe?.id, report.id)} className="text-xs bg-red-500 text-white px-2 py-1 rounded">
-                                                        削除
-                                                    </button>
-                                                    <button onClick={() => handleDismissReport(report.id)} className="text-xs bg-slate-200 text-slate-600 px-2 py-1 rounded">
-                                                        却下
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Column 3: Recent Activity */}
-                    <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-                        <div className="p-4 border-b">
-                            <h2 className="font-bold text-slate-800 flex items-center gap-2">
-                                <CheckCircle size={16} className="text-green-500" />
-                                最近のつくレポ
-                            </h2>
-                        </div>
-                        <div className="max-h-96 overflow-y-auto">
-                            {triedReports.length === 0 ? (
-                                <div className="p-8 text-center text-slate-400 text-sm">まだつくレポはありません</div>
-                            ) : (
-                                triedReports.map(report => (
-                                    <div key={report.id} className="p-3 border-b hover:bg-slate-50">
-                                        <div className="flex gap-2">
-                                            {report.image_url ? (
-                                                <img src={report.image_url} className="w-10 h-10 rounded object-cover" />
-                                            ) : (
-                                                <div className="w-10 h-10 rounded bg-slate-100 flex items-center justify-center text-sm">📄</div>
-                                            )}
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex justify-between">
-                                                    <span className="text-xs font-bold text-slate-800">{report.user?.username}</span>
-                                                    <span className="text-[10px] text-slate-400">{new Date(report.created_at).toLocaleDateString()}</span>
-                                                </div>
-                                                <div className="text-[10px] text-slate-500 truncate">→ {report.recipe?.title}</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))
-                            )}
-                        </div>
-                    </div>
-                </div>
-
-                {/* Weekly Trend */}
-                <div className="mt-6 bg-white rounded-xl p-5 shadow-sm">
-                    <h2 className="text-sm font-bold text-slate-600 mb-4">📊 新規登録（過去7日）</h2>
-                    <div className="flex items-end justify-between h-20 gap-2">
-                        {analytics?.weekly?.usersByDay?.map((day, i) => {
-                            const maxCount = Math.max(...(analytics?.weekly?.usersByDay?.map(d => d.count) || [1]));
-                            const height = maxCount > 0 ? (day.count / maxCount) * 100 : 0;
-                            const isToday = i === analytics.weekly.usersByDay.length - 1;
-                            return (
-                                <div key={day.date} className="flex-1 flex flex-col items-center gap-1">
-                                    <div className="text-xs font-bold text-slate-600">{day.count}</div>
-                                    <div
-                                        className={`w-full rounded-t ${isToday ? 'bg-blue-500' : 'bg-slate-300'}`}
-                                        style={{ height: `${Math.max(height, 8)}%` }}
-                                    />
-                                    <div className="text-[10px] text-slate-500">{new Date(day.date).getDate()}日</div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
-
-                {/* Allergen Distribution */}
-                {stats?.allergens && stats.allergens.length > 0 && (
-                    <div className="mt-6 bg-white rounded-xl p-5 shadow-sm">
-                        <h2 className="text-sm font-bold text-slate-600 mb-4">🥜 アレルゲン分布</h2>
-                        <div className="grid grid-cols-4 gap-3">
-                            {stats.allergens.map(a => (
-                                <div key={a.name} className="flex justify-between items-center text-sm">
-                                    <span className="text-slate-700">{a.name}</span>
-                                    <span className="font-bold text-slate-800">{a.count}</span>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '24px' }}>
+                    {/* Totals */}
+                    <div style={{ background: 'linear-gradient(145deg, #1a1a2e, #16213e)', borderRadius: '16px', padding: '24px', border: '1px solid #2a2a4a' }}>
+                        <h2 style={{ fontSize: '14px', color: '#888', marginBottom: '20px', fontWeight: 600 }}>📈 TOTALS</h2>
+                        <div style={{ display: 'grid', gap: '16px' }}>
+                            {[
+                                { label: 'ユーザー', value: t.users, color: '#667eea' },
+                                { label: 'レシピ', value: t.recipes, color: '#10b981' },
+                                { label: '登録子供', value: t.children, color: '#f59e0b' }
+                            ].map(item => (
+                                <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span style={{ color: '#888', fontSize: '14px' }}>{item.label}</span>
+                                    <span style={{ color: '#fff', fontSize: '24px', fontWeight: 700 }}>{item.value ?? '-'}</span>
                                 </div>
                             ))}
                         </div>
                     </div>
-                )}
-            </div>
+
+                    {/* Funnel */}
+                    <div style={{ background: 'linear-gradient(145deg, #1a1a2e, #16213e)', borderRadius: '16px', padding: '24px', border: '1px solid #2a2a4a' }}>
+                        <h2 style={{ fontSize: '14px', color: '#888', marginBottom: '20px', fontWeight: 600 }}>🔄 FUNNEL</h2>
+                        <div style={{ display: 'grid', gap: '12px' }}>
+                            {[
+                                { label: '登録', value: f.registered, color: '#667eea' },
+                                { label: '子供登録', value: f.childAdded, color: '#10b981' },
+                                { label: '初保存', value: f.firstSave, color: '#f59e0b' },
+                                { label: '初投稿', value: f.firstRecipe, color: '#ef4444' }
+                            ].map((step, i, arr) => {
+                                const max = arr[0].value || 1;
+                                const pct = Math.round((step.value / max) * 100) || 0;
+                                const prev = i > 0 ? arr[i - 1].value : step.value;
+                                const cvr = prev > 0 ? Math.round((step.value / prev) * 100) : 0;
+                                return (
+                                    <div key={step.label}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                                            <span style={{ fontSize: '12px', color: '#888' }}>{step.label}</span>
+                                            <span style={{ fontSize: '12px', color: '#fff' }}>{step.value ?? 0} {i > 0 && <span style={{ color: '#666' }}>({cvr}%)</span>}</span>
+                                        </div>
+                                        <div style={{ height: '6px', background: '#2a2a4a', borderRadius: '3px', overflow: 'hidden' }}>
+                                            <div style={{ height: '100%', width: `${pct}%`, background: step.color, transition: 'width 0.5s' }} />
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Weekly Trend */}
+                    <div style={{ background: 'linear-gradient(145deg, #1a1a2e, #16213e)', borderRadius: '16px', padding: '24px', border: '1px solid #2a2a4a' }}>
+                        <h2 style={{ fontSize: '14px', color: '#888', marginBottom: '20px', fontWeight: 600 }}>📊 WEEKLY SIGNUPS</h2>
+                        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', height: '120px', gap: '8px' }}>
+                            {w.map((day, i) => {
+                                const max = Math.max(...w.map(d => d.count)) || 1;
+                                const h = (day.count / max) * 100;
+                                const isToday = i === w.length - 1;
+                                return (
+                                    <div key={day.date} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                                        <span style={{ fontSize: '11px', color: '#fff', fontWeight: 600 }}>{day.count}</span>
+                                        <div style={{
+                                            width: '100%',
+                                            height: `${Math.max(h, 8)}%`,
+                                            background: isToday ? 'linear-gradient(180deg, #667eea, #764ba2)' : '#3a3a5a',
+                                            borderRadius: '4px 4px 0 0'
+                                        }} />
+                                        <span style={{ fontSize: '10px', color: '#666' }}>{new Date(day.date).getDate()}</span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Allergens */}
+                    <div style={{ background: 'linear-gradient(145deg, #1a1a2e, #16213e)', borderRadius: '16px', padding: '24px', border: '1px solid #2a2a4a' }}>
+                        <h2 style={{ fontSize: '14px', color: '#888', marginBottom: '20px', fontWeight: 600 }}>🥜 ALLERGENS</h2>
+                        <div style={{ display: 'grid', gap: '8px' }}>
+                            {(stats?.allergens || []).slice(0, 6).map(a => (
+                                <div key={a.name} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    <span style={{ fontSize: '13px', color: '#aaa' }}>{a.name}</span>
+                                    <span style={{ fontSize: '13px', color: '#fff', fontWeight: 600 }}>{a.count}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Reports & Activity Row */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginTop: '24px' }}>
+                    {/* Reports */}
+                    <div style={{ background: 'linear-gradient(145deg, #1a1a2e, #16213e)', borderRadius: '16px', border: '1px solid #2a2a4a', overflow: 'hidden' }}>
+                        <div style={{ padding: '20px 24px', borderBottom: '1px solid #2a2a4a', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <h2 style={{ fontSize: '14px', color: '#888', fontWeight: 600 }}>⚠️ REPORTS ({reports.length})</h2>
+                        </div>
+                        <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                            {reports.length === 0 ? (
+                                <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>No pending reports</div>
+                            ) : reports.map(r => (
+                                <div key={r.id} style={{ padding: '16px 24px', borderBottom: '1px solid #2a2a4a', display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                    <img src={r.recipe?.image_url || '/placeholder.png'} style={{ width: '48px', height: '48px', borderRadius: '8px', objectFit: 'cover' }} />
+                                    <div style={{ flex: 1 }}>
+                                        <div style={{ color: '#fff', fontSize: '14px', fontWeight: 500 }}>{r.recipe?.title}</div>
+                                        <div style={{ color: '#ef4444', fontSize: '12px' }}>{r.reason}</div>
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '8px' }}>
+                                        <button onClick={() => handleDeleteRecipe(r.recipe?.id, r.id)} style={{ background: '#ef4444', border: 'none', padding: '6px 12px', borderRadius: '6px', color: '#fff', fontSize: '12px', cursor: 'pointer' }}>削除</button>
+                                        <button onClick={() => handleDismiss(r.id)} style={{ background: '#333', border: 'none', padding: '6px 12px', borderRadius: '6px', color: '#888', fontSize: '12px', cursor: 'pointer' }}>却下</button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Recent Activity */}
+                    <div style={{ background: 'linear-gradient(145deg, #1a1a2e, #16213e)', borderRadius: '16px', border: '1px solid #2a2a4a', overflow: 'hidden' }}>
+                        <div style={{ padding: '20px 24px', borderBottom: '1px solid #2a2a4a' }}>
+                            <h2 style={{ fontSize: '14px', color: '#888', fontWeight: 600 }}>✨ RECENT ACTIVITY</h2>
+                        </div>
+                        <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                            {triedReports.length === 0 ? (
+                                <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>No activity yet</div>
+                            ) : triedReports.map(r => (
+                                <div key={r.id} style={{ padding: '12px 24px', borderBottom: '1px solid #2a2a4a', display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                    {r.image_url ? (
+                                        <img src={r.image_url} style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'cover' }} />
+                                    ) : (
+                                        <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: '#2a2a4a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>📄</div>
+                                    )}
+                                    <div style={{ flex: 1 }}>
+                                        <div style={{ color: '#fff', fontSize: '13px' }}>{r.user?.username}</div>
+                                        <div style={{ color: '#666', fontSize: '11px' }}>→ {r.recipe?.title}</div>
+                                    </div>
+                                    <div style={{ color: '#666', fontSize: '11px' }}>{new Date(r.created_at).toLocaleDateString()}</div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </main>
         </div>
     );
 };
