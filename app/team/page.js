@@ -3,8 +3,10 @@
 import React from 'react';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
+import { useProfile } from '@/hooks/useProfile';
 
 const TeamPage = () => {
+    const { user } = useProfile();
     return (
         <div className="min-h-screen bg-slate-50 pb-24">
             {/* Header */}
@@ -22,8 +24,8 @@ const TeamPage = () => {
                 <div className="bg-gradient-to-br from-orange-400 to-amber-500 rounded-2xl p-6 text-white mb-6 text-center">
                     <h2 className="text-2xl font-bold mb-2">あんしんレシピ 運営チーム</h2>
                     <p className="text-white/90 text-sm">
-                        アレルギーっ子を持つ親として、<br />
-                        同じ悩みを持つご家庭をサポートします
+                        同じお悩みをもつママ・パパが繋がれる<br />
+                        場所を提供いたします
                     </p>
                 </div>
 
@@ -45,11 +47,11 @@ const TeamPage = () => {
                         </p>
 
                         <p>
-                            開発チームといっても、まだまだ勉強中の身です。不具合やエラーが出てしまうこともあるかもしれませんが、どうか寛大な心で見守っていただき、少しでも皆さんの生活にお役立ていただければ嬉しいです。
+                            開発チームといっても、まだまだ勉強中の身です。不具合やエラーが出てしまうこともあるかもしれませんが、どうか寛大な心で見守っていただき、少しでも皆さんの生活にお役立ていただければ嬉しいです！🙏
                         </p>
 
                         <p>
-                            改善のご要望や、ご意見・ご感想などは、<Link href="/profile" className="text-orange-500 font-bold hover:underline">こちら</Link>から、どしどしご連絡ください。
+                            改善のご要望や、ご意見・ご感想などは、<Link href={user ? "/profile" : "mailto:y.kominami@hitokoto1.co.jp"} className="text-orange-500 font-bold hover:underline">こちら</Link>から、どしどしご連絡ください。
                         </p>
                     </div>
                 </div>
