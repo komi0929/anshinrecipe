@@ -360,7 +360,7 @@ const RecipeListPage = () => {
 
                             {/* Card 2: Share (Large - Swapped to Bottom) */}
                             <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center text-center h-[200px] justify-center relative overflow-hidden group">
-                                <div className="absolute top-0 left-0 w-full h-1 bg-pink-400 opacity-80"></div>
+                                <div className="absolute top-0 left-0 w-full h-1 bg-yellow-400 opacity-80"></div>
                                 <div className="w-20 h-20 mb-3 relative group-hover:scale-110 transition-transform duration-300">
                                     <Image
                                         src="/features/share.png"
@@ -373,10 +373,17 @@ const RecipeListPage = () => {
                                     安心レシピを共有
                                 </h3>
                                 <p className="text-xs font-bold text-slate-500 leading-tight">
-                                    工夫したレシピを<br />みんなにシェア
+                                    お気に入りのレシピを<br />みんなにシェア
                                 </p>
                             </div>
                         </div>
+                    </div>
+
+                    {/* Team Link - Moved between sections */}
+                    <div className="w-full flex justify-center mb-4">
+                        <Link href="/team" className="flex items-center gap-1 text-orange-500 font-bold text-sm bg-orange-50 px-4 py-2 rounded-full hover:bg-orange-100 transition-colors shadow-sm">
+                            <span>👋 だれがやってるの？</span>
+                        </Link>
                     </div>
 
                     {/* CTA Section */}
@@ -386,15 +393,12 @@ const RecipeListPage = () => {
                                 LINEアカウントで今すぐ始めましょう
                             </p>
 
-                            {/* Team Link - Repositioned Here */}
-                            <Link href="/team" className="flex items-center gap-1 text-orange-500 font-bold text-sm bg-orange-50 px-3 py-1 rounded-full mb-1 hover:bg-orange-100 transition-colors">
-                                <span>👋 だれがやってるの？</span>
-                            </Link>
+
 
                             <LineLoginButton />
 
                             <p className="text-center text-slate-400 text-[10px] mt-1">
-                                ログインをもって利用規約・プライバシーポリシーに同意とみなします
+                                ログインをもって <Link href="/terms" className="text-slate-500 underline">利用規約</Link>・<Link href="/privacy" className="text-slate-500 underline">プライバシーポリシー</Link> に同意とみなします
                             </p>
                         </div>
                     </div>
