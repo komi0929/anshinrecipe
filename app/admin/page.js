@@ -172,6 +172,12 @@ const AdminPage = () => {
                         Anshin Admin
                     </h1>
                     <div className="flex items-center gap-4">
+                        <Link
+                            href="/admin/dashboard"
+                            className="text-sm font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                        >
+                            📊 ダッシュボード
+                        </Link>
                         <span className="text-xs text-slate-500 hidden sm:inline">
                             最終更新: {new Date().toLocaleTimeString()}
                         </span>
