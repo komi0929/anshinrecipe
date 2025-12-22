@@ -51,7 +51,7 @@ const TeamPage = () => {
                         </p>
 
                         <p>
-                            改善のご要望や、ご意見・ご感想などは、<Link href={user ? "/profile" : "mailto:y.kominami@hitokoto1.co.jp"} className="text-orange-500 font-bold hover:underline">こちら</Link>から、どしどしご連絡ください。
+                            改善のご要望や、ご意見・ご感想などは、<a href="https://lin.ee/hCPaJBc" target="_blank" rel="noopener noreferrer" className="text-orange-500 font-bold hover:underline">こちら</a>から、どしどしご連絡ください。
                         </p>
                     </div>
                 </div>
