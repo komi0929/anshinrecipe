@@ -51,7 +51,7 @@ const TeamPage = () => {
                         </p>
 
                         <p>
-                            改善のご要望や、ご意見・ご感想などは、<a href="https://line.me/R/ti/p/@017dtfqz" target="_blank" rel="noopener noreferrer" className="text-orange-500 font-bold hover:underline">公式LINE</a>から、どしどしご連絡ください。
+                            改善のご要望や、ご意見・ご感想などは、<Link href="/profile" className="text-orange-500 font-bold hover:underline">マイページのお問い合わせ</Link>から、どしどしご連絡ください。
                         </p>
                     </div>
                 </div>
