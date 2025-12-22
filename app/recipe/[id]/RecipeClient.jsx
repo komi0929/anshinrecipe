@@ -8,7 +8,7 @@ import { useProfile } from '../../../hooks/useProfile';
 import { useRecipes } from '../../../hooks/useRecipes';
 import { useToast } from '../../../components/Toast';
 import { ArrowLeft, Bookmark, Share2, ExternalLink, User as UserIcon, Clock, Smile, Heart, CheckCircle, MessageCircle, Pencil, UtensilsCrossed } from 'lucide-react';
-import { getReactionCounts, getUserReaction, toggleReaction, getTriedReports, deleteTriedReport } from '../../../lib/actions/socialActions';
+import { getReactionCounts, getUserReaction, toggleReaction, getTriedReports, deleteTriedReport, getLikeCount, getBookmarkCount } from '../../../lib/actions/socialActions';
 import { getRecommendedRecipes } from '../../../lib/recommendations';
 import TriedReportForm from '../../../components/TriedReportForm';
 import TriedReportCard from '../../../components/TriedReportCard';
@@ -41,6 +41,8 @@ const RecipeDetailPage = () => {
     const [userReaction, setUserReaction] = useState(null);
     const [reactionCounts, setReactionCounts] = useState({ yummy: 0, helpful: 0, ate_it: 0 });
     const [isSaved, setIsSaved] = useState(false);
+    const [likeCount, setLikeCount] = useState(0);
+    const [bookmarkCount, setBookmarkCount] = useState(0);
     const [triedReports, setTriedReports] = useState([]);
     const [recommendations, setRecommendations] = useState([]);
     const [showReportForm, setShowReportForm] = useState(false);
@@ -96,6 +98,12 @@ const RecipeDetailPage = () => {
                 const recs = await getRecommendedRecipes(data, 6, user?.id);
                 setRecommendations(recs);
 
+                // Fetch like and bookmark counts (for display)
+                const likes = await getLikeCount(id);
+                setLikeCount(likes);
+                const bookmarks = await getBookmarkCount(id);
+                setBookmarkCount(bookmarks);
+
             } catch (error) {
                 console.error('Error fetching recipe:', error);
                 addToast('レシピの読み込みに失敗しました', 'error');
@@ -134,6 +142,9 @@ const RecipeDetailPage = () => {
             // Refresh counts
             const counts = await getReactionCounts(id);
             setReactionCounts(counts);
+            // Also refresh like count for display
+            const likes = await getLikeCount(id);
+            setLikeCount(likes);
 
             // Toast logic
             if (newReaction === null) {
@@ -163,6 +174,9 @@ const RecipeDetailPage = () => {
                 setIsSaved(true);
                 addToast('レシピを保存しました', 'success');
             }
+            // Refresh bookmark count for display
+            const bookmarks = await getBookmarkCount(id);
+            setBookmarkCount(bookmarks);
         } catch (error) {
             console.error('Error toggling save:', error);
         }
@@ -255,6 +269,34 @@ const RecipeDetailPage = () => {
         );
     };
 
+    // Helper: Parse memo content for structured sections
+    const parseRecipeContent = (memo) => {
+        if (!memo) return { ingredients: null, steps: null, recommendation: null };
+
+        const ingredientsMatch = memo.match(/【材料】([\s\S]*?)(?=【|$)/);
+        const stepsMatch = memo.match(/【作り方】([\s\S]*?)(?=【|$)/);
+
+        // Remove matched sections to get remaining content
+        let remaining = memo
+            .replace(/【材料】[\s\S]*?(?=【|$)/, '')
+            .replace(/【作り方】[\s\S]*?(?=【|$)/, '')
+            .trim();
+
+        return {
+            ingredients: ingredientsMatch ? ingredientsMatch[1].trim() : null,
+            steps: stepsMatch ? stepsMatch[1].trim() : null,
+            recommendation: remaining || null
+        };
+    };
+
+    // Parse the memo content
+    const parsedContent = parseRecipeContent(recipe.memo || recipe.description);
+
+    // Title truncation (50 chars max)
+    const displayTitle = recipe.title && recipe.title.length > 50
+        ? recipe.title.substring(0, 50) + '...'
+        : recipe.title;
+
     const positiveIngredients = recipe.positiveIngredients || recipe.positive_ingredients || [];
 
     return (
@@ -269,46 +311,6 @@ const RecipeDetailPage = () => {
                             <Pencil size={24} />
                         </Link>
                     )}
-                    <button
-                        onClick={() => handleReaction('like')}
-                        className={`action-btn ${userReaction === 'like' ? 'active text-rose-500' : ''}`}
-                    >
-                        <Heart size={24} fill={userReaction === 'like' ? "currentColor" : "none"} />
-                    </button>
-                    <button onClick={handleSave} className={`action-btn ${isSaved ? 'active' : ''}`}>
-                        <Bookmark size={24} fill={isSaved ? "currentColor" : "none"} />
-                    </button>
-                    <button
-                        onClick={async () => {
-                            const shareData = {
-                                title: `【あんしんレシピ】${recipe.title}`,
-                                text: `${recipe.title} #アレルギー対応 #あんしんレシピ`,
-                                url: window.location.href,
-                            };
-
-                            if (navigator.share) {
-                                try {
-                                    await navigator.share(shareData);
-                                } catch (err) {
-                                    // User cancelled or failed
-                                    console.log('Share skipped', err);
-                                }
-                            } else {
-                                // Fallback for desktop: Copy link
-                                try {
-                                    await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
-                                    addToast('リンクをコピーしました', 'success');
-                                } catch (err) {
-                                    // Fallback to LINE if copy fails?
-                                    window.open(`https://line.me/R/msg/text/?${encodeURIComponent(shareData.text + ' ' + shareData.url)}`, '_blank');
-                                }
-                            }
-                        }}
-                        className="action-btn"
-                        aria-label="シェア"
-                    >
-                        <Share2 size={24} />
-                    </button>
                 </div>
             </div>
 
@@ -334,7 +336,7 @@ const RecipeDetailPage = () => {
             </div>
 
             <div className="recipe-info">
-                <h1 className="detail-title">{recipe.title}</h1>
+                <h1 className="detail-title" title={recipe.title}>{displayTitle}</h1>
 
                 <div className="recipe-meta">
                     <div className="author-info">
@@ -391,12 +393,33 @@ const RecipeDetailPage = () => {
                     </div>
                 )}
 
+                {/* Ingredients Section (Parsed from memo) */}
+                {parsedContent.ingredients && (
+                    <div className="detail-section">
+                        <h3>材料</h3>
+                        <div className="recipe-description whitespace-pre-line">
+                            {parsedContent.ingredients}
+                        </div>
+                    </div>
+                )}
+
+                {/* Steps Section (Parsed from memo) */}
+                {parsedContent.steps && (
+                    <div className="detail-section">
+                        <h3>作り方</h3>
+                        <div className="recipe-description whitespace-pre-line">
+                            {parsedContent.steps}
+                        </div>
+                    </div>
+                )}
+
+                {/* Recommendation Points Section */}
                 <div className="detail-section">
                     <h3>おすすめポイント</h3>
-                    {(recipe.memo || recipe.description) ? (
+                    {parsedContent.recommendation ? (
                         <>
-                            <p className="recipe-description">
-                                {recipe.memo || recipe.description}
+                            <p className="recipe-description whitespace-pre-line">
+                                {parsedContent.recommendation}
                             </p>
                             {recipe.recipe_images && recipe.recipe_images.length > 0 && (
                                 <div className="recipe-additional-images">
@@ -530,6 +553,53 @@ const RecipeDetailPage = () => {
 
 
                 <ReportButton recipeId={id} userId={user?.id} />
+            </div>
+
+            {/* Floating Action Bar */}
+            <div className="floating-action-bar">
+                <button
+                    onClick={() => handleReaction('like')}
+                    className={`fab-btn ${userReaction === 'like' ? 'active' : ''}`}
+                >
+                    <Heart size={20} fill={userReaction === 'like' ? "currentColor" : "none"} />
+                    <span className="fab-label">いいね！</span>
+                    <span className="fab-count">{likeCount}</span>
+                </button>
+                <button
+                    onClick={handleSave}
+                    className={`fab-btn ${isSaved ? 'active' : ''}`}
+                >
+                    <Bookmark size={20} fill={isSaved ? "currentColor" : "none"} />
+                    <span className="fab-label">保存</span>
+                    <span className="fab-count">{bookmarkCount}</span>
+                </button>
+                <button
+                    onClick={async () => {
+                        const shareData = {
+                            title: `【あんしんレシピ】${recipe.title}`,
+                            text: `${recipe.title} #アレルギー対応 #あんしんレシピ`,
+                            url: window.location.href,
+                        };
+                        if (navigator.share) {
+                            try {
+                                await navigator.share(shareData);
+                            } catch (err) {
+                                console.log('Share skipped', err);
+                            }
+                        } else {
+                            try {
+                                await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
+                                addToast('リンクをコピーしました', 'success');
+                            } catch (err) {
+                                window.open(`https://line.me/R/msg/text/?${encodeURIComponent(shareData.text + ' ' + shareData.url)}`, '_blank');
+                            }
+                        }
+                    }}
+                    className="fab-btn"
+                >
+                    <Share2 size={20} />
+                    <span className="fab-label">シェア</span>
+                </button>
             </div>
         </div>
     );

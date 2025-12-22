@@ -418,3 +418,95 @@
 .add-points-btn:hover {
     background: #fde68a;
 }
+
+/* Floating Action Bar */
+.floating-action-bar {
+    position: fixed;
+    bottom: 70px;
+    /* Above tab bar */
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    padding: 10px 16px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(12px);
+    border-radius: 50px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
+    z-index: 100;
+}
+
+.fab-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    background: #f8fafc;
+    border-radius: 24px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #64748b;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.fab-btn:hover {
+    background: #f1f5f9;
+    transform: translateY(-1px);
+}
+
+.fab-btn:active {
+    transform: scale(0.97);
+}
+
+.fab-btn.active {
+    background: #fff1f2;
+    color: #f43f5e;
+}
+
+.fab-btn.active:nth-child(2) {
+    background: #fff7ed;
+    color: #f97316;
+}
+
+.fab-label {
+    font-weight: 600;
+}
+
+.fab-count {
+    background: #e2e8f0;
+    color: #475569;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    min-width: 24px;
+    text-align: center;
+}
+
+.fab-btn.active .fab-count {
+    background: #fecdd3;
+    color: #be123c;
+}
+
+.fab-btn.active:nth-child(2) .fab-count {
+    background: #fed7aa;
+    color: #c2410c;
+}
+
+/* Responsive adjustments for floating bar */
+@media (max-width: 400px) {
+    .floating-action-bar {
+        padding: 8px 12px;
+        gap: 6px;
+    }
+
+    .fab-btn {
+        padding: 8px 10px;
+        font-size: 11px;
+    }
+
+    .fab-label {
+        display: none;
+    }
+}
