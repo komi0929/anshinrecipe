@@ -44,7 +44,7 @@ const SmartImportOverlay = ({ isVisible, onRunning, onComplete }) => {
     if (!isVisible) return null;
 
     return (
-        <div className="absolute inset-0 z-50 bg-white/95 backdrop-blur-sm flex flex-col items-center justify-center rounded-3xl animate-fade-in">
+        <div className="fixed inset-0 z-[9999] bg-white/95 backdrop-blur-sm flex flex-col items-center justify-center animate-fade-in">
             <div className="relative flex flex-col items-center">
                 {/* Branding Icon / Logo Area */}
                 <div className="w-24 h-24 bg-gradient-to-br from-orange-100 to-amber-50 rounded-full flex items-center justify-center mb-6 shadow-xl shadow-orange-100/50">
