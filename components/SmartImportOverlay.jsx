@@ -47,43 +47,43 @@ const SmartImportOverlay = ({ isVisible, onRunning, onComplete }) => {
         <div className="fixed inset-0 z-[9999] bg-white/95 backdrop-blur-sm flex flex-col items-center justify-center animate-fade-in">
             <div className="relative flex flex-col items-center">
                 {/* Branding Icon / Logo Area */}
-                <div className="w-24 h-24 bg-gradient-to-br from-orange-100 to-amber-50 rounded-full flex items-center justify-center mb-6 shadow-xl shadow-orange-100/50">
-                    <span className="text-5xl animate-bounce">
-                        {status === 'done' ? '✨' : '👶'}
-                    </span>
+                <div className="w-40 h-40 bg-white rounded-full flex items-center justify-center mb-8 shadow-2xl shadow-orange-200/50 p-2 animate-bounce">
+                    <img src="/images/baby-chef.png" alt="Baby Chef" className="w-full h-full object-contain" />
                 </div>
 
                 {/* Status Text & Counter */}
                 <div className="text-center">
                     {status === 'counting' && (
                         <>
-                            <div className="text-6xl font-black text-slate-800 mb-2 font-mono tracking-tighter animate-zoom-in" key={count}>
+                            <div className="text-8xl font-black text-orange-500 mb-4 font-mono tracking-tighter animate-pop-in drop-shadow-sm" key={count}>
                                 {count}
                             </div>
-                            <p className="text-slate-500 font-medium">レシピを読み込んでいます...</p>
+                            <p className="text-slate-600 font-bold text-xl animate-pulse">
+                                おいしいレシピにな～れ！✨
+                            </p>
                         </>
                     )}
 
                     {status === 'finalizing' && (
-                        <>
-                            <Loader2 className="w-12 h-12 text-orange-400 animate-spin mx-auto mb-4" />
-                            <p className="text-slate-600 font-bold text-lg">仕上げ中...</p>
-                        </>
+                        <div className="animate-zoom-in">
+                            <Loader2 className="w-16 h-16 text-orange-400 animate-spin mx-auto mb-6" />
+                            <p className="text-slate-700 font-bold text-2xl">あとちょっと！🍳</p>
+                        </div>
                     )}
 
                     {status === 'done' && (
                         <div className="animate-zoom-in">
-                            <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4" />
-                            <h3 className="text-2xl font-bold text-slate-800">準備完了！</h3>
+                            <CheckCircle2 className="w-20 h-20 text-green-500 mx-auto mb-6" />
+                            <h3 className="text-3xl font-bold text-slate-800">準備OK！🎉</h3>
                         </div>
                     )}
                 </div>
             </div>
 
             {/* Background Decoration */}
-            <div className="absolute inset-0 -z-10 overflow-hidden rounded-3xl opacity-30">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-orange-200 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-                <div className="absolute bottom-0 left-0 w-64 h-64 bg-amber-200 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
+            <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+                <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-orange-300/20 rounded-full blur-3xl animate-pulse"></div>
+                <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-yellow-300/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
             </div>
         </div>
     );
