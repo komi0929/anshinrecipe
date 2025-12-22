@@ -106,11 +106,13 @@ const SNSSaveGuidePage = () => {
 
                 {/* Tips */}
                 <div className="bg-amber-50 rounded-2xl p-4 border border-amber-100">
-                    <h4 className="font-bold text-amber-800 text-sm mb-2">💡 ポイント</h4>
-                    <p className="text-amber-700 text-xs leading-relaxed">
-                        保存したレシピは最初は「非公開」になっています。
-                        編集画面で「公開」に変更すると、他のユーザーにも共有されます。
-                    </p>
+                    <h4 className="font-bold text-amber-800 text-sm mb-2">💡 URLの取得方法</h4>
+                    <div className="text-amber-700 text-xs leading-relaxed space-y-2">
+                        <p><b>Instagram:</b> 投稿右上の「…」→「リンクをコピー」</p>
+                        <p><b>TikTok:</b> 共有ボタン→「リンクをコピー」</p>
+                        <p><b>YouTube:</b> 「共有」→「コピー」</p>
+                        <p><b>Webサイト:</b> ブラウザのアドレスバーからコピー</p>
+                    </div>
                 </div>
             </div>
         </div>
