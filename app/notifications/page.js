@@ -147,8 +147,8 @@ const NotificationsPage = () => {
             key={notification.id}
             onClick={() => handleNotificationClick(notification)}
             className={`p-4 rounded-2xl transition-all cursor-pointer ${isUnread
-                ? 'bg-gradient-to-r from-orange-50 to-amber-50/50 border-l-4 border-l-orange-400 border border-orange-100 hover:from-orange-100'
-                : 'bg-slate-50/70 border border-slate-100 opacity-60 hover:opacity-100'
+                ? 'bg-gradient-to-r from-orange-50 to-amber-50/50 border-l-4 border-l-orange-400 border border-orange-100 shadow-sm hover:from-orange-100'
+                : 'bg-white border border-slate-100 hover:bg-slate-50 shadow-[0_2px_8px_rgba(0,0,0,0.02)]'
                 }`}
         >
             <div className="flex items-start gap-3">
@@ -174,7 +174,7 @@ const NotificationsPage = () => {
                             {formatDate(notification.createdAt || notification.created_at)}
                         </span>
                         {!isUnread && (
-                            <span className="text-[10px] text-slate-300 flex items-center gap-0.5">
+                            <span className="text-[10px] text-slate-400 flex items-center gap-0.5 bg-slate-100 px-1.5 py-0.5 rounded-full">
                                 <Eye size={10} />
                                 既読
                             </span>
@@ -191,7 +191,7 @@ const NotificationsPage = () => {
     return (
         <div className="container max-w-md mx-auto min-h-screen bg-background pb-24">
             {/* Header */}
-            <div className="page-header sticky top-0 bg-background z-10 border-b border-slate-100">
+            <div className="page-header sticky top-0 bg-background z-10 border-b border-slate-100 mb-2">
                 <h1 className="page-title">お知らせ</h1>
                 {activeTab === 'activity' && actualUnreadCount > 0 && (
                     <button

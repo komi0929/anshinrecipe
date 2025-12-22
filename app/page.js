@@ -467,7 +467,7 @@ const RecipeListPage = () => {
             <ClipboardRecipeDetector />
 
             {/* Header with Personalization */}
-            <div className="pt-6 pb-4 px-4 flex items-center justify-between">
+            <div className="pt-4 pb-2 px-4 flex items-center justify-between">
                 <div>
                     <Image
                         src="/logo.png"
@@ -488,7 +488,7 @@ const RecipeListPage = () => {
             {user && (
                 <>
                     {/* Tab Switcher */}
-                    <div className="flex bg-slate-100 p-1 rounded-2xl mb-4 mx-4 space-x-1">
+                    <div className="flex bg-slate-100 p-1 rounded-2xl mb-3 mx-4 space-x-1">
                         {['recommend', 'saved', 'mine'].map((tab) => {
                             const labels = { recommend: 'みんなの投稿', saved: '保存済み', mine: '自分の投稿' };
                             const isActive = activeTab === tab;
@@ -510,7 +510,7 @@ const RecipeListPage = () => {
                         })}
                     </div>
 
-                    <div className="px-4 mb-4">
+                    <div className="px-4 mb-3">
                         <div className="relative">
                             <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 font-bold" size={20} />
                             <input

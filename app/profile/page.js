@@ -210,11 +210,11 @@ export default function ProfilePage() {
     return (
         <div className="min-h-screen bg-background">
             {/* Header Area */}
-            <div className="pt-6 pb-2 px-6">
+            <div className="pt-6 pb-0 px-6">
                 <h1 className="text-2xl font-bold text-text-main">マイページ</h1>
             </div>
 
-            <div className="px-4 space-y-6">
+            <div className="px-4 space-y-4">
 
                 {/* 1. Profile Card */}
                 <div className="bg-white rounded-[32px] p-6 shadow-sm flex items-center gap-4">
@@ -300,7 +300,7 @@ export default function ProfilePage() {
                                 )}
                             </div>
                             <span className={`text-[11px] font-bold ${profile.stats?.recipeCount > 0 ? 'text-text-main' : 'text-slate-400'}`}>初投稿</span>
-                            <span className={`text-[10px] text-center leading-tight ${profile.stats?.recipeCount > 0 ? 'text-amber-500' : 'text-slate-300'}`}>
+                            <span className={`text-[10px] text-center leading-tight ${profile.stats?.recipeCount > 0 ? 'text-amber-500' : 'text-slate-500 font-medium'}`}>
                                 {profile.stats?.recipeCount > 0 ? '獲得済み' : (
                                     <>レシピ投稿<br />あと1回</>
                                 )}
@@ -317,7 +317,7 @@ export default function ProfilePage() {
                                 )}
                             </div>
                             <span className={`text-[11px] font-bold ${profile.stats?.reportCount > 0 ? 'text-text-main' : 'text-slate-400'}`}>初レポート</span>
-                            <span className={`text-[10px] text-center leading-tight ${profile.stats?.reportCount > 0 ? 'text-amber-500' : 'text-slate-300'}`}>
+                            <span className={`text-[10px] text-center leading-tight ${profile.stats?.reportCount > 0 ? 'text-amber-500' : 'text-slate-500 font-medium'}`}>
                                 {profile.stats?.reportCount > 0 ? '獲得済み' : (
                                     <>レポ投稿<br />あと1回</>
                                 )}
@@ -335,7 +335,7 @@ export default function ProfilePage() {
                                 )}
                             </div>
                             <span className={`text-[11px] font-bold ${likedRecipeIds?.length >= 10 ? 'text-text-main' : 'text-slate-400'}`}>食通</span>
-                            <span className={`text-[10px] text-center leading-tight ${likedRecipeIds?.length >= 10 ? 'text-amber-500' : 'text-slate-300'}`}>
+                            <span className={`text-[10px] text-center leading-tight ${likedRecipeIds?.length >= 10 ? 'text-amber-500' : 'text-slate-500 font-medium'}`}>
                                 {likedRecipeIds?.length >= 10 ? '獲得済み' : (
                                     <>いいね！<br />あと{(10 - (likedRecipeIds?.length || 0))}回</>
                                 )}
@@ -352,7 +352,7 @@ export default function ProfilePage() {
                                 )}
                             </div>
                             <span className={`text-[11px] font-bold ${profile.stats?.recipeCount >= 10 ? 'text-text-main' : 'text-slate-400'}`}>シェフ</span>
-                            <span className={`text-[10px] text-center leading-tight ${profile.stats?.recipeCount >= 10 ? 'text-amber-500' : 'text-slate-300'}`}>
+                            <span className={`text-[10px] text-center leading-tight ${profile.stats?.recipeCount >= 10 ? 'text-amber-500' : 'text-slate-500 font-medium'}`}>
                                 {profile.stats?.recipeCount >= 10 ? '獲得済み' : (
                                     <>レシピ投稿<br />あと{(10 - (profile.stats?.recipeCount || 0))}回</>
                                 )}
@@ -369,7 +369,7 @@ export default function ProfilePage() {
                                 )}
                             </div>
                             <span className={`text-[11px] font-bold ${profile.stats?.reportCount >= 5 ? 'text-text-main' : 'text-slate-400'}`}>レポーター</span>
-                            <span className={`text-[10px] text-center leading-tight ${profile.stats?.reportCount >= 5 ? 'text-amber-500' : 'text-slate-300'}`}>
+                            <span className={`text-[10px] text-center leading-tight ${profile.stats?.reportCount >= 5 ? 'text-amber-500' : 'text-slate-500 font-medium'}`}>
                                 {profile.stats?.reportCount >= 5 ? '獲得済み' : (
                                     <>レポ投稿<br />あと{(5 - (profile.stats?.reportCount || 0))}回</>
                                 )}
@@ -474,23 +474,8 @@ export default function ProfilePage() {
                     <h3 className="text-sm font-bold text-text-sub mb-3 ml-2">便利な使い方</h3>
                     <div className="bg-white rounded-[24px] overflow-hidden shadow-sm">
                         <Link
-                            href="/quick-save-guide#sns-save"
-                            className="w-full p-4 flex items-center justify-between border-b border-slate-50 hover:bg-slate-50 transition-colors"
-                        >
-                            <div className="flex items-center gap-3 text-text-main">
-                                <div className="w-8 h-8 bg-gradient-to-br from-orange-400 to-amber-500 rounded-full flex items-center justify-center">
-                                    <Zap size={16} className="text-white" />
-                                </div>
-                                <div>
-                                    <span className="font-medium">SNSからかんたん保存</span>
-                                    <p className="text-xs text-slate-400">インスタやTikTokのURLを共有するだけ</p>
-                                </div>
-                            </div>
-                            <ChevronRight className="text-slate-300" size={20} />
-                        </Link>
-                        <Link
                             href="/quick-save-guide#pwa-install"
-                            className="w-full p-4 flex items-center justify-between hover:bg-slate-50 transition-colors border-2 border-emerald-50 bg-emerald-50/10"
+                            className="w-full p-4 flex items-center justify-between hover:bg-slate-50 transition-colors border-b border-slate-50 bg-emerald-50/10"
                         >
                             <div className="flex items-center gap-3 text-text-main">
                                 <div className="w-8 h-8 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center shadow-sm">
@@ -505,6 +490,21 @@ export default function ProfilePage() {
                                 </div>
                             </div>
                             <ChevronRight className="text-emerald-300" size={20} />
+                        </Link>
+                        <Link
+                            href="/quick-save-guide#sns-save"
+                            className="w-full p-4 flex items-center justify-between hover:bg-slate-50 transition-colors"
+                        >
+                            <div className="flex items-center gap-3 text-text-main">
+                                <div className="w-8 h-8 bg-gradient-to-br from-orange-400 to-amber-500 rounded-full flex items-center justify-center">
+                                    <Zap size={16} className="text-white" />
+                                </div>
+                                <div>
+                                    <span className="font-medium">SNSからかんたん保存</span>
+                                    <p className="text-xs text-slate-400">インスタやTikTokのURLを共有するだけ</p>
+                                </div>
+                            </div>
+                            <ChevronRight className="text-slate-300" size={20} />
                         </Link>
                     </div>
                 </div>
