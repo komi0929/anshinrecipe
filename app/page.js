@@ -591,7 +591,7 @@ const RecipeListPage = () => {
             )}
 
             {/* Recipe Grid - CSS Grid Layout for stability */}
-            <div className="px-3 grid grid-cols-2 gap-3 pb-24">
+            <div className="px-2 grid grid-cols-2 gap-2 pb-24">
                 {loading || tabLoading || !imagesLoaded ? (
                     Array.from({ length: 6 }).map((_, i) => (
                         <div key={i}>
