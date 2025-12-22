@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Copy, CheckCircle, Smartphone, Zap } from 'lucide-react';
+import { ArrowLeft, Copy, CheckCircle, Smartphone, Zap, Share2, Settings } from 'lucide-react';
 
 const SNSSaveGuidePage = () => {
     return (
@@ -30,41 +30,77 @@ const SNSSaveGuidePage = () => {
                     </p>
                 </div>
 
-                {/* SNS Save Section */}
-                <div id="sns-save" className="bg-white rounded-2xl p-5 shadow-sm mb-4 scroll-mt-20">
+                {/* Method 1: Copy URL */}
+                <div className="bg-white rounded-2xl p-5 shadow-sm mb-4">
                     <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                        使い方
+                        <span className="w-7 h-7 bg-orange-500 text-white text-sm rounded-full flex items-center justify-center font-black">1</span>
+                        URLをコピーして保存
                     </h3>
 
                     <div className="space-y-4 text-sm text-slate-600">
                         <div className="flex gap-3 items-start">
-                            <span className="w-6 h-6 bg-orange-500 text-white text-xs rounded-full flex items-center justify-center font-bold flex-shrink-0">1</span>
+                            <Copy size={18} className="text-orange-500 flex-shrink-0 mt-0.5" />
                             <div>
                                 <p className="font-bold text-slate-700">レシピのURLをコピー</p>
                                 <p className="text-xs text-slate-500 mt-1">Instagram/TikTokで「リンクをコピー」をタップ</p>
                             </div>
                         </div>
                         <div className="flex gap-3 items-start">
-                            <span className="w-6 h-6 bg-orange-500 text-white text-xs rounded-full flex items-center justify-center font-bold flex-shrink-0">2</span>
+                            <Smartphone size={18} className="text-orange-500 flex-shrink-0 mt-0.5" />
                             <div>
                                 <p className="font-bold text-slate-700">あんしんレシピを開く</p>
                                 <p className="text-xs text-slate-500 mt-1">クリップボードのURLを自動で検出します</p>
                             </div>
                         </div>
-                        <div className="flex gap-3 items-start">
-                            <span className="w-6 h-6 bg-orange-500 text-white text-xs rounded-full flex items-center justify-center font-bold flex-shrink-0">3</span>
-                            <div>
-                                <p className="font-bold text-slate-700">レシピを保存！</p>
-                                <p className="text-xs text-slate-500 mt-1">タイトルや材料が自動で入力されます</p>
-                            </div>
-                        </div>
                     </div>
 
-                    <div className="mt-5 p-3 bg-green-50 rounded-xl border border-green-100">
+                    <div className="mt-4 p-3 bg-green-50 rounded-xl border border-green-100">
                         <div className="flex items-center gap-2 text-green-700 font-medium text-sm">
                             <CheckCircle size={16} />
                             この機能は既に有効です
                         </div>
+                    </div>
+                </div>
+
+                {/* Method 2: Android Share (Galaxy等) */}
+                <div className="bg-white rounded-2xl p-5 shadow-sm mb-4 border-2 border-blue-100">
+                    <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <span className="w-7 h-7 bg-blue-500 text-white text-sm rounded-full flex items-center justify-center font-black">2</span>
+                        共有メニューから直接開く
+                        <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold">Android</span>
+                    </h3>
+
+                    <div className="space-y-3 text-sm text-slate-600 mb-4">
+                        <p className="text-slate-700">
+                            Galaxy/Androidでホーム画面に追加すると、Instagramの共有メニューに「あんしんレシピ」が表示されます。
+                        </p>
+                    </div>
+
+                    <div className="p-4 bg-blue-50 rounded-xl text-sm text-blue-700">
+                        <p className="font-bold mb-2 flex items-center gap-2"><Settings size={16} /> 設定方法:</p>
+                        <ol className="list-decimal list-inside space-y-1 text-xs">
+                            <li>Chromeで右上メニュー（⋮）をタップ</li>
+                            <li>「ホーム画面に追加」または「アプリをインストール」</li>
+                            <li>インストール後、Instagramの共有で「あんしんレシピ」を選択！</li>
+                        </ol>
+                    </div>
+                </div>
+
+                {/* Method 3: iOS Shortcut (Coming Soon) */}
+                <div className="bg-white rounded-2xl p-5 shadow-sm mb-4 opacity-75">
+                    <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <span className="w-7 h-7 bg-slate-400 text-white text-sm rounded-full flex items-center justify-center">3</span>
+                        iOSショートカット
+                        <span className="text-xs bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full">開発中</span>
+                    </h3>
+
+                    <p className="text-sm text-slate-500 mb-4">
+                        iPhoneの「ショートカット」アプリで共有メニューに追加できる機能を準備中です。
+                        しばらくお待ちください。
+                    </p>
+
+                    <div className="p-3 bg-slate-100 rounded-xl text-xs text-slate-500">
+                        現在は方法1または2をご利用ください。
                     </div>
                 </div>
 
