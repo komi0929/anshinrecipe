@@ -90,20 +90,39 @@ const EditRecipeContent = () => {
 
         setIsDeleting(true);
         try {
-            // Delete from Supabase
+            // Delete related data first (foreign key constraints)
+            // 1. Delete likes for this recipe
+            await supabase.from('likes').delete().eq('recipe_id', id);
+
+            // 2. Delete saved_recipes for this recipe
+            await supabase.from('saved_recipes').delete().eq('recipe_id', id);
+
+            // 3. Delete tried_reports for this recipe
+            await supabase.from('tried_reports').delete().eq('recipe_id', id);
+
+            // 4. Delete recipe_images for this recipe
+            await supabase.from('recipe_images').delete().eq('recipe_id', id);
+
+            // 5. Delete cooking_logs for this recipe
+            await supabase.from('cooking_logs').delete().eq('recipe_id', id);
+
+            // 6. Finally delete the recipe itself
             const { error } = await supabase
                 .from('recipes')
                 .delete()
                 .eq('id', id)
                 .eq('user_id', user.id);
 
-            if (error) throw error;
+            if (error) {
+                console.error('Recipe delete error:', error);
+                throw error;
+            }
 
             // Navigate to home
             router.push('/?tab=mine');
         } catch (error) {
             console.error('Failed to delete recipe:', error);
-            alert('レシピの削除に失敗しました');
+            alert(`レシピの削除に失敗しました: ${error.message || 'Unknown error'}`);
         } finally {
             setIsDeleting(false);
             setShowDeleteConfirm(false);
