@@ -4,7 +4,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useRecipes } from '@/hooks/useRecipes';
 import { useProfile } from '@/hooks/useProfile';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { RecipeForm } from '@/components/RecipeForm';
@@ -13,11 +13,13 @@ import { supabase } from '@/lib/supabaseClient';
 const EditRecipeContent = () => {
     const router = useRouter();
     const { id } = useParams();
-    const { updateRecipe } = useRecipes();
+    const { updateRecipe, deleteRecipe } = useRecipes();
     const { user, profile, loading: profileLoading } = useProfile();
 
     const [isLoading, setIsLoading] = useState(true);
     const [initialData, setInitialData] = useState(null);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     useEffect(() => {
         if (!profileLoading && !user) {
@@ -83,7 +85,32 @@ const EditRecipeContent = () => {
         }
     };
 
-    // Show skeleton while loading - prevents blank flash
+    const handleDelete = async () => {
+        if (!id || !user) return;
+
+        setIsDeleting(true);
+        try {
+            // Delete from Supabase
+            const { error } = await supabase
+                .from('recipes')
+                .delete()
+                .eq('id', id)
+                .eq('user_id', user.id);
+
+            if (error) throw error;
+
+            // Navigate to home
+            router.push('/?tab=mine');
+        } catch (error) {
+            console.error('Failed to delete recipe:', error);
+            alert('レシピの削除に失敗しました');
+        } finally {
+            setIsDeleting(false);
+            setShowDeleteConfirm(false);
+        }
+    };
+
+    // Show skeleton while loading
     if (profileLoading || isLoading || !user || !initialData) {
         return (
             <div className="container add-recipe-page relative">
@@ -118,7 +145,49 @@ const EditRecipeContent = () => {
                     profile={profile}
                     isEditMode={true}
                 />
+
+                {/* Delete Button */}
+                <div className="mt-8 pt-6 border-t border-red-100">
+                    <button
+                        type="button"
+                        onClick={() => setShowDeleteConfirm(true)}
+                        className="w-full py-3 px-4 bg-red-50 text-red-600 font-bold rounded-xl border border-red-200 hover:bg-red-100 transition-colors flex items-center justify-center gap-2"
+                    >
+                        <Trash2 size={20} />
+                        このレシピを削除する
+                    </button>
+                </div>
             </div>
+
+            {/* Delete Confirmation Modal */}
+            {showDeleteConfirm && (
+                <div className="fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
+                        <h3 className="text-xl font-bold text-slate-800 mb-4">レシピを削除しますか？</h3>
+                        <p className="text-slate-600 mb-6">
+                            この操作は取り消せません。レシピに関連するすべてのデータ（いいね、保存、レポートなど）も削除されます。
+                        </p>
+                        <div className="flex gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setShowDeleteConfirm(false)}
+                                disabled={isDeleting}
+                                className="flex-1 py-3 px-4 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-colors"
+                            >
+                                キャンセル
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleDelete}
+                                disabled={isDeleting}
+                                className="flex-1 py-3 px-4 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 transition-colors disabled:opacity-50"
+                            >
+                                {isDeleting ? '削除中...' : '削除する'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
@@ -132,3 +201,4 @@ const EditRecipePage = () => {
 };
 
 export default EditRecipePage;
+

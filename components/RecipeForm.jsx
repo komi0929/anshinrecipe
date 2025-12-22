@@ -46,7 +46,8 @@ export const RecipeForm = ({
     // Smart Import State
     const [isSmartImporting, setIsSmartImporting] = useState(false);
     const [smartImportError, setSmartImportError] = useState(null);
-    const [showOverlay, setShowOverlay] = useState(false); // New state for overlay
+    const [showOverlay, setShowOverlay] = useState(false);
+    const originalSourceUrl = useRef(initialData.sourceUrl || ''); // Track original URL for edit mode
 
     // Auto-calculate allergens from selected children
     useEffect(() => {
@@ -111,6 +112,11 @@ export const RecipeForm = ({
             try {
                 new URL(sourceUrl);
             } catch (e) {
+                return;
+            }
+
+            // Skip re-analysis if in edit mode and URL hasn't changed
+            if (isEditMode && sourceUrl === originalSourceUrl.current) {
                 return;
             }
 
