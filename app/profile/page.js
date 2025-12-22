@@ -474,7 +474,7 @@ export default function ProfilePage() {
                     <h3 className="text-sm font-bold text-text-sub mb-3 ml-2">便利な使い方</h3>
                     <div className="bg-white rounded-[24px] overflow-hidden shadow-sm">
                         <Link
-                            href="/quick-save-guide"
+                            href="/quick-save-guide#sns-save"
                             className="w-full p-4 flex items-center justify-between border-b border-slate-50 hover:bg-slate-50 transition-colors"
                         >
                             <div className="flex items-center gap-3 text-text-main">
@@ -483,25 +483,28 @@ export default function ProfilePage() {
                                 </div>
                                 <div>
                                     <span className="font-medium">SNSからかんたん保存</span>
-                                    <p className="text-xs text-slate-400">Instagram・TikTokからワンタップ</p>
+                                    <p className="text-xs text-slate-400">インスタやTikTokのURLを共有するだけ</p>
                                 </div>
                             </div>
                             <ChevronRight className="text-slate-300" size={20} />
                         </Link>
                         <Link
-                            href="/quick-save-guide"
-                            className="w-full p-4 flex items-center justify-between hover:bg-slate-50 transition-colors"
+                            href="/quick-save-guide#pwa-install"
+                            className="w-full p-4 flex items-center justify-between hover:bg-slate-50 transition-colors border-2 border-emerald-50 bg-emerald-50/10"
                         >
                             <div className="flex items-center gap-3 text-text-main">
-                                <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full flex items-center justify-center">
+                                <div className="w-8 h-8 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center shadow-sm">
                                     <Smartphone size={16} className="text-white" />
                                 </div>
-                                <div>
-                                    <span className="font-medium">ホーム画面に追加</span>
-                                    <p className="text-xs text-slate-400">アプリのようにすぐ開ける！</p>
+                                <div className="flex-1">
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-bold text-slate-800">ホーム画面に追加</span>
+                                        <span className="text-[10px] bg-emerald-500 text-white px-2 py-0.5 rounded-full font-black animate-pulse">推奨</span>
+                                    </div>
+                                    <p className="text-xs text-emerald-600 font-bold">アプリのように全画面で見やすくなります！</p>
                                 </div>
                             </div>
-                            <ChevronRight className="text-slate-300" size={20} />
+                            <ChevronRight className="text-emerald-300" size={20} />
                         </Link>
                     </div>
                 </div>

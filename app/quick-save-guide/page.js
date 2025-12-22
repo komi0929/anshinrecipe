@@ -31,10 +31,10 @@ const QuickSaveGuidePage = () => {
                 </div>
 
                 {/* Method 1: Copy URL */}
-                <div className="bg-white rounded-2xl p-5 shadow-sm mb-4">
+                <div id="sns-save" className="bg-white rounded-2xl p-5 shadow-sm mb-4 scroll-mt-20">
                     <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                        <span className="w-7 h-7 bg-green-500 text-white text-sm rounded-full flex items-center justify-center">1</span>
-                        URLをコピーして開く（最も簡単）
+                        <span className="w-7 h-7 bg-orange-500 text-white text-sm rounded-full flex items-center justify-center font-black">1</span>
+                        SNSやWebから保存する方法
                     </h3>
 
                     <div className="space-y-3 text-sm text-slate-600">
@@ -57,16 +57,34 @@ const QuickSaveGuidePage = () => {
                 </div>
 
                 {/* Method 2: Android PWA (moved up) */}
-                <div className="bg-white rounded-2xl p-5 shadow-sm mb-4">
-                    <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                        <span className="w-7 h-7 bg-emerald-500 text-white text-sm rounded-full flex items-center justify-center">2</span>
-                        ホーム画面に追加する
-                    </h3>
+                <div id="pwa-install" className="bg-white rounded-2xl p-5 shadow-sm mb-4 border-2 border-emerald-100 scroll-mt-20">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                            <span className="w-7 h-7 bg-emerald-500 text-white text-sm rounded-full flex items-center justify-center font-black">2</span>
+                            ホーム画面に追加する（推奨）
+                        </h3>
+                        <span className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full font-bold">
+                            快適にご利用いただけます
+                        </span>
+                    </div>
 
-                    <p className="text-sm text-slate-600 mb-4">
-                        ホーム画面に追加すると、アプリのようにすぐに開けます。
-                        Androidでは共有メニューに「あんしんレシピ」が表示されるようになります。
-                    </p>
+                    <div className="space-y-3 mb-6 font-bold">
+                        <p className="text-sm text-slate-700">追加するメリット：</p>
+                        <ul className="text-xs text-slate-600 space-y-2 pl-1">
+                            <li className="flex items-start gap-2">
+                                <span className="text-emerald-500">✔</span>
+                                <div><span className="font-bold text-slate-800">アプリのように起動</span><br /><span className="font-normal">ホーム画面からワンタップで見たいレシピにすぐ届きます。</span></div>
+                            </li>
+                            <li className="flex items-start gap-2">
+                                <span className="text-emerald-500">✔</span>
+                                <div><span className="font-bold text-slate-800">全画面で料理が快適</span><br /><span className="font-normal">ブラウザの枠がなくなり、画面いっぱいレシピを表示できます。</span></div>
+                            </li>
+                            <li className="flex items-start gap-2">
+                                <span className="text-emerald-500">✔</span>
+                                <div><span className="font-bold text-slate-800">共有から直接ひらく</span><br /><span className="font-normal">Instagramの共有メニューに「あんしんレシピ」が表示されます。</span></div>
+                            </li>
+                        </ul>
+                    </div>
 
                     <div className="p-4 bg-emerald-50 rounded-xl text-sm text-emerald-700 mb-3">
                         <p className="font-bold mb-2 flex items-center gap-2"><Smartphone size={16} /> iPhone / Safariの場合:</p>
