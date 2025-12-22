@@ -632,7 +632,7 @@ const RecipeListPage = () => {
                         </div>
                     ))
                 ) : filteredRecipes.length > 0 ? (
-                    filteredRecipes.map(recipe => (
+                    filteredRecipes.map((recipe, index) => (
                         <div key={recipe.id}>
                             <RecipeCard
                                 recipe={recipe}
@@ -641,6 +641,7 @@ const RecipeListPage = () => {
                                 onToggleSave={() => toggleSave(recipe.id)}
                                 isLiked={likedRecipeIds?.includes(recipe.id)}
                                 onToggleLike={() => toggleLike(recipe.id)}
+                                priority={index < 4}
                             />
                         </div>
                     ))

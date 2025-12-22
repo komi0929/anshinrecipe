@@ -196,7 +196,7 @@ export const RecipeForm = ({
 
         const timer = setTimeout(() => {
             fetchSmartImport();
-        }, 1000); // 1.0s debounce
+        }, 500); // 0.5s debounce - faster response
 
         return () => clearTimeout(timer);
         // eslint-disable-next-line react-hooks/exhaustive-deps

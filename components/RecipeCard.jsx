@@ -1,17 +1,24 @@
 'use client'
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Heart, Bookmark } from 'lucide-react';
 import './RecipeCard.css';
 import { useRecipes } from '../hooks/useRecipes';
 import { useProfile } from '../hooks/useProfile';
 
-export const RecipeCard = ({ recipe, isSaved, onToggleSave, isLiked, onToggleLike }) => {
+export const RecipeCard = ({ recipe, isSaved, onToggleSave, isLiked, onToggleLike, priority = false }) => {
     const [localIsSaved, setLocalIsSaved] = useState(false);
     const [localIsLiked, setLocalIsLiked] = useState(false);
     const { previewImage } = useRecipes();
     const { user } = useProfile();
+    const router = useRouter();
+
+    // Prefetch on hover for faster navigation
+    const handleMouseEnter = useCallback(() => {
+        router.prefetch(`/recipe/${recipe.id}`);
+    }, [router, recipe.id]);
 
     const savedState = isSaved !== undefined ? isSaved : localIsSaved;
     const likedState = isLiked !== undefined ? isLiked : localIsLiked;
@@ -49,7 +56,7 @@ export const RecipeCard = ({ recipe, isSaved, onToggleSave, isLiked, onToggleLik
         : recipe.title;
 
     return (
-        <Link href={`/recipe/${recipe.id}`} className="recipe-card-visual">
+        <Link href={`/recipe/${recipe.id}`} className="recipe-card-visual" onMouseEnter={handleMouseEnter}>
             <div className="card-visual-container">
                 {/* Image or Placeholder */}
                 {recipe.image ? (
@@ -57,7 +64,8 @@ export const RecipeCard = ({ recipe, isSaved, onToggleSave, isLiked, onToggleLik
                         src={recipe.image}
                         alt={recipe.title}
                         className="card-visual-image"
-                        loading="lazy"
+                        loading={priority ? "eager" : "lazy"}
+                        fetchpriority={priority ? "high" : "auto"}
                     />
                 ) : (
                     <div className="card-visual-placeholder">

@@ -52,8 +52,8 @@ const RecipeDetailPage = () => {
             try {
                 setLoading(true);
 
-                // Fetch recipe with author
-                const { data, error } = await supabase
+                // OPTIMIZATION: Start ALL fetches in parallel for maximum speed
+                const recipePromise = supabase
                     .from('recipes')
                     .select(`
                         *,
@@ -69,40 +69,45 @@ const RecipeDetailPage = () => {
                     .eq('id', id)
                     .single();
 
+                // Start parallel fetches (don't await yet)
+                const countsPromise = getReactionCounts(id);
+                const reportsPromise = getTriedReports(id);
+                const likesPromise = getLikeCount(id);
+                const bookmarksPromise = getBookmarkCount(id);
+
+                // User-specific fetches (only if logged in)
+                const reactionPromise = user ? getUserReaction(id, user.id) : Promise.resolve(null);
+                const savedPromise = user
+                    ? supabase.from('saved_recipes').select('id').eq('recipe_id', id).eq('user_id', user.id).single()
+                    : Promise.resolve({ data: null });
+
+                // Wait for recipe first (needed for recommendations)
+                const { data: recipeData, error } = await recipePromise;
                 if (error) throw error;
-                setRecipe(data);
+                setRecipe(recipeData);
 
-                // Fetch interaction status if logged in
-                if (user) {
-                    const reaction = await getUserReaction(id, user.id);
-                    setUserReaction(reaction);
+                // Start recommendations now that we have recipe data
+                const recsPromise = getRecommendedRecipes(recipeData, 6, user?.id);
 
-                    const { data: saveData } = await supabase
-                        .from('saved_recipes')
-                        .select('id')
-                        .eq('recipe_id', id)
-                        .eq('user_id', user.id)
-                        .single();
-                    setIsSaved(!!saveData);
-                }
+                // Await all other fetches in parallel
+                const [counts, reports, likes, bookmarks, reaction, saved, recs] = await Promise.all([
+                    countsPromise,
+                    reportsPromise,
+                    likesPromise,
+                    bookmarksPromise,
+                    reactionPromise,
+                    savedPromise,
+                    recsPromise
+                ]);
 
-                // Fetch reaction counts
-                const counts = await getReactionCounts(id);
+                // Apply all results
                 setReactionCounts(counts);
-
-                // Fetch tried reports
-                const reports = await getTriedReports(id);
                 setTriedReports(reports);
-
-                // Fetch recommendations (exclude current user's recipes)
-                const recs = await getRecommendedRecipes(data, 6, user?.id);
-                setRecommendations(recs);
-
-                // Fetch like and bookmark counts (for display)
-                const likes = await getLikeCount(id);
                 setLikeCount(likes);
-                const bookmarks = await getBookmarkCount(id);
                 setBookmarkCount(bookmarks);
+                setUserReaction(reaction);
+                setIsSaved(!!saved.data);
+                setRecommendations(recs);
 
             } catch (error) {
                 console.error('Error fetching recipe:', error);
