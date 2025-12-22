@@ -324,6 +324,8 @@ export const RecipeForm = ({
     // Unsaved Changes Alert
     useEffect(() => {
         const handleBeforeUnload = (e) => {
+            // Skip warning if form is being submitted (navigating away after save)
+            if (isSubmitting) return;
             if (title || image || description || ingredientsAndSteps) {
                 e.preventDefault();
                 e.returnValue = '';
@@ -331,7 +333,7 @@ export const RecipeForm = ({
         };
         window.addEventListener('beforeunload', handleBeforeUnload);
         return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-    }, [title, image, description, ingredientsAndSteps]);
+    }, [title, image, description, ingredientsAndSteps, isSubmitting]);
 
     // Tag handlers
     const handleAddTag = (e) => { e.preventDefault(); if (tagInput.trim() && !tags.includes(tagInput.trim())) { setTags([...tags, tagInput.trim()]); setTagInput(''); } };
