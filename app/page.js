@@ -219,35 +219,39 @@ const RecipeListPage = () => {
             const aSafe = a.safeFor.length > 0;
             const bSafe = b.safeFor.length > 0;
 
-            // 1. Safety Match first
+            // 1. Safety Match first (safe recipes always come first)
             if (aSafe && !bSafe) return -1;
             if (!aSafe && bSafe) return 1;
 
-            // 2. Sort by user preference
-            if (sortOrder === 'likes') {
-                const aLikes = a.like_count || a.likeCount || 0;
-                const bLikes = b.like_count || b.likeCount || 0;
-                if (bLikes - aLikes !== 0) return bLikes - aLikes;
-                // Secondary sort by saves when likes are equal
-                const aSaves = a.save_count || a.saveCount || 0;
-                const bSaves = b.save_count || b.saveCount || 0;
-                if (bSaves - aSaves !== 0) return bSaves - aSaves;
-            } else if (sortOrder === 'newest') {
-                const dateA = new Date(a.created_at || a.createdAt || 0);
-                const dateB = new Date(b.created_at || b.createdAt || 0);
-                if (dateB - dateA !== 0) return dateB - dateA;
-            } else if (sortOrder === 'saves') {
-                const aSaves = a.save_count || a.saveCount || 0;
-                const bSaves = b.save_count || b.saveCount || 0;
-                if (bSaves - aSaves !== 0) return bSaves - aSaves;
-            }
-
-            // 3. Newest as secondary or primary sort
+            // Get counts for sorting
+            const aLikes = a.like_count || a.likeCount || 0;
+            const bLikes = b.like_count || b.likeCount || 0;
+            const aSaves = a.save_count || a.saveCount || 0;
+            const bSaves = b.save_count || b.saveCount || 0;
             const dateA = new Date(a.created_at || a.createdAt || 0);
             const dateB = new Date(b.created_at || b.createdAt || 0);
-            if (dateB - dateA !== 0) return dateB - dateA;
 
-            // 4. Stable Tie-breaker
+            // 2. Sort by user preference
+            if (sortOrder === 'saves') {
+                // Primary: saves (descending)
+                if (bSaves !== aSaves) return bSaves - aSaves;
+                // Secondary: likes (descending) when saves are equal
+                if (bLikes !== aLikes) return bLikes - aLikes;
+                // Tertiary: newest (descending)
+                if (dateB - dateA !== 0) return dateB - dateA;
+            } else if (sortOrder === 'likes') {
+                // Primary: likes (descending)
+                if (bLikes !== aLikes) return bLikes - aLikes;
+                // Secondary: saves (descending) when likes are equal
+                if (bSaves !== aSaves) return bSaves - aSaves;
+                // Tertiary: newest (descending)
+                if (dateB - dateA !== 0) return dateB - dateA;
+            } else {
+                // Default: newest (descending)
+                if (dateB - dateA !== 0) return dateB - dateA;
+            }
+
+            // 4. Stable Tie-breaker (by ID)
             const idA = String(a.id || a.recipe_id);
             const idB = String(b.id || b.recipe_id);
             return idA.localeCompare(idB);
