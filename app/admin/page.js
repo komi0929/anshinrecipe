@@ -7,25 +7,72 @@ export default function AdminPage() {
     const [auth, setAuth] = useState(false);
     const [pin, setPin] = useState('');
     const [loading, setLoading] = useState(false);
+    const [loginError, setLoginError] = useState('');
     const [data, setData] = useState(null);
     const [stats, setStats] = useState(null);
     const [reports, setReports] = useState([]);
     const [activity, setActivity] = useState([]);
 
     useEffect(() => {
-        const p = sessionStorage.getItem('admin_pin');
-        if (p === process.env.NEXT_PUBLIC_ADMIN_PIN) {
-            setAuth(true);
-            load();
-        }
+        // セッショントークンの有効性をサーバーサイドで検証
+        const validateSession = async () => {
+            const token = sessionStorage.getItem('admin_token');
+            if (!token) return;
+
+            try {
+                const response = await fetch('/api/admin/verify-pin', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.valid) {
+                        setAuth(true);
+                        load();
+                    } else {
+                        sessionStorage.removeItem('admin_token');
+                    }
+                }
+            } catch (error) {
+                console.error('Session validation error:', error);
+                sessionStorage.removeItem('admin_token');
+            }
+        };
+
+        validateSession();
     }, []);
 
-    const login = (e) => {
+    const login = async (e) => {
         e.preventDefault();
-        if (pin === process.env.NEXT_PUBLIC_ADMIN_PIN) {
-            setAuth(true);
-            sessionStorage.setItem('admin_pin', pin);
-            load();
+        setLoginError('');
+        setLoading(true);
+
+        try {
+            const response = await fetch('/api/admin/verify-pin', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ pin }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                setAuth(true);
+                sessionStorage.setItem('admin_token', data.token);
+                load();
+            } else {
+                setLoginError(data.error || 'ログインに失敗しました');
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            setLoginError('ネットワークエラーが発生しました');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -91,7 +138,14 @@ export default function AdminPage() {
                     <h1 style={{ color: '#fff', marginBottom: '24px' }}>🔒 Admin</h1>
                     <input type="password" value={pin} onChange={e => setPin(e.target.value)} placeholder="PIN"
                         style={{ width: '100%', padding: '12px', background: '#0d1117', border: '1px solid #30363d', borderRadius: '6px', color: '#fff', textAlign: 'center', fontSize: '18px', letterSpacing: '4px', marginBottom: '16px' }} />
-                    <button type="submit" style={{ ...css.btn, width: '100%', background: '#238636', border: 'none' }}>Login</button>
+                    {loginError && (
+                        <div style={{ color: '#f85149', fontSize: '12px', marginBottom: '12px', padding: '8px', background: 'rgba(248, 81, 73, 0.1)', borderRadius: '6px' }}>
+                            {loginError}
+                        </div>
+                    )}
+                    <button type="submit" disabled={loading} style={{ ...css.btn, width: '100%', background: loading ? '#30363d' : '#238636', border: 'none', opacity: loading ? 0.7 : 1 }}>
+                        {loading ? '認証中...' : 'Login'}
+                    </button>
                 </form>
             </div>
         );
@@ -110,7 +164,7 @@ export default function AdminPage() {
                     <span style={{ color: '#8b949e', fontSize: '12px' }}>{new Date().toLocaleString('ja-JP')}</span>
                     <button onClick={load} disabled={loading} style={css.btn}>{loading ? '...' : '🔄 Refresh'}</button>
                     <a href="https://analytics.google.com/" target="_blank" rel="noopener" style={{ ...css.btn, textDecoration: 'none' }}>GA4</a>
-                    <button onClick={() => { setAuth(false); sessionStorage.removeItem('admin_pin'); }} style={css.btn}>Logout</button>
+                    <button onClick={() => { setAuth(false); sessionStorage.removeItem('admin_token'); }} style={css.btn}>Logout</button>
                 </div>
             </header>
 
