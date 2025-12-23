@@ -21,7 +21,6 @@ import { Input } from '@/components/ui/Input';
 import { useNotifications } from '@/hooks/useNotifications';
 import ChildOnboardingPopup from '@/components/ChildOnboardingPopup';
 import PWAInstallPrompt from '@/components/PWAInstallPrompt';
-import ClipboardRecipeDetector from '@/components/ClipboardRecipeDetector';
 
 // Random greeting messages
 const GREETINGS = [
@@ -473,7 +472,7 @@ const RecipeListPage = () => {
             <PWAInstallPrompt />
 
             {/* Clipboard Recipe Detector (for iOS users) */}
-            <ClipboardRecipeDetector />
+
 
             {/* Header with Personalization */}
             <div className="pt-4 pb-2 px-4 flex items-center justify-between">

@@ -30,34 +30,35 @@ const SNSSaveGuidePage = () => {
                     </p>
                 </div>
 
-                {/* Method 1: Copy URL */}
-                <div className="bg-white rounded-2xl p-5 shadow-sm mb-4">
+                {/* Method 1: Copy URL - 開発中 */}
+                <div className="bg-white rounded-2xl p-5 shadow-sm mb-4 opacity-75">
                     <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                        <span className="w-7 h-7 bg-orange-500 text-white text-sm rounded-full flex items-center justify-center font-black">1</span>
+                        <span className="w-7 h-7 bg-slate-400 text-white text-sm rounded-full flex items-center justify-center font-black">1</span>
                         URLをコピーして保存
+                        <span className="text-xs bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full">開発中</span>
                     </h3>
 
                     <div className="space-y-4 text-sm text-slate-600">
                         <div className="flex gap-3 items-start">
-                            <Copy size={18} className="text-orange-500 flex-shrink-0 mt-0.5" />
+                            <Copy size={18} className="text-slate-400 flex-shrink-0 mt-0.5" />
                             <div>
                                 <p className="font-bold text-slate-700">レシピのURLをコピー</p>
                                 <p className="text-xs text-slate-500 mt-1">Instagram/TikTokで「リンクをコピー」をタップ</p>
                             </div>
                         </div>
                         <div className="flex gap-3 items-start">
-                            <Smartphone size={18} className="text-orange-500 flex-shrink-0 mt-0.5" />
+                            <Smartphone size={18} className="text-slate-400 flex-shrink-0 mt-0.5" />
                             <div>
                                 <p className="font-bold text-slate-700">あんしんレシピを開く</p>
-                                <p className="text-xs text-slate-500 mt-1">クリップボードのURLを自動で検出します</p>
+                                <p className="text-xs text-slate-500 mt-1">クリップボードのURLを自動で検出する機能を開発中です</p>
                             </div>
                         </div>
                     </div>
 
-                    <div className="mt-4 p-3 bg-green-50 rounded-xl border border-green-100">
-                        <div className="flex items-center gap-2 text-green-700 font-medium text-sm">
-                            <CheckCircle size={16} />
-                            この機能は既に有効です
+                    <div className="mt-4 p-3 bg-slate-100 rounded-xl border border-slate-200">
+                        <div className="flex items-center gap-2 text-slate-600 font-medium text-sm">
+                            <Settings size={16} />
+                            現在は方法2をご利用ください
                         </div>
                     </div>
                 </div>
