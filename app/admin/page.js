@@ -13,6 +13,20 @@ export default function AdminPage() {
     const [reports, setReports] = useState([]);
     const [activity, setActivity] = useState([]);
 
+    // Tab state
+    const [activeTab, setActiveTab] = useState('dashboard'); // dashboard | content | users
+
+    // Content management state
+    const [contentType, setContentType] = useState('recipes'); // recipes | tried_reports
+    const [contentList, setContentList] = useState([]);
+    const [contentPage, setContentPage] = useState(1);
+    const [contentPagination, setContentPagination] = useState(null);
+
+    // User management state
+    const [userList, setUserList] = useState([]);
+    const [userPage, setUserPage] = useState(1);
+    const [userPagination, setUserPagination] = useState(null);
+
     useEffect(() => {
         // セッショントークンの有効性をサーバーサイドで検証
         const validateSession = async () => {
@@ -109,6 +123,99 @@ export default function AdminPage() {
         load();
     };
 
+    // Load content list (recipes or tried_reports)
+    const loadContent = async (type = contentType, page = 1) => {
+        setLoading(true);
+        const token = sessionStorage.getItem('admin_token');
+        try {
+            const res = await fetch(`/api/admin/content?type=${type}&page=${page}&limit=15`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            setContentList(data.data || []);
+            setContentPagination(data.pagination);
+        } catch (e) {
+            console.error('Load content error:', e);
+        }
+        setLoading(false);
+    };
+
+    // Delete content
+    const deleteContent = async (type, id, title) => {
+        if (!confirm(`「${title || 'このアイテム'}」を削除しますか？この操作は取り消せません。`)) return;
+        const token = sessionStorage.getItem('admin_token');
+        try {
+            const res = await fetch('/api/admin/content', {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type, id })
+            });
+            if (res.ok) {
+                loadContent();
+            } else {
+                alert('削除に失敗しました');
+            }
+        } catch (e) {
+            console.error('Delete error:', e);
+            alert('削除に失敗しました');
+        }
+    };
+
+    // Load users
+    const loadUsers = async (page = 1) => {
+        setLoading(true);
+        const token = sessionStorage.getItem('admin_token');
+        try {
+            const res = await fetch(`/api/admin/users?page=${page}&limit=20`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            setUserList(data.data || []);
+            setUserPagination(data.pagination);
+        } catch (e) {
+            console.error('Load users error:', e);
+        }
+        setLoading(false);
+    };
+
+    // Ban/Unban user
+    const toggleUserBan = async (userId, currentlyBanned, username) => {
+        const action = currentlyBanned ? 'unban' : 'ban';
+        const msg = currentlyBanned
+            ? `${username} のBANを解除しますか？`
+            : `${username} をBANしますか？このユーザーはログインできなくなります。`;
+        if (!confirm(msg)) return;
+
+        const token = sessionStorage.getItem('admin_token');
+        const reason = currentlyBanned ? null : prompt('BAN理由を入力（任意）:');
+
+        try {
+            const res = await fetch('/api/admin/users', {
+                method: 'PATCH',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, action, reason })
+            });
+            if (res.ok) {
+                loadUsers(userPage);
+            } else {
+                alert('操作に失敗しました');
+            }
+        } catch (e) {
+            console.error('Ban toggle error:', e);
+        }
+    };
+
+    // Tab change handler
+    const handleTabChange = (tab) => {
+        setActiveTab(tab);
+        if (tab === 'content') {
+            loadContent();
+        } else if (tab === 'users') {
+            loadUsers();
+        }
+    };
+
+
     // Styles
     const css = {
         page: { minHeight: '100vh', background: '#0d1117', color: '#c9d1d9', fontFamily: 'system-ui, -apple-system, sans-serif', fontSize: '14px' },
@@ -168,171 +275,356 @@ export default function AdminPage() {
                 </div>
             </header>
 
-            <div style={css.main}>
-                {/* KPI Row */}
+            {/* Tab Navigation */}
+            <div style={{ display: 'flex', gap: '0', background: '#161b22', borderBottom: '1px solid #30363d' }}>
                 {[
-                    { l: '新規登録', t: d.newUsers?.today, y: d.newUsers?.yesterday, i: '👤' },
-                    { l: 'レシピ', t: d.recipes?.today, y: d.recipes?.yesterday, i: '📝' },
-                    { l: '保存', t: d.saves?.today, y: d.saves?.yesterday, i: '🔖' },
-                    { l: 'いいね', t: d.likes?.today, y: d.likes?.yesterday, i: '❤️' },
-                    { l: 'つくれぽ', t: d.tried?.today, y: d.tried?.yesterday, i: '✨' },
-                    { l: '子供', t: t.children, y: null, i: '👶' }
-                ].map(k => (
-                    <div key={k.l} style={css.kpi}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span>{k.i}</span>
-                            {k.y !== null && <span style={css.badge((k.t || 0) - (k.y || 0))}>{(k.t || 0) - (k.y || 0) > 0 ? '+' : ''}{(k.t || 0) - (k.y || 0)}</span>}
-                        </div>
-                        <div style={css.kpiVal}>{k.t ?? 0}</div>
-                        <div style={css.kpiLabel}>{k.l}</div>
-                    </div>
+                    { id: 'dashboard', label: '📊 ダッシュボード' },
+                    { id: 'content', label: '📋 コンテンツ管理' },
+                    { id: 'users', label: '👥 ユーザー管理' }
+                ].map(tab => (
+                    <button
+                        key={tab.id}
+                        onClick={() => handleTabChange(tab.id)}
+                        style={{
+                            padding: '12px 24px',
+                            border: 'none',
+                            borderBottom: activeTab === tab.id ? '2px solid #58a6ff' : '2px solid transparent',
+                            background: 'transparent',
+                            color: activeTab === tab.id ? '#fff' : '#8b949e',
+                            cursor: 'pointer',
+                            fontSize: '14px',
+                            fontWeight: activeTab === tab.id ? 600 : 400
+                        }}
+                    >
+                        {tab.label}
+                    </button>
                 ))}
+            </div>
 
-                {/* Totals */}
-                <div style={{ ...css.card, gridColumn: 'span 1' }}>
-                    <div style={{ fontWeight: 600, marginBottom: '16px', color: '#fff' }}>📈 累計</div>
-                    {[['ユーザー', t.users], ['レシピ', t.recipes], ['子供', t.children]].map(([l, v]) => (
-                        <div key={l} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                            <span style={{ color: '#8b949e' }}>{l}</span>
-                            <span style={{ color: '#fff', fontWeight: 600 }}>{v ?? '-'}</span>
+            {/* Content Management Tab */}
+            {activeTab === 'content' && (
+                <div style={{ padding: '24px' }}>
+                    {/* Sub-tabs for content type */}
+                    <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+                        <button
+                            onClick={() => { setContentType('recipes'); loadContent('recipes'); }}
+                            style={{ ...css.btn, background: contentType === 'recipes' ? '#238636' : '#21262d' }}
+                        >
+                            📝 レシピ一覧
+                        </button>
+                        <button
+                            onClick={() => { setContentType('tried_reports'); loadContent('tried_reports'); }}
+                            style={{ ...css.btn, background: contentType === 'tried_reports' ? '#238636' : '#21262d' }}
+                        >
+                            ✨ つくれぽ一覧
+                        </button>
+                    </div>
+
+                    {/* Content List */}
+                    <div style={{ ...css.card }}>
+                        {contentList.length === 0 ? (
+                            <div style={{ padding: '32px', textAlign: 'center', color: '#8b949e' }}>
+                                {loading ? '読み込み中...' : 'データなし'}
+                            </div>
+                        ) : (
+                            <div style={{ maxHeight: '600px', overflowY: 'auto' }}>
+                                {contentType === 'recipes' ? (
+                                    contentList.map(r => (
+                                        <div key={r.id} style={{ ...css.row, borderBottom: '1px solid #30363d' }}>
+                                            {r.image_url ? <img src={r.image_url} style={css.img} alt="" /> : <div style={css.placeholder}>📝</div>}
+                                            <div style={{ flex: 1, minWidth: 0 }}>
+                                                <div style={{ color: '#fff', fontSize: '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.title}</div>
+                                                <div style={{ color: '#8b949e', fontSize: '11px' }}>
+                                                    by {r.profiles?.display_name || r.profiles?.username || '不明'} | {new Date(r.created_at).toLocaleDateString('ja-JP')}
+                                                    {!r.is_public && <span style={{ marginLeft: '8px', color: '#f0883e' }}>🔒 非公開</span>}
+                                                </div>
+                                            </div>
+                                            <a href={`/recipe/${r.id}`} target="_blank" rel="noopener" style={{ ...css.btn, textDecoration: 'none' }}>表示</a>
+                                            <button onClick={() => deleteContent('recipe', r.id, r.title)} style={{ ...css.btn, background: '#da3633', border: 'none' }}>🗑️ 削除</button>
+                                        </div>
+                                    ))
+                                ) : (
+                                    contentList.map(r => (
+                                        <div key={r.id} style={{ ...css.row, borderBottom: '1px solid #30363d' }}>
+                                            {r.image_url ? <img src={r.image_url} style={css.img} alt="" /> : <div style={css.placeholder}>💬</div>}
+                                            <div style={{ flex: 1, minWidth: 0 }}>
+                                                <div style={{ color: '#fff', fontSize: '12px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.comment || '(コメントなし)'}</div>
+                                                <div style={{ color: '#8b949e', fontSize: '11px' }}>
+                                                    {r.profiles?.display_name || r.profiles?.username} → {r.recipes?.title || '不明'} | {new Date(r.created_at).toLocaleDateString('ja-JP')}
+                                                </div>
+                                            </div>
+                                            <button onClick={() => deleteContent('tried_report', r.id)} style={{ ...css.btn, background: '#da3633', border: 'none' }}>🗑️ 削除</button>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        )}
+
+                        {/* Pagination */}
+                        {contentPagination && contentPagination.totalPages > 1 && (
+                            <div style={{ padding: '16px', display: 'flex', justifyContent: 'center', gap: '8px', borderTop: '1px solid #30363d' }}>
+                                <button
+                                    disabled={contentPagination.page <= 1}
+                                    onClick={() => { setContentPage(p => p - 1); loadContent(contentType, contentPage - 1); }}
+                                    style={{ ...css.btn, opacity: contentPagination.page <= 1 ? 0.5 : 1 }}
+                                >
+                                    ← 前へ
+                                </button>
+                                <span style={{ color: '#8b949e', fontSize: '12px', alignSelf: 'center' }}>
+                                    {contentPagination.page} / {contentPagination.totalPages} ({contentPagination.total}件)
+                                </span>
+                                <button
+                                    disabled={contentPagination.page >= contentPagination.totalPages}
+                                    onClick={() => { setContentPage(p => p + 1); loadContent(contentType, contentPage + 1); }}
+                                    style={{ ...css.btn, opacity: contentPagination.page >= contentPagination.totalPages ? 0.5 : 1 }}
+                                >
+                                    次へ →
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* User Management Tab */}
+            {activeTab === 'users' && (
+                <div style={{ padding: '24px' }}>
+                    <div style={{ ...css.card }}>
+                        <div style={{ padding: '12px 16px', borderBottom: '1px solid #30363d', fontWeight: 600, color: '#fff' }}>
+                            👥 ユーザー一覧 ({userPagination?.total || 0}人)
+                        </div>
+                        {userList.length === 0 ? (
+                            <div style={{ padding: '32px', textAlign: 'center', color: '#8b949e' }}>
+                                {loading ? '読み込み中...' : 'データなし'}
+                            </div>
+                        ) : (
+                            <div style={{ maxHeight: '600px', overflowY: 'auto' }}>
+                                {userList.map(u => (
+                                    <div key={u.id} style={{ ...css.row, borderBottom: '1px solid #30363d' }}>
+                                        {(u.avatar_url || u.picture_url) ? (
+                                            <img src={u.avatar_url || u.picture_url} style={{ ...css.img, borderRadius: '50%' }} alt="" />
+                                        ) : (
+                                            <div style={{ ...css.placeholder, borderRadius: '50%' }}>👤</div>
+                                        )}
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <span style={{ color: '#fff', fontSize: '13px', fontWeight: 500 }}>{u.display_name || u.username || '名前なし'}</span>
+                                                {u.is_banned && <span style={{ background: '#da3633', color: '#fff', fontSize: '10px', padding: '2px 6px', borderRadius: '4px' }}>BAN</span>}
+                                            </div>
+                                            <div style={{ color: '#8b949e', fontSize: '11px' }}>
+                                                レシピ: {u.recipeCount}件 | 登録: {new Date(u.created_at).toLocaleDateString('ja-JP')}
+                                            </div>
+                                            {u.ban_reason && <div style={{ color: '#f85149', fontSize: '11px' }}>理由: {u.ban_reason}</div>}
+                                        </div>
+                                        <button
+                                            onClick={() => toggleUserBan(u.id, u.is_banned, u.display_name || u.username)}
+                                            style={{
+                                                ...css.btn,
+                                                background: u.is_banned ? '#238636' : '#da3633',
+                                                border: 'none'
+                                            }}
+                                        >
+                                            {u.is_banned ? '🔓 BAN解除' : '🚫 BAN'}
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Pagination */}
+                        {userPagination && userPagination.totalPages > 1 && (
+                            <div style={{ padding: '16px', display: 'flex', justifyContent: 'center', gap: '8px', borderTop: '1px solid #30363d' }}>
+                                <button
+                                    disabled={userPagination.page <= 1}
+                                    onClick={() => { setUserPage(p => p - 1); loadUsers(userPage - 1); }}
+                                    style={{ ...css.btn, opacity: userPagination.page <= 1 ? 0.5 : 1 }}
+                                >
+                                    ← 前へ
+                                </button>
+                                <span style={{ color: '#8b949e', fontSize: '12px', alignSelf: 'center' }}>
+                                    {userPagination.page} / {userPagination.totalPages}
+                                </span>
+                                <button
+                                    disabled={userPagination.page >= userPagination.totalPages}
+                                    onClick={() => { setUserPage(p => p + 1); loadUsers(userPage + 1); }}
+                                    style={{ ...css.btn, opacity: userPagination.page >= userPagination.totalPages ? 0.5 : 1 }}
+                                >
+                                    次へ →
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* Dashboard Tab (existing content) */}
+            {activeTab === 'dashboard' && (
+                <div style={css.main}>
+                    {/* KPI Row */}
+                    {[
+                        { l: '新規登録', t: d.newUsers?.today, y: d.newUsers?.yesterday, i: '👤' },
+                        { l: 'レシピ', t: d.recipes?.today, y: d.recipes?.yesterday, i: '📝' },
+                        { l: '保存', t: d.saves?.today, y: d.saves?.yesterday, i: '🔖' },
+                        { l: 'いいね', t: d.likes?.today, y: d.likes?.yesterday, i: '❤️' },
+                        { l: 'つくれぽ', t: d.tried?.today, y: d.tried?.yesterday, i: '✨' },
+                        { l: '子供', t: t.children, y: null, i: '👶' }
+                    ].map(k => (
+                        <div key={k.l} style={css.kpi}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <span>{k.i}</span>
+                                {k.y !== null && <span style={css.badge((k.t || 0) - (k.y || 0))}>{(k.t || 0) - (k.y || 0) > 0 ? '+' : ''}{(k.t || 0) - (k.y || 0)}</span>}
+                            </div>
+                            <div style={css.kpiVal}>{k.t ?? 0}</div>
+                            <div style={css.kpiLabel}>{k.l}</div>
                         </div>
                     ))}
-                </div>
 
-                {/* Funnel */}
-                <div style={{ ...css.card, gridColumn: 'span 2' }}>
-                    <div style={{ fontWeight: 600, marginBottom: '16px', color: '#fff' }}>🔄 ファネル</div>
-                    {[
-                        { l: '登録', v: f.registered, c: '#3b82f6' },
-                        { l: '子供登録', v: f.childAdded, c: '#10b981' },
-                        { l: '初保存', v: f.firstSave, c: '#f59e0b' },
-                        { l: '初投稿', v: f.firstRecipe, c: '#ef4444' }
-                    ].map((s, i, a) => {
-                        const max = a[0].v || 1;
-                        const pct = Math.round((s.v / max) * 100);
-                        const prev = i > 0 ? a[i - 1].v : s.v;
-                        const cvr = prev ? Math.round((s.v / prev) * 100) : 0;
-                        return (
-                            <div key={s.l} style={{ marginBottom: '12px' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
-                                    <span>{s.l}</span>
-                                    <span style={{ color: '#fff' }}>{s.v ?? 0} {i > 0 && <span style={{ color: '#8b949e' }}>({cvr}%)</span>}</span>
-                                </div>
-                                <div style={css.barWrap}><div style={css.bar(pct, s.c)} /></div>
+                    {/* Totals */}
+                    <div style={{ ...css.card, gridColumn: 'span 1' }}>
+                        <div style={{ fontWeight: 600, marginBottom: '16px', color: '#fff' }}>📈 累計</div>
+                        {[['ユーザー', t.users], ['レシピ', t.recipes], ['子供', t.children]].map(([l, v]) => (
+                            <div key={l} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                <span style={{ color: '#8b949e' }}>{l}</span>
+                                <span style={{ color: '#fff', fontWeight: 600 }}>{v ?? '-'}</span>
                             </div>
-                        );
-                    })}
-                </div>
+                        ))}
+                    </div>
 
-                {/* Weekly */}
-                <div style={{ ...css.card, gridColumn: 'span 2' }}>
-                    <div style={{ fontWeight: 600, marginBottom: '16px', color: '#fff' }}>📊 週次登録</div>
-                    <div style={{ display: 'flex', alignItems: 'flex-end', height: '80px', gap: '4px' }}>
-                        {w.map((day, i) => {
-                            const max = Math.max(...w.map(x => x.count)) || 1;
-                            const h = (day.count / max) * 100;
+                    {/* Funnel */}
+                    <div style={{ ...css.card, gridColumn: 'span 2' }}>
+                        <div style={{ fontWeight: 600, marginBottom: '16px', color: '#fff' }}>🔄 ファネル</div>
+                        {[
+                            { l: '登録', v: f.registered, c: '#3b82f6' },
+                            { l: '子供登録', v: f.childAdded, c: '#10b981' },
+                            { l: '初保存', v: f.firstSave, c: '#f59e0b' },
+                            { l: '初投稿', v: f.firstRecipe, c: '#ef4444' }
+                        ].map((s, i, a) => {
+                            const max = a[0].v || 1;
+                            const pct = Math.round((s.v / max) * 100);
+                            const prev = i > 0 ? a[i - 1].v : s.v;
+                            const cvr = prev ? Math.round((s.v / prev) * 100) : 0;
                             return (
-                                <div key={day.date} style={{ flex: 1, textAlign: 'center' }}>
-                                    <div style={{ fontSize: '10px', color: '#fff', marginBottom: '4px' }}>{day.count}</div>
-                                    <div style={{ height: `${Math.max(h, 8)}%`, background: i === w.length - 1 ? '#3b82f6' : '#30363d', borderRadius: '2px 2px 0 0', minHeight: '4px' }} />
-                                    <div style={{ fontSize: '10px', color: '#8b949e', marginTop: '4px' }}>{new Date(day.date).getDate()}</div>
+                                <div key={s.l} style={{ marginBottom: '12px' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+                                        <span>{s.l}</span>
+                                        <span style={{ color: '#fff' }}>{s.v ?? 0} {i > 0 && <span style={{ color: '#8b949e' }}>({cvr}%)</span>}</span>
+                                    </div>
+                                    <div style={css.barWrap}><div style={css.bar(pct, s.c)} /></div>
                                 </div>
                             );
                         })}
                     </div>
-                </div>
 
-                {/* Allergens */}
-                <div style={{ ...css.card, gridColumn: 'span 1' }}>
-                    <div style={{ fontWeight: 600, marginBottom: '16px', color: '#fff' }}>🥜 アレルゲン</div>
-                    {(stats?.allergens || []).slice(0, 5).map(a => (
-                        <div key={a.name} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '12px' }}>
-                            <span style={{ color: '#8b949e' }}>{a.name}</span>
-                            <span style={{ color: '#fff' }}>{a.count}</span>
-                        </div>
-                    ))}
-                </div>
-
-                {/* Smart Import Stats */}
-                <div style={{ ...css.card, gridColumn: 'span 1' }}>
-                    <div style={{ fontWeight: 600, marginBottom: '16px', color: '#fff' }}>✨ スマートインポート</div>
-                    <div style={{ marginBottom: '12px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '4px' }}>
-                            <span style={{ color: '#8b949e' }}>成功率 (週)</span>
-                            <span style={{ color: '#fff' }}>{data?.features?.smartImport?.starts > 0 ? Math.round((data.features.smartImport.successes / data.features.smartImport.starts) * 100) : 0}%</span>
-                        </div>
-                        <div style={css.barWrap}>
-                            <div style={css.bar(data?.features?.smartImport?.starts > 0 ? (data.features.smartImport.successes / data.features.smartImport.starts) * 100 : 0, '#a855f7')} />
+                    {/* Weekly */}
+                    <div style={{ ...css.card, gridColumn: 'span 2' }}>
+                        <div style={{ fontWeight: 600, marginBottom: '16px', color: '#fff' }}>📊 週次登録</div>
+                        <div style={{ display: 'flex', alignItems: 'flex-end', height: '80px', gap: '4px' }}>
+                            {w.map((day, i) => {
+                                const max = Math.max(...w.map(x => x.count)) || 1;
+                                const h = (day.count / max) * 100;
+                                return (
+                                    <div key={day.date} style={{ flex: 1, textAlign: 'center' }}>
+                                        <div style={{ fontSize: '10px', color: '#fff', marginBottom: '4px' }}>{day.count}</div>
+                                        <div style={{ height: `${Math.max(h, 8)}%`, background: i === w.length - 1 ? '#3b82f6' : '#30363d', borderRadius: '2px 2px 0 0', minHeight: '4px' }} />
+                                        <div style={{ fontSize: '10px', color: '#8b949e', marginTop: '4px' }}>{new Date(day.date).getDate()}</div>
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#8b949e' }}>
-                        <span>開始: {data?.features?.smartImport?.starts || 0}</span>
-                        <span>成功: {data?.features?.smartImport?.successes || 0}</span>
-                    </div>
-                </div>
 
-                {/* Popular Recipes */}
-                <div style={{ ...css.card, gridColumn: 'span 2' }}>
-                    <div style={{ fontWeight: 600, marginBottom: '16px', color: '#fff' }}>🔥 人気レシピ Top5</div>
-                    {(data?.popularRecipes || []).length === 0 ? (
-                        <div style={{ color: '#8b949e', fontSize: '12px', textAlign: 'center', padding: '16px' }}>データなし</div>
-                    ) : (
-                        data.popularRecipes.map((r, i) => (
-                            <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-                                <span style={{ color: i < 3 ? '#f59e0b' : '#8b949e', fontWeight: 700, width: '20px' }}>{i + 1}</span>
-                                {r.image && <img src={r.image} style={{ width: '32px', height: '32px', borderRadius: '4px', objectFit: 'cover' }} alt="" />}
-                                <div style={{ flex: 1, minWidth: 0 }}>
-                                    <div style={{ color: '#fff', fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.title}</div>
-                                </div>
-                                <div style={{ display: 'flex', gap: '8px', fontSize: '11px' }}>
-                                    <span style={{ color: '#ef4444' }}>❤️ {r.likeCount}</span>
-                                    <span style={{ color: '#3b82f6' }}>🔖 {r.saveCount}</span>
-                                </div>
+                    {/* Allergens */}
+                    <div style={{ ...css.card, gridColumn: 'span 1' }}>
+                        <div style={{ fontWeight: 600, marginBottom: '16px', color: '#fff' }}>🥜 アレルゲン</div>
+                        {(stats?.allergens || []).slice(0, 5).map(a => (
+                            <div key={a.name} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '12px' }}>
+                                <span style={{ color: '#8b949e' }}>{a.name}</span>
+                                <span style={{ color: '#fff' }}>{a.count}</span>
                             </div>
-                        ))
-                    )}
-                </div>
+                        ))}
+                    </div>
 
+                    {/* Smart Import Stats */}
+                    <div style={{ ...css.card, gridColumn: 'span 1' }}>
+                        <div style={{ fontWeight: 600, marginBottom: '16px', color: '#fff' }}>✨ スマートインポート</div>
+                        <div style={{ marginBottom: '12px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '4px' }}>
+                                <span style={{ color: '#8b949e' }}>成功率 (週)</span>
+                                <span style={{ color: '#fff' }}>{data?.features?.smartImport?.starts > 0 ? Math.round((data.features.smartImport.successes / data.features.smartImport.starts) * 100) : 0}%</span>
+                            </div>
+                            <div style={css.barWrap}>
+                                <div style={css.bar(data?.features?.smartImport?.starts > 0 ? (data.features.smartImport.successes / data.features.smartImport.starts) * 100 : 0, '#a855f7')} />
+                            </div>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#8b949e' }}>
+                            <span>開始: {data?.features?.smartImport?.starts || 0}</span>
+                            <span>成功: {data?.features?.smartImport?.successes || 0}</span>
+                        </div>
+                    </div>
 
-                {/* Reports */}
-                <div style={css.section}>
-                    <div style={css.secHead}>⚠️ 通報 ({reports.length})</div>
-                    <div style={css.secBody}>
-                        {reports.length === 0 ? <div style={{ padding: '32px', textAlign: 'center', color: '#8b949e' }}>なし</div> :
-                            reports.map(r => (
-                                <div key={r.id} style={css.row}>
-                                    <img src={r.recipe?.image_url || '/placeholder.png'} style={css.img} />
-                                    <div style={{ flex: 1 }}>
-                                        <div style={{ color: '#fff', fontSize: '13px' }}>{r.recipe?.title}</div>
-                                        <div style={{ color: '#f85149', fontSize: '11px' }}>{r.reason}</div>
+                    {/* Popular Recipes */}
+                    <div style={{ ...css.card, gridColumn: 'span 2' }}>
+                        <div style={{ fontWeight: 600, marginBottom: '16px', color: '#fff' }}>🔥 人気レシピ Top5</div>
+                        {(data?.popularRecipes || []).length === 0 ? (
+                            <div style={{ color: '#8b949e', fontSize: '12px', textAlign: 'center', padding: '16px' }}>データなし</div>
+                        ) : (
+                            data.popularRecipes.map((r, i) => (
+                                <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                                    <span style={{ color: i < 3 ? '#f59e0b' : '#8b949e', fontWeight: 700, width: '20px' }}>{i + 1}</span>
+                                    {r.image && <img src={r.image} style={{ width: '32px', height: '32px', borderRadius: '4px', objectFit: 'cover' }} alt="" />}
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                        <div style={{ color: '#fff', fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.title}</div>
                                     </div>
-                                    <button onClick={() => del(r.recipe?.id, r.id)} style={{ ...css.btn, background: '#da3633', border: 'none' }}>削除</button>
-                                    <button onClick={() => dismiss(r.id)} style={css.btn}>却下</button>
+                                    <div style={{ display: 'flex', gap: '8px', fontSize: '11px' }}>
+                                        <span style={{ color: '#ef4444' }}>❤️ {r.likeCount}</span>
+                                        <span style={{ color: '#3b82f6' }}>🔖 {r.saveCount}</span>
+                                    </div>
                                 </div>
                             ))
-                        }
+                        )}
                     </div>
-                </div>
 
-                {/* Activity */}
-                <div style={css.section}>
-                    <div style={css.secHead}>✨ 最近のつくれぽ</div>
-                    <div style={css.secBody}>
-                        {activity.length === 0 ? <div style={{ padding: '32px', textAlign: 'center', color: '#8b949e' }}>なし</div> :
-                            activity.map(a => (
-                                <div key={a.id} style={css.row}>
-                                    {a.image_url ? <img src={a.image_url} style={css.img} /> : <div style={css.placeholder}>📄</div>}
-                                    <div style={{ flex: 1 }}>
-                                        <div style={{ color: '#fff', fontSize: '12px' }}>{a.user?.username}</div>
-                                        <div style={{ color: '#8b949e', fontSize: '11px' }}>→ {a.recipe?.title}</div>
+
+                    {/* Reports */}
+                    <div style={css.section}>
+                        <div style={css.secHead}>⚠️ 通報 ({reports.length})</div>
+                        <div style={css.secBody}>
+                            {reports.length === 0 ? <div style={{ padding: '32px', textAlign: 'center', color: '#8b949e' }}>なし</div> :
+                                reports.map(r => (
+                                    <div key={r.id} style={css.row}>
+                                        <img src={r.recipe?.image_url || '/placeholder.png'} style={css.img} />
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{ color: '#fff', fontSize: '13px' }}>{r.recipe?.title}</div>
+                                            <div style={{ color: '#f85149', fontSize: '11px' }}>{r.reason}</div>
+                                        </div>
+                                        <button onClick={() => del(r.recipe?.id, r.id)} style={{ ...css.btn, background: '#da3633', border: 'none' }}>削除</button>
+                                        <button onClick={() => dismiss(r.id)} style={css.btn}>却下</button>
                                     </div>
-                                    <div style={{ color: '#8b949e', fontSize: '11px' }}>{new Date(a.created_at).toLocaleDateString()}</div>
-                                </div>
-                            ))
-                        }
+                                ))
+                            }
+                        </div>
+                    </div>
+
+                    {/* Activity */}
+                    <div style={css.section}>
+                        <div style={css.secHead}>✨ 最近のつくれぽ</div>
+                        <div style={css.secBody}>
+                            {activity.length === 0 ? <div style={{ padding: '32px', textAlign: 'center', color: '#8b949e' }}>なし</div> :
+                                activity.map(a => (
+                                    <div key={a.id} style={css.row}>
+                                        {a.image_url ? <img src={a.image_url} style={css.img} /> : <div style={css.placeholder}>📄</div>}
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{ color: '#fff', fontSize: '12px' }}>{a.user?.username}</div>
+                                            <div style={{ color: '#8b949e', fontSize: '11px' }}>→ {a.recipe?.title}</div>
+                                        </div>
+                                        <div style={{ color: '#8b949e', fontSize: '11px' }}>{new Date(a.created_at).toLocaleDateString()}</div>
+                                    </div>
+                                ))
+                            }
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 }
