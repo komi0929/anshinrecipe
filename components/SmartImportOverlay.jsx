@@ -46,18 +46,25 @@ const SmartImportOverlay = ({ isVisible, onRunning, onComplete }) => {
     return (
         <div className="fixed inset-0 z-[9999] bg-white/95 backdrop-blur-sm flex flex-col items-center justify-center animate-fade-in">
             <div className="relative flex flex-col items-center">
-                {/* Countdown Number Container */}
-                {status === 'counting' && (
-                    <div className="w-48 h-48 bg-gradient-to-br from-orange-50 to-amber-50 rounded-full flex items-center justify-center mb-8 shadow-lg shadow-orange-100/50 animate-bounce">
-                        {/* The Number */}
+                {/* Unified Icon Container - Same size for all states */}
+                <div className="w-48 h-48 bg-gradient-to-br from-orange-50 to-amber-50 rounded-full flex items-center justify-center mb-8 shadow-lg shadow-orange-100/50">
+                    {status === 'counting' && (
                         <div className="text-8xl font-black text-orange-500 tracking-tighter animate-pop-in" key={count}>
                             {count}
                         </div>
-                    </div>
-                )}
+                    )}
+
+                    {status === 'finalizing' && (
+                        <Loader2 className="w-20 h-20 text-orange-400 animate-spin" />
+                    )}
+
+                    {status === 'done' && (
+                        <CheckCircle2 className="w-24 h-24 text-green-500 animate-zoom-in" />
+                    )}
+                </div>
 
                 {/* Status Text */}
-                <div className="text-center h-24">
+                <div className="text-center">
                     {status === 'counting' && (
                         <p className="text-slate-600 font-bold text-xl">
                             レシピを解析中...
@@ -65,21 +72,15 @@ const SmartImportOverlay = ({ isVisible, onRunning, onComplete }) => {
                     )}
 
                     {status === 'finalizing' && (
-                        <div className="animate-zoom-in flex flex-col items-center">
-                            <div className="w-56 h-56 flex items-center justify-center mb-8">
-                                <Loader2 className="w-24 h-24 text-orange-400 animate-spin" />
-                            </div>
-                            <p className="text-slate-700 font-bold text-xl">もう少しお待ちください...</p>
-                        </div>
+                        <p className="text-slate-700 font-bold text-xl">
+                            もう少しお待ちください...
+                        </p>
                     )}
 
                     {status === 'done' && (
-                        <div className="animate-zoom-in flex flex-col items-center">
-                            <div className="w-56 h-56 flex items-center justify-center mb-8">
-                                <CheckCircle2 className="w-32 h-32 text-green-500" />
-                            </div>
-                            <h3 className="text-2xl font-bold text-slate-800">読み込み完了</h3>
-                        </div>
+                        <h3 className="text-2xl font-bold text-slate-800">
+                            読み込み完了
+                        </h3>
                     )}
                 </div>
             </div>
