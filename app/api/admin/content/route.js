@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabase as supabaseAdmin } from '@/lib/supabaseClient';
 
-// Verify admin token
+// Verify admin token using session token from verify-pin API
 async function verifyAdminToken(request) {
     const authHeader = request.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -9,10 +9,17 @@ async function verifyAdminToken(request) {
     }
 
     const token = authHeader.split(' ')[1];
-    const expectedPin = process.env.ADMIN_PIN || process.env.NEXT_PUBLIC_ADMIN_PIN;
 
-    // Simple token validation (in production, use JWT or similar)
-    return token === `admin_${expectedPin}_token`;
+    // Validate session token format and expiry (same logic as verify-pin)
+    if (!token || !token.includes('_')) return false;
+
+    const parts = token.split('_');
+    const expiry = parseInt(parts[parts.length - 1], 10);
+
+    if (isNaN(expiry)) return false;
+
+    // Check expiry (24 hours from token creation)
+    return Date.now() < expiry;
 }
 
 // GET: List all content (recipes and tried reports)

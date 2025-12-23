@@ -351,8 +351,13 @@ const RecipeListPage = () => {
                         <div className="flex flex-col gap-3">
                             {/* Card 4: AI Import (Small - Swapped to Top) */}
                             <div className="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center text-center h-[140px] justify-center group">
-                                <div className="w-12 h-12 mb-2 flex items-center justify-center text-4xl group-hover:scale-110 transition-transform duration-300">
-                                    ✨
+                                <div className="w-12 h-12 mb-2 relative group-hover:scale-110 transition-transform duration-300">
+                                    <Image
+                                        src="/features/ai.png"
+                                        alt="AI連携"
+                                        fill
+                                        className="object-contain"
+                                    />
                                 </div>
                                 <h3 className="text-sm font-black text-slate-800 mb-1">
                                     AIでかんたん登録

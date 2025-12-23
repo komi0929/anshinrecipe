@@ -5,21 +5,40 @@ import { X, Sparkles } from 'lucide-react';
 
 const ChildOnboardingPopup = ({ profile }) => {
     const [showPopup, setShowPopup] = useState(false);
+    const [hasChecked, setHasChecked] = useState(false);
 
     useEffect(() => {
+        // Only check once per session to prevent re-triggering
+        if (hasChecked) return;
+
         // Check if user just registered their first child
         if (!profile?.children || profile.children.length === 0) return;
 
+        // Check localStorage FIRST to prevent any flash
         const onboardingShown = localStorage.getItem('child-onboarding-shown');
-        if (onboardingShown) return;
+        if (onboardingShown) {
+            setHasChecked(true);
+            return;
+        }
+
+        // Also check sessionStorage to prevent re-showing in same session
+        const sessionShown = sessionStorage.getItem('child-onboarding-shown-session');
+        if (sessionShown) {
+            setHasChecked(true);
+            return;
+        }
+
+        setHasChecked(true);
 
         // Show popup after a short delay
         const timer = setTimeout(() => {
             setShowPopup(true);
+            // Mark as shown in session immediately
+            sessionStorage.setItem('child-onboarding-shown-session', 'true');
         }, 500);
 
         return () => clearTimeout(timer);
-    }, [profile?.children]);
+    }, [profile?.children, hasChecked]);
 
     const handleClose = () => {
         setShowPopup(false);

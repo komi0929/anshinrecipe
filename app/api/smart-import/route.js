@@ -120,6 +120,40 @@ export async function POST(request) {
 
         if (!url) return NextResponse.json({ error: 'URL is required' }, { status: 400 });
 
+        // ===== SSRF Protection: Validate URL =====
+        try {
+            const parsedUrl = new URL(url);
+            const hostname = parsedUrl.hostname.toLowerCase();
+
+            // Block internal/private network access
+            const blockedPatterns = [
+                'localhost',
+                '127.',
+                '0.0.0.0',
+                '10.',
+                '172.16.', '172.17.', '172.18.', '172.19.',
+                '172.20.', '172.21.', '172.22.', '172.23.',
+                '172.24.', '172.25.', '172.26.', '172.27.',
+                '172.28.', '172.29.', '172.30.', '172.31.',
+                '192.168.',
+                '169.254.',
+                '[::1]',
+                'metadata.google',
+                '.internal',
+                '.local'
+            ];
+
+            const isBlocked = blockedPatterns.some(pattern =>
+                hostname === pattern || hostname.startsWith(pattern) || hostname.endsWith(pattern)
+            );
+
+            if (isBlocked || !['http:', 'https:'].includes(parsedUrl.protocol)) {
+                return NextResponse.json({ error: 'Invalid URL: This URL is not allowed' }, { status: 400 });
+            }
+        } catch (e) {
+            return NextResponse.json({ error: 'Invalid URL format' }, { status: 400 });
+        }
+
         // ===== STEP 1: Get OGP Data (Title/Image) - RELIABLE =====
         console.log('Fetching OGP data for:', url);
         const ogpData = await getOgpData(url);

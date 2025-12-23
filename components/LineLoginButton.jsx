@@ -15,6 +15,7 @@ export default function LineLoginButton() {
             onClick={handleLogin}
             className="line-login-button bg-[#06C755] text-white hover:bg-[#05B04A] flex items-center justify-center gap-2 px-4 py-2 rounded whitespace-nowrap"
             type="button"
+            aria-label="LINEアカウントでログインする"
         >
             <svg
                 className="line-icon"
