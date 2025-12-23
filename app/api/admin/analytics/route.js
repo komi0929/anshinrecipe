@@ -137,6 +137,7 @@ export async function GET(request) {
 
         // ========== ANALYTICS EVENTS (if table exists) ==========
         let smartImportStats = { starts: 0, successes: 0 };
+        let eventStats = { recipeViews: 0, searches: 0 };
         try {
             const { count: importStarts } = await supabaseAdmin
                 .from('analytics_events')
@@ -154,8 +155,57 @@ export async function GET(request) {
                 starts: importStarts || 0,
                 successes: importSuccesses || 0
             };
+
+            // Additional event counts
+            const { count: recipeViews } = await supabaseAdmin
+                .from('analytics_events')
+                .select('*', { count: 'exact', head: true })
+                .eq('event_name', 'recipe_view')
+                .gte('created_at', weekAgo);
+
+            const { count: searches } = await supabaseAdmin
+                .from('analytics_events')
+                .select('*', { count: 'exact', head: true })
+                .eq('event_name', 'search_execute')
+                .gte('created_at', weekAgo);
+
+            eventStats = {
+                recipeViews: recipeViews || 0,
+                searches: searches || 0
+            };
         } catch (e) {
             // analytics_events table may not exist yet
+        }
+
+        // ========== POPULAR RECIPES (Top 5 by likes) ==========
+        let popularRecipes = [];
+        try {
+            const { data: recipes } = await supabaseAdmin
+                .from('recipes')
+                .select(`
+                    id,
+                    title,
+                    image_url,
+                    likes!recipe_id(id),
+                    saved_recipes!recipe_id(id)
+                `)
+                .eq('is_public', true)
+                .limit(100);
+
+            if (recipes) {
+                popularRecipes = recipes
+                    .map(r => ({
+                        id: r.id,
+                        title: r.title,
+                        image: r.image_url,
+                        likeCount: r.likes?.length || 0,
+                        saveCount: r.saved_recipes?.length || 0
+                    }))
+                    .sort((a, b) => (b.likeCount + b.saveCount) - (a.likeCount + a.saveCount))
+                    .slice(0, 5);
+            }
+        } catch (e) {
+            console.error('Popular recipes error:', e);
         }
 
         return NextResponse.json({
@@ -190,6 +240,10 @@ export async function GET(request) {
             features: {
                 smartImport: smartImportStats
             },
+            // Event stats (weekly)
+            events: eventStats,
+            // Popular recipes
+            popularRecipes,
             // Metadata
             generatedAt: new Date().toISOString()
         });

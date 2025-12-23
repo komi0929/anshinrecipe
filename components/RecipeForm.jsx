@@ -7,6 +7,7 @@ import { uploadImage } from '@/lib/imageUpload';
 import { MEAL_SCENES, SCENE_ICONS } from '@/lib/constants';
 import { SmartEmbed } from '@/components/SmartEmbed'; // Import SmartEmbed
 import SmartImportOverlay from './SmartImportOverlay'; // Import SmartImportOverlay
+import { useAnalytics } from '@/hooks/useAnalytics';
 import './RecipeForm.css';
 
 export const RecipeForm = ({
@@ -16,6 +17,9 @@ export const RecipeForm = ({
     profile,
     isEditMode = false
 }) => {
+    // Analytics
+    const { trackSmartImportStart, trackSmartImportSuccess, trackSmartImportFail, trackRecipeCreate } = useAnalytics();
+
     // Form state
     const [sourceUrl, setSourceUrl] = useState(initialData.sourceUrl || '');
     const [title, setTitle] = useState(initialData.title || '');
@@ -137,6 +141,9 @@ export const RecipeForm = ({
             setOgpFetched(false); // Reset OGP state
 
             try {
+                // Track smart import start
+                trackSmartImportStart(sourceUrl);
+
                 // Trigger OGP fetch
                 fetchOgpData();
 
@@ -182,13 +189,18 @@ export const RecipeForm = ({
                         });
                     }
 
+                    // Track success
+                    trackSmartImportSuccess(sourceUrl, !!(d.ingredients && d.ingredients.length > 0));
+
                 } else {
                     console.warn('Smart Import returned no data');
                     setSmartImportError('解析できましたが、有効な情報が見つかりませんでした');
+                    trackSmartImportFail(sourceUrl, 'No valid data returned');
                 }
             } catch (error) {
                 console.error('Smart Import Error:', error);
                 setSmartImportError(`うまく情報を取得できませんでした (${error.message})`);
+                trackSmartImportFail(sourceUrl, error.message);
             } finally {
                 setIsSmartImporting(false);
             }

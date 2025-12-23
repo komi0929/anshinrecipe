@@ -7,6 +7,7 @@ import { supabase } from '../../../lib/supabaseClient';
 import { useProfile } from '../../../hooks/useProfile';
 import { useRecipes } from '../../../hooks/useRecipes';
 import { useToast } from '../../../components/Toast';
+import { useAnalytics } from '../../../hooks/useAnalytics';
 import { ArrowLeft, Bookmark, Share2, ExternalLink, User as UserIcon, Clock, Smile, Heart, CheckCircle, MessageCircle, Pencil, UtensilsCrossed } from 'lucide-react';
 import { getReactionCounts, getUserReaction, toggleReaction, getTriedReports, deleteTriedReport, getLikeCount, getBookmarkCount } from '../../../lib/actions/socialActions';
 import { getRecommendedRecipes } from '../../../lib/recommendations';
@@ -21,19 +22,8 @@ const RecipeDetailPage = () => {
     const { id } = useParams();
     const router = useRouter();
     const { profile, user } = useProfile();
-    const { recipes, addCookingLog, deleteCookingLog } = useRecipes(); // Note: useRecipes normally returns { recipes, loading, addCookingLog } but trying to match existing usage if possible. 
-    // Wait, the existing code uses `useProfile` and `supabase` directly to fetch the SINGLE recipe.
-    // It does NOT use `useRecipes` hook for fetching the single recipe details currently.
-    // It fetches manually in `useEffect`.
-    // I should check if I should use `useRecipes` or just keep the manual fetch.
-    // The existing code does: `const { addToast } = useToast(); ... useEffect(() => { ... fetch from supabase ... })`
-    // It does NOT import `useRecipes`.
-    // I need to import `useRecipes` to get `addCookingLog`.
-    // Re-reading file content...
-    // The top imports DO NOT include `useRecipes`.
-    // I need to add that import first.
-    // My previous 'Import SmartEmbed' step was fine.
-    // Now I need to add `import { useRecipes } from '../../../hooks/useRecipes';`
+    const { addCookingLog, deleteCookingLog } = useRecipes();
+    const { trackRecipeView, trackRecipeSave, trackRecipeLike, trackTriedReport } = useAnalytics();
     const { addToast } = useToast();
 
     const [recipe, setRecipe] = useState(null);
@@ -109,6 +99,9 @@ const RecipeDetailPage = () => {
                 setIsSaved(!!saved.data);
                 setRecommendations(recs);
 
+                // Track recipe view
+                trackRecipeView(id);
+
             } catch (error) {
                 console.error('Error fetching recipe:', error);
                 addToast('レシピの読み込みに失敗しました', 'error');
@@ -120,7 +113,7 @@ const RecipeDetailPage = () => {
         if (id) {
             fetchRecipe();
         }
-    }, [id, user, addToast]);
+    }, [id, user, addToast, trackRecipeView]);
 
     useEffect(() => {
         if (!loading && typeof window !== 'undefined' && window.location.hash) {
@@ -151,11 +144,9 @@ const RecipeDetailPage = () => {
             const likes = await getLikeCount(id);
             setLikeCount(likes);
 
-            // Toast logic
-            if (newReaction === null) {
-                // Removed
-            } else {
-                // Added
+            // Track like action
+            if (reactionType === 'like' && newReaction !== null) {
+                trackRecipeLike(id);
             }
         } catch (error) {
             console.error('Error toggling reaction:', error);
@@ -178,6 +169,8 @@ const RecipeDetailPage = () => {
                 await supabase.from('saved_recipes').insert({ recipe_id: id, user_id: user.id });
                 setIsSaved(true);
                 addToast('レシピを保存しました', 'success');
+                // Track save action
+                trackRecipeSave(id);
             }
             // Refresh bookmark count for display
             const bookmarks = await getBookmarkCount(id);

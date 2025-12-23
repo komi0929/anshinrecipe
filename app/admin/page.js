@@ -253,6 +253,47 @@ export default function AdminPage() {
                     ))}
                 </div>
 
+                {/* Smart Import Stats */}
+                <div style={{ ...css.card, gridColumn: 'span 1' }}>
+                    <div style={{ fontWeight: 600, marginBottom: '16px', color: '#fff' }}>✨ スマートインポート</div>
+                    <div style={{ marginBottom: '12px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '4px' }}>
+                            <span style={{ color: '#8b949e' }}>成功率 (週)</span>
+                            <span style={{ color: '#fff' }}>{data?.features?.smartImport?.starts > 0 ? Math.round((data.features.smartImport.successes / data.features.smartImport.starts) * 100) : 0}%</span>
+                        </div>
+                        <div style={css.barWrap}>
+                            <div style={css.bar(data?.features?.smartImport?.starts > 0 ? (data.features.smartImport.successes / data.features.smartImport.starts) * 100 : 0, '#a855f7')} />
+                        </div>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#8b949e' }}>
+                        <span>開始: {data?.features?.smartImport?.starts || 0}</span>
+                        <span>成功: {data?.features?.smartImport?.successes || 0}</span>
+                    </div>
+                </div>
+
+                {/* Popular Recipes */}
+                <div style={{ ...css.card, gridColumn: 'span 2' }}>
+                    <div style={{ fontWeight: 600, marginBottom: '16px', color: '#fff' }}>🔥 人気レシピ Top5</div>
+                    {(data?.popularRecipes || []).length === 0 ? (
+                        <div style={{ color: '#8b949e', fontSize: '12px', textAlign: 'center', padding: '16px' }}>データなし</div>
+                    ) : (
+                        data.popularRecipes.map((r, i) => (
+                            <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                                <span style={{ color: i < 3 ? '#f59e0b' : '#8b949e', fontWeight: 700, width: '20px' }}>{i + 1}</span>
+                                {r.image && <img src={r.image} style={{ width: '32px', height: '32px', borderRadius: '4px', objectFit: 'cover' }} alt="" />}
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                    <div style={{ color: '#fff', fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.title}</div>
+                                </div>
+                                <div style={{ display: 'flex', gap: '8px', fontSize: '11px' }}>
+                                    <span style={{ color: '#ef4444' }}>❤️ {r.likeCount}</span>
+                                    <span style={{ color: '#3b82f6' }}>🔖 {r.saveCount}</span>
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+
+
                 {/* Reports */}
                 <div style={css.section}>
                     <div style={css.secHead}>⚠️ 通報 ({reports.length})</div>
