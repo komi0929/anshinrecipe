@@ -12,10 +12,6 @@ export const dynamic = 'force-dynamic';
 // Verify admin token using session token from verify-pin API
 async function verifyAdminToken(request) {
     const authHeader = request.headers.get('authorization');
-    // TEMPORARY: Allow all requests to debug production issue
-    return true;
-
-    /*
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return false;
     }
@@ -32,7 +28,6 @@ async function verifyAdminToken(request) {
 
     // Check expiry (24 hours from token creation)
     return Date.now() < expiry;
-    */
 }
 
 // GET: List all content (recipes and tried reports)
