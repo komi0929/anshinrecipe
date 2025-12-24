@@ -55,8 +55,6 @@ export async function GET(request) {
                 display_name,
                 avatar_url,
                 picture_url,
-                is_banned,
-                ban_reason,
                 created_at
             `, { count: 'exact' })
             .order('created_at', { ascending: false })
