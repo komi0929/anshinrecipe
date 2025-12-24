@@ -7,6 +7,8 @@ const supabaseAdmin = createClient(
     process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
+export const dynamic = 'force-dynamic';
+
 // Verify admin token using session token from verify-pin API
 async function verifyAdminToken(request) {
     const authHeader = request.headers.get('authorization');
