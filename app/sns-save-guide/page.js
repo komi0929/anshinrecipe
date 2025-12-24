@@ -30,10 +30,34 @@ const SNSSaveGuidePage = () => {
                     </p>
                 </div>
 
-                {/* Method 1: Copy URL - 開発中 */}
+                {/* Method 1: Android Share (Galaxy等) - ACTIVE */}
+                <div className="bg-white rounded-2xl p-5 shadow-sm mb-4 border-2 border-blue-100">
+                    <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <span className="w-7 h-7 bg-blue-500 text-white text-sm rounded-full flex items-center justify-center font-black">1</span>
+                        共有メニューから直接開く
+                        <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold">Android</span>
+                    </h3>
+
+                    <div className="space-y-3 text-sm text-slate-600 mb-4">
+                        <p className="text-slate-700">
+                            Galaxy/Androidでホーム画面に追加すると、Instagramの共有メニューに「あんしんレシピ」が表示されます。
+                        </p>
+                    </div>
+
+                    <div className="p-4 bg-blue-50 rounded-xl text-sm text-blue-700">
+                        <p className="font-bold mb-2 flex items-center gap-2"><Settings size={16} /> 設定方法:</p>
+                        <ol className="list-decimal list-inside space-y-1 text-xs">
+                            <li>Chromeで右上メニュー（⋮）をタップ</li>
+                            <li>「ホーム画面に追加」または「アプリをインストール」</li>
+                            <li>インストール後、Instagramの共有で「あんしんレシピ」を選択！</li>
+                        </ol>
+                    </div>
+                </div>
+
+                {/* Method 2: Copy URL - 開発中 */}
                 <div className="bg-white rounded-2xl p-5 shadow-sm mb-4 opacity-75">
                     <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                        <span className="w-7 h-7 bg-slate-400 text-white text-sm rounded-full flex items-center justify-center font-black">1</span>
+                        <span className="w-7 h-7 bg-slate-400 text-white text-sm rounded-full flex items-center justify-center font-black">2</span>
                         URLをコピーして保存
                         <span className="text-xs bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full">開発中</span>
                     </h3>
@@ -58,32 +82,8 @@ const SNSSaveGuidePage = () => {
                     <div className="mt-4 p-3 bg-slate-100 rounded-xl border border-slate-200">
                         <div className="flex items-center gap-2 text-slate-600 font-medium text-sm">
                             <Settings size={16} />
-                            現在は方法2をご利用ください
+                            現在は方法1をご利用ください
                         </div>
-                    </div>
-                </div>
-
-                {/* Method 2: Android Share (Galaxy等) */}
-                <div className="bg-white rounded-2xl p-5 shadow-sm mb-4 border-2 border-blue-100">
-                    <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                        <span className="w-7 h-7 bg-blue-500 text-white text-sm rounded-full flex items-center justify-center font-black">2</span>
-                        共有メニューから直接開く
-                        <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold">Android</span>
-                    </h3>
-
-                    <div className="space-y-3 text-sm text-slate-600 mb-4">
-                        <p className="text-slate-700">
-                            Galaxy/Androidでホーム画面に追加すると、Instagramの共有メニューに「あんしんレシピ」が表示されます。
-                        </p>
-                    </div>
-
-                    <div className="p-4 bg-blue-50 rounded-xl text-sm text-blue-700">
-                        <p className="font-bold mb-2 flex items-center gap-2"><Settings size={16} /> 設定方法:</p>
-                        <ol className="list-decimal list-inside space-y-1 text-xs">
-                            <li>Chromeで右上メニュー（⋮）をタップ</li>
-                            <li>「ホーム画面に追加」または「アプリをインストール」</li>
-                            <li>インストール後、Instagramの共有で「あんしんレシピ」を選択！</li>
-                        </ol>
                     </div>
                 </div>
 
