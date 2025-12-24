@@ -1,5 +1,11 @@
 import { NextResponse } from 'next/server';
-import { supabase as supabaseAdmin } from '@/lib/supabaseClient';
+import { createClient } from '@supabase/supabase-js';
+
+// Initialize Supabase Admin Client
+const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+);
 
 // Verify admin token using session token from verify-pin API
 async function verifyAdminToken(request) {
