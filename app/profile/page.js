@@ -48,6 +48,8 @@ export default function ProfilePage() {
     const [childPhoto, setChildPhoto] = useState(null); // URL string
     const [childPhotoFile, setChildPhotoFile] = useState(null); // File object
     const [childAllergens, setChildAllergens] = useState([]);
+
+
     const [customAllergen, setCustomAllergen] = useState(''); // Free text input
     const [formErrors, setFormErrors] = useState({}); // Validation errors
 

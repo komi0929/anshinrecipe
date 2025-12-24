@@ -2,16 +2,27 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ArrowLeft, Heart, Megaphone, Check, CheckCheck, ChevronDown, ChevronUp, Eye } from 'lucide-react';
 import { useProfile } from '@/hooks/useProfile';
 import { useNotifications } from '@/hooks/useNotifications';
 import Image from 'next/image';
 
+
+
 const NotificationsPage = () => {
+    const router = useRouter(); // Initialize router
     const { user, profile, loading: profileLoading } = useProfile();
     const { notifications, loading: notificationsLoading, markAsRead, markAllAsRead, unreadCount } = useNotifications(user?.id);
     const [activeTab, setActiveTab] = useState('activity'); // 'activity' | 'announcements'
     const [showReadNotifications, setShowReadNotifications] = useState(false);
+
+    // Auth Protection
+    useEffect(() => {
+        if (!profileLoading && !user) {
+            router.push('/login');
+        }
+    }, [user, profileLoading, router]);
 
     // App announcements (static for now)
     const announcements = [
