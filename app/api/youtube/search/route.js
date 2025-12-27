@@ -107,7 +107,7 @@ export async function POST(req) {
             title: item.snippet.title,
             description: item.snippet.description,
             channelTitle: item.snippet.channelTitle,
-            thumbnail: item.snippet.thumbnails.high?.url || item.snippet.thumbnails.medium?.url,
+            thumbnail: item.snippet.thumbnails.maxres?.url || item.snippet.thumbnails.high?.url || item.snippet.thumbnails.medium?.url,
             url: `https://www.youtube.com/watch?v=${item.id.videoId}`,
             publishedAt: item.snippet.publishedAt
         }));
@@ -120,9 +120,19 @@ export async function POST(req) {
 
     } catch (error) {
         console.error('YouTube API Error:', error);
+
+        // Check for specific Google API errors
+        const status = error.code || 500;
+        const message = error.errors?.[0]?.message || error.message || 'Failed to fetch from YouTube';
+        const reason = error.errors?.[0]?.reason || 'unknown';
+
         return NextResponse.json(
-            { error: 'Failed to fetch from YouTube', details: error.message },
-            { status: 500 }
+            {
+                error: message,
+                reason: reason,
+                details: error.message
+            },
+            { status: typeof status === 'number' ? status : 500 }
         );
     }
 }

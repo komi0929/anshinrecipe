@@ -19,8 +19,12 @@ const YouTubeSearchOverlay = ({
     // Results State
     const [results, setResults] = useState([]);
     const [isSearching, setIsSearching] = useState(false);
-    const [pageIndex, setPageIndex] = useState(0); // For pagination (client-side slicing of 30 results)
+    const [error, setError] = useState(null);
+    const [pageIndex, setPageIndex] = useState(0);
     const [searchPerformed, setSearchPerformed] = useState(false);
+
+    // Confirmation Modal State
+    const [confirmingVideo, setConfirmingVideo] = useState(null);
 
     // UI State
     const { addToast } = useToast();
@@ -29,8 +33,6 @@ const YouTubeSearchOverlay = ({
     useEffect(() => {
         if (isOpen) {
             setSelectedChildren(initialChildIds);
-            // Reset searches if opened fresh? Maybe keep consistent if user closes/reopens?
-            // Let's keep state for better UX unless explicitly cleared
         }
     }, [isOpen, initialChildIds]);
 
@@ -45,6 +47,7 @@ const YouTubeSearchOverlay = ({
         setIsSearching(true);
         setSearchPerformed(true);
         setResults([]);
+        setError(null);
         setPageIndex(0);
 
         try {
@@ -71,7 +74,8 @@ const YouTubeSearchOverlay = ({
             }
         } catch (error) {
             console.error('YouTube Search Error:', error);
-            addToast('検索に失敗しました。API設定などを確認してください。', 'error');
+            setError(error.message);
+            addToast('検索に失敗しました', 'error');
         } finally {
             setIsSearching(false);
         }
@@ -82,20 +86,33 @@ const YouTubeSearchOverlay = ({
         if (nextIndex < results.length) {
             setPageIndex(nextIndex);
         } else {
-            setPageIndex(0); // Cycle back to start or fetch more? Cycle for now.
+            setPageIndex(0);
             addToast('最初のおすすめに戻りました', 'info');
         }
     };
 
-    const handleSelect = (video) => {
-        onSelectRecipe(video);
-        onClose();
-        addToast('レシピ情報を取得しています...', 'success');
+    // Show confirmation modal instead of immediate selection
+    const handleCardSelect = (video) => {
+        setConfirmingVideo(video);
+    };
 
-        // Reset state after selection (optional, but good for next use)
-        setQuery('');
-        setResults([]);
-        setSearchPerformed(false);
+    // Confirmed selection
+    const handleConfirmAdd = () => {
+        if (confirmingVideo) {
+            onSelectRecipe(confirmingVideo);
+            onClose();
+            addToast('レシピ情報を取得しています...', 'success');
+
+            setQuery('');
+            setResults([]);
+            setSearchPerformed(false);
+            setConfirmingVideo(null);
+        }
+    };
+
+    // Cancel confirmation
+    const handleCancelConfirm = () => {
+        setConfirmingVideo(null);
     };
 
     if (!isOpen) return null;
@@ -119,7 +136,6 @@ const YouTubeSearchOverlay = ({
                 <div className="youtube-overlay-content">
                     {/* Search Form */}
                     <div className="search-controls">
-                        {/* Child Selector used here to contextualize search */}
                         <div className="mb-4">
                             <ChildSelector
                                 selected={selectedChildren}
@@ -129,12 +145,12 @@ const YouTubeSearchOverlay = ({
 
                         <div className="search-bar-group">
                             <div className="relative flex-1">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
                                 <input
                                     type="text"
                                     value={query}
                                     onChange={(e) => setQuery(e.target.value)}
-                                    placeholder="何を作りますか？ (例: ハンバーグ, うどん)"
+                                    placeholder="何を作りますか？ (例: ハンバーグ)"
                                     className="search-input"
                                     onKeyDown={(e) => {
                                         if (e.key === 'Enter') {
@@ -164,7 +180,7 @@ const YouTubeSearchOverlay = ({
                                 disabled={isSearching}
                                 className="search-submit-btn"
                             >
-                                {isSearching ? <Loader2 className="animate-spin" /> : '検索'}
+                                {isSearching ? <Loader2 className="animate-spin" size={20} /> : '検索'}
                             </button>
                         </div>
 
@@ -182,6 +198,14 @@ const YouTubeSearchOverlay = ({
                                 <p>美味しいレシピを探しています...</p>
                                 <p className="text-sm text-gray-500 mt-2">アレルギー情報と照合中</p>
                             </div>
+                        ) : error ? (
+                            <div className="empty-state text-red-600">
+                                <p className="font-bold mb-2">エラーが発生しました 😢</p>
+                                <p className="text-xs font-mono bg-red-50 p-2 rounded border border-red-100 mb-2">{error}</p>
+                                <p className="text-sm text-gray-500">
+                                    {error.includes('blocked') ? 'API設定(Google Console)を確認してください' : 'もう一度お試しください'}
+                                </p>
+                            </div>
                         ) : searchPerformed && results.length === 0 ? (
                             <div className="empty-state">
                                 <p>見つかりませんでした 😢</p>
@@ -194,7 +218,7 @@ const YouTubeSearchOverlay = ({
                                         <YouTubeRecipeCard
                                             key={video.id}
                                             video={video}
-                                            onSelect={handleSelect}
+                                            onSelect={handleCardSelect}
                                         />
                                     ))}
                                 </div>
@@ -209,23 +233,50 @@ const YouTubeSearchOverlay = ({
                                 )}
                             </div>
                         ) : (
-                            // Use instructions state
-                            <div className="initial-instructions">
-                                <div className="step-badge">1</div>
-                                <p>食べたい料理を入力</p>
-                                <div className="arrow-down">⬇</div>
-                                <div className="step-badge">2</div>
-                                <p>AIが安全なレシピを厳選</p>
-                                <div className="arrow-down">⬇</div>
-                                <div className="step-badge">3</div>
-                                <p>選んで自動入力！</p>
+                            <div className="initial-empty-state">
+                                <p>🍳 食べたい料理を検索してみましょう</p>
                             </div>
                         )}
                     </div>
                 </div>
             </div>
+
+            {/* Confirmation Modal */}
+            {confirmingVideo && (
+                <div className="confirm-modal-backdrop" onClick={handleCancelConfirm}>
+                    <div className="confirm-modal" onClick={(e) => e.stopPropagation()}>
+                        <img
+                            src={confirmingVideo.thumbnail}
+                            alt={confirmingVideo.title}
+                            className="confirm-modal-thumbnail"
+                        />
+                        <h3 className="confirm-modal-title">{confirmingVideo.title}</h3>
+                        <p className="confirm-modal-channel">{confirmingVideo.channelTitle}</p>
+                        <p className="text-center text-gray-600 mb-4 text-sm">
+                            このレシピをメモに追加しますか？
+                        </p>
+                        <div className="confirm-modal-actions">
+                            <button
+                                type="button"
+                                onClick={handleCancelConfirm}
+                                className="confirm-cancel-btn"
+                            >
+                                キャンセル
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleConfirmAdd}
+                                className="confirm-add-btn"
+                            >
+                                追加する
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
 
 export default YouTubeSearchOverlay;
+

@@ -46,7 +46,7 @@ const YouTubeRecipeCard = ({ video, onSelect, isSelected }) => {
                         onClick={() => onSelect(video)}
                         className={`select-btn ${isSelected ? 'selected' : ''}`}
                     >
-                        {isSelected ? 'これにする' : '自分のメモに追加'}
+                        {isSelected ? 'これにする' : 'このレシピを追加'}
                     </button>
                 </div>
             </div>
