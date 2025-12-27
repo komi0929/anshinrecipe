@@ -136,7 +136,12 @@ const YouTubeSearchOverlay = ({
                                     onChange={(e) => setQuery(e.target.value)}
                                     placeholder="何を作りますか？ (例: ハンバーグ, うどん)"
                                     className="search-input"
-                                    onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                            handleSearch();
+                                        }
+                                    }}
                                     autoFocus
                                 />
                             </div>
@@ -146,8 +151,15 @@ const YouTubeSearchOverlay = ({
                                 onChange={(e) => setScene(e.target.value)}
                                 placeholder="シーン (任意)"
                                 className="scene-input"
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        handleSearch();
+                                    }
+                                }}
                             />
                             <button
+                                type="button"
                                 onClick={handleSearch}
                                 disabled={isSearching}
                                 className="search-submit-btn"
