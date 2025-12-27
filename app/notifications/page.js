@@ -27,6 +27,14 @@ const NotificationsPage = () => {
     // App announcements (static for now)
     const announcements = [
         {
+            id: 2,
+            title: '📺 YouTube検索機能が追加されました！',
+            content: 'YouTubeからお子様のアレルギーを考慮したレシピ動画を検索できるようになりました。レシピ作成画面の「YouTubeから見つける」ボタンからお試しください。シーンや特徴でも絞り込めます！',
+            date: '2025-12-28',
+            isNew: true,
+            hasContactLink: false
+        },
+        {
             id: 1,
             title: 'あんしんレシピ へようこそ！',
             content: 'アレルギーっ子のパパ・ママのためのレシピ共有アプリです。',
