@@ -55,6 +55,18 @@ const TriedReportCard = ({ report, currentUserId, onDelete }) => {
         return date.toLocaleDateString('ja-JP');
     };
 
+    const getReactionDetails = (type) => {
+        switch (type) {
+            case 'ate_all': return { emoji: '😋', label: '完食！', color: 'orange' };
+            case 'ate_some': return { emoji: '👍', label: 'パクパク食べた', color: 'green' };
+            case 'challenge': return { emoji: '😯', label: '頑張って食べた', color: 'blue' };
+            case 'struggled': return { emoji: '😓', label: 'ちょっと苦戦...', color: 'slate' };
+            default: return null;
+        }
+    };
+
+    const reaction = report.reaction ? getReactionDetails(report.reaction) : null;
+
     return (
         <div className="tried-report-card" id={`report-${report.id}`}>
             <div className="report-header">
@@ -104,7 +116,15 @@ const TriedReportCard = ({ report, currentUserId, onDelete }) => {
                 <div className="report-image">
                     <img src={report.imageUrl || report.image_url} alt="レポート画像" />
                 </div>
+
             ) : null}
+
+            {reaction && (
+                <div className={`report-reaction reaction-${reaction.color}`}>
+                    <span className="reaction-emoji">{reaction.emoji}</span>
+                    <span className="reaction-label">{reaction.label}</span>
+                </div>
+            )}
 
             {report.comment && (
                 <p className="report-comment">{report.comment}</p>

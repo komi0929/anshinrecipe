@@ -1,0 +1,249 @@
+.youtube-overlay-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+
+.youtube-overlay-container {
+    background: #fff;
+    width: 100%;
+    max-width: 800px;
+    height: 90vh;
+    max-height: 800px;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+}
+
+.youtube-overlay-header {
+    padding: 16px 24px;
+    border-bottom: 1px solid #f3f4f6;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: white;
+}
+
+.close-btn {
+    padding: 8px;
+    border-radius: 50%;
+    color: #6b7280;
+    transition: background 0.2s;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+}
+
+.close-btn:hover {
+    background: #f3f4f6;
+}
+
+.youtube-overlay-content {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    padding: 24px;
+    background: #fafafa;
+}
+
+/* Search Controls */
+.search-controls {
+    background: white;
+    padding: 20px;
+    border-radius: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    margin-bottom: 24px;
+}
+
+.search-bar-group {
+    display: flex;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+@media (max-width: 640px) {
+    .search-bar-group {
+        flex-direction: column;
+    }
+}
+
+.search-input {
+    width: 100%;
+    padding: 12px 12px 12px 40px;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    font-size: 16px;
+    transition: all 0.2s;
+}
+
+.search-input:focus {
+    border-color: #ef4444;
+    /* Red focus for YouTube theme */
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.scene-input {
+    width: 120px;
+    padding: 12px;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    font-size: 14px;
+}
+
+@media (max-width: 640px) {
+    .scene-input {
+        width: 100%;
+    }
+}
+
+.search-submit-btn {
+    padding: 0 24px;
+    background: #ef4444;
+    /* YouTube Red */
+    color: white;
+    font-weight: bold;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-width: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.search-submit-btn:hover {
+    background: #dc2626;
+    transform: translateY(-1px);
+}
+
+.search-submit-btn:disabled {
+    background: #fca5a5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.search-hint {
+    margin-top: 8px;
+    font-size: 12px;
+    color: #6b7280;
+    text-align: right;
+}
+
+/* Results Area */
+.results-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.searching-state,
+.empty-state,
+.initial-instructions {
+    text-align: center;
+    color: #4b5563;
+}
+
+.initial-instructions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    opacity: 0.6;
+}
+
+.step-badge {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: #6b7280;
+}
+
+.arrow-down {
+    font-size: 20px;
+    color: #d1d5db;
+}
+
+/* Grid */
+.results-grid-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.results-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    width: 100%;
+}
+
+@media (max-width: 768px) {
+    .results-grid {
+        grid-template-columns: repeat(1, 1fr);
+        /* Stack functionality for mobile */
+    }
+}
+
+.pagination-area {
+    display: flex;
+    justify-content: center;
+    padding-bottom: 24px;
+}
+
+.next-results-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background: white;
+    border: 2px solid #e5e7eb;
+    border-radius: 30px;
+    color: #4b5563;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.next-results-btn:hover {
+    border-color: #d1d5db;
+    background: #f9fafb;
+    transform: translateY(-2px);
+}
+
+/* Animations */
+.animate-fade-in-up {
+    animation: fadeInUp 0.3s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

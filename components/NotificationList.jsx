@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Heart, Bookmark, MessageCircle, Clock, CheckCheck, ChevronDown, ChevronUp, Eye } from 'lucide-react';
+import { Heart, Bookmark, MessageCircle, Clock, CheckCheck, ChevronDown, ChevronUp, Eye, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 
@@ -59,6 +59,7 @@ const NotificationList = ({ notifications, onRead, onMarkAllRead, unreadCount = 
             case 'report_like': return <Heart size={18} className="text-pink-500 fill-pink-500" />;
             case 'save': return <Bookmark size={18} className="text-orange-500 fill-orange-500" />;
             case 'report': return <MessageCircle size={18} className="text-blue-500 fill-blue-500" />;
+            case 'thanks': return <Sparkles size={18} className="text-amber-500 fill-amber-500" />;
             default: return <Clock size={18} className="text-slate-400" />;
         }
     };
@@ -102,6 +103,18 @@ const NotificationList = ({ notifications, onRead, onMarkAllRead, unreadCount = 
                         <span className="text-slate-600">があなたのつくレポに</span>
                         <span className="text-pink-500 font-bold">いいね！</span>
                         <span className="text-slate-600">しました</span>
+                    </span>
+                );
+            case 'thanks':
+                // Get the thanks message from metadata if available
+                const thanksEmoji = notification.metadata?.emoji || '💕';
+                const thanksMessage = notification.metadata?.message || '感謝';
+                return (
+                    <span>
+                        <strong className="text-slate-800">{actorName}</strong>
+                        <span className="text-slate-600">から</span>
+                        <span className="text-amber-500 font-bold"> {thanksEmoji} {thanksMessage}</span>
+                        <span className="text-slate-600">が届きました！</span>
                     </span>
                 );
             default:
@@ -159,7 +172,10 @@ const NotificationList = ({ notifications, onRead, onMarkAllRead, unreadCount = 
                     {/* Icon Badge */}
                     <div className={`
                         absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center shadow-sm
-                        ${n.type === 'like' ? 'bg-pink-100' : n.type === 'save' ? 'bg-orange-100' : 'bg-blue-100'}
+                        ${n.type === 'like' || n.type === 'report_like' ? 'bg-pink-100' :
+                            n.type === 'save' ? 'bg-orange-100' :
+                                n.type === 'thanks' ? 'bg-amber-100' :
+                                    n.type === 'report' ? 'bg-blue-100' : 'bg-slate-100'}
                     `}>
                         {getIcon(n.type)}
                     </div>

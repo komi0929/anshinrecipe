@@ -168,6 +168,13 @@
     gap: 4px;
 }
 
+/* Thanks Section */
+.thanks-section {
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: center;
+}
+
 .source-link-btn {
     display: flex;
     align-items: center;
@@ -192,6 +199,11 @@
 
 .source-link-btn:active {
     transform: translateY(0);
+}
+
+/* Collection Action Section */
+.collection-action-section {
+    margin-bottom: 20px;
 }
 
 .detail-section {

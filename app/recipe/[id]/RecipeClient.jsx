@@ -16,6 +16,8 @@ import TriedReportCard from '../../../components/TriedReportCard';
 import { ReportButton } from '../../../components/ReportButton';
 import { SmartEmbed } from '../../../components/SmartEmbed';
 import { CookingLog } from '../../../components/CookingLog';
+import ThanksButton from '../../../components/ThanksButton';
+import AddToCollectionButton from '../../../components/AddToCollection';
 import './RecipeDetailPage.css';
 
 const RecipeDetailPage = () => {
@@ -353,6 +355,16 @@ const RecipeDetailPage = () => {
                     </div>
                 </div>
 
+                {/* Thanks Button - 感謝を送る */}
+                <div className="thanks-section">
+                    <ThanksButton
+                        recipeId={id}
+                        authorId={recipe.user_id}
+                        currentUserId={user?.id}
+                        recipeName={recipe.title}
+                    />
+                </div>
+
                 {/* Heart Reaction moved to header */}
 
                 {/* --- NEW: Smart Embed (YouTube/TikTok) --- */}
@@ -365,6 +377,16 @@ const RecipeDetailPage = () => {
                     <a href={recipe.source_url} target="_blank" rel="noopener noreferrer" className="source-link-btn">
                         レシピを見る <ExternalLink size={16} />
                     </a>
+                )}
+
+                {/* Add to Collection Button */}
+                {user && (
+                    <div className="collection-action-section">
+                        <AddToCollectionButton
+                            recipeId={id}
+                            recipeName={recipe.title}
+                        />
+                    </div>
                 )}
 
                 <div className="detail-section">

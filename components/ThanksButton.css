@@ -1,0 +1,228 @@
+/* ThanksButton.css - 感謝を送る機能のスタイル */
+
+.thanks-button-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+/* Trigger Button */
+.thanks-trigger-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+    border: 2px solid #fed7aa;
+    border-radius: 100px;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #ea580c;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.thanks-trigger-btn:hover {
+    background: linear-gradient(135deg, #ffedd5 0%, #fed7aa 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(234, 88, 12, 0.2);
+}
+
+.thanks-trigger-btn.active {
+    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+    border-color: #ea580c;
+    color: white;
+}
+
+.thanks-heart-icon {
+    transition: transform 0.2s ease;
+}
+
+.thanks-trigger-btn:hover .thanks-heart-icon {
+    transform: scale(1.2);
+}
+
+.thanks-trigger-btn.active .thanks-heart-icon {
+    fill: currentColor;
+}
+
+/* Options Panel */
+.thanks-options-panel {
+    position: absolute;
+    bottom: calc(100% + 12px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    border-radius: 20px;
+    padding: 1rem;
+    min-width: 280px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    z-index: 100;
+    animation: panelSlideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes panelSlideUp {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(10px) scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0) scale(1);
+    }
+}
+
+/* Arrow */
+.thanks-options-panel::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 10px solid white;
+}
+
+.thanks-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #64748b;
+}
+
+.thanks-panel-header svg {
+    color: #f59e0b;
+}
+
+/* Options Grid */
+.thanks-options-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.thanks-option-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: #f8fafc;
+    border: 2px solid transparent;
+    border-radius: 12px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #334155;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.thanks-option-btn:hover {
+    background: white;
+    border-color: var(--option-color, #f97316);
+    transform: translateX(4px);
+}
+
+.thanks-option-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.thanks-option-emoji {
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.thanks-option-label {
+    flex: 1;
+}
+
+/* Close Button */
+.thanks-panel-close {
+    width: 100%;
+    margin-top: 0.75rem;
+    padding: 0.5rem;
+    background: none;
+    border: none;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #94a3b8;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.thanks-panel-close:hover {
+    color: #64748b;
+}
+
+/* Sent Badge */
+.thanks-sent-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1rem;
+    background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+    border: 2px solid #86efac;
+    border-radius: 100px;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: #16a34a;
+}
+
+.thanks-sent-icon {
+    font-size: 1rem;
+}
+
+.thanks-sent-text {
+    animation: fadeInText 0.3s ease;
+}
+
+@keyframes fadeInText {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* Mobile adjustments */
+@media (max-width: 480px) {
+    .thanks-options-panel {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        top: auto;
+        transform: none;
+        border-radius: 24px 24px 0 0;
+        min-width: 100%;
+        padding: 1.5rem;
+        padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
+        animation: panelSlideUpMobile 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes panelSlideUpMobile {
+        from {
+            opacity: 0;
+            transform: translateY(100%);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .thanks-options-panel::after {
+        display: none;
+    }
+}

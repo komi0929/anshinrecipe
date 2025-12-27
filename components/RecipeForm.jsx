@@ -7,6 +7,8 @@ import { uploadImage } from '@/lib/imageUpload';
 import { MEAL_SCENES, SCENE_ICONS } from '@/lib/constants';
 import { SmartEmbed } from '@/components/SmartEmbed'; // Import SmartEmbed
 import SmartImportOverlay from './SmartImportOverlay'; // Import SmartImportOverlay
+import YouTubeSearchOverlay from './YouTubeSearchOverlay'; // Import YouTubeSearchOverlay
+import { Youtube } from 'lucide-react'; // Import Youtube icon
 import { useAnalytics } from '@/hooks/useAnalytics';
 import './RecipeForm.css';
 
@@ -356,16 +358,44 @@ export const RecipeForm = ({
     const addCustomScene = () => { if (customScene.trim() && !selectedScenes.includes(customScene.trim())) { setSelectedScenes([...selectedScenes, customScene.trim()]); setCustomScene(''); } };
     const removeScene = (sceneToRemove) => { setSelectedScenes(selectedScenes.filter(scene => scene !== sceneToRemove)); };
 
+    const [showYouTubeSearch, setShowYouTubeSearch] = useState(false);
+
+    // YouTube Selection Handler
+    const handleYouTubeSelect = (videoData) => {
+        // 1. Populate fields
+        setSourceUrl(videoData.url); // This will trigger Smart Import automatically via useEffect
+        setTitle(videoData.title);
+        setImage(videoData.thumbnail);
+        setDescription(videoData.description);
+
+        // 2. Track analytics if needed
+        // trackYouTubeSelect(videoData.id); (optional)
+
+        // 3. Mark OGP as fetched so it doesn't try to overwrite everything (unless smart import does)
+        setOgpFetched(true);
+    };
+
     return (
         <form onSubmit={handleSubmit} className="recipe-form">
-            {/* OGP Loading Overlay - User wants "Instant title/image", removing overlay helps responsiveness feeling. 
-                But OGP takes 1-2s. Let's keep a subtle spinner on the field itself if possible, but the overlay is "safest" for feedback.
-                Actually, removing full-screen overlay for better "instant" flow, relying on skeleton/spinner in fields.
-            */}
-            {/* Overlay Removed as per UX request for "Zero-click" feeling, making it background activity mostly */}
+            {/* OGP Loading Overlay removed as per previous update */}
+
+            {/* YouTube Search Button */}
+            <div className="form-section pb-0 mb-0">
+                <button
+                    type="button"
+                    onClick={() => setShowYouTubeSearch(true)}
+                    className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md transform hover:-translate-y-1"
+                >
+                    <Youtube size={24} />
+                    YouTubeから見つける
+                </button>
+                <p className="text-center text-xs text-gray-500 mt-2">
+                    お子様のアレルギーを考慮したレシピを検索できます
+                </p>
+            </div>
 
             {/* URL Input Section */}
-            <div className="form-section url-section" id="recipe-form-url-input">
+            <div className="form-section url-section mt-4" id="recipe-form-url-input">
                 <label className="section-label">レシピURL / SNSリンク</label>
                 <div className="url-input-group">
                     <div className="input-with-icon">
@@ -478,11 +508,20 @@ export const RecipeForm = ({
                     <span>{isEditMode ? '変更を保存' : 'レシピを保存'}</span>
                 </button>
             </div>
+
             {/* Smart Import Overlay */}
             <SmartImportOverlay
                 isVisible={showOverlay}
                 onRunning={isSmartImporting}
                 onComplete={() => setShowOverlay(false)}
+            />
+
+            {/* YouTube Search Overlay */}
+            <YouTubeSearchOverlay
+                isOpen={showYouTubeSearch}
+                onClose={() => setShowYouTubeSearch(false)}
+                onSelectRecipe={handleYouTubeSelect}
+                initialChildIds={selectedChildren}
             />
         </form >
     );

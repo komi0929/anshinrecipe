@@ -11,6 +11,7 @@ const TriedReportForm = ({ recipeId, userId, onSuccess, onCancel }) => {
     const [imageFile, setImageFile] = useState(null);
     const [imagePreview, setImagePreview] = useState('');
     const [comment, setComment] = useState('');
+    const [reaction, setReaction] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef(null);
@@ -80,13 +81,15 @@ const TriedReportForm = ({ recipeId, userId, onSuccess, onCancel }) => {
             // Create report
             const report = await createTriedReport(recipeId, {
                 imageUrl: uploadedImageUrl,
-                comment: comment.trim() || null
+                comment: comment.trim() || null,
+                reaction
             }, userId);
 
             addToast('レポートを投稿しました！', 'success');
             setImageFile(null);
             setImagePreview('');
             setComment('');
+            setReaction(null);
             if (onSuccess) onSuccess(report);
         } catch (error) {
             console.error('Failed to create report:', error);
@@ -141,6 +144,28 @@ const TriedReportForm = ({ recipeId, userId, onSuccess, onCancel }) => {
                         onChange={handleImageSelect}
                         style={{ display: 'none' }}
                     />
+                </div>
+
+                <div className="form-group">
+                    <label>お子さまの反応</label>
+                    <div className="reaction-selector">
+                        {[
+                            { id: 'ate_all', emoji: '😋', label: '完食！' },
+                            { id: 'ate_some', emoji: '👍', label: 'パクパク' },
+                            { id: 'challenge', emoji: '😯', label: '挑戦！' },
+                            { id: 'struggled', emoji: '😓', label: '苦戦...' },
+                        ].map((r) => (
+                            <button
+                                key={r.id}
+                                type="button"
+                                className={`reaction-btn ${reaction === r.id ? 'selected' : ''}`}
+                                onClick={() => setReaction(reaction === r.id ? null : r.id)}
+                            >
+                                <span className="reaction-emoji">{r.emoji}</span>
+                                <span className="reaction-label">{r.label}</span>
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
                 <div className="form-group">

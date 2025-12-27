@@ -1,5 +1,54 @@
 # 改善ログ
 
+## 2025-12-27 - グロース施策 Phase 1 & 2 実装
+
+**ステータス**: 🛠️ 開発完了（マイグレーション適用待ち）
+
+### Phase 1: 投稿者へのフィードバック強化
+
+**CelebrationModal（投稿お祝いモーダル）**:
+- 紙吹雪・ハートバーストアニメーション
+- 「あんしんレシピさん」からの人格化メッセージ
+- 初投稿、5/10/25/50件のマイルストーン演出
+- 子どもにぴったりのレシピ判定
+
+**ThanksButton（感謝を送る機能）**:
+- 5種類の感謝プリセット（🙏助かりました！、💡天才！など）
+- レシピ詳細ページに配置
+- 通知システムに `thanks` タイプ追加
+
+### Phase 2: コレクション機能 & 子どもの反応評価
+
+**コレクション機能**:
+- 保存したレシピをフォルダで整理
+- カスタムアイコン・カラー選択
+- レシピ詳細ページから直接追加可能
+
+**子どもの反応評価システム**:
+- つくレポ投稿時に「完食」「パクパク」「挑戦」「苦戦」を選択可能
+- レポートカードに子どもの反応を表示（完食=オレンジなど視覚的に表現）
+- 「実際の保護者が認めたレシピ」としての信頼性を可視化
+
+**関連ファイル**:
+- `components/CelebrationModal.jsx` (新規)
+- `components/ThanksButton.jsx` (新規)
+- `components/CollectionCard.jsx` (新規)
+- `components/CollectionModal.jsx` (新規)
+- `components/AddToCollection.jsx` (新規)
+- `hooks/useCollections.js` (新規)
+- `app/recipe/new/page.js` (CelebrationModal統合)
+- `app/recipe/[id]/RecipeClient.jsx` (ThanksButton・AddToCollection統合)
+- `components/NotificationList.jsx` (thanks通知対応)
+- `components/TriedReportForm.jsx` (反応入力追加)
+- `components/TriedReportCard.jsx` (反応表示追加)
+- `lib/actions/socialActions.js` (DB連携)
+
+**マイグレーション**:
+- `data/migrations/add_notifications_metadata.sql`
+- `data/migrations/create_collections.sql`
+- `data/migrations/add_child_reaction.sql`
+
+
 ## 2025-12-20 - 画面遷移の高速化（ローディング画面の削除）
 
 **ステータス**: 🚀 本番反映済み

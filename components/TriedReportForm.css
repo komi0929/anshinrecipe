@@ -47,6 +47,51 @@
     font-size: 14px;
 }
 
+/* Reaction Selector */
+.reaction-selector {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+
+.reaction-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 10px 4px;
+    border: 2px solid #E2E8F0;
+    border-radius: 12px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.reaction-btn:hover {
+    background: #F8FAFC;
+    transform: translateY(-2px);
+}
+
+.reaction-btn.selected {
+    background: #FFF7ED;
+    border-color: #F97316;
+}
+
+.reaction-emoji {
+    font-size: 24px;
+}
+
+.reaction-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+}
+
+.reaction-btn.selected .reaction-label {
+    color: #F97316;
+}
+
 .image-input-wrapper {
     position: relative;
     display: flex;

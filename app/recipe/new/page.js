@@ -9,6 +9,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { RecipeForm } from '@/components/RecipeForm';
 import CoachMark from '@/components/CoachMark';
+import CelebrationModal from '@/components/CelebrationModal';
 
 const AddRecipeContent = () => {
     const router = useRouter();
@@ -16,6 +17,8 @@ const AddRecipeContent = () => {
     const { addRecipe } = useRecipes();
     const { user, profile, loading: profileLoading } = useProfile();
     const [initialData, setInitialData] = useState({});
+    const [showCelebration, setShowCelebration] = useState(false);
+    const [celebrationData, setCelebrationData] = useState({});
 
     useEffect(() => {
         if (!profileLoading && !user) {
@@ -54,11 +57,35 @@ const AddRecipeContent = () => {
     const handleCreateRecipe = async (formData) => {
         try {
             await addRecipe(formData, user, profile);
-            router.push('/?tab=mine');
+
+            // Calculate recipe count for milestones
+            const currentRecipeCount = (profile?.stats?.recipeCount || 0) + 1;
+            const isFirstPost = currentRecipeCount === 1;
+
+            // Find matching child for personalized message
+            const matchingChild = profile?.children?.find(child => {
+                if (!child.allergens || child.allergens.length === 0) return true;
+                const recipeAllergens = formData.freeFromAllergens || [];
+                return child.allergens.every(a => recipeAllergens.includes(a));
+            });
+
+            // Set celebration data and show modal
+            setCelebrationData({
+                isFirstPost,
+                recipeCount: currentRecipeCount,
+                recipeName: formData.title || '',
+                childName: matchingChild?.name || '',
+            });
+            setShowCelebration(true);
         } catch (error) {
             console.error('Failed to add recipe', error);
             alert('レシピの保存に失敗しました');
         }
+    };
+
+    const handleCelebrationClose = () => {
+        setShowCelebration(false);
+        router.push('/?tab=mine');
     };
 
     // Wait for profile data to be fully loaded before rendering content
@@ -78,6 +105,16 @@ const AddRecipeContent = () => {
 
     return (
         <div className="container add-recipe-page relative">
+            {/* Celebration Modal */}
+            <CelebrationModal
+                isOpen={showCelebration}
+                onClose={handleCelebrationClose}
+                isFirstPost={celebrationData.isFirstPost}
+                recipeCount={celebrationData.recipeCount}
+                recipeName={celebrationData.recipeName}
+                childName={celebrationData.childName}
+            />
+
             <div className="page-header">
                 <h1 className="page-title">レシピを追加</h1>
             </div>
