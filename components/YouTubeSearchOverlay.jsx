@@ -1,9 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Search, X, Loader2, Youtube, Sparkles, RefreshCw } from 'lucide-react';
+import { Search, X, Loader2, Youtube, RefreshCw } from 'lucide-react';
 import YouTubeRecipeCard from './YouTubeRecipeCard';
 import ChildSelector from './ChildSelector';
 import { useToast } from './Toast';
+import { MEAL_SCENES, SCENE_ICONS } from '@/lib/constants';
 import './YouTubeSearchOverlay.css';
+
+// 特徴（タグ）の選択肢
+const FEATURE_OPTIONS = [
+    '簡単', '時短', '栄養満点', 'ヘルシー', '野菜たっぷり',
+    '子供向け', '作り置き', '節約', 'お弁当向き'
+];
 
 const YouTubeSearchOverlay = ({
     isOpen,
@@ -13,7 +20,8 @@ const YouTubeSearchOverlay = ({
 }) => {
     // Search State
     const [query, setQuery] = useState('');
-    const [scene, setScene] = useState('');
+    const [selectedScenes, setSelectedScenes] = useState([]);
+    const [selectedFeatures, setSelectedFeatures] = useState([]);
     const [selectedChildren, setSelectedChildren] = useState(initialChildIds);
 
     // Results State
@@ -36,6 +44,18 @@ const YouTubeSearchOverlay = ({
         }
     }, [isOpen, initialChildIds]);
 
+    const toggleScene = (scene) => {
+        setSelectedScenes(prev =>
+            prev.includes(scene) ? prev.filter(s => s !== scene) : [...prev, scene]
+        );
+    };
+
+    const toggleFeature = (feature) => {
+        setSelectedFeatures(prev =>
+            prev.includes(feature) ? prev.filter(f => f !== feature) : [...prev, feature]
+        );
+    };
+
     const handleSearch = async (e) => {
         e?.preventDefault();
 
@@ -50,6 +70,10 @@ const YouTubeSearchOverlay = ({
         setError(null);
         setPageIndex(0);
 
+        // Combine scenes and features into search context
+        const sceneStr = selectedScenes.join(' ');
+        const featureStr = selectedFeatures.join(' ');
+
         try {
             const response = await fetch('/api/youtube/search', {
                 method: 'POST',
@@ -57,7 +81,8 @@ const YouTubeSearchOverlay = ({
                 body: JSON.stringify({
                     query: query.trim(),
                     childIds: selectedChildren,
-                    scene: scene.trim()
+                    scene: `${sceneStr} ${featureStr}`.trim(),
+                    tags: selectedFeatures
                 })
             });
 
@@ -91,12 +116,16 @@ const YouTubeSearchOverlay = ({
         }
     };
 
-    // Show confirmation modal instead of immediate selection
     const handleCardSelect = (video) => {
-        setConfirmingVideo(video);
+        // Pass selected metadata along with video
+        const enrichedVideo = {
+            ...video,
+            selectedScenes,
+            selectedFeatures
+        };
+        setConfirmingVideo(enrichedVideo);
     };
 
-    // Confirmed selection
     const handleConfirmAdd = () => {
         if (confirmingVideo) {
             onSelectRecipe(confirmingVideo);
@@ -107,10 +136,11 @@ const YouTubeSearchOverlay = ({
             setResults([]);
             setSearchPerformed(false);
             setConfirmingVideo(null);
+            setSelectedScenes([]);
+            setSelectedFeatures([]);
         }
     };
 
-    // Cancel confirmation
     const handleCancelConfirm = () => {
         setConfirmingVideo(null);
     };
@@ -125,33 +155,35 @@ const YouTubeSearchOverlay = ({
                 {/* Header */}
                 <div className="youtube-overlay-header">
                     <div className="flex items-center gap-2 text-red-600">
-                        <Youtube size={24} />
-                        <h2 className="text-lg font-bold">YouTubeからレシピを探す</h2>
+                        <Youtube size={22} />
+                        <h2 className="text-base font-bold">YouTubeからレシピを探す</h2>
                     </div>
                     <button onClick={onClose} className="close-btn">
-                        <X size={24} />
+                        <X size={22} />
                     </button>
                 </div>
 
                 <div className="youtube-overlay-content">
-                    {/* Search Form */}
-                    <div className="search-controls">
-                        <div className="mb-4">
+                    {/* Compact Search Form */}
+                    <div className="yt-search-form">
+                        {/* Child Selector - Compact */}
+                        <div className="yt-section">
                             <ChildSelector
                                 selected={selectedChildren}
                                 onChange={setSelectedChildren}
                             />
                         </div>
 
-                        <div className="search-bar-group">
-                            <div className="relative flex-1">
-                                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                        {/* Search Input - Fixed padding */}
+                        <div className="yt-search-input-row">
+                            <div className="yt-search-input-wrapper">
+                                <Search className="yt-search-icon" size={18} />
                                 <input
                                     type="text"
                                     value={query}
                                     onChange={(e) => setQuery(e.target.value)}
-                                    placeholder="何を作りますか？ (例: ハンバーグ)"
-                                    className="search-input"
+                                    placeholder="何を作りますか？"
+                                    className="yt-search-input"
                                     onKeyDown={(e) => {
                                         if (e.key === 'Enter') {
                                             e.preventDefault();
@@ -161,55 +193,68 @@ const YouTubeSearchOverlay = ({
                                     autoFocus
                                 />
                             </div>
-                            <input
-                                type="text"
-                                value={scene}
-                                onChange={(e) => setScene(e.target.value)}
-                                placeholder="シーン (任意)"
-                                className="scene-input"
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                        e.preventDefault();
-                                        handleSearch();
-                                    }
-                                }}
-                            />
                             <button
                                 type="button"
                                 onClick={handleSearch}
                                 disabled={isSearching}
-                                className="search-submit-btn"
+                                className="yt-search-btn"
                             >
-                                {isSearching ? <Loader2 className="animate-spin" size={20} /> : '検索'}
+                                {isSearching ? <Loader2 className="animate-spin" size={18} /> : '検索'}
                             </button>
                         </div>
 
-                        <p className="search-hint">
-                            <Sparkles size={12} className="inline mr-1 text-yellow-500" />
-                            お子様のアレルギー情報を考慮して、あんしんレシピを優先表示します
-                        </p>
+                        {/* Scene Chips */}
+                        <div className="yt-chips-section">
+                            <span className="yt-chips-label">シーン</span>
+                            <div className="yt-chips-row">
+                                {MEAL_SCENES.slice(0, 6).map(scene => (
+                                    <button
+                                        key={scene}
+                                        type="button"
+                                        onClick={() => toggleScene(scene)}
+                                        className={`yt-chip ${selectedScenes.includes(scene) ? 'selected' : ''}`}
+                                    >
+                                        <span className="yt-chip-icon">{SCENE_ICONS[scene]}</span>
+                                        {scene}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Feature/Tag Chips */}
+                        <div className="yt-chips-section">
+                            <span className="yt-chips-label">特徴</span>
+                            <div className="yt-chips-row">
+                                {FEATURE_OPTIONS.slice(0, 6).map(feature => (
+                                    <button
+                                        key={feature}
+                                        type="button"
+                                        onClick={() => toggleFeature(feature)}
+                                        className={`yt-chip ${selectedFeatures.includes(feature) ? 'selected' : ''}`}
+                                    >
+                                        {feature}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
                     </div>
 
                     {/* Results Area */}
                     <div className="results-area">
                         {isSearching ? (
                             <div className="searching-state">
-                                <Loader2 size={40} className="animate-spin text-red-500 mb-4" />
-                                <p>美味しいレシピを探しています...</p>
-                                <p className="text-sm text-gray-500 mt-2">アレルギー情報と照合中</p>
+                                <Loader2 size={36} className="animate-spin text-red-500 mb-3" />
+                                <p>レシピを探しています...</p>
                             </div>
                         ) : error ? (
                             <div className="empty-state text-red-600">
-                                <p className="font-bold mb-2">エラーが発生しました 😢</p>
-                                <p className="text-xs font-mono bg-red-50 p-2 rounded border border-red-100 mb-2">{error}</p>
-                                <p className="text-sm text-gray-500">
-                                    {error.includes('blocked') ? 'API設定(Google Console)を確認してください' : 'もう一度お試しください'}
-                                </p>
+                                <p className="font-bold mb-2">エラーが発生しました</p>
+                                <p className="text-xs bg-red-50 p-2 rounded">{error}</p>
                             </div>
                         ) : searchPerformed && results.length === 0 ? (
                             <div className="empty-state">
                                 <p>見つかりませんでした 😢</p>
-                                <p className="text-sm text-gray-500">検索ワードを変えて試してみてください</p>
+                                <p className="text-sm text-gray-500">検索ワードを変えてみてください</p>
                             </div>
                         ) : results.length > 0 ? (
                             <div className="results-grid-container">
@@ -226,17 +271,13 @@ const YouTubeSearchOverlay = ({
                                 {results.length > 3 && (
                                     <div className="pagination-area">
                                         <button onClick={handleNextPage} className="next-results-btn">
-                                            <RefreshCw size={16} />
-                                            他の案を見る ({pageIndex + 3} / {results.length})
+                                            <RefreshCw size={14} />
+                                            他の案を見る
                                         </button>
                                     </div>
                                 )}
                             </div>
-                        ) : (
-                            <div className="initial-empty-state">
-                                <p>🍳 食べたい料理を検索してみましょう</p>
-                            </div>
-                        )}
+                        ) : null}
                     </div>
                 </div>
             </div>
@@ -279,4 +320,5 @@ const YouTubeSearchOverlay = ({
 };
 
 export default YouTubeSearchOverlay;
+
 

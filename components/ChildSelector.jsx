@@ -26,7 +26,6 @@ const ChildSelector = ({ selected = [], onChange }) => {
     return (
         <div className="child-selector">
             <p className="child-selector-label">誰のためのレシピですか？</p>
-            <p className="child-selector-note">選択したお子様が食べられるレシピです</p>
 
             <div className="child-selector-grid">
                 {profile.children.map((child) => (
@@ -50,12 +49,6 @@ const ChildSelector = ({ selected = [], onChange }) => {
                     </button>
                 ))}
             </div>
-
-            {selected.length > 0 && (
-                <div className="child-selector-summary">
-                    <p>選択中: {profile.children.filter(c => selected.includes(c.id)).map(c => c.name).join('、')}</p>
-                </div>
-            )}
         </div>
     );
 };
