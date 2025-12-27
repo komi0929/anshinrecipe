@@ -1,6 +1,6 @@
 import React from 'react';
 import { useProfile } from '../hooks/useProfile';
-import { User } from 'lucide-react';
+import { Check } from 'lucide-react';
 import './ChildSelector.css';
 
 const ChildSelector = ({ selected = [], onChange }) => {
@@ -14,7 +14,7 @@ const ChildSelector = ({ selected = [], onChange }) => {
         }
     };
 
-    if (profile.children.length === 0) {
+    if (!profile?.children || profile.children.length === 0) {
         return (
             <div className="child-selector-empty">
                 <p>お子様が登録されていません。</p>
@@ -25,26 +25,35 @@ const ChildSelector = ({ selected = [], onChange }) => {
 
     return (
         <div className="child-selector">
-            <p className="child-selector-label">誰のためのレシピですか？</p>
-
             <div className="child-selector-grid">
-                {profile.children.map((child) => (
+                {profile.children.map(child => (
                     <button
                         key={child.id}
                         type="button"
-                        className={`child-selector-item ${selected.includes(child.id) ? 'selected' : ''}`}
                         onClick={() => toggleChild(child.id)}
+                        className={`child-select-card ${selected.includes(child.id) ? 'selected' : ''}`}
                     >
-                        <div className="child-selector-avatar">
+                        <div className="child-select-icon">
                             {child.photo ? (
-                                <img src={child.photo} alt={child.name} className="child-selector-photo" />
+                                <img src={child.photo} alt={child.name} />
                             ) : (
-                                <span className="child-selector-icon">{child.icon || '👶'}</span>
+                                <span>{child.icon}</span>
                             )}
                         </div>
-                        <span className="child-selector-name">{child.name}</span>
+                        <div className="child-select-info" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', flex: 1 }}>
+                            <span className="child-select-name" style={{ fontWeight: 'bold' }}>{child.name}</span>
+                            {child.allergens && child.allergens.length > 0 && (
+                                <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                                    {child.allergens.map(a => (
+                                        <span key={a} style={{ fontSize: '12px', padding: '2px 8px', background: '#fff7ed', color: '#ea580c', borderRadius: '9999px', fontWeight: 'bold', border: '1px solid #fed7aa' }}>
+                                            {a}なし
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                         {selected.includes(child.id) && (
-                            <div className="child-selector-check">✓</div>
+                            <Check size={20} className="check-icon" />
                         )}
                     </button>
                 ))}

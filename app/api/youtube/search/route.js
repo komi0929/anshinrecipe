@@ -11,7 +11,7 @@ const youtube = google.youtube({
 
 export async function POST(req) {
     try {
-        const { query, childIds, scene, tags } = await req.json();
+        const { query, childIds, scenes, features } = await req.json();
 
         if (!process.env.YOUTUBE_API_KEY) {
             return NextResponse.json(
@@ -31,7 +31,7 @@ export async function POST(req) {
                 .in('id', childIds);
 
             if (!error && children) {
-                childProfiles = children; // Keep for scoring later
+                childProfiles = children;
 
                 // Collect unique allergens
                 const allAllergens = new Set();
@@ -42,7 +42,6 @@ export async function POST(req) {
                 });
 
                 // Construct exclusion string for query (aggressive safety)
-                // Appending "Itemなし" (No Item)
                 if (allAllergens.size > 0) {
                     allergenQueryPart = Array.from(allAllergens)
                         .map(a => `${a}なし`)
@@ -51,28 +50,81 @@ export async function POST(req) {
             }
         }
 
-        // 2. Construct Search Query
-        // Format: "{UserQuery} {AllergenFree} {Scene}"
-        // e.g., "Pancake 卵なし 朝ごはん"
-        const finalQuery = `${query} ${allergenQueryPart} ${scene || ''}`.trim();
+        // 2. Construct Search Query Parts
+        const sceneStr = (scenes || []).join(' ');
+        const featureStr = (features || []).join(' ');
 
-        console.log(`YouTube Search Query: [${finalQuery}]`);
+        // Define Search Levels (Fallback Strategy)
+        const attempts = [
+            {
+                name: 'strict',
+                q: `${query} ${allergenQueryPart} ${sceneStr} ${featureStr}`.trim()
+            },
+            {
+                name: 'relaxed', // Drop features
+                q: `${query} ${allergenQueryPart} ${sceneStr}`.trim()
+            },
+            {
+                name: 'safety_only', // Drop scenes and features, keep safety
+                q: `${query} ${allergenQueryPart}`.trim()
+            }
+        ];
 
-        // 3. Call YouTube API
-        const response = await youtube.search.list({
-            part: ['snippet'],
-            q: finalQuery,
-            type: 'video',
-            maxResults: 30, // Fetch more to re-rank
-            relevanceLanguage: 'ja',
-            regionCode: 'JP',
-            safeSearch: 'strict' // Important for children
-        });
+        let finalItems = [];
+        let usedQuery = '';
+        let debugInfo = [];
 
-        const items = response.data.items || [];
+        // 3. Execute Search with Fallback
+        for (const attempt of attempts) {
+            // Skip duplicate queries (e.g. if no features, strict == relaxed)
+            if (attempt.q === usedQuery) continue;
+
+            console.log(`YouTube Search Attempt [${attempt.name}]: ${attempt.q}`);
+
+            try {
+                const response = await youtube.search.list({
+                    part: ['snippet'],
+                    q: attempt.q,
+                    type: 'video',
+                    maxResults: 30, // Fetch more to re-rank
+                    relevanceLanguage: 'ja',
+                    regionCode: 'JP',
+                    safeSearch: 'strict'
+                });
+
+                const items = response.data.items || [];
+                debugInfo.push({ level: attempt.name, count: items.length });
+
+                // If we found enough results, use them and stop
+                if (items.length > 3) {
+                    finalItems = items;
+                    usedQuery = attempt.q;
+                    break;
+                }
+
+                // If we are at the last attempt, take whatever we got
+                if (attempt.name === 'safety_only') {
+                    // Start with what we have (even if <= 3)
+                    finalItems = items;
+                    usedQuery = attempt.q;
+                } else {
+                    // Update our best guess so far, but continue to try to find MORE results
+                    // If strict gave 2 and relaxed gives 10, next loop will overwrite finalItems with 10.
+                    // If strict gave 2 and relaxed gives 0 (unlikely), we stick with 2?
+                    // No, usually broader query gives more results.
+                    if (items.length > finalItems.length) {
+                        finalItems = items;
+                        usedQuery = attempt.q;
+                    }
+                }
+            } catch (err) {
+                console.error(`Search attempt ${attempt.name} failed:`, err);
+                // Continue to next level if possible
+            }
+        }
 
         // 4. "Anshin" Re-Ranking Algorithm
-        const rankedItems = items.map(item => {
+        const rankedItems = finalItems.map(item => {
             let score = 0;
             const title = item.snippet.title || "";
             const desc = item.snippet.description || "";
@@ -87,13 +139,10 @@ export async function POST(req) {
             if (childKeywords.some(w => content.includes(w))) score += 10;
 
             // Rule 3: Visual Appeal check (Resolution) - Minor bonus
-            // (We can't check actual image quality easily, assuming result order has some relevance)
-            score += (30 - items.indexOf(item)); // Inverse index score (keep original relevance partially)
+            score += (30 - finalItems.indexOf(item)); // Inverse index score
 
             // Rule 4: Query Match (+15)
             if (title.includes(query)) score += 15;
-
-            // Rule 5: User Engagement (Not available in simple search, could fetch stats but slow)
 
             return { item, score };
         });
@@ -115,13 +164,12 @@ export async function POST(req) {
         return NextResponse.json({
             success: true,
             data: results,
-            debug_query: finalQuery
+            debug: { usedQuery, attempts: debugInfo }
         });
 
     } catch (error) {
         console.error('YouTube API Error:', error);
 
-        // Check for specific Google API errors
         const status = error.code || 500;
         const message = error.errors?.[0]?.message || error.message || 'Failed to fetch from YouTube';
         const reason = error.errors?.[0]?.reason || 'unknown';

@@ -101,8 +101,8 @@ const YouTubeSearchOverlay = ({
                 body: JSON.stringify({
                     query: query.trim(),
                     childIds: selectedChildren,
-                    scene: `${sceneStr} ${featureStr}`.trim(),
-                    tags: selectedFeatures
+                    scenes: selectedScenes,
+                    features: selectedFeatures
                 })
             });
 
