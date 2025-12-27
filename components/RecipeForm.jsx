@@ -368,8 +368,13 @@ export const RecipeForm = ({
         setImage(videoData.thumbnail);
         setDescription(videoData.description);
 
-        // 2. Track analytics if needed
-        // trackYouTubeSelect(videoData.id); (optional)
+        // 2. Auto-populate tags from selected features (if provided from YouTube search)
+        if (videoData.autoTags && videoData.autoTags.length > 0) {
+            setTags(prev => {
+                const newTags = [...new Set([...prev, ...videoData.autoTags])];
+                return newTags;
+            });
+        }
 
         // 3. Mark OGP as fetched so it doesn't try to overwrite everything (unless smart import does)
         setOgpFetched(true);

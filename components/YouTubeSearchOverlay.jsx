@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, X, Loader2, Youtube, RefreshCw } from 'lucide-react';
+import { Search, X, Loader2, Youtube, RefreshCw, Plus } from 'lucide-react';
 import YouTubeRecipeCard from './YouTubeRecipeCard';
 import ChildSelector from './ChildSelector';
 import { useToast } from './Toast';
@@ -22,6 +22,7 @@ const YouTubeSearchOverlay = ({
     const [query, setQuery] = useState('');
     const [selectedScenes, setSelectedScenes] = useState([]);
     const [selectedFeatures, setSelectedFeatures] = useState([]);
+    const [customFeature, setCustomFeature] = useState('');
     const [selectedChildren, setSelectedChildren] = useState(initialChildIds);
 
     // Results State
@@ -34,6 +35,9 @@ const YouTubeSearchOverlay = ({
     // Confirmation Modal State
     const [confirmingVideo, setConfirmingVideo] = useState(null);
 
+    // Validation State
+    const [showValidation, setShowValidation] = useState(false);
+
     // UI State
     const { addToast } = useToast();
 
@@ -41,6 +45,7 @@ const YouTubeSearchOverlay = ({
     useEffect(() => {
         if (isOpen) {
             setSelectedChildren(initialChildIds);
+            setShowValidation(false);
         }
     }, [isOpen, initialChildIds]);
 
@@ -56,14 +61,29 @@ const YouTubeSearchOverlay = ({
         );
     };
 
+    const addCustomFeature = () => {
+        const trimmed = customFeature.trim();
+        if (trimmed && !selectedFeatures.includes(trimmed)) {
+            setSelectedFeatures(prev => [...prev, trimmed]);
+            setCustomFeature('');
+        }
+    };
+
     const handleSearch = async (e) => {
         e?.preventDefault();
 
-        if (!query.trim()) {
-            addToast('検索ワードを入力してください', 'error');
+        // Validation: child selection and query are required
+        if (selectedChildren.length === 0 || !query.trim()) {
+            setShowValidation(true);
+            if (selectedChildren.length === 0) {
+                addToast('お子様を選択してください', 'error');
+            } else {
+                addToast('検索ワードを入力してください', 'error');
+            }
             return;
         }
 
+        setShowValidation(false);
         setIsSearching(true);
         setSearchPerformed(true);
         setResults([]);
@@ -117,11 +137,12 @@ const YouTubeSearchOverlay = ({
     };
 
     const handleCardSelect = (video) => {
-        // Pass selected metadata along with video
+        // Pass selected metadata along with video - tags will auto-populate
         const enrichedVideo = {
             ...video,
             selectedScenes,
-            selectedFeatures
+            selectedFeatures,
+            autoTags: selectedFeatures // These will be used for tags in RecipeForm
         };
         setConfirmingVideo(enrichedVideo);
     };
@@ -138,6 +159,7 @@ const YouTubeSearchOverlay = ({
             setConfirmingVideo(null);
             setSelectedScenes([]);
             setSelectedFeatures([]);
+            setCustomFeature('');
         }
     };
 
@@ -148,6 +170,7 @@ const YouTubeSearchOverlay = ({
     if (!isOpen) return null;
 
     const currentDisplayResults = results.slice(pageIndex, pageIndex + 3);
+    const isFormValid = selectedChildren.length > 0 && query.trim().length > 0;
 
     return (
         <div className="youtube-overlay-backdrop">
@@ -166,24 +189,34 @@ const YouTubeSearchOverlay = ({
                 <div className="youtube-overlay-content">
                     {/* Compact Search Form */}
                     <div className="yt-search-form">
-                        {/* Child Selector - Compact */}
-                        <div className="yt-section">
+                        {/* Child Selector - Required */}
+                        <div className={`yt-section ${showValidation && selectedChildren.length === 0 ? 'yt-validation-error' : ''}`}>
+                            <div className="yt-section-header">
+                                <span className="yt-section-label">お子様</span>
+                                <span className="yt-required">必須</span>
+                            </div>
                             <ChildSelector
                                 selected={selectedChildren}
                                 onChange={setSelectedChildren}
                             />
                         </div>
 
-                        {/* Search Input - Fixed padding */}
-                        <div className="yt-search-input-row">
-                            <div className="yt-search-input-wrapper">
-                                <Search className="yt-search-icon" size={18} />
+                        {/* Search Input - Required, Icon OUTSIDE input */}
+                        <div className={`yt-section ${showValidation && !query.trim() ? 'yt-validation-error' : ''}`}>
+                            <div className="yt-section-header">
+                                <span className="yt-section-label">検索ワード</span>
+                                <span className="yt-required">必須</span>
+                            </div>
+                            <div className="yt-search-row">
+                                <div className="yt-search-icon-box">
+                                    <Search size={18} />
+                                </div>
                                 <input
                                     type="text"
                                     value={query}
                                     onChange={(e) => setQuery(e.target.value)}
-                                    placeholder="何を作りますか？"
-                                    className="yt-search-input"
+                                    placeholder="例: ハンバーグ"
+                                    className="yt-search-input-clean"
                                     onKeyDown={(e) => {
                                         if (e.key === 'Enter') {
                                             e.preventDefault();
@@ -192,20 +225,23 @@ const YouTubeSearchOverlay = ({
                                     }}
                                     autoFocus
                                 />
+                                <button
+                                    type="button"
+                                    onClick={handleSearch}
+                                    disabled={isSearching || !isFormValid}
+                                    className="yt-search-btn"
+                                >
+                                    {isSearching ? <Loader2 className="animate-spin" size={18} /> : '検索'}
+                                </button>
                             </div>
-                            <button
-                                type="button"
-                                onClick={handleSearch}
-                                disabled={isSearching}
-                                className="yt-search-btn"
-                            >
-                                {isSearching ? <Loader2 className="animate-spin" size={18} /> : '検索'}
-                            </button>
                         </div>
 
-                        {/* Scene Chips */}
-                        <div className="yt-chips-section">
-                            <span className="yt-chips-label">シーン</span>
+                        {/* Scene Chips - Optional */}
+                        <div className="yt-section">
+                            <div className="yt-section-header">
+                                <span className="yt-section-label">シーン</span>
+                                <span className="yt-optional">任意</span>
+                            </div>
                             <div className="yt-chips-row">
                                 {MEAL_SCENES.slice(0, 6).map(scene => (
                                     <button
@@ -221,9 +257,12 @@ const YouTubeSearchOverlay = ({
                             </div>
                         </div>
 
-                        {/* Feature/Tag Chips */}
-                        <div className="yt-chips-section">
-                            <span className="yt-chips-label">特徴</span>
+                        {/* Feature/Tag Chips - Optional with custom input */}
+                        <div className="yt-section">
+                            <div className="yt-section-header">
+                                <span className="yt-section-label">特徴</span>
+                                <span className="yt-optional">任意・タグに反映</span>
+                            </div>
                             <div className="yt-chips-row">
                                 {FEATURE_OPTIONS.slice(0, 6).map(feature => (
                                     <button
@@ -236,6 +275,46 @@ const YouTubeSearchOverlay = ({
                                     </button>
                                 ))}
                             </div>
+                            {/* Custom tag input */}
+                            <div className="yt-custom-tag-row">
+                                <input
+                                    type="text"
+                                    value={customFeature}
+                                    onChange={(e) => setCustomFeature(e.target.value)}
+                                    placeholder="自由入力で追加"
+                                    className="yt-custom-tag-input"
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                            addCustomFeature();
+                                        }
+                                    }}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={addCustomFeature}
+                                    disabled={!customFeature.trim()}
+                                    className="yt-custom-tag-btn"
+                                >
+                                    <Plus size={16} />
+                                </button>
+                            </div>
+                            {/* Show selected custom features */}
+                            {selectedFeatures.filter(f => !FEATURE_OPTIONS.includes(f)).length > 0 && (
+                                <div className="yt-chips-row mt-2">
+                                    {selectedFeatures.filter(f => !FEATURE_OPTIONS.includes(f)).map(feature => (
+                                        <button
+                                            key={feature}
+                                            type="button"
+                                            onClick={() => toggleFeature(feature)}
+                                            className="yt-chip selected custom"
+                                        >
+                                            {feature}
+                                            <X size={12} />
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -293,6 +372,11 @@ const YouTubeSearchOverlay = ({
                         />
                         <h3 className="confirm-modal-title">{confirmingVideo.title}</h3>
                         <p className="confirm-modal-channel">{confirmingVideo.channelTitle}</p>
+                        {selectedFeatures.length > 0 && (
+                            <p className="text-xs text-gray-500 mb-2">
+                                タグに反映: {selectedFeatures.join(', ')}
+                            </p>
+                        )}
                         <p className="text-center text-gray-600 mb-4 text-sm">
                             このレシピをメモに追加しますか？
                         </p>
@@ -320,5 +404,6 @@ const YouTubeSearchOverlay = ({
 };
 
 export default YouTubeSearchOverlay;
+
 
 
