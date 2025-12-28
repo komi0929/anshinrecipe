@@ -54,6 +54,7 @@ export const RecipeForm = ({
     const [smartImportError, setSmartImportError] = useState(null);
     const [showOverlay, setShowOverlay] = useState(false);
     const originalSourceUrl = useRef(initialData.sourceUrl || ''); // Track original URL for edit mode
+    const isYouTubeSelection = useRef(false); // Ref to track if change came from YouTube selection
 
     // Auto-calculate allergens from selected children
     useEffect(() => {
@@ -128,19 +129,31 @@ export const RecipeForm = ({
 
             // RESET FORM DATA ON NEW URL DETECTION
             // User requested: "When URL is pasted/changed, reset information immediately"
-            setTitle(''); // Clear title
-            setImage('');
-            setDescription('');
-            setTags([]); // Clear tags
-            setIngredientsAndSteps(''); // Clear ingredients
-            setIngredientsAndSteps(''); // Clear ingredients
+            // FIX: If came from YouTube select, DO NOT reset because fields are already pre-filled correctly
+            if (!isYouTubeSelection.current) {
+                setTitle(''); // Clear title
+                setImage('');
+                setDescription('');
+                setTags([]); // Clear tags
+                setIngredientsAndSteps(''); // Clear ingredients
+            }
+
             setShowIngredientsField(true); // Show field immediately with loading state
 
             // Start Overlay & Import Process
             setShowOverlay(true);
             setIsSmartImporting(true);
             setSmartImportError(null);
-            setOgpFetched(false); // Reset OGP state
+
+            // If from YouTube select, OGP is effectively fetched (we have the info), but we can let it re-verify if needed
+            // Actually, we should probably reset OGP fetched status to ensure fresh data in most cases
+            // but for YouTube, we trust the selection.
+            if (!isYouTubeSelection.current) {
+                setOgpFetched(false);
+            }
+
+            // Reset the flag for next time
+            isYouTubeSelection.current = false;
 
             try {
                 // Track smart import start
@@ -363,6 +376,7 @@ export const RecipeForm = ({
     // YouTube Selection Handler
     const handleYouTubeSelect = (videoData) => {
         // 1. Populate fields
+        isYouTubeSelection.current = true; // Flag to prevent auto-clear in useEffect
         setSourceUrl(videoData.url); // This will trigger Smart Import automatically via useEffect
         setTitle(videoData.title);
         setImage(videoData.thumbnail);

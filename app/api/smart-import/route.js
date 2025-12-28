@@ -210,10 +210,12 @@ export async function POST(request) {
         // ===== STEP 4: AI Extraction =====
         const prompt = `You are a recipe parser. Extract data from text.
         
+        IMPORTANT: Return all text content in JAPANESE. Translate if necessary.
+
         Return JSON:
         {
-            "title": "Recipe Title",
-            "description": "Short description",
+            "title": "Recipe Title (Japanese)",
+            "description": "Short description (Japanese)",
             "image_url": "URL or null",
             "ingredients": ["Ingredient 1"],
             "steps": ["Step 1"],
