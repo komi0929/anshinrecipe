@@ -127,10 +127,13 @@ export const RecipeForm = ({
                 return;
             }
 
+            // Capture the flag status at the very beginning of execution
+            const wasSelectedFromYouTube = isYouTubeSelection.current;
+
             // RESET FORM DATA ON NEW URL DETECTION
             // User requested: "When URL is pasted/changed, reset information immediately"
             // FIX: If came from YouTube select, DO NOT reset because fields are already pre-filled correctly
-            if (!isYouTubeSelection.current) {
+            if (!wasSelectedFromYouTube) {
                 setTitle(''); // Clear title
                 setImage('');
                 setDescription('');
@@ -148,7 +151,7 @@ export const RecipeForm = ({
             // If from YouTube select, OGP is effectively fetched (we have the info), but we can let it re-verify if needed
             // Actually, we should probably reset OGP fetched status to ensure fresh data in most cases
             // but for YouTube, we trust the selection.
-            if (!isYouTubeSelection.current) {
+            if (!wasSelectedFromYouTube) {
                 setOgpFetched(false);
             }
 
@@ -159,8 +162,11 @@ export const RecipeForm = ({
                 // Track smart import start
                 trackSmartImportStart(sourceUrl);
 
-                // Trigger OGP fetch
-                fetchOgpData();
+                // Trigger OGP fetch ONLY if not from YouTube selection
+                // (YouTube selection already populates high-quality metadata)
+                if (!wasSelectedFromYouTube) {
+                    fetchOgpData();
+                }
 
                 const response = await fetch('/api/smart-import', {
                     method: 'POST',
@@ -180,9 +186,15 @@ export const RecipeForm = ({
                     const d = result.data;
 
                     // --- AUTO APPLY LOGIC ---
-                    if (d.title) setTitle(d.title);
-                    if (d.image_url && (!image || image.includes('placeholder'))) setImage(d.image_url);
-                    if (d.description) setDescription(d.description);
+                    // Only apply title if empty or not from YouTube (trust YouTube title)
+                    if (d.title && (!title || !wasSelectedFromYouTube)) setTitle(d.title);
+
+                    // Only apply image if empty or placeholder, and NOT from YouTube (trust YouTube thumbnail)
+                    if (d.image_url && (!image || image.includes('placeholder')) && !wasSelectedFromYouTube) {
+                        setImage(d.image_url);
+                    }
+
+                    if (d.description && !description) setDescription(d.description);
 
                     // Ingredients & Steps
                     const materialsText = d.ingredients && d.ingredients.length > 0 ? `【材料】\n${d.ingredients.map(i => `- ${i}`).join('\n')}` : '';
