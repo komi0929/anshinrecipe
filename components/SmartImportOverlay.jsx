@@ -44,18 +44,18 @@ const SmartImportOverlay = ({ isVisible, onRunning, onComplete }) => {
     if (!isVisible) return null;
 
     return (
-        <div className="fixed inset-0 z-[9999] bg-white/95 backdrop-blur-sm flex flex-col items-center justify-center animate-fade-in">
-            <div className="relative flex flex-col items-center">
+        <div className="fixed inset-0 z-[9999] bg-[#FFF8F5]/98 backdrop-blur-sm flex flex-col items-center justify-center animate-fade-in text-slate-700">
+            <div className="relative flex flex-col items-center p-8 bg-white/50 rounded-[40px] shadow-xl shadow-orange-100/20 border border-white/60">
                 {/* Unified Icon Container - Same size for all states */}
-                <div className="w-48 h-48 bg-gradient-to-br from-orange-50 to-amber-50 rounded-full flex items-center justify-center mb-8 shadow-lg shadow-orange-100/50">
+                <div className="w-48 h-48 bg-gradient-to-br from-white to-orange-50 rounded-full flex items-center justify-center mb-8 shadow-inner border border-white">
                     {status === 'counting' && (
-                        <div className="text-8xl font-black text-orange-500 tracking-tighter animate-pop-in" key={count}>
+                        <div className="text-8xl font-black text-[#F97316] tracking-tighter animate-pop-in" key={count}>
                             {count}
                         </div>
                     )}
 
                     {status === 'finalizing' && (
-                        <Loader2 className="w-20 h-20 text-orange-400 animate-spin" />
+                        <Loader2 className="w-20 h-20 text-[#F97316] animate-spin" />
                     )}
 
                     {status === 'done' && (
@@ -66,29 +66,29 @@ const SmartImportOverlay = ({ isVisible, onRunning, onComplete }) => {
                 {/* Status Text */}
                 <div className="text-center">
                     {status === 'counting' && (
-                        <p className="text-slate-600 font-bold text-xl">
+                        <p className="text-slate-600 font-bold text-xl tracking-wider">
                             レシピを解析中...
                         </p>
                     )}
 
                     {status === 'finalizing' && (
-                        <p className="text-slate-700 font-bold text-xl">
-                            もう少しお待ちください...
+                        <p className="text-slate-600 font-bold text-xl tracking-wider animate-pulse">
+                            仕上げています...
                         </p>
                     )}
 
                     {status === 'done' && (
-                        <h3 className="text-2xl font-bold text-slate-800">
-                            読み込み完了
+                        <h3 className="text-2xl font-bold text-slate-800 tracking-wider">
+                            完了しました！
                         </h3>
                     )}
                 </div>
             </div>
 
-            {/* Background Decoration */}
+            {/* Background Decoration - Softer */}
             <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
-                <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-orange-300/20 rounded-full blur-3xl animate-pulse"></div>
-                <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-yellow-300/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+                <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-orange-100/30 rounded-full blur-3xl animate-pulse"></div>
+                <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-yellow-100/30 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1.5s' }}></div>
             </div>
         </div>
     );

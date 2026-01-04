@@ -27,6 +27,11 @@ export default function AdminPage() {
     const [userPage, setUserPage] = useState(1);
     const [userPagination, setUserPagination] = useState(null);
 
+    // Announcement management state
+    const [announcementList, setAnnouncementList] = useState([]);
+    const [announcementLoading, setAnnouncementLoading] = useState(false);
+    const [newAnnouncement, setNewAnnouncement] = useState({ title: '', content: '', emoji: '📢' });
+
     useEffect(() => {
         // セッショントークンの有効性をサーバーサイドで検証
         const validateSession = async () => {
@@ -205,6 +210,77 @@ export default function AdminPage() {
         }
     };
 
+    // Load announcements
+    const loadAnnouncements = async () => {
+        setAnnouncementLoading(true);
+        try {
+            const res = await fetch(`/api/admin/announcement?pin=${pin}&active=false`);
+            const data = await res.json();
+            if (data.success) {
+                setAnnouncementList(data.announcements || []);
+            }
+        } catch (e) {
+            console.error('Load announcements error:', e);
+        }
+        setAnnouncementLoading(false);
+    };
+
+    // Create new announcement
+    const createAnnouncement = async () => {
+        if (!newAnnouncement.title.trim() || !newAnnouncement.content.trim()) {
+            alert('タイトルと内容を入力してください');
+            return;
+        }
+
+        if (!confirm(`お知らせ「${newAnnouncement.title}」を全ユーザーに通知しますか？`)) return;
+
+        setAnnouncementLoading(true);
+        try {
+            const res = await fetch('/api/admin/announcement', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    pin: pin,
+                    title: newAnnouncement.title,
+                    content: newAnnouncement.content,
+                    emoji: newAnnouncement.emoji
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert(`お知らせを送信しました！\n通知数: ${data.notificationsSent}件`);
+                setNewAnnouncement({ title: '', content: '', emoji: '📢' });
+                loadAnnouncements();
+            } else {
+                alert('送信に失敗しました: ' + (data.error || 'Unknown error'));
+            }
+        } catch (e) {
+            console.error('Create announcement error:', e);
+            alert('送信に失敗しました');
+        }
+        setAnnouncementLoading(false);
+    };
+
+    // Delete/deactivate announcement
+    const deleteAnnouncement = async (announcementId, title) => {
+        if (!confirm(`「${title}」を非表示にしますか？`)) return;
+
+        try {
+            const res = await fetch('/api/admin/announcement', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pin: pin, announcementId })
+            });
+            if (res.ok) {
+                loadAnnouncements();
+            } else {
+                alert('操作に失敗しました');
+            }
+        } catch (e) {
+            console.error('Delete announcement error:', e);
+        }
+    };
+
     // Tab change handler
     const handleTabChange = (tab) => {
         setActiveTab(tab);
@@ -212,6 +288,8 @@ export default function AdminPage() {
             loadContent();
         } else if (tab === 'users') {
             loadUsers();
+        } else if (tab === 'announcements') {
+            loadAnnouncements();
         }
     };
 
@@ -280,7 +358,8 @@ export default function AdminPage() {
                 {[
                     { id: 'dashboard', label: '📊 ダッシュボード' },
                     { id: 'content', label: '📋 コンテンツ管理' },
-                    { id: 'users', label: '👥 ユーザー管理' }
+                    { id: 'users', label: '👥 ユーザー管理' },
+                    { id: 'announcements', label: '📢 お知らせ管理' }
                 ].map(tab => (
                     <button
                         key={tab.id}
@@ -451,6 +530,167 @@ export default function AdminPage() {
                                 >
                                     次へ →
                                 </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* Announcements Management Tab */}
+            {activeTab === 'announcements' && (
+                <div style={{ padding: '24px' }}>
+                    {/* Create New Announcement */}
+                    <div style={{ ...css.card, marginBottom: '24px' }}>
+                        <div style={{ padding: '12px 16px', borderBottom: '1px solid #30363d', fontWeight: 600, color: '#fff' }}>
+                            📢 新規お知らせ作成
+                        </div>
+                        <div style={{ padding: '16px' }}>
+                            <div style={{ marginBottom: '16px' }}>
+                                <label style={{ color: '#8b949e', fontSize: '12px', display: 'block', marginBottom: '6px' }}>
+                                    絵文字
+                                </label>
+                                <select
+                                    value={newAnnouncement.emoji}
+                                    onChange={(e) => setNewAnnouncement(prev => ({ ...prev, emoji: e.target.value }))}
+                                    style={{
+                                        width: '100px',
+                                        padding: '8px 12px',
+                                        background: '#0d1117',
+                                        border: '1px solid #30363d',
+                                        borderRadius: '6px',
+                                        color: '#fff',
+                                        fontSize: '16px'
+                                    }}
+                                >
+                                    <option value="📢">📢</option>
+                                    <option value="🎉">🎉</option>
+                                    <option value="✨">✨</option>
+                                    <option value="📺">📺</option>
+                                    <option value="🔧">🔧</option>
+                                    <option value="❤️">❤️</option>
+                                    <option value="⚠️">⚠️</option>
+                                    <option value="🎁">🎁</option>
+                                </select>
+                            </div>
+                            <div style={{ marginBottom: '16px' }}>
+                                <label style={{ color: '#8b949e', fontSize: '12px', display: 'block', marginBottom: '6px' }}>
+                                    タイトル
+                                </label>
+                                <input
+                                    type="text"
+                                    value={newAnnouncement.title}
+                                    onChange={(e) => setNewAnnouncement(prev => ({ ...prev, title: e.target.value }))}
+                                    placeholder="例: 新機能が追加されました！"
+                                    style={{
+                                        width: '100%',
+                                        padding: '10px 12px',
+                                        background: '#0d1117',
+                                        border: '1px solid #30363d',
+                                        borderRadius: '6px',
+                                        color: '#fff',
+                                        fontSize: '14px'
+                                    }}
+                                />
+                            </div>
+                            <div style={{ marginBottom: '16px' }}>
+                                <label style={{ color: '#8b949e', fontSize: '12px', display: 'block', marginBottom: '6px' }}>
+                                    内容
+                                </label>
+                                <textarea
+                                    value={newAnnouncement.content}
+                                    onChange={(e) => setNewAnnouncement(prev => ({ ...prev, content: e.target.value }))}
+                                    placeholder="お知らせの詳細を入力してください"
+                                    rows={4}
+                                    style={{
+                                        width: '100%',
+                                        padding: '10px 12px',
+                                        background: '#0d1117',
+                                        border: '1px solid #30363d',
+                                        borderRadius: '6px',
+                                        color: '#fff',
+                                        fontSize: '14px',
+                                        resize: 'vertical'
+                                    }}
+                                />
+                            </div>
+                            <button
+                                onClick={createAnnouncement}
+                                disabled={announcementLoading}
+                                style={{
+                                    ...css.btn,
+                                    background: announcementLoading ? '#30363d' : '#238636',
+                                    border: 'none',
+                                    padding: '10px 20px',
+                                    fontSize: '14px',
+                                    fontWeight: 600
+                                }}
+                            >
+                                {announcementLoading ? '送信中...' : '📤 全ユーザーに通知を送信'}
+                            </button>
+                            <p style={{ color: '#8b949e', fontSize: '11px', marginTop: '8px' }}>
+                                ※ 送信すると、すべてのユーザーに通知が届きます
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Existing Announcements List */}
+                    <div style={css.card}>
+                        <div style={{ padding: '12px 16px', borderBottom: '1px solid #30363d', fontWeight: 600, color: '#fff' }}>
+                            📋 お知らせ一覧 ({announcementList.length}件)
+                        </div>
+                        {announcementLoading ? (
+                            <div style={{ padding: '32px', textAlign: 'center', color: '#8b949e' }}>
+                                読み込み中...
+                            </div>
+                        ) : announcementList.length === 0 ? (
+                            <div style={{ padding: '32px', textAlign: 'center', color: '#8b949e' }}>
+                                お知らせはありません
+                            </div>
+                        ) : (
+                            <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                                {announcementList.map(a => (
+                                    <div key={a.id} style={{ ...css.row, borderBottom: '1px solid #30363d' }}>
+                                        <div style={{
+                                            width: '40px',
+                                            height: '40px',
+                                            borderRadius: '8px',
+                                            background: a.is_active ? '#238636' : '#30363d',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            fontSize: '20px',
+                                            flexShrink: 0
+                                        }}>
+                                            {a.emoji || '📢'}
+                                        </div>
+                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <span style={{ color: '#fff', fontSize: '13px', fontWeight: 500 }}>
+                                                    {a.title}
+                                                </span>
+                                                {!a.is_active && (
+                                                    <span style={{ background: '#30363d', color: '#8b949e', fontSize: '10px', padding: '2px 6px', borderRadius: '4px' }}>
+                                                        非表示
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div style={{ color: '#8b949e', fontSize: '11px', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                {a.content}
+                                            </div>
+                                            <div style={{ color: '#6e7681', fontSize: '10px', marginTop: '4px' }}>
+                                                {new Date(a.created_at).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                            </div>
+                                        </div>
+                                        {a.is_active && (
+                                            <button
+                                                onClick={() => deleteAnnouncement(a.id, a.title)}
+                                                style={{ ...css.btn, background: '#da3633', border: 'none' }}
+                                            >
+                                                非表示
+                                            </button>
+                                        )}
+                                    </div>
+                                ))}
                             </div>
                         )}
                     </div>

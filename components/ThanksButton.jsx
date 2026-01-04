@@ -55,7 +55,19 @@ export const ThanksButton = ({ recipeId, authorId, currentUserId, recipeName }) 
                     }
                 });
 
-            if (error) throw error;
+            if (error) {
+                console.error('Supabase error sending thanks:', {
+                    code: error.code,
+                    message: error.message,
+                    details: error.details,
+                    hint: error.hint,
+                    // Debug info
+                    recipient_id: authorId,
+                    actor_id: currentUserId,
+                    recipe_id: recipeId
+                });
+                throw error;
+            }
 
             setHasSent(true);
             setIsOpen(false);
@@ -70,7 +82,11 @@ export const ThanksButton = ({ recipeId, authorId, currentUserId, recipeName }) 
             }
         } catch (error) {
             console.error('Error sending thanks:', error);
-            addToast('送信に失敗しました', 'error');
+            // Show more specific error message if available
+            const errorMessage = error.code === '42501'
+                ? 'RLSポリシーエラー。管理者にお問い合わせください。'
+                : '送信に失敗しました';
+            addToast(errorMessage, 'error');
         } finally {
             setIsSending(false);
         }

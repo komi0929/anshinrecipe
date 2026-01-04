@@ -17,6 +17,10 @@ const NotificationsPage = () => {
     const [activeTab, setActiveTab] = useState('activity'); // 'activity' | 'announcements'
     const [showReadNotifications, setShowReadNotifications] = useState(false);
 
+    // Announcements from database
+    const [announcements, setAnnouncements] = useState([]);
+    const [announcementsLoading, setAnnouncementsLoading] = useState(true);
+
     // Auth Protection
     useEffect(() => {
         if (!profileLoading && !user) {
@@ -24,25 +28,24 @@ const NotificationsPage = () => {
         }
     }, [user, profileLoading, router]);
 
-    // App announcements (static for now)
-    const announcements = [
-        {
-            id: 2,
-            title: '📺 YouTube検索機能が追加されました！',
-            content: 'YouTubeからお子様のアレルギーを考慮したレシピ動画を検索できるようになりました。レシピ作成画面の「YouTubeから見つける」ボタンからお試しください。シーンや特徴でも絞り込めます！',
-            date: '2025-12-28',
-            isNew: true,
-            hasContactLink: false
-        },
-        {
-            id: 1,
-            title: 'あんしんレシピ へようこそ！',
-            content: 'アレルギーっ子のパパ・ママのためのレシピ共有アプリです。',
-            date: '2024-12-01',
-            isNew: false,
-            hasContactLink: true
-        }
-    ];
+    // Fetch announcements from database
+    useEffect(() => {
+        const fetchAnnouncements = async () => {
+            try {
+                const response = await fetch('/api/announcements');
+                const data = await response.json();
+                if (data.success && data.announcements) {
+                    setAnnouncements(data.announcements);
+                }
+            } catch (error) {
+                console.error('Error fetching announcements:', error);
+            } finally {
+                setAnnouncementsLoading(false);
+            }
+        };
+
+        fetchAnnouncements();
+    }, []);
 
     // Show skeleton while loading - prevents blank flash
     if (profileLoading || !user) {
@@ -127,6 +130,27 @@ const NotificationsPage = () => {
                         <span className="text-primary font-medium">{recipeTitle}</span>
                         <span className="text-slate-600">」のつくレポに</span>
                         <span className="text-pink-500 font-bold">いいね！</span>
+                    </span>
+                );
+            case 'thanks':
+                const emoji = notification.metadata?.emoji || '💕';
+                const message = notification.metadata?.message || '感謝を送りました';
+                return (
+                    <span>
+                        <strong className="text-slate-800">{actorName}</strong>
+                        <span className="text-slate-600"> さんが「</span>
+                        <span className="text-primary font-medium">{recipeTitle}</span>
+                        <span className="text-slate-600">」に</span>
+                        <span className="text-green-500 font-bold">{emoji} {message}</span>
+                    </span>
+                );
+            case 'announcement':
+                const announcementEmoji = notification.metadata?.emoji || '📢';
+                const announcementTitle = notification.metadata?.title || 'お知らせ';
+                return (
+                    <span>
+                        <span className="text-orange-500 font-bold">{announcementEmoji} 運営より: </span>
+                        <span className="text-slate-700 font-medium">{announcementTitle}</span>
                     </span>
                 );
             default:
@@ -310,34 +334,66 @@ const NotificationsPage = () => {
                     </div>
                 ) : (
                     <div className="space-y-3">
-                        {announcements.map((announcement) => (
-                            <div
-                                key={announcement.id}
-                                className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm"
-                            >
-                                <div className="flex items-start gap-3">
-                                    <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-amber-400 rounded-full flex items-center justify-center flex-shrink-0">
-                                        <Megaphone size={18} className="text-white" />
-                                    </div>
-                                    <div className="flex-1">
-                                        <h3 className="font-bold text-slate-700 mb-1">
-                                            {announcement.title}
-                                        </h3>
-                                        <p className="text-sm text-slate-500 leading-relaxed">
-                                            {announcement.content}
-                                            {announcement.hasContactLink && (
-                                                <>
-                                                    ご意見・ご要望は<a href="https://line.me/R/ti/p/@668fqaht" target="_blank" rel="noopener noreferrer" className="text-[#06C755] font-bold mx-0.5 underline">LINE</a>か<a href="mailto:y.kominami@hitokoto1.co.jp" className="text-primary font-bold mx-0.5 underline">メール</a>でお寄せください。
-                                                </>
-                                            )}
-                                        </p>
-                                        <p className="text-xs text-slate-400 mt-2">
-                                            {announcement.date}
-                                        </p>
-                                    </div>
+                        {announcementsLoading ? (
+                            <div className="text-center py-8 text-slate-400">読み込み中...</div>
+                        ) : announcements.length === 0 ? (
+                            <div className="text-center py-12">
+                                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <Megaphone size={24} className="text-slate-300" />
                                 </div>
+                                <p className="text-slate-400 text-sm">まだお知らせはありません</p>
                             </div>
-                        ))}
+                        ) : (
+                            announcements.map((announcement) => {
+                                // Format date from database timestamp
+                                const dateStr = announcement.created_at
+                                    ? new Date(announcement.created_at).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' })
+                                    : '';
+                                // Check if announcement is within last 7 days
+                                const isNew = announcement.created_at
+                                    ? (new Date() - new Date(announcement.created_at)) < 7 * 24 * 60 * 60 * 1000
+                                    : false;
+
+                                return (
+                                    <div
+                                        key={announcement.id}
+                                        className={`bg-white rounded-2xl p-5 border shadow-sm ${isNew ? 'border-orange-200 bg-gradient-to-r from-orange-50/50 to-white' : 'border-slate-100'}`}
+                                    >
+                                        <div className="flex items-start gap-3">
+                                            <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-amber-400 rounded-full flex items-center justify-center flex-shrink-0 text-lg">
+                                                {announcement.emoji || '📢'}
+                                            </div>
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-2">
+                                                    <h3 className="font-bold text-slate-700 mb-1">
+                                                        {announcement.title}
+                                                    </h3>
+                                                    {isNew && (
+                                                        <span className="text-[10px] bg-orange-500 text-white px-1.5 py-0.5 rounded-full font-bold">NEW</span>
+                                                    )}
+                                                </div>
+                                                <p className="text-sm text-slate-500 leading-relaxed">
+                                                    {announcement.content}
+                                                </p>
+                                                <div className="flex items-center gap-2 mt-2">
+                                                    <p className="text-xs text-slate-400">
+                                                        {dateStr}
+                                                    </p>
+                                                    <a
+                                                        href="https://line.me/R/ti/p/@668fqaht"
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-xs text-[#06C755] font-medium hover:underline"
+                                                    >
+                                                        ご意見・ご要望はこちら
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })
+                        )}
                     </div>
                 )}
             </div>

@@ -1,5 +1,57 @@
 # 改善ログ
 
+## 2025-12-30 - 感謝を送る機能とお知らせ通知システムの修正
+
+**ステータス**: 🛠️ 開発完了（マイグレーション適用待ち）
+
+**問題点**:
+- 「感謝を送る」ボタンをタップすると「送信に失敗しました」エラーが発生
+- 感謝通知のタイプ（thanks）が通知一覧で表示されていなかった
+- 運営からのおしらせがDBベースの通知システムと連携していなかった
+
+**変更内容**:
+- **RLSポリシーの修正**: `auth.role() = 'authenticated'` を `auth.uid() IS NOT NULL` に変更（Supabase v2対応）
+- **metadataカラムのサポート**: 通知データにmetadataを含め、絵文字やメッセージを表示可能に
+- **thanks通知の表示**: 通知一覧で「🙏 助かりました！」などの感謝メッセージを表示
+- **お知らせのDB管理**: announcements テーブルを新規作成し、お知らせをDBで一元管理
+- **自動通知機能**: お知らせ追加時に全ユーザーへ通知を自動送信
+- **管理画面の拡張**: 「📢 お知らせ管理」タブを追加。お知らせの作成・一覧表示・非表示化が可能
+- **announcement通知の表示**: 通知一覧で運営からのおしらせを「📢 運営より: タイトル」形式で表示
+- **エラーハンドリング改善**: ThanksButtonでより詳細なエラー情報をログ出力
+
+**関連ファイル**:
+- `data/migrations/fix_notifications_rls.sql` (新規)
+- `data/migrations/create_announcements_table.sql` (新規)
+- `hooks/useNotifications.js` (metadataサポート追加)
+- `components/ThanksButton.jsx` (エラーハンドリング改善)
+- `app/notifications/page.js` (thanks, announcements表示対応、DB連携)
+- `app/api/admin/announcement/route.js` (拡張)
+- `app/api/announcements/route.js` (新規 - 公開API)
+- `app/admin/page.js` (お知らせ管理タブ追加)
+
+**マイグレーション**:
+以下のSQLをSupabase SQL Editorで実行が必要:
+
+1. **通知のRLSポリシー修正**（実行済み）:
+```sql
+DROP POLICY IF EXISTS "Authenticated users can create notifications" ON notifications;
+CREATE POLICY "Authenticated users can insert notifications" ON notifications
+    FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS metadata JSONB DEFAULT '{}';
+```
+
+2. **お知らせテーブル作成**:
+```sql
+-- data/migrations/create_announcements_table.sql の内容を実行
+```
+
+**確認ポイント**:
+- [ ] 感謝を送るボタンが正常に動作すること
+- [ ] 感謝の通知が「みんなの反応」タブに表示されること
+- [ ] 管理画面でお知らせを作成し、全ユーザーに通知が届くこと
+- [ ] 「運営からのお知らせ」タブにDBのお知らせが表示されること
+
+
 ## 2025-12-28 - YouTube検索のスマート化とUI統一
 
 **ステータス**: 🚀 本番反映済み
