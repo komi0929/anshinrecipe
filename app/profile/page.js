@@ -380,6 +380,27 @@ export default function ProfilePage() {
                     </div>
                 </div>
 
+                {/* 1.7 Pro Settings Link (For Pro Users only) */}
+                {profile.isPro && (
+                    <div className="mb-4">
+                        <Link
+                            href="/profile/pro-settings"
+                            className="w-full p-4 flex items-center justify-between bg-gradient-to-r from-amber-50 to-orange-50 rounded-[24px] border border-amber-200 shadow-sm hover:shadow-md transition-all group"
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm text-amber-500">
+                                    <Star size={20} fill="currentColor" />
+                                </div>
+                                <div>
+                                    <span className="font-bold text-slate-800">プロ設定を編集する</span>
+                                    <p className="text-[11px] text-amber-600 font-medium">SNSリンク・自己紹介の管理</p>
+                                </div>
+                            </div>
+                            <ChevronRight className="text-amber-400 group-hover:translate-x-1 transition-transform" size={20} />
+                        </Link>
+                    </div>
+                )}
+
                 {/* 2. Children Settings */}
                 <div>
                     <h3 className="text-sm font-bold text-text-sub mb-3 ml-2">お子様の設定</h3>
