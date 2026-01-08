@@ -57,16 +57,21 @@ export default function ProLoginPage() {
                 </div>
             </section>
 
+            {/* Appeal Text */}
+            <div className="pro-appeal-text">
+                サービスへのご登録&<br />
+                レシピの投稿をお願いできませんでしょうか
+            </div>
+
             {/* Easy Start Section - Swapped to top of blocks */}
             <section className="pro-section pro-easy-start">
                 <div className="pro-easy-content">
                     <div className="pro-easy-emoji">✨</div>
-                    <h2>レシピ投稿だけ！手間なしスタート</h2>
+                    <h2>InstagramのURLを貼るだけ！</h2>
                     <div className="pro-easy-description">
-                        <p>難しい設定は一切不要。</p>
                         <p className="pro-highlight-block">
-                            <strong>Instagram等に投稿されているレシピのURLを貼り付けるだけ</strong>で、<br />
-                            いつものレシピが自動的に取り込まれます。
+                            <strong>Instagramにすでに投稿されているレシピのURLを再度投稿していただくのみ。</strong><br />
+                            面倒な入力作業は極力AIがしてくれます。
                         </p>
                         <p>
                             あなたのレシピが、多くのアレルギーっ子家庭に届きます。
@@ -75,15 +80,15 @@ export default function ProLoginPage() {
                     <ul className="pro-easy-list">
                         <li>
                             <CheckCircle size={18} className="text-green-500" />
-                            <span>登録費用：<strong>無料</strong></span>
+                            <span>費用：<strong>完全無料</strong></span>
                         </li>
                         <li>
                             <CheckCircle size={18} className="text-green-500" />
-                            <span>追加作業：<strong>なし</strong></span>
+                            <span>作業：<strong>URLを貼るだけ</strong></span>
                         </li>
                         <li>
                             <CheckCircle size={18} className="text-green-500" />
-                            <span>投稿方法：<strong>通常と同じ</strong></span>
+                            <span>安心：<strong>プロバッジ付与</strong></span>
                         </li>
                     </ul>
                 </div>

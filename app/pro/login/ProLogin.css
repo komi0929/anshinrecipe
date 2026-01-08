@@ -77,6 +77,18 @@
     text-align: center;
 }
 
+/* Appeal Text */
+.pro-appeal-text {
+    text-align: center;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #f97316;
+    line-height: 1.6;
+    margin: 1rem auto;
+    padding: 0 1.5rem;
+    max-width: 480px;
+}
+
 /* Intro Card */
 .pro-intro-card {
     background: white;
