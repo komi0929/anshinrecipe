@@ -1,21 +1,23 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
     ArrowLeft,
     Star,
-    Save,
     Instagram,
     Youtube,
     ExternalLink,
     User,
-    FileText
+    FileText,
+    Camera,
+    Pencil
 } from 'lucide-react';
 import { useProfile } from '@/hooks/useProfile';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { uploadImage } from '@/lib/imageUpload';
 import './ProSettings.css';
 
 // X (Twitter) icon component
@@ -31,8 +33,12 @@ const XIcon = ({ size = 20 }) => (
  */
 export default function ProSettingsPage() {
     const router = useRouter();
-    const { profile, user, loading, updateProProfile } = useProfile();
+    const { profile, user, loading, updateProProfile, updateUserName, updateAvatar } = useProfile();
+    const fileInputRef = useRef(null);
 
+    // Profile fields
+    const [userName, setUserName] = useState('');
+    const [avatarUrl, setAvatarUrl] = useState('');
     const [bio, setBio] = useState('');
     const [instagramUrl, setInstagramUrl] = useState('');
     const [twitterUrl, setTwitterUrl] = useState('');
@@ -40,10 +46,13 @@ export default function ProSettingsPage() {
     const [blogUrl, setBlogUrl] = useState('');
     const [saving, setSaving] = useState(false);
     const [hasChanges, setHasChanges] = useState(false);
+    const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
     // Initialize form with profile data
     useEffect(() => {
         if (profile) {
+            setUserName(profile.userName || '');
+            setAvatarUrl(profile.avatarUrl || '');
             setBio(profile.bio || '');
             setInstagramUrl(profile.instagramUrl || '');
             setTwitterUrl(profile.twitterUrl || '');
@@ -56,6 +65,7 @@ export default function ProSettingsPage() {
     useEffect(() => {
         if (profile) {
             const changed =
+                userName !== (profile.userName || '') ||
                 bio !== (profile.bio || '') ||
                 instagramUrl !== (profile.instagramUrl || '') ||
                 twitterUrl !== (profile.twitterUrl || '') ||
@@ -63,11 +73,37 @@ export default function ProSettingsPage() {
                 blogUrl !== (profile.blogUrl || '');
             setHasChanges(changed);
         }
-    }, [bio, instagramUrl, twitterUrl, youtubeUrl, blogUrl, profile]);
+    }, [userName, bio, instagramUrl, twitterUrl, youtubeUrl, blogUrl, profile]);
+
+    // Handle avatar upload
+    const handleAvatarChange = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsUploadingAvatar(true);
+        try {
+            const publicUrl = await uploadImage(file);
+            if (publicUrl) {
+                setAvatarUrl(publicUrl);
+                await updateAvatar(publicUrl);
+            }
+        } catch (error) {
+            console.error('Avatar upload failed:', error);
+            alert('アイコンのアップロードに失敗しました');
+        } finally {
+            setIsUploadingAvatar(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+    };
 
     const handleSave = async () => {
         setSaving(true);
         try {
+            // Update name if changed
+            if (userName !== (profile?.userName || '')) {
+                await updateUserName(userName);
+            }
+            // Update pro profile fields
             await updateProProfile({
                 bio,
                 instagramUrl,
@@ -130,17 +166,57 @@ export default function ProSettingsPage() {
                     <ArrowLeft size={24} />
                 </button>
                 <h1>プロフィール設定</h1>
-                <button
-                    onClick={handleSave}
-                    disabled={!hasChanges || saving}
-                    className={`pro-save-button ${hasChanges ? 'active' : ''}`}
-                >
-                    <Save size={20} />
-                </button>
+                <div style={{ width: 24 }} /> {/* Spacer for centering */}
             </div>
 
             {/* Form */}
             <div className="pro-settings-content">
+                {/* Avatar & Name Section */}
+                <div className="pro-avatar-section">
+                    <div className="pro-avatar-edit-container">
+                        <div
+                            className="pro-avatar-wrapper-large"
+                            onClick={() => fileInputRef.current?.click()}
+                        >
+                            {avatarUrl ? (
+                                <img src={avatarUrl} alt={userName} className="pro-avatar-large" />
+                            ) : (
+                                <div className="pro-avatar-placeholder-large">
+                                    <User size={40} />
+                                </div>
+                            )}
+                            <div className="pro-avatar-overlay">
+                                {isUploadingAvatar ? (
+                                    <div className="loading-spinner-small" />
+                                ) : (
+                                    <Camera size={20} />
+                                )}
+                            </div>
+                        </div>
+                        <input
+                            type="file"
+                            ref={fileInputRef}
+                            onChange={handleAvatarChange}
+                            accept="image/*"
+                            className="hidden-input"
+                            style={{ display: 'none' }}
+                        />
+                    </div>
+                    <div className="pro-name-edit">
+                        <label className="pro-name-label">表示名</label>
+                        <div className="pro-name-input-wrapper">
+                            <Input
+                                type="text"
+                                value={userName}
+                                onChange={(e) => setUserName(e.target.value)}
+                                placeholder="お名前を入力"
+                                className="pro-name-input"
+                            />
+                            <Pencil size={16} className="pro-name-icon" />
+                        </div>
+                    </div>
+                </div>
+
                 {/* Pro Badge */}
                 <div className="pro-settings-badge">
                     <Star size={16} fill="currentColor" />
