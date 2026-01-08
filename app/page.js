@@ -423,7 +423,8 @@ const RecipeListPage = () => {
         return null; // Wait for profile data to fully load
     }
 
-    if (profile?.children?.length === 0) {
+    // Pro Users can skip child registration - they can post recipes with direct allergen selection
+    if (profile?.children?.length === 0 && !profile?.isPro) {
         return (
             <div className="container max-w-md mx-auto min-h-screen bg-background">
                 <div className="pt-6 pb-4 px-4 text-center">

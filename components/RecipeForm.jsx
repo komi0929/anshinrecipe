@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2, Link as LinkIcon, Search, Check, X, ImagePlus, Save, Globe, Lock, Sparkles, BrainCircuit, AlertCircle } from 'lucide-react';
 import { uploadImage } from '@/lib/imageUpload';
-import { MEAL_SCENES, SCENE_ICONS } from '@/lib/constants';
+import { MEAL_SCENES, SCENE_ICONS, ALLERGEN_OPTIONS } from '@/lib/constants';
 import { SmartEmbed } from '@/components/SmartEmbed'; // Import SmartEmbed
 import SmartImportOverlay from './SmartImportOverlay'; // Import SmartImportOverlay
 import YouTubeSearchOverlay from './YouTubeSearchOverlay'; // Import YouTubeSearchOverlay
@@ -327,7 +327,13 @@ export const RecipeForm = ({
         if (!title.trim()) { alert('レシピ名は必須です'); return; }
         if (isPublic === null) { alert('公開設定を選択してください'); return; }
         if (!image) { alert('レシピ画像を登録してください'); return; }
-        if (selectedChildren.length === 0) { alert('お子様を選択してください'); return; }
+        // Pro Users can skip child selection if they manually specify allergens
+        if (!profile?.isPro && selectedChildren.length === 0) { alert('お子様を選択してください'); return; }
+        // Pro Users must specify at least one allergen if no children selected
+        if (profile?.isPro && selectedChildren.length === 0 && freeFromAllergens.length === 0) {
+            alert('使われていない食材（アレルゲン）を1つ以上選択してください');
+            return;
+        }
 
         setIsSubmitting(true);
         try {
@@ -495,13 +501,62 @@ export const RecipeForm = ({
             {/* Children Selection */}
             {profile?.children && profile.children.length > 0 && (
                 <div className="form-section">
-                    <label className="section-label">どのお子さまのためのレシピですか？ <span className="required">*</span></label>
+                    <label className="section-label">
+                        どのお子さまのためのレシピですか？
+                        {profile?.isPro ? (
+                            <span className="text-xs text-slate-400 ml-2">(任意)</span>
+                        ) : (
+                            <span className="required">*</span>
+                        )}
+                    </label>
+                    {profile?.isPro && (
+                        <p className="text-xs text-amber-600 mb-3 bg-amber-50 p-2 rounded-lg border border-amber-200">
+                            ※プロユーザーさまはお子さまの情報は必須ではありません。下の「使われていない食材」を直接選択できます。
+                        </p>
+                    )}
                     <div className="children-selection"> {profile.children.map(child => (<button key={child.id} type="button" onClick={() => toggleChild(child.id)} className={`child-select-card ${selectedChildren.includes(child.id) ? 'selected' : ''}`} > <div className="child-select-icon"> {child.photo ? (<img src={child.photo} alt={child.name} />) : (<span>{child.icon}</span>)} </div> <div className="child-select-info" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', flex: 1 }}> <span className="child-select-name" style={{ fontWeight: 'bold' }}>{child.name}</span> {child.allergens && child.allergens.length > 0 && (<div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}> {child.allergens.map(a => (<span key={a} style={{ fontSize: '12px', padding: '2px 8px', background: '#fff7ed', color: '#ea580c', borderRadius: '9999px', fontWeight: 'bold', border: '1px solid #fed7aa' }}> {a}なし </span>))} </div>)} </div> {selectedChildren.includes(child.id) && (<Check size={20} className="check-icon" />)} </button>))} </div>
                 </div>
             )}
 
-            {/* Allergen Selection */}
-            {profile?.children && profile.children.some(c => c.allergens?.length > 0) && (
+            {/* Pro User: Direct Allergen Selection (shown when no children or as additional option) */}
+            {profile?.isPro && (
+                <div className="form-section">
+                    <label className="section-label">
+                        使われていない食材（アレルゲン）
+                        {selectedChildren.length === 0 && <span className="required">*</span>}
+                    </label>
+                    {(!profile?.children || profile.children.length === 0) && (
+                        <p className="text-xs text-slate-500 mb-3">
+                            ※一般ユーザーの皆さまにはお子さまの登録を必須とさせていただいております
+                        </p>
+                    )}
+                    <div className="flex flex-wrap gap-2">
+                        {ALLERGEN_OPTIONS.map(allergen => (
+                            <button
+                                key={allergen}
+                                type="button"
+                                onClick={() => {
+                                    setFreeFromAllergens(prev =>
+                                        prev.includes(allergen)
+                                            ? prev.filter(a => a !== allergen)
+                                            : [...prev, allergen]
+                                    );
+                                }}
+                                className={`px-3 py-1.5 rounded-full text-sm font-bold transition-all border ${freeFromAllergens.includes(allergen)
+                                        ? 'bg-green-500 text-white border-green-500 shadow-md'
+                                        : 'bg-white text-slate-600 border-slate-200 hover:border-green-300'
+                                    }`}
+                            >
+                                {allergen}なし
+                                {freeFromAllergens.includes(allergen) && <Check size={14} className="ml-1 inline" />}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* General User: Allergen Display (auto-calculated from children) */}
+            {!profile?.isPro && profile?.children && profile.children.some(c => c.allergens?.length > 0) && freeFromAllergens.length > 0 && (
                 <div className="form-section">
                     <label className="section-label">使われていない材料</label>
                     <div className="flex flex-wrap gap-2 mt-2"> {freeFromAllergens.map(allergen => (<button key={allergen} type="button" onClick={() => toggleAllergen(allergen)} className="px-4 py-2 rounded-full text-sm font-bold transition-all border bg-green-500 text-white border-green-500 shadow-md hover:bg-green-600" > {allergen}なし <Check size={14} className="ml-1 inline" /> </button>))} </div>
