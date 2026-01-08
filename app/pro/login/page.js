@@ -91,7 +91,7 @@ export default function ProLoginPage() {
 
             {/* Benefits Section - Swapped to bottom of blocks */}
             <section className="pro-section pro-benefits">
-                <h2 className="pro-section-title">プロユーザーさま特典</h2>
+                <h2 className="pro-section-title">プロユーザーさま向け機能</h2>
                 <div className="pro-benefits-grid">
                     <div className="pro-benefit-card">
                         <div className="pro-benefit-icon">
