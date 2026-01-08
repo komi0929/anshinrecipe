@@ -8,7 +8,7 @@ import Image from 'next/image';
 import {
     User, Settings, FileText, HelpCircle, LogOut,
     Trash2, ChevronRight, Camera, Plus, MapPin,
-    ShieldAlert, Info, Mail, Pencil, Loader2, Award, MessageCircle, Zap, Smartphone, Users
+    ShieldAlert, Info, Mail, Pencil, Loader2, Award, MessageCircle, Zap, Smartphone, Users, Star
 } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { Footer } from '@/components/Footer';
