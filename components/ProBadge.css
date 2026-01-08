@@ -1,0 +1,118 @@
+/* Pro Badge Styles */
+
+.pro-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 9999px;
+    font-weight: 700;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 4px rgba(255, 165, 0, 0.3);
+}
+
+.pro-badge-xs {
+    font-size: 9px;
+    padding: 1px 4px;
+}
+
+.pro-badge-sm {
+    font-size: 10px;
+    padding: 2px 6px;
+}
+
+.pro-badge-md {
+    font-size: 11px;
+    padding: 3px 8px;
+}
+
+.pro-badge-lg {
+    font-size: 12px;
+    padding: 4px 10px;
+}
+
+.pro-badge-text {
+    letter-spacing: 0.5px;
+}
+
+/* Pro Badge Icon Only */
+.pro-badge-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #FFD700;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+/* Pro Avatar Wrapper */
+.pro-avatar-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.pro-avatar-wrapper.clickable {
+    cursor: pointer;
+}
+
+.pro-avatar-wrapper.clickable:hover .pro-avatar-image {
+    transform: scale(1.05);
+}
+
+/* Pro Avatar with Golden Border */
+.pro-avatar-image {
+    border-radius: 50%;
+    object-fit: cover;
+    transition: transform 0.2s ease;
+}
+
+.pro-avatar-wrapper.is-pro .pro-avatar-image {
+    border: 3px solid transparent;
+    background: linear-gradient(white, white) padding-box,
+        linear-gradient(135deg, #FFD700, #FFA500, #FFD700) border-box;
+}
+
+/* Pro verification badge overlay */
+.pro-avatar-badge {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    color: white;
+    border-radius: 50%;
+    padding: 3px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    border: 2px solid white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pro-avatar-badge-sm {
+    padding: 2px;
+    bottom: -1px;
+    right: -1px;
+}
+
+.pro-avatar-badge-lg {
+    padding: 4px;
+    bottom: -3px;
+    right: -3px;
+}
+
+/* Placeholder avatar */
+.pro-avatar-placeholder {
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9ca3af;
+}
+
+.pro-avatar-wrapper.is-pro .pro-avatar-placeholder {
+    border: 3px solid transparent;
+    background: linear-gradient(#f3f4f6, #e5e7eb) padding-box,
+        linear-gradient(135deg, #FFD700, #FFA500, #FFD700) border-box;
+}

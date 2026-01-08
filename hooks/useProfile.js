@@ -35,8 +35,15 @@ const fetchProfileData = async (userId) => {
             stats: {
                 recipeCount: recipeCountRes.count || 0,
                 reportCount: reportCountRes.count || 0
-            }
-        } : { id: null, userName: '', avatarUrl: '', children: [], stats: { recipeCount: 0, reportCount: 0 } },
+            },
+            // プロユーザー関連フィールド
+            isPro: profileData.is_pro || false,
+            bio: profileData.bio || '',
+            instagramUrl: profileData.instagram_url || '',
+            twitterUrl: profileData.twitter_url || '',
+            youtubeUrl: profileData.youtube_url || '',
+            blogUrl: profileData.blog_url || ''
+        } : { id: null, userName: '', avatarUrl: '', children: [], stats: { recipeCount: 0, reportCount: 0 }, isPro: false, bio: '', instagramUrl: '', twitterUrl: '', youtubeUrl: '', blogUrl: '' },
         savedRecipeIds: savedData.map(item => item.recipe_id),
         likedRecipeIds: likedData.map(item => item.recipe_id),
     };
@@ -351,6 +358,42 @@ export const useProfile = () => {
         }
     };
 
+    // プロユーザープロフィール更新
+    const updateProProfile = async ({ bio, instagramUrl, twitterUrl, youtubeUrl, blogUrl }) => {
+        if (!user) return;
+        try {
+            const { error } = await supabase
+                .from('profiles')
+                .update({
+                    bio: bio,
+                    instagram_url: instagramUrl,
+                    twitter_url: twitterUrl,
+                    youtube_url: youtubeUrl,
+                    blog_url: blogUrl,
+                    updated_at: new Date()
+                })
+                .eq('id', user.id);
+
+            if (error) throw error;
+
+            mutateProfile(prev => prev ? {
+                ...prev,
+                profile: {
+                    ...prev.profile,
+                    bio,
+                    instagramUrl,
+                    twitterUrl,
+                    youtubeUrl,
+                    blogUrl
+                }
+            } : prev, false);
+            addToast('プロフィールを更新しました', 'success');
+        } catch (error) {
+            console.error('Error updating pro profile:', error);
+            addToast('更新に失敗しました', 'error');
+        }
+    };
+
     return {
         user,
         profile,
@@ -364,7 +407,8 @@ export const useProfile = () => {
         deleteChild,
         toggleSave,
         toggleLike,
-        deleteAccount
+        deleteAccount,
+        updateProProfile
     };
 };
 

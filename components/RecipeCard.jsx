@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Heart, Bookmark } from 'lucide-react';
+import { Heart, Bookmark, Star } from 'lucide-react';
 import './RecipeCard.css';
 import { useRecipes } from '../hooks/useRecipes';
 import { useProfile } from '../hooks/useProfile';
@@ -55,9 +55,20 @@ export const RecipeCard = ({ recipe, isSaved, onToggleSave, isLiked, onToggleLik
         ? recipe.title.substring(0, 35) + '...'
         : recipe.title;
 
+    // プロユーザーかどうかを判定（authorにis_proがあればプロ）
+    const isProUser = recipe.author?.is_pro || recipe.author?.isPro || false;
+
     return (
         <Link href={`/recipe/${recipe.id}`} className="recipe-card-visual" onMouseEnter={handleMouseEnter}>
             <div className="card-visual-container">
+                {/* Pro User Badge */}
+                {isProUser && (
+                    <span className="card-pro-badge">
+                        <Star size={10} fill="currentColor" />
+                        プロ
+                    </span>
+                )}
+
                 {/* Image or Placeholder */}
                 {recipe.image ? (
                     <img

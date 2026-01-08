@@ -4,8 +4,20 @@ import React from 'react';
 import { getLineAuthUrl } from '@/lib/lineAuth';
 import './LineLoginButton.css';
 
-export default function LineLoginButton() {
+/**
+ * LINEログインボタン
+ * @param {boolean} isProRegistration - プロユーザー登録フローかどうか
+ */
+export default function LineLoginButton({ isProRegistration = false }) {
     const handleLogin = () => {
+        // プロユーザー登録フラグをlocalStorageに保存
+        if (typeof window !== 'undefined') {
+            if (isProRegistration) {
+                localStorage.setItem('pro_registration', 'true');
+            } else {
+                localStorage.removeItem('pro_registration');
+            }
+        }
         const authUrl = getLineAuthUrl();
         window.location.href = authUrl;
     };

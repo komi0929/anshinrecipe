@@ -16,7 +16,7 @@ const LINE_CHANNEL_SECRET = process.env.LINE_CHANNEL_SECRET;
 
 export async function POST(request) {
     try {
-        const { code, redirectUri } = await request.json();
+        const { code, redirectUri, isProRegistration } = await request.json();
 
         if (!code) {
             return Response.json({ error: 'Missing authorization code' }, { status: 400 });
@@ -98,6 +98,12 @@ export async function POST(request) {
                 console.log('LINE pictureUrl not provided, keeping existing avatar:', existingProfile.avatar_url);
             }
 
+            // プロユーザー登録フローからのログインの場合、is_proをtrueに設定
+            if (isProRegistration) {
+                updateData.is_pro = true;
+                console.log('Pro registration detected, setting is_pro to true');
+            }
+
             await supabaseAdmin
                 .from('profiles')
                 .update(updateData)
@@ -122,6 +128,7 @@ export async function POST(request) {
                         display_name: displayName,
                         picture_url: pictureUrl,
                         avatar_url: pictureUrl,
+                        is_pro: isProRegistration || false,
                     }, {
                         onConflict: 'id'
                     });
@@ -174,6 +181,7 @@ export async function POST(request) {
                         display_name: displayName,
                         picture_url: pictureUrl,
                         avatar_url: pictureUrl,
+                        is_pro: isProRegistration || false,
                     }, {
                         onConflict: 'id'
                     });

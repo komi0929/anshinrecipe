@@ -8,7 +8,7 @@ import { useProfile } from '../../../hooks/useProfile';
 import { useRecipes } from '../../../hooks/useRecipes';
 import { useToast } from '../../../components/Toast';
 import { useAnalytics } from '../../../hooks/useAnalytics';
-import { ArrowLeft, Bookmark, Share2, ExternalLink, User as UserIcon, Clock, Smile, Heart, CheckCircle, MessageCircle, Pencil, UtensilsCrossed } from 'lucide-react';
+import { ArrowLeft, Bookmark, Share2, ExternalLink, User as UserIcon, Clock, Smile, Heart, CheckCircle, MessageCircle, Pencil, UtensilsCrossed, Star } from 'lucide-react';
 import { getReactionCounts, getUserReaction, toggleReaction, getTriedReports, deleteTriedReport, getLikeCount, getBookmarkCount } from '../../../lib/actions/socialActions';
 import { getRecommendedRecipes } from '../../../lib/recommendations';
 import TriedReportForm from '../../../components/TriedReportForm';
@@ -18,6 +18,7 @@ import { SmartEmbed } from '../../../components/SmartEmbed';
 import { CookingLog } from '../../../components/CookingLog';
 import ThanksButton from '../../../components/ThanksButton';
 import AddToCollectionButton from '../../../components/AddToCollection';
+import ProAvatar from '../../../components/ProAvatar';
 import './RecipeDetailPage.css';
 
 const RecipeDetailPage = () => {
@@ -50,10 +51,12 @@ const RecipeDetailPage = () => {
                     .select(`
                         *,
                         profiles:user_id (
+                            id,
                             username,
                             display_name,
                             avatar_url,
-                            picture_url
+                            picture_url,
+                            is_pro
                         ),
                         cooking_logs (id, content, rating, created_at, user_id),
                         recipe_images (id, image_url)
@@ -340,14 +343,24 @@ const RecipeDetailPage = () => {
 
                 <div className="recipe-meta">
                     <div className="author-info">
-                        {(recipe.profiles?.avatar_url || recipe.profiles?.picture_url) ? (
-                            <img src={recipe.profiles?.avatar_url || recipe.profiles?.picture_url} alt="" className="author-avatar-small" />
-                        ) : (
-                            <div className="author-avatar-placeholder small">
-                                <UserIcon size={16} />
-                            </div>
-                        )}
-                        <span className="author-name">{recipe.profiles?.username || recipe.profiles?.display_name || 'ゲスト'}</span>
+                        <ProAvatar
+                            src={recipe.profiles?.avatar_url || recipe.profiles?.picture_url}
+                            alt={recipe.profiles?.username || recipe.profiles?.display_name || 'ユーザー'}
+                            isPro={recipe.profiles?.is_pro}
+                            userId={recipe.profiles?.id}
+                            size={32}
+                            showBadge={true}
+                            clickable={true}
+                        />
+                        <span className="author-name">
+                            {recipe.profiles?.username || recipe.profiles?.display_name || 'ゲスト'}
+                            {recipe.profiles?.is_pro && (
+                                <span className="pro-author-badge">
+                                    <Star size={10} fill="currentColor" />
+                                    プロ
+                                </span>
+                            )}
+                        </span>
                     </div>
                     <div className="date-info">
                         <Clock size={14} />

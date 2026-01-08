@@ -35,8 +35,10 @@ function LineCallbackContent() {
 
                 // Verify state (CSRF protection) - use localStorage as sessionStorage doesn't persist across redirects
                 const storedState = localStorage.getItem('line_oauth_state');
+                const isProRegistration = localStorage.getItem('pro_registration') === 'true';
                 localStorage.removeItem('line_oauth_state');
                 localStorage.removeItem('line_oauth_nonce');
+                localStorage.removeItem('pro_registration');
 
                 if (state !== storedState) {
                     setError('無効なリクエストです');
@@ -53,7 +55,8 @@ function LineCallbackContent() {
                     },
                     body: JSON.stringify({
                         code,
-                        redirectUri: window.location.origin + '/auth/callback/line'
+                        redirectUri: window.location.origin + '/auth/callback/line',
+                        isProRegistration: isProRegistration
                     }),
                 });
 
