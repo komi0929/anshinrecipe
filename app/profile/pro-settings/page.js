@@ -99,7 +99,7 @@ export default function ProSettingsPage() {
                 <div className="pro-settings-error">
                     <p>ログインが必要です</p>
                     <Link href="/pro/login">
-                        <Button>プロユーザーログイン</Button>
+                        <Button>プロユーザーさまログイン</Button>
                     </Link>
                 </div>
             </div>
@@ -111,8 +111,8 @@ export default function ProSettingsPage() {
             <div className="pro-settings-page">
                 <div className="pro-settings-error">
                     <div className="pro-error-icon">🔒</div>
-                    <h2>プロユーザー限定</h2>
-                    <p>この機能はプロユーザーのみご利用いただけます</p>
+                    <h2>プロユーザーさま限定</h2>
+                    <p>この機能はプロユーザーさまのみご利用いただけます</p>
                     <button onClick={() => router.back()} className="pro-back-button">
                         <ArrowLeft size={18} />
                         戻る
@@ -144,7 +144,7 @@ export default function ProSettingsPage() {
                 {/* Pro Badge */}
                 <div className="pro-settings-badge">
                     <Star size={16} fill="currentColor" />
-                    認証済みプロユーザー
+                    認証済みプロユーザーさま
                 </div>
 
                 {/* Preview Link */}

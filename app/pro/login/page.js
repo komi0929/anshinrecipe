@@ -27,7 +27,7 @@ export default function ProLoginPage() {
                     />
                     <div className="pro-hero-badge">
                         <Star size={16} fill="currentColor" />
-                        <span>プロユーザー専用</span>
+                        <span>プロユーザーさま専用</span>
                     </div>
                     <h1 className="pro-hero-title">
                         あなたのレシピで<br />
@@ -39,43 +39,59 @@ export default function ProLoginPage() {
                 </div>
             </div>
 
-            {/* Preview Section - How your recipes appear */}
-            <section className="pro-section">
-                <h2 className="pro-section-title">
-                    <Star size={20} className="text-yellow-500" />
-                    あなたのレシピはこのように表示されます
-                </h2>
-                <div className="pro-preview-card">
-                    <div className="pro-preview-image">
-                        <div className="pro-preview-badge">
-                            <Star size={10} fill="currentColor" />
-                            プロ
-                        </div>
-                        <div className="pro-preview-placeholder">
-                            <span>🍳</span>
-                        </div>
-                        <div className="pro-preview-title">あなたのレシピタイトル</div>
+            {/* Service Introduction Section */}
+            <section className="pro-section pro-intro">
+                <div className="pro-intro-card">
+                    <div className="pro-intro-image">
+                        <Image
+                            src="/pro-intro.jpg"
+                            alt="あんしんレシピの紹介"
+                            width={400}
+                            height={400}
+                            className="rounded-xl shadow-lg"
+                        />
                     </div>
-                    <div className="pro-preview-features">
-                        <div className="pro-feature-item">
-                            <CheckCircle size={16} className="text-green-500" />
-                            <span>金色の☆バッジで目立つ</span>
-                        </div>
-                        <div className="pro-feature-item">
-                            <CheckCircle size={16} className="text-green-500" />
-                            <span>プロフィールページで自己紹介</span>
-                        </div>
-                        <div className="pro-feature-item">
-                            <CheckCircle size={16} className="text-green-500" />
-                            <span>SNSリンクを掲載可能</span>
-                        </div>
-                    </div>
+                    <p className="pro-intro-text">
+                        あんしんレシピは、アレルギーっ子のためのレシピ共有アプリです。同じお悩みをもつママパパ同士が、気にいったレシピを共有することができます。
+                    </p>
                 </div>
             </section>
 
-            {/* Benefits Section */}
+            {/* Easy Start Section - Swapped to top of blocks */}
+            <section className="pro-section pro-easy-start">
+                <div className="pro-easy-content">
+                    <div className="pro-easy-emoji">✨</div>
+                    <h2>レシピ投稿だけ！手間なしスタート</h2>
+                    <div className="pro-easy-description">
+                        <p>難しい設定は一切不要。</p>
+                        <p className="pro-highlight-block">
+                            <strong>Instagram等に投稿されているレシピのURLを貼り付けるだけ</strong>で、<br />
+                            いつものレシピが自動的に取り込まれます。
+                        </p>
+                        <p>
+                            あなたのレシピが、多くのアレルギーっ子家庭に届きます。
+                        </p>
+                    </div>
+                    <ul className="pro-easy-list">
+                        <li>
+                            <CheckCircle size={18} className="text-green-500" />
+                            <span>登録費用：<strong>無料</strong></span>
+                        </li>
+                        <li>
+                            <CheckCircle size={18} className="text-green-500" />
+                            <span>追加作業：<strong>なし</strong></span>
+                        </li>
+                        <li>
+                            <CheckCircle size={18} className="text-green-500" />
+                            <span>投稿方法：<strong>通常と同じ</strong></span>
+                        </li>
+                    </ul>
+                </div>
+            </section>
+
+            {/* Benefits Section - Swapped to bottom of blocks */}
             <section className="pro-section pro-benefits">
-                <h2 className="pro-section-title">プロユーザー特典</h2>
+                <h2 className="pro-section-title">プロユーザーさま特典</h2>
                 <div className="pro-benefits-grid">
                     <div className="pro-benefit-card">
                         <div className="pro-benefit-icon">
@@ -105,33 +121,6 @@ export default function ProLoginPage() {
                         <h3>外部リンク</h3>
                         <p>Instagram, YouTube, ブログなどへのリンクを設置</p>
                     </div>
-                </div>
-            </section>
-
-            {/* Easy Start Section */}
-            <section className="pro-section pro-easy-start">
-                <div className="pro-easy-content">
-                    <div className="pro-easy-emoji">✨</div>
-                    <h2>レシピ投稿だけ！手間なしスタート</h2>
-                    <p className="pro-easy-description">
-                        難しい設定は一切不要。<br />
-                        <strong>いつものレシピを投稿するだけで</strong>、<br />
-                        あなたのレシピが多くのアレルギーっ子家庭に届きます。
-                    </p>
-                    <ul className="pro-easy-list">
-                        <li>
-                            <CheckCircle size={18} className="text-green-500" />
-                            <span>登録費用：<strong>無料</strong></span>
-                        </li>
-                        <li>
-                            <CheckCircle size={18} className="text-green-500" />
-                            <span>追加作業：<strong>なし</strong></span>
-                        </li>
-                        <li>
-                            <CheckCircle size={18} className="text-green-500" />
-                            <span>投稿方法：<strong>通常と同じ</strong></span>
-                        </li>
-                    </ul>
                 </div>
             </section>
 

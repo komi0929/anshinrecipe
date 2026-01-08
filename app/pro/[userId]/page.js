@@ -65,7 +65,7 @@ export default function ProProfilePage() {
 
                 setProUser({
                     id: profileData.id,
-                    userName: profileData.username || profileData.display_name || 'プロユーザー',
+                    userName: profileData.username || profileData.display_name || 'プロユーザーさま',
                     avatarUrl: profileData.avatar_url || '',
                     bio: profileData.bio || '',
                     instagramUrl: profileData.instagram_url || '',
@@ -177,7 +177,7 @@ export default function ProProfilePage() {
                 <h2 className="pro-user-name">{proUser.userName}</h2>
                 <div className="pro-verified-badge">
                     <Star size={14} fill="currentColor" />
-                    認証済みプロユーザー
+                    認証済みプロユーザーさま
                 </div>
 
                 {/* Bio */}
@@ -268,6 +268,6 @@ export default function ProProfilePage() {
                     </div>
                 )}
             </div>
-        </div>
+        </div >
     );
 }

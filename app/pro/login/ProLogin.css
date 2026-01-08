@@ -77,78 +77,40 @@
     text-align: center;
 }
 
-/* Preview Card */
-.pro-preview-card {
+/* Intro Card */
+.pro-intro-card {
     background: white;
-    border-radius: 16px;
-    padding: 1.25rem;
+    border-radius: 24px;
+    padding: 1.5rem;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    text-align: center;
 }
 
-.pro-preview-image {
-    position: relative;
-    aspect-ratio: 1;
-    background: linear-gradient(135deg, #fed7aa, #fb923c);
-    border-radius: 12px;
+.pro-intro-image {
+    margin-bottom: 1.5rem;
     overflow: hidden;
-    margin-bottom: 1rem;
+    border-radius: 16px;
 }
 
-.pro-preview-badge {
-    position: absolute;
-    top: 8px;
-    left: 8px;
-    z-index: 2;
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-    background: linear-gradient(135deg, #FFD700, #FFA500);
-    color: white;
-    padding: 4px 10px;
-    border-radius: 9999px;
-    font-size: 11px;
-    font-weight: 700;
-    box-shadow: 0 2px 8px rgba(255, 165, 0, 0.4);
+.pro-intro-image img {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
 }
 
-.pro-preview-placeholder {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.pro-preview-placeholder span {
-    font-size: 64px;
-    opacity: 0.8;
-}
-
-.pro-preview-title {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding: 2rem 1rem 1rem;
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
-    color: white;
-    font-weight: 700;
+.pro-intro-text {
     font-size: 1rem;
-}
-
-.pro-preview-features {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-.pro-feature-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.9rem;
     color: #475569;
+    line-height: 1.7;
     font-weight: 500;
+}
+
+.pro-highlight-block {
+    background: #fff7ed;
+    border-left: 4px solid #f97316;
+    padding: 1rem;
+    margin: 1rem 0;
+    border-radius: 0 8px 8px 0;
 }
 
 /* Benefits */
