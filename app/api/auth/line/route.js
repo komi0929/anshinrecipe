@@ -100,16 +100,22 @@ export async function POST(request) {
             const primaryEmail = `${lineUserId}@line.anshin-recipe.app`;
             const legacyEmail = `${lineUserId}@line.user`;
 
-            // Search in ALL users (handling pagination)
-            const allMatchUsers = await findAllUsersByEmails(supabaseAdmin, [primaryEmail, legacyEmail]);
-            const existingAuthUser = allMatchUsers[0]; // Use the first match
+            console.log('Searching for existing Auth user by emails:', [primaryEmail, legacyEmail]);
+
+            // Speed optimization: Use getUserByEmail instead of listUsers
+            const { data: primaryResult } = await supabaseAdmin.auth.admin.getUserByEmail(primaryEmail);
+            let existingAuthUser = primaryResult?.user;
+
+            if (!existingAuthUser) {
+                const { data: legacyResult } = await supabaseAdmin.auth.admin.getUserByEmail(legacyEmail);
+                existingAuthUser = legacyResult?.user;
+            }
 
             if (existingAuthUser) {
                 userId = existingAuthUser.id;
                 finalEmail = existingAuthUser.email;
-                console.log('Found existing Auth user by email:', finalEmail);
+                console.log('Found existing Auth user instantly:', finalEmail);
             } else {
-                // Truly a NEW user
                 console.log('Creating new user for:', primaryEmail);
                 const dummyPassword = generateSecurePassword();
                 const { data: authData, error: signUpError } = await supabaseAdmin.auth.admin.createUser({
@@ -155,10 +161,10 @@ export async function POST(request) {
 
         if (profileError) {
             console.error('Profile sync error:', profileError);
-            // Non-critical, but should be logged
         }
 
         // 4. Generate Magic Link for Session
+        console.log('Generating session link for email:', finalEmail);
         const appUrl = process.env.NEXT_PUBLIC_APP_URL || request.headers.get('origin') || 'http://localhost:3000';
         const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.admin.generateLink({
             type: 'magiclink',
@@ -173,6 +179,7 @@ export async function POST(request) {
             return Response.json({ error: `Session generation failed: ${sessionError.message}` }, { status: 500 });
         }
 
+        console.log('Success! Redirecting to action link...');
         return Response.json({
             success: true,
             userId: userId,
@@ -185,65 +192,14 @@ export async function POST(request) {
     }
 }
 
-/**
- * Find users by multiple emails across all pages of Supabase Auth
- * Necessary because listUsers() only returns 50 users at a time.
- */
-async function findAllUsersByEmails(supabase, emails) {
-    console.log('Searching for users with emails:', emails);
-    let allUsers = [];
-    let page = 1;
-    const perPage = 50;
-    const MAX_PAGES = 20; // Safety break to prevent infinite loops (up to 1000 users)
-
-    while (page <= MAX_PAGES) {
-        console.log(`Fetching page ${page} of users...`);
-        // Correct Supabase v2 pagination format
-        const { data: { users }, error } = await supabase.auth.admin.listUsers({
-            pagination: {
-                page: page,
-                perPage: perPage
-            }
-        });
-
-        if (error) {
-            console.error(`Error fetching users at page ${page}:`, error);
-            break;
-        }
-
-        if (!users || users.length === 0) {
-            console.log(`No more users found at page ${page}`);
-            break;
-        }
-
-        const matches = users.filter(u => emails.includes(u.email));
-        if (matches.length > 0) {
-            console.log(`Found ${matches.length} matching users on page ${page}`);
-            allUsers.push(...matches);
-        }
-
-        // If we found a match, we can stop early if we only need one, 
-        // but here we keep going to be exhaustive if needed.
-        if (allUsers.length > 0) break;
-
-        if (users.length < perPage) {
-            console.log('Reached last page of users');
-            break;
-        }
-
-        page++;
-    }
-
-    if (page > MAX_PAGES) {
-        console.warn('findAllUsersByEmails reached MAX_PAGES safety limit');
-    }
-
-    return allUsers;
-}
-
-
 function generateSecurePassword() {
-    const array = new Uint8Array(32);
-    crypto.getRandomValues(array);
-    return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+    try {
+        if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+            const array = new Uint8Array(32);
+            crypto.getRandomValues(array);
+            return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+        }
+    } catch (e) { }
+    return Math.random().toString(36).substring(2) + Date.now().toString(36);
 }
+
