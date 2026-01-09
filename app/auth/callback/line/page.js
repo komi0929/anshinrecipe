@@ -91,7 +91,8 @@ function LineCallbackContent() {
                 console.error('LINE callback error:', error);
                 setError(error.message || '認証処理中にエラーが発生しました');
                 setLoading(false);
-                setTimeout(() => router.push('/login'), 3000);
+                // Extend timeout to give user time to read the error
+                setTimeout(() => router.push('/login'), 8000);
             }
         };
 
@@ -111,9 +112,11 @@ function LineCallbackContent() {
                     ) : error ? (
                         <>
                             <AlertCircle size={48} color="#EF4444" />
-                            <h2>エラー</h2>
-                            <p>{error}</p>
-                            <p className="redirect-message">ログインページにリダイレクトします...</p>
+                            <h2 style={{ color: '#EF4444' }}>認証エラーが発生しました</h2>
+                            <div className="error-box">
+                                <p className="error-message">{error}</p>
+                            </div>
+                            <p className="redirect-hint">まもなくログインページに戻ります...</p>
                         </>
                     ) : (
                         <>
@@ -149,10 +152,27 @@ function LineCallbackContent() {
           color: var(--text-secondary);
         }
 
-        .redirect-message {
-          margin-top: 8px;
-          font-size: 14px;
-          color: var(--text-tertiary);
+        .error-box {
+          background-color: #FEF2F2;
+          border: 1px solid #FECACA;
+          border-radius: 12px;
+          padding: 16px;
+          margin: 8px 0;
+          max-width: 100%;
+          word-break: break-all;
+        }
+
+        .error-message {
+          color: #DC2626 !important;
+          font-size: 14px !important;
+          font-weight: 500;
+          line-height: 1.5;
+        }
+
+        .redirect-hint {
+          margin-top: 12px !important;
+          font-size: 12px !important;
+          color: #9CA3AF !important;
         }
 
         .animate-spin {

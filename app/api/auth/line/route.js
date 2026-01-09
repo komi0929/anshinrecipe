@@ -44,7 +44,7 @@ export async function POST(request) {
         if (!tokenResponse.ok) {
             const error = await tokenResponse.json();
             console.error('LINE token exchange error:', error);
-            return Response.json({ error: 'Failed to exchange code for token' }, { status: 400 });
+            return Response.json({ error: `LINE token exchange failed: ${error.error_description || error.error || 'unknown'}` }, { status: 400 });
         }
 
         const tokenData = await tokenResponse.json();
@@ -65,84 +65,55 @@ export async function POST(request) {
         const lineProfile = await profileResponse.json();
         const { userId: lineUserId, displayName, pictureUrl } = lineProfile;
 
-        // Debug log for pictureUrl
-        console.log('LINE Profile:', { lineUserId, displayName, pictureUrl: pictureUrl || 'NOT PROVIDED' });
+        // ---------------------------------------------------------
+        // ROBUST AUTH FLOW START
+        // ---------------------------------------------------------
 
-        // Check if user already exists - fetch both picture_url and avatar_url
+        // 1. Check profiles table first (single source of truth for LINE linkage)
         const { data: existingProfile } = await supabaseAdmin
             .from('profiles')
-            .select('id, picture_url, avatar_url')
+            .select('id, is_pro')
             .eq('line_user_id', lineUserId)
             .single();
 
-        let userId;
+        let userId = null;
+        let finalEmail = null;
 
         if (existingProfile) {
-            // Existing user - update profile
             userId = existingProfile.id;
+            console.log('Found profile for LINE ID:', lineUserId, 'UID:', userId);
 
-            // Determine the best avatar: LINE's pictureUrl > existing avatar_url > existing picture_url
-            // const bestAvatar = pictureUrl || existingProfile.avatar_url || existingProfile.picture_url;
+            // Verify if Auth user still exists
+            const { data: { user: authUser }, error: getAuthError } = await supabaseAdmin.auth.admin.getUserById(userId);
 
-            // Always update avatar from LINE if provided, otherwise keep existing
-            const updateData = {
-                display_name: displayName,
-            };
-
-            // Only update avatar fields if LINE provides a new one
-            if (pictureUrl) {
-                updateData.picture_url = pictureUrl;
-                updateData.avatar_url = pictureUrl;
-                console.log('Updating avatar with LINE pictureUrl:', pictureUrl);
+            if (getAuthError || !authUser) {
+                console.warn('Auth user missing for existing profile. Re-creating auth user...');
+                // Fallback: This is an inconsistent state, we need to handle it below in the "New/Broken User" path
+                userId = null;
             } else {
-                console.log('LINE pictureUrl not provided, keeping existing avatar:', existingProfile.avatar_url);
+                finalEmail = authUser.email;
             }
+        }
 
-            // プロユーザー登録フローからのログインの場合、is_proをtrueに設定
-            if (isProRegistration) {
-                updateData.is_pro = true;
-                console.log('Pro registration detected, setting is_pro to true');
-            }
+        // 2. If no valid active userId, we need to find or create the auth user
+        if (!userId) {
+            const primaryEmail = `${lineUserId}@line.anshin-recipe.app`;
+            const legacyEmail = `${lineUserId}@line.user`;
 
-            await supabaseAdmin
-                .from('profiles')
-                .update(updateData)
-                .eq('id', userId);
-        } else {
-            // Check if auth user exists but profile doesn't
-            const dummyEmail = `${lineUserId}@line.anshin-recipe.app`;
+            // Search in ALL users (handling pagination)
+            const allMatchUsers = await findAllUsersByEmails(supabaseAdmin, [primaryEmail, legacyEmail]);
+            const existingAuthUser = allMatchUsers[0]; // Use the first match
 
-            // Try to get existing auth user
-            const { data: existingAuthUser } = await supabaseAdmin.auth.admin.listUsers();
-            const authUser = existingAuthUser.users.find(u => u.email === dummyEmail);
-
-            if (authUser) {
-                // Auth user exists but profile doesn't - create profile only
-                userId = authUser.id;
-
-                const { error: profileError } = await supabaseAdmin
-                    .from('profiles')
-                    .upsert({
-                        id: userId,
-                        line_user_id: lineUserId,
-                        display_name: displayName,
-                        picture_url: pictureUrl,
-                        avatar_url: pictureUrl,
-                        is_pro: isProRegistration || false,
-                    }, {
-                        onConflict: 'id'
-                    });
-
-                if (profileError) {
-                    console.error('Profile upsert error:', profileError);
-                    return Response.json({ error: 'Failed to create profile' }, { status: 500 });
-                }
+            if (existingAuthUser) {
+                userId = existingAuthUser.id;
+                finalEmail = existingAuthUser.email;
+                console.log('Found existing Auth user by email:', finalEmail);
             } else {
-                // New user - create auth user and profile
+                // Truly a NEW user
+                console.log('Creating new user for:', primaryEmail);
                 const dummyPassword = generateSecurePassword();
-
                 const { data: authData, error: signUpError } = await supabaseAdmin.auth.admin.createUser({
-                    email: dummyEmail,
+                    email: primaryEmail,
                     password: dummyPassword,
                     email_confirm: true,
                     user_metadata: {
@@ -152,62 +123,46 @@ export async function POST(request) {
                 });
 
                 if (signUpError) {
-                    // If email already exists, try to find the user
-                    if (signUpError.code === 'email_exists' || signUpError.message?.includes('User already registered')) {
-                        console.log('Email exists, finding existing user...');
-                        const { data: allUsers } = await supabaseAdmin.auth.admin.listUsers();
-                        const existingUser = allUsers.users.find(u => u.email === dummyEmail);
-
-                        if (existingUser) {
-                            userId = existingUser.id;
-                        } else {
-                            console.error('Could not find existing user');
-                            return Response.json({ error: 'Failed to find user' }, { status: 500 });
-                        }
-                    } else {
-                        console.error('Supabase user creation error:', signUpError);
-                        return Response.json({ error: 'Failed to create user' }, { status: 500 });
-                    }
-                } else {
-                    userId = authData.user.id;
+                    console.error('Supabase user creation error:', signUpError);
+                    return Response.json({ error: `Auth creation failed: ${signUpError.message}` }, { status: 500 });
                 }
 
-                // Create profile using upsert to avoid conflicts
-                const { error: profileError } = await supabaseAdmin
-                    .from('profiles')
-                    .upsert({
-                        id: userId,
-                        line_user_id: lineUserId,
-                        display_name: displayName,
-                        picture_url: pictureUrl,
-                        avatar_url: pictureUrl,
-                        is_pro: isProRegistration || false,
-                    }, {
-                        onConflict: 'id'
-                    });
-
-                if (profileError) {
-                    console.error('Profile creation error:', profileError);
-                    return Response.json({ error: 'Failed to create profile' }, { status: 500 });
-                }
+                userId = authData.user.id;
+                finalEmail = primaryEmail;
             }
         }
 
-        // Fetch the actual user's email to ensure magic link works even if email domain changed
-        const { data: { user: authUser }, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId);
+        // 3. Sync/Create Profile
+        const updateData = {
+            id: userId,
+            line_user_id: lineUserId,
+            display_name: displayName,
+            updated_at: new Date().toISOString()
+        };
 
-        if (userError || !authUser) {
-            console.error('Failed to fetch auth user:', userError);
-            return Response.json({ error: 'Failed to fetch user data/failed' }, { status: 500 });
+        if (pictureUrl) {
+            updateData.picture_url = pictureUrl;
+            updateData.avatar_url = pictureUrl;
         }
 
-        // Get the app URL for redirect
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL || request.headers.get('origin') || 'http://localhost:3000';
+        if (isProRegistration) {
+            updateData.is_pro = true;
+        }
 
-        // Generate session token for the user using their ACTUAL email
+        const { error: profileError } = await supabaseAdmin
+            .from('profiles')
+            .upsert(updateData, { onConflict: 'id' });
+
+        if (profileError) {
+            console.error('Profile sync error:', profileError);
+            // Non-critical, but should be logged
+        }
+
+        // 4. Generate Magic Link for Session
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || request.headers.get('origin') || 'http://localhost:3000';
         const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.admin.generateLink({
             type: 'magiclink',
-            email: authUser.email,
+            email: finalEmail,
             options: {
                 redirectTo: appUrl,
             }
@@ -215,7 +170,7 @@ export async function POST(request) {
 
         if (sessionError) {
             console.error('Session generation error:', sessionError);
-            return Response.json({ error: 'Failed to create session' }, { status: 500 });
+            return Response.json({ error: `Session generation failed: ${sessionError.message}` }, { status: 500 });
         }
 
         return Response.json({
@@ -225,9 +180,38 @@ export async function POST(request) {
         });
 
     } catch (error) {
-        console.error('LINE auth error:', error);
-        return Response.json({ error: 'Internal server error' }, { status: 500 });
+        console.error('Critical LINE auth error:', error);
+        return Response.json({ error: `Server error: ${error.message}` }, { status: 500 });
     }
+}
+
+/**
+ * Find users by multiple emails across all pages of Supabase Auth
+ * Necessary because listUsers() only returns 50 users at a time.
+ */
+async function findAllUsersByEmails(supabase, emails) {
+    let allUsers = [];
+    let page = 1;
+    const perPage = 50;
+
+    while (true) {
+        const { data: { users }, error } = await supabase.auth.admin.listUsers({
+            page: page,
+            perPage: perPage
+        });
+
+        if (error || !users || users.length === 0) break;
+
+        const matches = users.filter(u => emails.includes(u.email));
+        if (matches.length > 0) {
+            allUsers.push(...matches);
+        }
+
+        if (users.length < perPage) break; // Last page reached
+        page++;
+    }
+
+    return allUsers;
 }
 
 
