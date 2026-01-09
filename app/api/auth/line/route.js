@@ -82,7 +82,7 @@ export async function POST(request) {
             userId = existingProfile.id;
 
             // Determine the best avatar: LINE's pictureUrl > existing avatar_url > existing picture_url
-            const bestAvatar = pictureUrl || existingProfile.avatar_url || existingProfile.picture_url;
+            // const bestAvatar = pictureUrl || existingProfile.avatar_url || existingProfile.picture_url;
 
             // Always update avatar from LINE if provided, otherwise keep existing
             const updateData = {
@@ -193,10 +193,18 @@ export async function POST(request) {
             }
         }
 
-        // Generate session token for the user
+        // Fetch the actual user's email to ensure magic link works even if email domain changed
+        const { data: { user: authUser }, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId);
+
+        if (userError || !authUser) {
+            console.error('Failed to fetch auth user:', userError);
+            return Response.json({ error: 'Failed to fetch user data/failed' }, { status: 500 });
+        }
+
+        // Generate session token for the user using their ACTUAL email
         const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.admin.generateLink({
             type: 'magiclink',
-            email: `${lineUserId}@line.anshin-recipe.app`,
+            email: authUser.email,
         });
 
         if (sessionError) {
@@ -215,6 +223,7 @@ export async function POST(request) {
         return Response.json({ error: 'Internal server error' }, { status: 500 });
     }
 }
+
 
 function generateSecurePassword() {
     const array = new Uint8Array(32);

@@ -3,6 +3,7 @@ import { Search, X, Loader2, Youtube, RefreshCw, Plus } from 'lucide-react';
 import YouTubeRecipeCard from './YouTubeRecipeCard';
 import ChildSelector from './ChildSelector';
 import { useToast } from './Toast';
+import { useIMESafeSubmit } from '@/hooks/useIMESafeSubmit';
 import { MEAL_SCENES, SCENE_ICONS } from '@/lib/constants';
 import './YouTubeSearchOverlay.css';
 
@@ -40,6 +41,12 @@ const YouTubeSearchOverlay = ({
 
     // UI State
     const { addToast } = useToast();
+
+    // 🛡️ IME-Safe Submit Hook - prevents accidental submission during Japanese input
+    const { getInputProps: getSearchInputProps } = useIMESafeSubmit({
+        onSubmit: () => handleSearch(),
+        mode: 'enter'
+    });
 
     // Sync child selection when opened
     useEffect(() => {
@@ -217,12 +224,7 @@ const YouTubeSearchOverlay = ({
                                     onChange={(e) => setQuery(e.target.value)}
                                     placeholder="例: ハンバーグ"
                                     className="yt-search-input-clean"
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter') {
-                                            e.preventDefault();
-                                            handleSearch();
-                                        }
-                                    }}
+                                    {...getSearchInputProps()}
                                     autoFocus
                                 />
                                 <button

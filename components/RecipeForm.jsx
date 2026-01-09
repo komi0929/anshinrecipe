@@ -10,6 +10,8 @@ import SmartImportOverlay from './SmartImportOverlay'; // Import SmartImportOver
 import YouTubeSearchOverlay from './YouTubeSearchOverlay'; // Import YouTubeSearchOverlay
 import { Youtube } from 'lucide-react'; // Import Youtube icon
 import { useAnalytics } from '@/hooks/useAnalytics';
+import { useIMESafeSubmit } from '@/hooks/useIMESafeSubmit';
+import { useDraftAutoSave } from '@/hooks/useDraftAutoSave';
 import './RecipeForm.css';
 
 export const RecipeForm = ({
@@ -55,6 +57,62 @@ export const RecipeForm = ({
     const [showOverlay, setShowOverlay] = useState(false);
     const originalSourceUrl = useRef(initialData.sourceUrl || ''); // Track original URL for edit mode
     const isYouTubeSelection = useRef(false); // Ref to track if change came from YouTube selection
+
+    // 💾 Draft Auto-Save Hook (only for new recipes)
+    const draftData = React.useMemo(() => ({
+        title,
+        sourceUrl,
+        description,
+        memo,
+        tags,
+        selectedChildren,
+        selectedScenes,
+        freeFromAllergens,
+        isPublic,
+    }), [title, sourceUrl, description, memo, tags, selectedChildren, selectedScenes, freeFromAllergens, isPublic]);
+
+    const {
+        hasDraft,
+        draftData: savedDraft,
+        restoreDraft,
+        clearDraft,
+        dismissDraft,
+        lastSaved
+    } = useDraftAutoSave({
+        key: 'recipe_form',
+        data: draftData,
+        debounceMs: 3000,
+        enabled: !isEditMode, // Only save drafts for new recipes
+    });
+
+    // Show draft restoration prompt
+    const [showDraftPrompt, setShowDraftPrompt] = useState(false);
+    useEffect(() => {
+        if (hasDraft && !isEditMode) {
+            setShowDraftPrompt(true);
+        }
+    }, [hasDraft, isEditMode]);
+
+    const handleRestoreDraft = () => {
+        const draft = restoreDraft();
+        if (draft) {
+            if (draft.title) setTitle(draft.title);
+            if (draft.sourceUrl) setSourceUrl(draft.sourceUrl);
+            if (draft.description) setDescription(draft.description);
+            if (draft.memo) setMemo(draft.memo);
+            if (draft.tags) setTags(draft.tags);
+            if (draft.selectedChildren) setSelectedChildren(draft.selectedChildren);
+            if (draft.selectedScenes) setSelectedScenes(draft.selectedScenes);
+            if (draft.freeFromAllergens) setFreeFromAllergens(draft.freeFromAllergens);
+            if (draft.isPublic !== undefined) setIsPublic(draft.isPublic);
+        }
+        setShowDraftPrompt(false);
+    };
+
+    const handleDismissDraft = () => {
+        dismissDraft();
+        setShowDraftPrompt(false);
+    };
 
     // Auto-calculate allergens from selected children
     useEffect(() => {
@@ -358,6 +416,8 @@ export const RecipeForm = ({
             };
 
             await onSubmit(formData);
+            // 🗑️ Clear draft on successful submission
+            clearDraft();
         } catch (error) {
             console.error('Form submission failed', error);
             alert('保存に失敗しました');
@@ -388,6 +448,16 @@ export const RecipeForm = ({
     const toggleScene = (scene) => { setSelectedScenes(prev => prev.includes(scene) ? prev.filter(s => s !== scene) : [...prev, scene]); };
     const addCustomScene = () => { if (customScene.trim() && !selectedScenes.includes(customScene.trim())) { setSelectedScenes([...selectedScenes, customScene.trim()]); setCustomScene(''); } };
     const removeScene = (sceneToRemove) => { setSelectedScenes(selectedScenes.filter(scene => scene !== sceneToRemove)); };
+
+    // 🛡️ IME-Safe Submit Hooks - prevents accidental submission during Japanese input
+    const { getInputProps: getTagInputProps } = useIMESafeSubmit({
+        onSubmit: handleAddTag,
+        mode: 'enter'
+    });
+    const { getInputProps: getSceneInputProps } = useIMESafeSubmit({
+        onSubmit: addCustomScene,
+        mode: 'enter'
+    });
 
     const [showYouTubeSearch, setShowYouTubeSearch] = useState(false);
 
@@ -543,8 +613,8 @@ export const RecipeForm = ({
                                     );
                                 }}
                                 className={`px-3 py-1.5 rounded-full text-sm font-bold transition-all border ${freeFromAllergens.includes(allergen)
-                                        ? 'bg-green-500 text-white border-green-500 shadow-md'
-                                        : 'bg-white text-slate-600 border-slate-200 hover:border-green-300'
+                                    ? 'bg-green-500 text-white border-green-500 shadow-md'
+                                    : 'bg-white text-slate-600 border-slate-200 hover:border-green-300'
                                     }`}
                             >
                                 {allergen}なし
@@ -567,7 +637,7 @@ export const RecipeForm = ({
             <div className="form-section">
                 <label className="section-label">おすすめシーン</label>
                 <div className="scene-selection"> {MEAL_SCENES.map(scene => (<button type="button" key={scene} onClick={() => toggleScene(scene)} className={`scene-chip ${selectedScenes.includes(scene) ? 'selected' : ''}`} > <span className="mr-1">{SCENE_ICONS[scene] || '🍽️'}</span> {scene} </button>))} {selectedScenes.filter(scene => !MEAL_SCENES.includes(scene)).map(scene => (<span key={scene} className="scene-chip selected custom-scene"> {scene} <button type="button" onClick={() => removeScene(scene)} className="remove-scene-btn"> <X size={14} /> </button> </span>))} </div >
-                <div className="custom-scene-input"> <input type="text" value={customScene} onChange={(e) => setCustomScene(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomScene())} placeholder="その他のシーンを入力" className="form-input" /> <button type="button" onClick={addCustomScene} className="add-btn"> 追加 </button> </div>
+                <div className="custom-scene-input"> <input type="text" value={customScene} onChange={(e) => setCustomScene(e.target.value)} {...getSceneInputProps()} placeholder="その他のシーンを入力" className="form-input" /> <button type="button" onClick={addCustomScene} className="add-btn"> 追加 </button> </div>
             </div >
 
             {/* Memo */}
@@ -579,7 +649,7 @@ export const RecipeForm = ({
             {/* Tags */}
             <div className="form-section">
                 <label className="section-label">タグ</label>
-                <div className="tags-container"> <div className="tags-list"> {tags.map(tag => (<span key={tag} className="tag-chip"> #{tag} <button type="button" onClick={() => removeTag(tag)}>&times;</button> </span>))} </div> <div className="tag-input-wrapper"> <input type="text" value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleAddTag(e)} placeholder="例: 時短、簡単、栄養満点" className="form-input" /> <button type="button" onClick={handleAddTag} className="add-btn"> 追加 </button> </div> </div>
+                <div className="tags-container"> <div className="tags-list"> {tags.map(tag => (<span key={tag} className="tag-chip"> #{tag} <button type="button" onClick={() => removeTag(tag)}>&times;</button> </span>))} </div> <div className="tag-input-wrapper"> <input type="text" value={tagInput} onChange={(e) => setTagInput(e.target.value)} {...getTagInputProps()} placeholder="例: 時短、簡単、栄養満点" className="form-input" /> <button type="button" onClick={handleAddTag} className="add-btn"> 追加 </button> </div> </div>
             </div >
 
             {/* Public/Private Setting */}

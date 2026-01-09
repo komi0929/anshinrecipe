@@ -1,0 +1,220 @@
+
+> anshin-recipe@0.0.0 lint
+> next lint
+
+
+./app/admin/page.js
+413:60  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+428:60  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+484:45  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+814:49  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+835:41  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+835:41  Warning: img elements must have an alt prop, either with meaningful text, or an empty string for decorative images.  jsx-a11y/alt-text
+855:56  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+855:56  Warning: img elements must have an alt prop, either with meaningful text, or an empty string for decorative images.  jsx-a11y/alt-text
+
+./app/api/admin/analytics/route.js
+19:27  Warning: 'request' is defined but never used.  @typescript-eslint/no-unused-vars
+24:15  Warning: 'monthAgo' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+176:18  Warning: 'e' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./app/api/admin/stats/route.js
+12:27  Warning: 'request' is defined but never used.  @typescript-eslint/no-unused-vars
+48:13  Warning: 'totalAllergies' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./app/api/auth/line/route.js
+85:19  Warning: 'bestAvatar' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./app/api/og/route.js
+27:25  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+27:25  Warning: img elements must have an alt prop, either with meaningful text, or an empty string for decorative images.  jsx-a11y/alt-text
+
+./app/api/smart-import/route.js
+102:26  Warning: 'e' is defined but never used.  @typescript-eslint/no-unused-vars
+153:18  Warning: 'e' is defined but never used.  @typescript-eslint/no-unused-vars
+192:22  Warning: 'e' is defined but never used.  @typescript-eslint/no-unused-vars
+205:22  Warning: 'e' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./app/api/youtube/search/route.js
+34:17  Warning: 'childProfiles' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./app/notifications/page.js
+4:8  Warning: 'Link' is defined but never used.  @typescript-eslint/no-unused-vars
+6:10  Warning: 'ArrowLeft' is defined but never used.  @typescript-eslint/no-unused-vars
+6:39  Warning: 'Check' is defined but never used.  @typescript-eslint/no-unused-vars
+9:8  Warning: 'Image' is defined but never used.  @typescript-eslint/no-unused-vars
+15:19  Warning: 'profile' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+16:86  Warning: 'unreadCount' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+200:25  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./app/page.js
+11:18  Warning: 'Plus' is defined but never used.  @typescript-eslint/no-unused-vars
+11:32  Warning: 'UserIcon' is defined but never used.  @typescript-eslint/no-unused-vars
+11:42  Warning: 'Grid' is defined but never used.  @typescript-eslint/no-unused-vars
+11:48  Warning: 'Bookmark' is defined but never used.  @typescript-eslint/no-unused-vars
+11:58  Warning: 'Heart' is defined but never used.  @typescript-eslint/no-unused-vars
+11:65  Warning: 'Baby' is defined but never used.  @typescript-eslint/no-unused-vars
+11:71  Warning: 'BookHeart' is defined but never used.  @typescript-eslint/no-unused-vars
+15:10  Warning: 'Footer' is defined but never used.  @typescript-eslint/no-unused-vars
+18:10  Warning: 'Input' is defined but never used.  @typescript-eslint/no-unused-vars
+37:31  Warning: 'refreshRecipes' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+45:12  Warning: 'showOnboarding' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+45:28  Warning: 'setShowOnboarding' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+55:13  Warning: 'unreadCount' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+261:8  Warning: React Hook React.useMemo has a missing dependency: 'profile.children.length'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+694:21  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./app/pro/[userId]/page.js
+5:8  Warning: 'Link' is defined but never used.  @typescript-eslint/no-unused-vars
+6:8  Warning: 'Image' is defined but never used.  @typescript-eslint/no-unused-vars
+17:10  Warning: 'RecipeCardSkeleton' is defined but never used.  @typescript-eslint/no-unused-vars
+37:13  Warning: 'user' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+161:29  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./app/profile/page.js
+9:11  Warning: 'Settings' is defined but never used.  @typescript-eslint/no-unused-vars
+9:21  Warning: 'FileText' is defined but never used.  @typescript-eslint/no-unused-vars
+10:41  Warning: 'MapPin' is defined but never used.  @typescript-eslint/no-unused-vars
+11:5  Warning: 'ShieldAlert' is defined but never used.  @typescript-eslint/no-unused-vars
+11:38  Warning: 'Loader2' is defined but never used.  @typescript-eslint/no-unused-vars
+11:47  Warning: 'Award' is defined but never used.  @typescript-eslint/no-unused-vars
+11:54  Warning: 'MessageCircle' is defined but never used.  @typescript-eslint/no-unused-vars
+16:8  Warning: 'NotificationList' is defined but never used.  @typescript-eslint/no-unused-vars
+22:10  Warning: 'ChevronDown' is defined but never used.  @typescript-eslint/no-unused-vars
+22:23  Warning: 'ChevronUp' is defined but never used.  @typescript-eslint/no-unused-vars
+34:13  Warning: 'notifications' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+34:28  Warning: 'unreadCount' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+34:41  Warning: 'markAsRead' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+34:53  Warning: 'markAllAsRead' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+53:12  Warning: 'customAllergen' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+63:11  Warning: 'ALLERGEN_OPTIONS' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+408:56  Warning: 'index' is defined but never used.  @typescript-eslint/no-unused-vars
+592:41  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+592:41  Warning: img elements must have an alt prop, either with meaningful text, or an empty string for decorative images.  jsx-a11y/alt-text
+594:41  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+594:41  Warning: img elements must have an alt prop, either with meaningful text, or an empty string for decorative images.  jsx-a11y/alt-text
+887:33  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./app/profile/pro-settings/page.js
+182:33  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./app/recipe/new/page.js
+7:10  Warning: 'ArrowLeft' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./app/recipe/quick-save/page.js
+71:30  Warning: 'e' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./app/recipe/[id]/edit/page.js
+9:8  Warning: 'Image' is defined but never used.  @typescript-eslint/no-unused-vars
+16:27  Warning: 'deleteRecipe' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./app/recipe/[id]/page.js
+54:11  Warning: 'resolvedParams' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./app/recipe/[id]/RecipeClient.jsx
+11:61  Warning: 'UserIcon' is defined but never used.  @typescript-eslint/no-unused-vars
+11:78  Warning: 'Smile' is defined but never used.  @typescript-eslint/no-unused-vars
+11:92  Warning: 'CheckCircle' is defined but never used.  @typescript-eslint/no-unused-vars
+29:64  Warning: 'trackTriedReport' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+253:11  Warning: 'totalReactions' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+322:21  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+461:45  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+542:50  Warning: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+579:37  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+626:38  Warning: 'err' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./app/search/ingredient/[name]/page.js
+6:8  Warning: 'Image' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./app/shortcut-guide/page.js
+5:21  Warning: 'Download' is defined but never used.  @typescript-eslint/no-unused-vars
+5:31  Warning: 'Share' is defined but never used.  @typescript-eslint/no-unused-vars
+8:12  Warning: 'isIOS' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+12:11  Warning: 'shortcutInstallUrl' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+15:11  Warning: 'createShortcutUrl' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+42:18  Warning: 'err' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./app/sns-save-guide/page.js
+5:27  Warning: 'CheckCircle' is defined but never used.  @typescript-eslint/no-unused-vars
+5:57  Warning: 'Share2' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./app/team/page.js
+9:13  Warning: 'user' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./app/welcome/page.js
+5:69  Warning: 'PenTool' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./components/AddToCollection.jsx
+18:5  Warning: 'recipeName' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./components/AllergySelector.jsx
+3:16  Warning: 'X' is defined but never used.  @typescript-eslint/no-unused-vars
+18:11  Warning: 'addCustomAllergen' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./components/BottomNav.jsx
+63:25  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./components/ChildCard.jsx
+75:33  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+164:25  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./components/ChildSelector.jsx
+38:33  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./components/CollectionCard.jsx
+57:37  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./components/CookingLog.jsx
+4:10  Warning: 'Send' is defined but never used.  @typescript-eslint/no-unused-vars
+4:24  Warning: 'Star' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./components/NotificationList.jsx
+8:67  Warning: 'unreadCount' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+69:15  Warning: 'recipeTitle' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+140:15  Warning: 'recipeImage' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./components/ProAvatar.jsx
+29:17  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./components/PWAInstallPrompt.jsx
+83:25  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./components/RecipeCard.jsx
+15:13  Warning: 'user' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+74:21  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./components/RecipeForm.jsx
+418:38  Error: Parsing error: Invalid character.
+
+./components/ThanksButton.jsx
+4:27  Warning: 'MessageCircle' is defined but never used.  @typescript-eslint/no-unused-vars
+24:67  Warning: 'recipeName' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./components/TriedReportCard.jsx
+75:25  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+117:21  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./components/TriedReportForm.jsx
+4:10  Warning: 'Camera' is defined but never used.  @typescript-eslint/no-unused-vars
+4:47  Warning: 'ImageIcon' is defined but never used.  @typescript-eslint/no-unused-vars
+129:29  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./components/YouTubeRecipeCard.jsx
+7:11  Warning: 'isHighQuality' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+13:17  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./components/YouTubeSearchOverlay.jsx
+101:15  Warning: 'sceneStr' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+102:15  Warning: 'featureStr' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+370:25  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./lib/actions/socialActions.js
+297:34  Warning: 'likeError' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./lib/imageUpload.js
+19:17  Warning: 'data' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./lib/lineAuth.js
+106:43  Warning: 'fetchError' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules

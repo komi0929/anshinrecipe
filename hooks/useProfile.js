@@ -223,10 +223,18 @@ export const useProfile = () => {
             return;
         }
 
-        const isSaved = savedRecipeIds.includes(recipeId);
+        const wasSaved = savedRecipeIds.includes(recipeId);
+
+        // 🚀 OPTIMISTIC UI: Update immediately for instant feedback (0ms perceived latency)
+        mutateProfile(prev => prev ? {
+            ...prev,
+            savedRecipeIds: wasSaved
+                ? prev.savedRecipeIds.filter(id => id !== recipeId)
+                : [...prev.savedRecipeIds, recipeId]
+        } : prev, false);
 
         try {
-            if (isSaved) {
+            if (wasSaved) {
                 // Delete
                 const { error } = await supabase
                     .from('saved_recipes')
@@ -235,8 +243,6 @@ export const useProfile = () => {
                     .eq('recipe_id', recipeId);
 
                 if (error) throw error;
-
-                mutateProfile(prev => prev ? { ...prev, savedRecipeIds: prev.savedRecipeIds.filter(id => id !== recipeId) } : prev, false);
             } else {
                 // Insert
                 const { error } = await supabase
@@ -245,27 +251,32 @@ export const useProfile = () => {
 
                 if (error) throw error;
 
-                mutateProfile(prev => prev ? { ...prev, savedRecipeIds: [...prev.savedRecipeIds, recipeId] } : prev, false);
-
-                // NOTIFICATION LOGIC
-                // Fetch recipe owner
-                const { data: recipe } = await supabase
+                // NOTIFICATION LOGIC (background, no need to await)
+                supabase
                     .from('recipes')
                     .select('user_id')
                     .eq('id', recipeId)
-                    .single();
-
-                if (recipe && recipe.user_id !== user.id) {
-                    await supabase.from('notifications').insert({
-                        recipient_id: recipe.user_id,
-                        actor_id: user.id,
-                        type: 'save',
-                        recipe_id: recipeId
+                    .single()
+                    .then(({ data: recipe }) => {
+                        if (recipe && recipe.user_id !== user.id) {
+                            supabase.from('notifications').insert({
+                                recipient_id: recipe.user_id,
+                                actor_id: user.id,
+                                type: 'save',
+                                recipe_id: recipeId
+                            });
+                        }
                     });
-                }
             }
         } catch (error) {
             console.error('Error toggling save:', error);
+            // 🔄 ROLLBACK: Revert optimistic update on failure
+            mutateProfile(prev => prev ? {
+                ...prev,
+                savedRecipeIds: wasSaved
+                    ? [...prev.savedRecipeIds, recipeId]
+                    : prev.savedRecipeIds.filter(id => id !== recipeId)
+            } : prev, false);
             addToast('操作に失敗しました', 'error');
         }
     };
@@ -276,10 +287,18 @@ export const useProfile = () => {
             return;
         }
 
-        const isLiked = likedRecipeIds.includes(recipeId);
+        const wasLiked = likedRecipeIds.includes(recipeId);
+
+        // 🚀 OPTIMISTIC UI: Update immediately for instant feedback (0ms perceived latency)
+        mutateProfile(prev => prev ? {
+            ...prev,
+            likedRecipeIds: wasLiked
+                ? prev.likedRecipeIds.filter(id => id !== recipeId)
+                : [...prev.likedRecipeIds, recipeId]
+        } : prev, false);
 
         try {
-            if (isLiked) {
+            if (wasLiked) {
                 const { error } = await supabase
                     .from('likes')
                     .delete()
@@ -288,8 +307,6 @@ export const useProfile = () => {
                     .eq('reaction_type', 'yummy');
 
                 if (error) throw error;
-
-                mutateProfile(prev => prev ? { ...prev, likedRecipeIds: prev.likedRecipeIds.filter(id => id !== recipeId) } : prev, false);
             } else {
                 const { error } = await supabase
                     .from('likes')
@@ -301,26 +318,33 @@ export const useProfile = () => {
 
                 if (error) throw error;
 
-                mutateProfile(prev => prev ? { ...prev, likedRecipeIds: [...prev.likedRecipeIds, recipeId] } : prev, false);
-
-                // NOTIFICATION LOGIC
-                const { data: recipe } = await supabase
+                // NOTIFICATION LOGIC (background, no need to await)
+                supabase
                     .from('recipes')
                     .select('user_id')
                     .eq('id', recipeId)
-                    .single();
-
-                if (recipe && recipe.user_id !== user.id) {
-                    await supabase.from('notifications').insert({
-                        recipient_id: recipe.user_id,
-                        actor_id: user.id,
-                        type: 'like',
-                        recipe_id: recipeId
+                    .single()
+                    .then(({ data: recipe }) => {
+                        if (recipe && recipe.user_id !== user.id) {
+                            supabase.from('notifications').insert({
+                                recipient_id: recipe.user_id,
+                                actor_id: user.id,
+                                type: 'like',
+                                recipe_id: recipeId
+                            });
+                        }
                     });
-                }
             }
         } catch (error) {
             console.error('Error toggling like:', error);
+            // 🔄 ROLLBACK: Revert optimistic update on failure
+            mutateProfile(prev => prev ? {
+                ...prev,
+                likedRecipeIds: wasLiked
+                    ? [...prev.likedRecipeIds, recipeId]
+                    : prev.likedRecipeIds.filter(id => id !== recipeId)
+            } : prev, false);
+            addToast('操作に失敗しました', 'error');
         }
     }
 

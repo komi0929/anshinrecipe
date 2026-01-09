@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, Suspense, useDeferredValue } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -37,6 +37,8 @@ const RecipeListPage = () => {
     const { recipes, loading, refreshRecipes } = useRecipes();
     const { profile, user, loading: profileLoading, savedRecipeIds, toggleSave, likedRecipeIds, toggleLike } = useProfile();
     const [searchTerm, setSearchTerm] = useState('');
+    // 🚀 useDeferredValue: Separates input state from heavy computation for smoother typing
+    const deferredSearchTerm = useDeferredValue(searchTerm);
     const [selectedChildId, setSelectedChildId] = useState(null);
     const [selectedScene, setSelectedScene] = useState(null);
     const [imagesLoaded, setImagesLoaded] = useState(false);
@@ -188,9 +190,10 @@ const RecipeListPage = () => {
 
     const filteredRecipes = React.useMemo(() => {
         const filtered = processedRecipes.filter(recipe => {
-            const matchesSearch = recipe.title.includes(searchTerm) ||
-                (recipe.tags && recipe.tags.some(t => t.includes(searchTerm))) ||
-                (recipe.positiveIngredients && recipe.positiveIngredients.some(pi => pi.includes(searchTerm)));
+            // Use deferredSearchTerm for filtering to avoid blocking input
+            const matchesSearch = recipe.title.includes(deferredSearchTerm) ||
+                (recipe.tags && recipe.tags.some(t => t.includes(deferredSearchTerm))) ||
+                (recipe.positiveIngredients && recipe.positiveIngredients.some(pi => pi.includes(deferredSearchTerm)));
 
             if (!matchesSearch) return false;
 
@@ -255,7 +258,7 @@ const RecipeListPage = () => {
             const idB = String(b.id || b.recipe_id);
             return idA.localeCompare(idB);
         });
-    }, [processedRecipes, searchTerm, selectedChildId, selectedScene, sortOrder]);
+    }, [processedRecipes, deferredSearchTerm, selectedChildId, selectedScene, sortOrder]);
 
     // ----------------------------------------------------
     // VIEW STATE MANAGEMENT
