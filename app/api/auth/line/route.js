@@ -102,97 +102,89 @@ async function handleAuth(request, logTime, timings) {
     if (!profileRes.ok) throw new Error('Failed to fetch LINE profile');
     const { userId: lineUserId, displayName, pictureUrl } = await profileRes.json();
 
-    // 2. Identity Search (Fixed: No getUserByEmail)
-    logTime('search_start');
+    // 2. ID Resolution Strategy (The "Magic Link" Shortcut)
+    // Instead of searching (which is slow or broken), we simply:
+    // A. Try to create the user. if it fails (duplicate), we ignore the error.
+    // B. Call generateLink immediately. This returns the User object (with ID) if they exist.
+    // This avoids getUserByEmail AND listUsers entirely. O(1) complexity.
 
+    logTime('resolution_start');
+
+    // We construct the email deterministically.
     const primaryEmail = `${lineUserId}@line.anshin-recipe.app`;
-
-    // Check Profile (Fastest / Most common for returning users)
-    const { data: existingProfile } = await supabaseAdmin
-        .from('profiles')
-        .select('id')
-        .eq('line_user_id', lineUserId)
-        .maybeSingle();
-
-    logTime('db_profile_checked');
-
-    let userId = existingProfile?.id;
+    let userId = null;
     let finalEmail = primaryEmail;
 
-    if (userId) {
-        // Verify Auth user exists
-        const { data: { user }, error } = await supabaseAdmin.auth.admin.getUserById(userId);
-        if (user) {
-            finalEmail = user.email;
-            logTime('auth_user_verified_by_id');
+    // A. Try Create (Optimistic) - Fast path for new users
+    try {
+        const { data: authData, error: signUpError } = await supabaseAdmin.auth.admin.createUser({
+            email: primaryEmail,
+            password: generateSecurePassword(),
+            email_confirm: true,
+            user_metadata: { line_user_id: lineUserId, display_name: displayName },
+        });
+
+        if (!signUpError && authData.user) {
+            userId = authData.user.id;
+            logTime('user_created_fresh');
         } else {
-            console.warn(`Profile ${userId} exists but auth user missing. Treating as new/broken.`);
-            userId = null;
+            // Already exists? expected. proceed to find them via link generation.
+            logTime('user_create_skipped');
         }
+    } catch (e) {
+        // Ignore create errors, priority is link generation
+    }
+
+    // B. Resolution via Link Generation
+    // generateLink(email) will find the user by email internally (O(1)) and return the user object.
+
+    logTime('generating_link_primary');
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || origin;
+
+    let sessionData = null;
+
+    const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+        type: 'magiclink',
+        email: primaryEmail,
+        options: { redirectTo: appUrl }
+    });
+
+    if (linkError) {
+        console.warn(`Primary email link failed: ${linkError.message}. Trying legacy email...`);
+        logTime('primary_link_failed');
+
+        // Fallback: Legacy Email
+        const legacyEmail = `${lineUserId}@line.user`;
+        const { data: legacyLinkData, error: legacyLinkError } = await supabaseAdmin.auth.admin.generateLink({
+            type: 'magiclink',
+            email: legacyEmail,
+            options: { redirectTo: appUrl }
+        });
+
+        if (legacyLinkError) {
+            throw new Error(`CRITICAL: Could not resolve user ID via link generation. Primary: ${linkError.message}, Legacy: ${legacyLinkError.message}`);
+        }
+
+        sessionData = legacyLinkData;
+        finalEmail = legacyEmail;
+        logTime('legacy_user_resolved');
+    } else {
+        sessionData = linkData;
+        logTime('primary_user_resolved');
+    }
+
+    // Capture User ID from Link Response
+    // sessionData should contain { user: User, properties: ... }
+    if (!userId && sessionData?.user) {
+        userId = sessionData.user.id;
     }
 
     if (!userId) {
-        // Optimistic Approach: Try to create user.
-        // If it fails with "already registered", then we have a "Zombie User" (Auth exists, Profile missing).
-        // Since getUserByEmail is NOT available in v2, strictly speaking we must use listUsers for that edge case.
-
-        try {
-            const { data: authData, error: signUpError } = await supabaseAdmin.auth.admin.createUser({
-                email: primaryEmail,
-                password: generateSecurePassword(),
-                email_confirm: true,
-                user_metadata: { line_user_id: lineUserId, display_name: displayName },
-            });
-
-            if (signUpError) {
-                // If "User already registered", we need to find their ID to link them.
-                if (signUpError.message?.includes('already registered') || signUpError.status === 422) {
-                    console.log('User exists (Zombie Check). Finding user by listUsers scan (fallback)...');
-
-                    // FALLBACK: O(N) scan but only for this specific error case
-                    // We scan pages until we find the email. Reliability priority.
-                    let page = 1;
-                    let foundUser = null;
-                    while (!foundUser && page <= 5) { // Limit to 5 pages to prevent timeouts
-                        const { data: { users }, error: listErr } = await supabaseAdmin.auth.admin.listUsers({ page: page, perPage: 50 });
-                        if (listErr || !users || users.length === 0) break;
-                        foundUser = users.find(u => u.email === primaryEmail);
-                        page++;
-                    }
-
-                    if (foundUser) {
-                        userId = foundUser.id;
-                        finalEmail = foundUser.email;
-                        logTime('zombie_user_recovered');
-                    } else {
-                        // Crucial Error: API says exists, but we can't find it.
-                        // Try legacy email check as last resort
-                        const legacyEmail = `${lineUserId}@line.user`;
-                        const { data: { users: legacyUsers } } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 50 });
-                        const legacyMatch = legacyUsers?.find(u => u.email === legacyEmail);
-
-                        if (legacyMatch) {
-                            userId = legacyMatch.id;
-                            finalEmail = legacyMatch.email;
-                            logTime('legacy_user_recovered');
-                        } else {
-                            throw new Error(`User conflict detected but ID resolution failed for ${primaryEmail}`);
-                        }
-                    }
-                } else {
-                    throw signUpError;
-                }
-            } else {
-                userId = authData.user.id;
-                finalEmail = authData.user.email;
-                logTime('user_created_fresh');
-            }
-        } catch (e) {
-            throw new Error(`Auth logic failed: ${e.message}`);
-        }
+        // This should theoretically never happen if generateLink succeeds
+        throw new Error('User ID missing in link generation response');
     }
 
-    // 3. Sync & Generate Link
+    // 3. Sync Profile (Now we definitely have userId)
     const updateData = {
         id: userId,
         line_user_id: lineUserId,
@@ -207,15 +199,6 @@ async function handleAuth(request, logTime, timings) {
 
     await supabaseAdmin.from('profiles').upsert(updateData, { onConflict: 'id' });
     logTime('profile_synced');
-
-    const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.admin.generateLink({
-        type: 'magiclink',
-        email: finalEmail,
-        options: { redirectTo: process.env.NEXT_PUBLIC_APP_URL || origin }
-    });
-
-    if (sessionError) throw new Error(`Session error: ${sessionError.message}`);
-    logTime('link_generated');
 
     return {
         success: true,
