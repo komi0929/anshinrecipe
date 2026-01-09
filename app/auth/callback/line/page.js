@@ -14,6 +14,9 @@ function LineCallbackContent() {
 
     useEffect(() => {
         const handleCallback = async () => {
+            const fetchStartTime = Date.now();
+            let timerId = null;
+
             try {
                 const code = searchParams.get('code');
                 const state = searchParams.get('state');
@@ -33,11 +36,10 @@ function LineCallbackContent() {
                     return;
                 }
 
-                // Verify state (CSRF protection) - use localStorage as sessionStorage doesn't persist across redirects
+                // Verify state
                 const storedState = localStorage.getItem('line_oauth_state');
                 const isProRegistration = localStorage.getItem('pro_registration') === 'true';
 
-                // Debug log for state verification
                 console.log('State verification:', {
                     receivedState: state,
                     storedState: storedState,
@@ -50,19 +52,20 @@ function LineCallbackContent() {
                 localStorage.removeItem('line_oauth_nonce');
                 localStorage.removeItem('pro_registration');
 
-                // State validation - warn but continue if state is missing (may happen on browser restart/cache clear)
                 if (storedState && state !== storedState) {
                     console.warn('State mismatch detected, but continuing authentication attempt');
-                    // Note: We continue anyway since the state mismatch could be due to 
-                    // browser cache issues, and the server-side code validation is still safe
                 }
 
-                // Call API route to handle authentication
-                console.log('Fetching auth status from API...');
+                // Call API route with 45s client timeout and a 1s diagnostic timer
+                console.log('--- STARTING AUTH ATTEMPT (Diagnostic Mode) ---');
 
-                // 30s timeout to allow for system latency
+                timerId = setInterval(() => {
+                    const elapsed = Math.round((Date.now() - fetchStartTime) / 1000);
+                    console.log(`Auth progress: ${elapsed}s elapsed...`);
+                }, 1000);
+
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 30000);
+                const timeoutId = setTimeout(() => controller.abort(), 45000);
 
                 const response = await fetch('/api/auth/line', {
                     method: 'POST',
@@ -70,38 +73,42 @@ function LineCallbackContent() {
                     body: JSON.stringify({
                         code,
                         redirectUri: window.location.origin + '/auth/callback/line',
-                        isProRegistration: isProRegistration
+                        isProRegistration
                     }),
                     signal: controller.signal
                 });
 
                 clearTimeout(timeoutId);
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    if (errorData.debug) console.log('Auth error debug:', errorData.debug);
-                    throw new Error(errorData.error || '認証に失敗しました');
-                }
+                if (timerId) clearInterval(timerId);
 
                 const data = await response.json();
-                if (data.debug) console.log('Auth success debug:', data.debug);
 
-                // Use the magic link to authenticate
+                if (!response.ok) {
+                    if (data.debug) console.log('Auth Error Debug Data:', data.debug);
+                    throw new Error(data.error || '認証に失敗しました');
+                }
+
+                if (data.debug) console.log('Auth Success Debug Data:', data.debug);
+
                 if (data.redirectUrl) {
+                    console.log('Auth success! Redirecting to session link...');
                     window.location.href = data.redirectUrl;
                 } else {
-                    // Fallback: refresh session and redirect
                     await supabase.auth.refreshSession();
                     router.push('/');
                     router.refresh();
                 }
 
-            } catch (error) {
-                console.error('LINE callback error:', error);
-                let message = error.message || '認証処理中にエラーが発生しました';
-                if (error.name === 'AbortError') {
-                    message = '認証サーバーの応答がタイムアウトしました(30s)。通信環境の良い場所で再度お試しください。';
+            } catch (err) {
+                if (timerId) clearInterval(timerId);
+                console.error('LINE callback error:', err);
+
+                let message = err.message || '認証処理中にエラーが発生しました';
+                if (err.name === 'AbortError') {
+                    const totalWait = Math.round((Date.now() - fetchStartTime) / 1000);
+                    message = `認証サーバーの応答がタイムアウトしました(${totalWait}s)。通信環境の良い場所で再度お試しください。`;
                 }
+
                 setError(message);
                 setLoading(false);
                 setTimeout(() => router.push('/login'), 8000);

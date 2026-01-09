@@ -19,186 +19,165 @@ export async function POST(request) {
     const timings = {};
     const logTime = (label) => {
         timings[label] = Date.now() - startTime;
-        console.log(`[AUTH_PATH] ${label}: ${timings[label]}ms`);
+        console.log(`[AUTH_PROBE] ${label}: ${timings[label]}ms`);
     };
 
+    /**
+     * Extreme Resilience Wrapper:
+     * Promise.race to ensure we ALWAYS respond before Vercel's 10s timeout kills us.
+     */
+    const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('API_GATEWAY_TIMEOUT_SIMULATED')), 8500);
+    });
+
     try {
-        const { code, redirectUri, isProRegistration } = await request.json();
-        logTime('request_parsed');
+        const result = await Promise.race([
+            handleAuth(request, logTime, timings),
+            timeoutPromise
+        ]);
 
-        if (!code) {
-            return Response.json({ error: 'Missing authorization code' }, { status: 400 });
-        }
-
-        // Environment Check
-        if (!LINE_CHANNEL_ID || !LINE_CHANNEL_SECRET || !supabaseUrl || !supabaseServiceKey || supabaseServiceKey === 'fallback_key_for_build') {
-            console.error('Critical: Environment variables missing');
-            return Response.json({ error: 'Server environment configuration error' }, { status: 500 });
-        }
-
-        const validRedirectUri = redirectUri || `${request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/callback/line`;
-
-        // Internal Fetch with Timeout
-        const fetchWithTimeout = async (url, options, timeout = 5000) => {
-            const controller = new AbortController();
-            const id = setTimeout(() => controller.abort(), timeout);
-            try {
-                const response = await fetch(url, { ...options, signal: controller.signal });
-                clearTimeout(id);
-                return response;
-            } catch (e) {
-                clearTimeout(id);
-                throw e;
-            }
-        };
-
-        // 1. Exchange code for access token
-        const tokenParams = new URLSearchParams({
-            grant_type: 'authorization_code',
-            code: code,
-            redirect_uri: validRedirectUri,
-            client_id: LINE_CHANNEL_ID,
-            client_secret: LINE_CHANNEL_SECRET,
-        });
-
-        const tokenResponse = await fetchWithTimeout('https://api.line.me/oauth2/v2.1/token', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: tokenParams.toString(),
-        });
-        logTime('line_token_exchanged');
-
-        if (!tokenResponse.ok) {
-            const error = await tokenResponse.json();
-            return Response.json({ error: `LINE token exchange failed: ${error.error_description || error.error || 'unknown'}` }, { status: 400 });
-        }
-
-        const tokenData = await tokenResponse.json();
-        const accessToken = tokenData.access_token;
-
-        // 2. Get LINE user profile
-        const profileResponse = await fetchWithTimeout('https://api.line.me/v2/profile', {
-            headers: { 'Authorization': `Bearer ${accessToken}` },
-        });
-        logTime('line_profile_fetched');
-
-        if (!profileResponse.ok) {
-            return Response.json({ error: 'Failed to get LINE profile' }, { status: 400 });
-        }
-
-        const lineProfile = await profileResponse.json();
-        const { userId: lineUserId, displayName, pictureUrl } = lineProfile;
-
-        // 3. Search for User (Fast Path)
-        logTime('starting_user_search');
-
-        const { data: existingProfile, error: profileQueryError } = await supabaseAdmin
-            .from('profiles')
-            .select('id, is_pro')
-            .eq('line_user_id', lineUserId)
-            .maybeSingle();
-
-        if (profileQueryError) {
-            console.error('Profile query error:', profileQueryError);
-        }
-        logTime('db_profile_checked');
-
-        let userId = null;
-        let finalEmail = null;
-
-        if (existingProfile) {
-            userId = existingProfile.id;
-            const { data: { user: authUser } } = await supabaseAdmin.auth.admin.getUserById(userId);
-            if (authUser) {
-                finalEmail = authUser.email;
-            } else {
-                userId = null;
-            }
-            logTime('auth_user_verified_by_id');
-        }
-
-        if (!userId) {
-            const primaryEmail = `${lineUserId}@line.anshin-recipe.app`;
-            const legacyEmail = `${lineUserId}@line.user`;
-
-            const { data: primaryResult } = await supabaseAdmin.auth.admin.getUserByEmail(primaryEmail);
-            let existingAuthUser = primaryResult?.user;
-            logTime('auth_email_primary_checked');
-
-            if (!existingAuthUser) {
-                const { data: legacyResult } = await supabaseAdmin.auth.admin.getUserByEmail(legacyEmail);
-                existingAuthUser = legacyResult?.user;
-                logTime('auth_email_legacy_checked');
-            }
-
-            if (existingAuthUser) {
-                userId = existingAuthUser.id;
-                finalEmail = existingAuthUser.email;
-            } else {
-                const { data: authData, error: signUpError } = await supabaseAdmin.auth.admin.createUser({
-                    email: primaryEmail,
-                    password: generateSecurePassword(),
-                    email_confirm: true,
-                    user_metadata: { line_user_id: lineUserId, display_name: displayName },
-                });
-
-                if (signUpError) {
-                    return Response.json({ error: `Auth creation failed: ${signUpError.message}` }, { status: 500 });
-                }
-
-                userId = authData.user.id;
-                finalEmail = primaryEmail;
-                logTime('auth_user_created');
-            }
-        }
-
-        // 4. Sync Profile
-        const updateData = {
-            id: userId,
-            line_user_id: lineUserId,
-            display_name: displayName,
-            updated_at: new Date().toISOString()
-        };
-        if (pictureUrl) {
-            updateData.picture_url = pictureUrl;
-            updateData.avatar_url = pictureUrl;
-        }
-        if (isProRegistration) updateData.is_pro = true;
-
-        await supabaseAdmin.from('profiles').upsert(updateData, { onConflict: 'id' });
-        logTime('profile_synced');
-
-        // 5. Generate Magic Link
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL || request.headers.get('origin') || 'http://localhost:3000';
-        const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.admin.generateLink({
-            type: 'magiclink',
-            email: finalEmail,
-            options: { redirectTo: appUrl }
-        });
-
-        if (sessionError) {
-            return Response.json({ error: `Session generation failed: ${sessionError.message}` }, { status: 500 });
-        }
-        logTime('session_link_generated');
-
-        const totalDuration = Date.now() - startTime;
-        console.log(`[AUTH_SUCCESS] Total duration: ${totalDuration}ms`);
-
-        return Response.json({
-            success: true,
-            userId: userId,
-            redirectUrl: sessionData.properties.action_link,
-            debug: { timings, total: totalDuration }
-        });
+        console.log(`[AUTH_DONE] Total: ${Date.now() - startTime}ms`);
+        return Response.json(result);
 
     } catch (error) {
-        logTime('critical_error');
-        console.error('Critical LINE auth error:', error);
+        const total = Date.now() - startTime;
+        console.error(`[AUTH_CRITICAL] ${error.message} at ${total}ms`);
+
+        let status = 500;
+        let message = error.message;
+
+        if (message === 'API_GATEWAY_TIMEOUT_SIMULATED') {
+            status = 504;
+            message = 'サーバーの内部処理が制限時間(8.5s)を超えました。外部API(LINE)の応答遅延の可能性があります。';
+        }
+
         return Response.json({
-            error: `Server error: ${error.message || 'Unknown error'}`,
-            debug: { timings, total: Date.now() - startTime }
-        }, { status: 500 });
+            error: message,
+            debug: { timings, total, hint: "Check probe logs to see where it got stuck" }
+        }, { status });
     }
+}
+
+async function handleAuth(request, logTime, timings) {
+    const { code, redirectUri, isProRegistration } = await request.json();
+    logTime('request_parsed');
+
+    if (!code) throw new Error('Missing authorization code');
+
+    // Env check
+    if (!LINE_CHANNEL_ID || !LINE_CHANNEL_SECRET || !supabaseUrl || !supabaseServiceKey || supabaseServiceKey === 'fallback_key_for_build') {
+        throw new Error('Server environment configuration missing');
+    }
+
+    const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const validRedirectUri = redirectUri || `${origin}/auth/callback/line`;
+
+    // 1. Get LINE Token & Profile (Sequential)
+    const tokenParams = new URLSearchParams({
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: validRedirectUri,
+        client_id: LINE_CHANNEL_ID,
+        client_secret: LINE_CHANNEL_SECRET,
+    });
+
+    const tokenRes = await fetch('https://api.line.me/oauth2/v2.1/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: tokenParams.toString(),
+    });
+    logTime('line_token_received');
+
+    if (!tokenRes.ok) {
+        const err = await tokenRes.json();
+        throw new Error(`LINE Token Error: ${err.error_description || err.error}`);
+    }
+    const { access_token } = await tokenRes.json();
+
+    const profileRes = await fetch('https://api.line.me/v2/profile', {
+        headers: { 'Authorization': `Bearer ${access_token}` },
+    });
+    logTime('line_profile_received');
+
+    if (!profileRes.ok) throw new Error('Failed to fetch LINE profile');
+    const { userId: lineUserId, displayName, pictureUrl } = await profileRes.json();
+
+    // 2. Identity Search (Parallel Optimization)
+    logTime('search_start');
+
+    const primaryEmail = `${lineUserId}@line.anshin-recipe.app`;
+    const legacyEmail = `${lineUserId}@line.user`;
+
+    const [profileMatch, primaryAuthMatch, legacyAuthMatch] = await Promise.all([
+        supabaseAdmin.from('profiles').select('id, is_pro').eq('line_user_id', lineUserId).maybeSingle(),
+        supabaseAdmin.auth.admin.getUserByEmail(primaryEmail),
+        supabaseAdmin.auth.admin.getUserByEmail(legacyEmail)
+    ]);
+    logTime('identity_searched_parallel');
+
+    let userId = profileMatch.data?.id;
+    let finalEmail = primaryEmail;
+
+    if (userId) {
+        const { data: { user } } = await supabaseAdmin.auth.admin.getUserById(userId);
+        if (user) {
+            finalEmail = user.email;
+        } else {
+            userId = primaryAuthMatch.data?.user?.id || legacyAuthMatch.data?.user?.id || null;
+            if (userId) finalEmail = primaryAuthMatch.data?.user?.email || legacyAuthMatch.data?.user?.email;
+        }
+    } else {
+        const existingAuth = primaryAuthMatch.data?.user || legacyAuthMatch.data?.user;
+        if (existingAuth) {
+            userId = existingAuth.id;
+            finalEmail = existingAuth.email;
+        }
+    }
+
+    if (!userId) {
+        const { data: authData, error: signUpError } = await supabaseAdmin.auth.admin.createUser({
+            email: primaryEmail,
+            password: generateSecurePassword(),
+            email_confirm: true,
+            user_metadata: { line_user_id: lineUserId, display_name: displayName },
+        });
+        if (signUpError) throw new Error(`Auth creation failed: ${signUpError.message}`);
+        userId = authData.user.id;
+        finalEmail = primaryEmail;
+        logTime('user_created');
+    }
+
+    // 3. Sync & Generate Link
+    const updateData = {
+        id: userId,
+        line_user_id: lineUserId,
+        display_name: displayName,
+        updated_at: new Date().toISOString()
+    };
+    if (pictureUrl) {
+        updateData.picture_url = pictureUrl;
+        updateData.avatar_url = pictureUrl;
+    }
+    if (isProRegistration) updateData.is_pro = true;
+
+    await supabaseAdmin.from('profiles').upsert(updateData, { onConflict: 'id' });
+    logTime('profile_synced');
+
+    const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.admin.generateLink({
+        type: 'magiclink',
+        email: finalEmail,
+        options: { redirectTo: process.env.NEXT_PUBLIC_APP_URL || origin }
+    });
+
+    if (sessionError) throw new Error(`Session error: ${sessionError.message}`);
+    logTime('link_generated');
+
+    return {
+        success: true,
+        userId,
+        redirectUrl: sessionData.properties.action_link,
+        debug: { timings, total: Date.now() - startTime }
+    };
 }
 
 function generateSecurePassword() {
@@ -211,4 +190,3 @@ function generateSecurePassword() {
     } catch (e) { }
     return Math.random().toString(36).substring(2) + Date.now().toString(36);
 }
-
