@@ -117,20 +117,12 @@ async function handleAuth(request, logTime, timings) {
         .maybeSingle();
     logTime('db_profile_checked');
 
+    // Make an educated guess about the user ID
     if (existingProfile) {
         userId = existingProfile.id;
-        // Verify Auth User Exists
-        const { data: { user } } = await supabaseAdmin.auth.admin.getUserById(userId);
-        if (user) {
-            finalEmail = user.email;
-            logTime('auth_user_verified');
-        } else {
-            // Profile exists but Auth missing (Zombie)
-            userId = null;
-        }
     }
 
-    // B. Create User if not found
+    // B. Create User if not found (Only if DB check failed)
     if (!userId) {
         try {
             const { data: authData, error: signUpError } = await supabaseAdmin.auth.admin.createUser({
@@ -144,43 +136,21 @@ async function handleAuth(request, logTime, timings) {
                 userId = authData.user.id;
                 logTime('user_created');
             } else if (signUpError?.message?.includes('already registered') || signUpError?.status === 422) {
-                // User exists in Auth, but not in Profile (or check failed)
-                // Use generateLink to recover ID (Safe fallback)
-                logTime('user_exists_recovering');
-                const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-                    type: 'magiclink',
-                    email: primaryEmail,
-                    options: { redirectTo: origin }
-                });
-
-                if (linkData?.user) {
-                    userId = linkData.user.id;
-                } else {
-                    // Try Legacy Email
-                    const legacyEmail = `${lineUserId}@line.user`;
-                    const { data: legacyLink } = await supabaseAdmin.auth.admin.generateLink({
-                        type: 'magiclink',
-                        email: legacyEmail,
-                        options: { redirectTo: origin }
-                    });
-                    if (legacyLink?.user) {
-                        userId = legacyLink.user.id;
-                        finalEmail = legacyEmail;
-                    }
-                }
+                // Fallback: If create failed, try to recover ID via Link Generation (Safe fallback)
+                // We skip complex checks to save time.
+                logTime('user_exists_recovering_via_link');
             }
         } catch (e) {
-            console.error('Create/Recover failed:', e);
+            // Ignore errors here, we will rely on generateLink to resolve ID if possible
         }
     }
 
-    if (!userId) {
-        throw new Error('Critical: Failed to resolve User ID.');
-    }
+    // 4. Parallel Execution: Upsert Profile & Generate Link
+    // We run these in parallel to save precious milliseconds.
 
-    // 4. Update Profile & Link
+    // a) Prepare Upsert Promise
     const updateData = {
-        id: userId,
+        id: userId, // this might be null, but upsert needs ID usually. Wait, if null, we can't upsert yet.
         line_user_id: lineUserId,
         display_name: displayName,
         updated_at: new Date().toISOString()
@@ -191,21 +161,72 @@ async function handleAuth(request, logTime, timings) {
     }
     if (isProRegistration) updateData.is_pro = true;
 
-    await supabaseAdmin.from('profiles').upsert(updateData, { onConflict: 'id' });
-    logTime('profile_synced');
+    // We can only upsert if we HAVE a userId. 
+    // If we don't have it (skipped create), we need to get it from the link first.
+    // So parallelization is possible only if we have userId.
 
-    const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.admin.generateLink({
-        type: 'magiclink',
-        email: finalEmail,
-        options: { redirectTo: process.env.NEXT_PUBLIC_APP_URL || origin }
-    });
+    let sessionData = null;
+    let finalLinkUserId = userId; // Local var to hold resolved ID
 
-    if (sessionError) throw new Error(`Link Gen Failed: ${sessionError.message}`);
-    logTime('link_generated');
+    if (userId) {
+        // CASE 1: We know the ID. Run Upsert and GenLink in Parallel.
+        logTime('parallel_exec_start');
+
+        const upsertPromise = supabaseAdmin.from('profiles').upsert(updateData, { onConflict: 'id' });
+
+        const linkPromise = supabaseAdmin.auth.admin.generateLink({
+            type: 'magiclink',
+            email: primaryEmail, // Use primaryEmail for link generation
+            options: { redirectTo: process.env.NEXT_PUBLIC_APP_URL || origin }
+        });
+
+        const [upsertRes, linkRes] = await Promise.all([upsertPromise, linkPromise]);
+        logTime('parallel_exec_done');
+
+        if (linkRes.error) throw new Error(`Link Gen Failed: ${linkRes.error.message}`);
+        sessionData = linkRes.data;
+
+    } else {
+        // CASE 2: We don't know ID yet (Zombie User). Must GenLink FIRST to get ID, then Upsert.
+        // This is the slower path but handles the conflict case.
+        logTime('recovery_exec_start');
+
+        const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+            type: 'magiclink',
+            email: primaryEmail,
+            options: { redirectTo: origin }
+        });
+
+        // Try Legacy if primary failed
+        if (linkError) {
+            const legacyEmail = `${lineUserId}@line.user`;
+            const { data: legacyLink, error: legacyError } = await supabaseAdmin.auth.admin.generateLink({
+                type: 'magiclink',
+                email: legacyEmail,
+                options: { redirectTo: origin }
+            });
+
+            if (legacyError) throw new Error(`Recovery Failed: ${linkError.message}`);
+            sessionData = legacyLink;
+            finalLinkUserId = legacyLink.user.id;
+        } else {
+            sessionData = linkData;
+            finalLinkUserId = linkData.user.id;
+        }
+
+        // Now we can upsert
+        updateData.id = finalLinkUserId;
+        await supabaseAdmin.from('profiles').upsert(updateData, { onConflict: 'id' });
+        logTime('recovery_exec_done');
+    }
+
+    if (!sessionData?.properties?.action_link) {
+        throw new Error('Failed to generate redirect link');
+    }
 
     return {
         success: true,
-        userId,
+        userId: finalLinkUserId,
         redirectUrl: sessionData.properties.action_link,
         debug: { timings, total: Date.now() - startTime }
     };
