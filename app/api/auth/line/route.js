@@ -181,7 +181,7 @@ export async function POST(request) {
 
     } catch (error) {
         console.error('Critical LINE auth error:', error);
-        return Response.json({ error: `Server error: ${error.message}` }, { status: 500 });
+        return Response.json({ error: `Server error: ${error.message || 'Unknown error'}` }, { status: 500 });
     }
 }
 
@@ -190,25 +190,52 @@ export async function POST(request) {
  * Necessary because listUsers() only returns 50 users at a time.
  */
 async function findAllUsersByEmails(supabase, emails) {
+    console.log('Searching for users with emails:', emails);
     let allUsers = [];
     let page = 1;
     const perPage = 50;
+    const MAX_PAGES = 20; // Safety break to prevent infinite loops (up to 1000 users)
 
-    while (true) {
+    while (page <= MAX_PAGES) {
+        console.log(`Fetching page ${page} of users...`);
+        // Correct Supabase v2 pagination format
         const { data: { users }, error } = await supabase.auth.admin.listUsers({
-            page: page,
-            perPage: perPage
+            pagination: {
+                page: page,
+                perPage: perPage
+            }
         });
 
-        if (error || !users || users.length === 0) break;
+        if (error) {
+            console.error(`Error fetching users at page ${page}:`, error);
+            break;
+        }
+
+        if (!users || users.length === 0) {
+            console.log(`No more users found at page ${page}`);
+            break;
+        }
 
         const matches = users.filter(u => emails.includes(u.email));
         if (matches.length > 0) {
+            console.log(`Found ${matches.length} matching users on page ${page}`);
             allUsers.push(...matches);
         }
 
-        if (users.length < perPage) break; // Last page reached
+        // If we found a match, we can stop early if we only need one, 
+        // but here we keep going to be exhaustive if needed.
+        if (allUsers.length > 0) break;
+
+        if (users.length < perPage) {
+            console.log('Reached last page of users');
+            break;
+        }
+
         page++;
+    }
+
+    if (page > MAX_PAGES) {
+        console.warn('findAllUsersByEmails reached MAX_PAGES safety limit');
     }
 
     return allUsers;
