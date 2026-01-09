@@ -201,10 +201,16 @@ export async function POST(request) {
             return Response.json({ error: 'Failed to fetch user data/failed' }, { status: 500 });
         }
 
+        // Get the app URL for redirect
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || request.headers.get('origin') || 'http://localhost:3000';
+
         // Generate session token for the user using their ACTUAL email
         const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.admin.generateLink({
             type: 'magiclink',
             email: authUser.email,
+            options: {
+                redirectTo: appUrl,
+            }
         });
 
         if (sessionError) {
