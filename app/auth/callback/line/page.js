@@ -14,9 +14,6 @@ function LineCallbackContent() {
 
     useEffect(() => {
         const handleCallback = async () => {
-            const fetchStartTime = Date.now();
-            let timerId = null;
-
             try {
                 const code = searchParams.get('code');
                 const state = searchParams.get('state');
@@ -36,82 +33,55 @@ function LineCallbackContent() {
                     return;
                 }
 
-                // Verify state
+                // Verify state (CSRF protection) - use localStorage as sessionStorage doesn't persist across redirects
                 const storedState = localStorage.getItem('line_oauth_state');
                 const isProRegistration = localStorage.getItem('pro_registration') === 'true';
-
-                console.log('State verification:', {
-                    receivedState: state,
-                    storedState: storedState,
-                    stateMatch: state === storedState,
-                    isProRegistration
-                });
-
-                // Clean up localStorage
                 localStorage.removeItem('line_oauth_state');
                 localStorage.removeItem('line_oauth_nonce');
                 localStorage.removeItem('pro_registration');
 
-                if (storedState && state !== storedState) {
-                    console.warn('State mismatch detected, but continuing authentication attempt');
+                if (state !== storedState) {
+                    setError('無効なリクエストです');
+                    setLoading(false);
+                    setTimeout(() => router.push('/login'), 2000);
+                    return;
                 }
 
-                // Call API route with 45s client timeout and a 1s diagnostic timer
-                console.log('--- STARTING AUTH ATTEMPT (Diagnostic Mode) ---');
-
-                timerId = setInterval(() => {
-                    const elapsed = Math.round((Date.now() - fetchStartTime) / 1000);
-                    console.log(`Auth progress: ${elapsed}s elapsed...`);
-                }, 1000);
-
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 45000);
-
+                // Call API route to handle authentication
                 const response = await fetch('/api/auth/line', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
                     body: JSON.stringify({
                         code,
                         redirectUri: window.location.origin + '/auth/callback/line',
-                        isProRegistration
+                        isProRegistration: isProRegistration
                     }),
-                    signal: controller.signal
                 });
 
-                clearTimeout(timeoutId);
-                if (timerId) clearInterval(timerId);
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || '認証に失敗しました');
+                }
 
                 const data = await response.json();
 
-                if (!response.ok) {
-                    if (data.debug) console.log('Auth Error Debug Data:', data.debug);
-                    throw new Error(data.error || '認証に失敗しました');
-                }
-
-                if (data.debug) console.log('Auth Success Debug Data:', data.debug);
-
+                // Use the magic link to authenticate
                 if (data.redirectUrl) {
-                    console.log('Auth success! Redirecting to session link...');
                     window.location.href = data.redirectUrl;
                 } else {
+                    // Fallback: refresh session and redirect
                     await supabase.auth.refreshSession();
                     router.push('/');
                     router.refresh();
                 }
 
-            } catch (err) {
-                if (timerId) clearInterval(timerId);
-                console.error('LINE callback error:', err);
-
-                let message = err.message || '認証処理中にエラーが発生しました';
-                if (err.name === 'AbortError') {
-                    const totalWait = Math.round((Date.now() - fetchStartTime) / 1000);
-                    message = `認証サーバーの応答がタイムアウトしました(${totalWait}s)。通信環境の良い場所で再度お試しください。`;
-                }
-
-                setError(message);
+            } catch (error) {
+                console.error('LINE callback error:', error);
+                setError(error.message || '認証処理中にエラーが発生しました');
                 setLoading(false);
-                setTimeout(() => router.push('/login'), 8000);
+                setTimeout(() => router.push('/login'), 3000);
             }
         };
 
@@ -131,11 +101,9 @@ function LineCallbackContent() {
                     ) : error ? (
                         <>
                             <AlertCircle size={48} color="#EF4444" />
-                            <h2 style={{ color: '#EF4444' }}>認証エラーが発生しました</h2>
-                            <div className="error-box">
-                                <p className="error-message">{error}</p>
-                            </div>
-                            <p className="redirect-hint">まもなくログインページに戻ります...</p>
+                            <h2>エラー</h2>
+                            <p>{error}</p>
+                            <p className="redirect-message">ログインページにリダイレクトします...</p>
                         </>
                     ) : (
                         <>
@@ -171,27 +139,10 @@ function LineCallbackContent() {
           color: var(--text-secondary);
         }
 
-        .error-box {
-          background-color: #FEF2F2;
-          border: 1px solid #FECACA;
-          border-radius: 12px;
-          padding: 16px;
-          margin: 8px 0;
-          max-width: 100%;
-          word-break: break-all;
-        }
-
-        .error-message {
-          color: #DC2626 !important;
-          font-size: 14px !important;
-          font-weight: 500;
-          line-height: 1.5;
-        }
-
-        .redirect-hint {
-          margin-top: 12px !important;
-          font-size: 12px !important;
-          color: #9CA3AF !important;
+        .redirect-message {
+          margin-top: 8px;
+          font-size: 14px;
+          color: var(--text-tertiary);
         }
 
         .animate-spin {
