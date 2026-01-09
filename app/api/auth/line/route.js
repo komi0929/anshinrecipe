@@ -22,39 +22,17 @@ export async function POST(request) {
         console.log(`[AUTH_PROBE] ${label}: ${timings[label]}ms`);
     };
 
-    /**
-     * Extreme Resilience Wrapper:
-     * Promise.race to ensure we ALWAYS respond before Vercel's 10s timeout kills us.
-     */
-    const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('API_GATEWAY_TIMEOUT_SIMULATED')), 8500);
-    });
-
     try {
-        const result = await Promise.race([
-            handleAuth(request, logTime, timings),
-            timeoutPromise
-        ]);
-
+        const result = await handleAuth(request, logTime, timings);
         console.log(`[AUTH_DONE] Total: ${Date.now() - startTime}ms`);
         return Response.json(result);
-
     } catch (error) {
         const total = Date.now() - startTime;
         console.error(`[AUTH_CRITICAL] ${error.message} at ${total}ms`);
-
-        let status = 500;
-        let message = error.message;
-
-        if (message === 'API_GATEWAY_TIMEOUT_SIMULATED') {
-            status = 504;
-            message = 'サーバーの内部処理が制限時間(8.5s)を超えました。外部API(LINE)の応答遅延の可能性があります。';
-        }
-
         return Response.json({
-            error: message,
-            debug: { timings, total, hint: "Check probe logs to see where it got stuck" }
-        }, { status });
+            error: error.message,
+            debug: { timings, total }
+        }, { status: 500 });
     }
 }
 
@@ -176,9 +154,10 @@ async function handleAuth(request, logTime, timings) {
 
         const linkPromise = supabaseAdmin.auth.admin.generateLink({
             type: 'magiclink',
-            email: primaryEmail, // Use primaryEmail for link generation
+            email: finalEmail, // Use resolved email (primary or legacy)
             options: { redirectTo: process.env.NEXT_PUBLIC_APP_URL || origin }
         });
+
 
         const [upsertRes, linkRes] = await Promise.all([upsertPromise, linkPromise]);
         logTime('parallel_exec_done');
