@@ -141,19 +141,6 @@ async function handleAuth(request, logTime, timings) {
 
     logTime('id_token_decoded_locally');
 
-    // Optimization: Decode ID Token locally instead of fetching profile
-    // ID Token contains sub (userId), name, picture.
-
-    // (decodeJwt is already defined above, avoiding duplication)
-
-
-    const idTokenPayload = decodeJwt(id_token);
-    const lineUserId = idTokenPayload.sub;
-    const displayName = idTokenPayload.name;
-    const pictureUrl = idTokenPayload.picture;
-
-    logTime('id_token_decoded_locally');
-
     // 2. ID Resolution Strategy (The "Magic Link" Shortcut)
     // Instead of searching (which is slow or broken), we simply:
     // A. Try to create the user. if it fails (duplicate), we ignore the error.
