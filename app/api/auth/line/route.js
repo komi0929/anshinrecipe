@@ -3,6 +3,9 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'fallback_key_for_build';
 
+// Vercel Hobbyプランのタイムアウトは10秒
+const VERCEL_TIMEOUT = 9000; // 9秒で安全なレスポンスを返す
+
 const supabaseAdmin = createClient(supabaseUrl || 'https://placeholder.supabase.co', supabaseServiceKey, {
     auth: {
         autoRefreshToken: false,
@@ -14,138 +17,177 @@ const LINE_CHANNEL_ID = process.env.NEXT_PUBLIC_LINE_CHANNEL_ID;
 const LINE_CHANNEL_SECRET = process.env.LINE_CHANNEL_SECRET;
 
 // Helper: Promise with timeout
-const withTimeout = (promise, ms) => {
+const withTimeout = (promise, ms, stepName = 'unknown') => {
     const timeout = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('TIMEOUT')), ms)
+        setTimeout(() => reject(new Error(`TIMEOUT_${stepName}_${ms}ms`)), ms)
     );
     return Promise.race([promise, timeout]);
+};
+
+// Fetch with timeout wrapper
+const fetchWithTimeout = async (url, options, timeoutMs, stepName) => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+        const response = await fetch(url, {
+            ...options,
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        return response;
+    } catch (err) {
+        clearTimeout(timeoutId);
+        if (err.name === 'AbortError') {
+            throw new Error(`FETCH_TIMEOUT_${stepName}_${timeoutMs}ms`);
+        }
+        throw err;
+    }
 };
 
 export async function POST(request) {
     const startTime = Date.now();
     const log = (step) => console.log(`[AUTH] ${step}: ${Date.now() - startTime}ms`);
+    const checkTimeout = () => {
+        if (Date.now() - startTime > VERCEL_TIMEOUT) {
+            throw new Error('APPROACHING_VERCEL_TIMEOUT');
+        }
+    };
 
     try {
         log('START');
         const { code, redirectUri, isProRegistration } = await request.json();
+        log('BODY_PARSED');
 
         if (!code) {
             return Response.json({ error: 'Missing authorization code' }, { status: 400 });
         }
 
         if (!LINE_CHANNEL_ID || !LINE_CHANNEL_SECRET || !supabaseUrl || !supabaseServiceKey || supabaseServiceKey === 'fallback_key_for_build') {
+            log('CONFIG_MISSING');
             return Response.json({ error: 'Server configuration missing' }, { status: 500 });
         }
 
         const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
         const validRedirectUri = redirectUri || `${origin}/auth/callback/line`;
 
-        // 1. Exchange code for LINE access token
+        // 1. Exchange code for LINE access token (with 3s timeout)
         log('LINE_TOKEN_START');
-        const tokenResponse = await fetch('https://api.line.me/oauth2/v2.1/token', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({
-                grant_type: 'authorization_code',
-                code,
-                redirect_uri: validRedirectUri,
-                client_id: LINE_CHANNEL_ID,
-                client_secret: LINE_CHANNEL_SECRET,
-            }).toString(),
-        });
-        log('LINE_TOKEN_DONE');
+        checkTimeout();
+        const tokenResponse = await fetchWithTimeout(
+            'https://api.line.me/oauth2/v2.1/token',
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({
+                    grant_type: 'authorization_code',
+                    code,
+                    redirect_uri: validRedirectUri,
+                    client_id: LINE_CHANNEL_ID,
+                    client_secret: LINE_CHANNEL_SECRET,
+                }).toString(),
+            },
+            3000,
+            'LINE_TOKEN'
+        );
+        log('LINE_TOKEN_RESPONSE');
 
         if (!tokenResponse.ok) {
-            return Response.json({ error: 'Failed to exchange code for token' }, { status: 400 });
+            const errorText = await tokenResponse.text();
+            log(`LINE_TOKEN_ERROR: ${errorText}`);
+            return Response.json({ error: 'Failed to exchange code for token', details: errorText }, { status: 400 });
         }
 
         const { access_token } = await tokenResponse.json();
+        log('LINE_TOKEN_DONE');
 
-        // 2. Get LINE profile
+        // 2. Get LINE profile (with 2s timeout)
+        checkTimeout();
         log('LINE_PROFILE_START');
-        const profileResponse = await fetch('https://api.line.me/v2/profile', {
-            headers: { 'Authorization': `Bearer ${access_token}` },
-        });
-        log('LINE_PROFILE_DONE');
+        const profileResponse = await fetchWithTimeout(
+            'https://api.line.me/v2/profile',
+            { headers: { 'Authorization': `Bearer ${access_token}` } },
+            2000,
+            'LINE_PROFILE'
+        );
+        log('LINE_PROFILE_RESPONSE');
 
         if (!profileResponse.ok) {
             return Response.json({ error: 'Failed to get LINE profile' }, { status: 400 });
         }
 
         const { userId: lineUserId, displayName, pictureUrl } = await profileResponse.json();
+        log('LINE_PROFILE_DONE');
+
         const primaryEmail = `${lineUserId}@line.anshin-recipe.app`;
         const legacyEmail = `${lineUserId}@line.user`;
 
-        // 3. Resolve User ID - MUST find existing user, NOT create new one blindly
+        // 3. Resolve User ID - OPTIMIZED: Run DB query and email checks in parallel
         log('USER_RESOLUTION_START');
+        checkTimeout();
         let userId = null;
         let resolvedEmail = primaryEmail;
 
-        // STRATEGY: Try multiple methods to find existing user
-        // Method A: Check profiles table (with timeout)
-        try {
-            const profileQuery = supabaseAdmin
-                .from('profiles')
-                .select('id')
-                .eq('line_user_id', lineUserId)
-                .maybeSingle();
+        // Run all lookup methods in parallel with short timeouts
+        const [dbResult, primaryEmailResult, legacyEmailResult] = await Promise.allSettled([
+            // Method A: Check profiles table
+            withTimeout(
+                supabaseAdmin.from('profiles').select('id').eq('line_user_id', lineUserId).maybeSingle(),
+                2000,
+                'DB_PROFILE'
+            ),
+            // Method B: generateLink with primary email
+            withTimeout(
+                supabaseAdmin.auth.admin.generateLink({ type: 'magiclink', email: primaryEmail }),
+                2000,
+                'PRIMARY_EMAIL'
+            ),
+            // Method C: generateLink with legacy email (only if needed, but we run in parallel for speed)
+            withTimeout(
+                supabaseAdmin.auth.admin.generateLink({ type: 'magiclink', email: legacyEmail }),
+                2000,
+                'LEGACY_EMAIL'
+            )
+        ]);
+        log('PARALLEL_LOOKUP_DONE');
 
-            const { data: existingProfile } = await withTimeout(profileQuery, 5000);
-            if (existingProfile) {
-                userId = existingProfile.id;
-                log('FOUND_VIA_DB');
-            }
-        } catch (e) {
-            log('DB_TIMEOUT');
+        // Check results in priority order
+        if (dbResult.status === 'fulfilled' && dbResult.value?.data?.id) {
+            userId = dbResult.value.data.id;
+            log('FOUND_VIA_DB');
+        } else if (primaryEmailResult.status === 'fulfilled' && primaryEmailResult.value?.data?.user) {
+            userId = primaryEmailResult.value.data.user.id;
+            resolvedEmail = primaryEmail;
+            log('FOUND_VIA_PRIMARY_EMAIL');
+        } else if (legacyEmailResult.status === 'fulfilled' && legacyEmailResult.value?.data?.user) {
+            userId = legacyEmailResult.value.data.user.id;
+            resolvedEmail = legacyEmail;
+            log('FOUND_VIA_LEGACY_EMAIL');
         }
 
-        // Method B: Try generateLink with primary email (finds existing Auth user)
-        if (!userId) {
-            try {
-                const { data: linkData } = await supabaseAdmin.auth.admin.generateLink({
-                    type: 'magiclink',
-                    email: primaryEmail,
-                });
-                if (linkData?.user) {
-                    userId = linkData.user.id;
-                    resolvedEmail = primaryEmail;
-                    log('FOUND_VIA_PRIMARY_EMAIL');
-                }
-            } catch (e) {
-                // User might not exist with this email
-            }
-        }
-
-        // Method C: Try generateLink with legacy email
-        if (!userId) {
-            try {
-                const { data: linkData } = await supabaseAdmin.auth.admin.generateLink({
-                    type: 'magiclink',
-                    email: legacyEmail,
-                });
-                if (linkData?.user) {
-                    userId = linkData.user.id;
-                    resolvedEmail = legacyEmail;
-                    log('FOUND_VIA_LEGACY_EMAIL');
-                }
-            } catch (e) {
-                // User might not exist with this email either
-            }
-        }
+        // Log any timeouts for debugging
+        if (dbResult.status === 'rejected') log(`DB_LOOKUP_FAILED: ${dbResult.reason?.message}`);
+        if (primaryEmailResult.status === 'rejected') log(`PRIMARY_EMAIL_FAILED: ${primaryEmailResult.reason?.message}`);
+        if (legacyEmailResult.status === 'rejected') log(`LEGACY_EMAIL_FAILED: ${legacyEmailResult.reason?.message}`);
 
         // Method D: Create new user ONLY if we couldn't find existing
         if (!userId) {
             log('CREATING_NEW_USER');
-            const { data: authData, error: signUpError } = await supabaseAdmin.auth.admin.createUser({
-                email: primaryEmail,
-                password: generateSecurePassword(),
-                email_confirm: true,
-                user_metadata: { line_user_id: lineUserId, display_name: displayName },
-            });
+            checkTimeout();
+            const { data: authData, error: signUpError } = await withTimeout(
+                supabaseAdmin.auth.admin.createUser({
+                    email: primaryEmail,
+                    password: generateSecurePassword(),
+                    email_confirm: true,
+                    user_metadata: { line_user_id: lineUserId, display_name: displayName },
+                }),
+                3000,
+                'CREATE_USER'
+            );
 
             if (signUpError) {
                 console.error('User creation failed:', signUpError);
-                return Response.json({ error: 'Failed to create user' }, { status: 500 });
+                return Response.json({ error: 'Failed to create user', details: signUpError.message }, { status: 500 });
             }
             userId = authData.user.id;
             resolvedEmail = primaryEmail;
@@ -154,8 +196,10 @@ export async function POST(request) {
 
         log('USER_RESOLUTION_DONE');
 
-        // 4. Update profile (BLOCKING - must complete to ensure data consistency)
-        log('PROFILE_UPDATE_START');
+        // 4. Update profile (run in parallel with session link generation for speed)
+        log('FINAL_STEPS_START');
+        checkTimeout();
+
         const profileData = {
             id: userId,
             line_user_id: lineUserId,
@@ -169,21 +213,38 @@ export async function POST(request) {
             profileData.is_pro = true;
         }
 
-        // Use upsert with onConflict to handle both new and existing profiles
-        await supabaseAdmin.from('profiles').upsert(profileData, { onConflict: 'id' });
-        log('PROFILE_UPDATE_DONE');
+        // Run profile update and session link generation in parallel
+        const [profileResult, sessionResult] = await Promise.allSettled([
+            withTimeout(
+                supabaseAdmin.from('profiles').upsert(profileData, { onConflict: 'id' }),
+                2000,
+                'PROFILE_UPSERT'
+            ),
+            withTimeout(
+                supabaseAdmin.auth.admin.generateLink({ type: 'magiclink', email: resolvedEmail }),
+                2000,
+                'SESSION_LINK'
+            )
+        ]);
+        log('FINAL_STEPS_DONE');
 
-        // 5. Generate session link
-        log('SESSION_LINK_START');
-        const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.admin.generateLink({
-            type: 'magiclink',
-            email: resolvedEmail,
-        });
-        log('SESSION_LINK_DONE');
+        // Log profile result (non-blocking, don't fail on this)
+        if (profileResult.status === 'rejected') {
+            log(`PROFILE_UPDATE_WARNING: ${profileResult.reason?.message}`);
+        } else {
+            log('PROFILE_UPDATE_SUCCESS');
+        }
 
-        if (sessionError || !sessionData?.properties?.action_link) {
-            console.error('Session error:', sessionError);
-            return Response.json({ error: 'Failed to create session' }, { status: 500 });
+        // Session link is required
+        if (sessionResult.status === 'rejected') {
+            log(`SESSION_LINK_FAILED: ${sessionResult.reason?.message}`);
+            return Response.json({ error: 'Failed to create session', details: sessionResult.reason?.message }, { status: 500 });
+        }
+
+        const sessionData = sessionResult.value?.data;
+        if (!sessionData?.properties?.action_link) {
+            log('SESSION_LINK_NO_URL');
+            return Response.json({ error: 'Failed to create session - no action link' }, { status: 500 });
         }
 
         log('SUCCESS');
@@ -194,8 +255,19 @@ export async function POST(request) {
         });
 
     } catch (error) {
-        console.error('LINE auth error:', error);
-        return Response.json({ error: 'Internal server error' }, { status: 500 });
+        const elapsed = Date.now() - startTime;
+        console.error(`LINE auth error after ${elapsed}ms:`, error.message);
+
+        // Return specific error message for timeout
+        if (error.message?.includes('TIMEOUT') || error.message?.includes('APPROACHING_VERCEL')) {
+            return Response.json({
+                error: 'サーバー処理がタイムアウトしました。再度お試しください。',
+                details: error.message,
+                elapsed: `${elapsed}ms`
+            }, { status: 504 });
+        }
+
+        return Response.json({ error: 'Internal server error', details: error.message }, { status: 500 });
     }
 }
 
