@@ -72,158 +72,113 @@ async function handleAuth(request, logTime, timings) {
     const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     const validRedirectUri = redirectUri || `${origin}/auth/callback/line`;
 
-    // Internal Fetch with Timeout
-    const fetchWithTimeout = async (url, options, timeout = 5000) => {
-        const controller = new AbortController();
-        const id = setTimeout(() => controller.abort(), timeout);
-        try {
-            const response = await fetch(url, { ...options, signal: controller.signal });
-            clearTimeout(id);
-            return response;
-        } catch (e) {
-            clearTimeout(id);
-            throw e;
-        }
-    };
-
-    // 1. Exchange code for access token & ID Token
-    // We request openid scope implicitly or explicitly to get id_token.
-    // This allows us to SKIP user profile fetch entirely -> FAST.
+    // 1. Get LINE Token
     const tokenParams = new URLSearchParams({
         grant_type: 'authorization_code',
-        code: code,
+        code,
         redirect_uri: validRedirectUri,
         client_id: LINE_CHANNEL_ID,
         client_secret: LINE_CHANNEL_SECRET,
     });
 
-    const tokenResponse = await fetchWithTimeout('https://api.line.me/oauth2/v2.1/token', {
+    const tokenRes = await fetch('https://api.line.me/oauth2/v2.1/token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: tokenParams.toString(),
     });
-    logTime('line_token_exchanged');
+    logTime('line_token_received');
 
-    if (!tokenResponse.ok) {
-        const error = await tokenResponse.json();
-        return Response.json({ error: `LINE token exchange failed: ${error.error_description || error.error || 'unknown'}` }, { status: 400 });
+    if (!tokenRes.ok) {
+        const err = await tokenRes.json();
+        throw new Error(`LINE Token Error: ${err.error_description || err.error}`);
     }
+    const { access_token } = await tokenRes.json();
 
-    const tokenData = await tokenResponse.json();
-    const { id_token } = tokenData;
+    // 2. Get LINE Profile (Standard API Call)
+    const profileRes = await fetch('https://api.line.me/v2/profile', {
+        headers: { 'Authorization': `Bearer ${access_token}` },
+    });
+    logTime('line_profile_received');
 
-    if (!id_token) {
-        // Fallback if id_token is missing (e.g. old channel settings)
-        // But we really want it for speed.
-        throw new Error('No id_token returned from LINE. Ensure openid scope is requested.');
-    }
+    if (!profileRes.ok) throw new Error('Failed to fetch LINE profile');
+    const { userId: lineUserId, displayName, pictureUrl } = await profileRes.json();
 
-    // Optimization: Decode ID Token locally instead of fetching profile
-    // ID Token contains sub (userId), name, picture.
-
-    const decodeJwt = (token) => {
-        try {
-            const base64Url = token.split('.')[1];
-            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
-                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-            }).join(''));
-            return JSON.parse(jsonPayload);
-        } catch (e) {
-            throw new Error('Failed to decode ID token');
-        }
-    };
-
-    const idTokenPayload = decodeJwt(id_token);
-    const lineUserId = idTokenPayload.sub;
-    const displayName = idTokenPayload.name;
-    const pictureUrl = idTokenPayload.picture;
-
-    logTime('id_token_decoded_locally');
-
-    // 2. ID Resolution Strategy (The "Magic Link" Shortcut)
-    // Instead of searching (which is slow or broken), we simply:
-    // A. Try to create the user. if it fails (duplicate), we ignore the error.
-    // B. Call generateLink immediately. This returns the User object (with ID) if they exist.
-    // This avoids getUserByEmail AND listUsers entirely. O(1) complexity.
-
+    // 3. Resolve User ID (Standard Flow: DB -> Auth)
     logTime('resolution_start');
-
-    // We construct the email deterministically.
     const primaryEmail = `${lineUserId}@line.anshin-recipe.app`;
     let userId = null;
     let finalEmail = primaryEmail;
 
-    // A. Try Create (Optimistic) - Fast path for new users
-    try {
-        const { data: authData, error: signUpError } = await supabaseAdmin.auth.admin.createUser({
-            email: primaryEmail,
-            password: generateSecurePassword(),
-            email_confirm: true,
-            user_metadata: { line_user_id: lineUserId, display_name: displayName },
-        });
+    // A. Check Profiles Table (Fastest & Most Reliable for existing users)
+    const { data: existingProfile } = await supabaseAdmin
+        .from('profiles')
+        .select('id')
+        .eq('line_user_id', lineUserId)
+        .maybeSingle();
+    logTime('db_profile_checked');
 
-        if (!signUpError && authData.user) {
-            userId = authData.user.id;
-            logTime('user_created_fresh');
+    if (existingProfile) {
+        userId = existingProfile.id;
+        // Verify Auth User Exists
+        const { data: { user } } = await supabaseAdmin.auth.admin.getUserById(userId);
+        if (user) {
+            finalEmail = user.email;
+            logTime('auth_user_verified');
         } else {
-            // Already exists? expected. proceed to find them via link generation.
-            logTime('user_create_skipped');
+            // Profile exists but Auth missing (Zombie)
+            userId = null;
         }
-    } catch (e) {
-        // Ignore create errors, priority is link generation
     }
 
-    // B. Resolution via Link Generation
-    // generateLink(email) will find the user by email internally (O(1)) and return the user object.
+    // B. Create User if not found
+    if (!userId) {
+        try {
+            const { data: authData, error: signUpError } = await supabaseAdmin.auth.admin.createUser({
+                email: primaryEmail,
+                password: generateSecurePassword(),
+                email_confirm: true,
+                user_metadata: { line_user_id: lineUserId, display_name: displayName },
+            });
 
-    logTime('generating_link_primary');
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || origin;
+            if (!signUpError && authData.user) {
+                userId = authData.user.id;
+                logTime('user_created');
+            } else if (signUpError?.message?.includes('already registered') || signUpError?.status === 422) {
+                // User exists in Auth, but not in Profile (or check failed)
+                // Use generateLink to recover ID (Safe fallback)
+                logTime('user_exists_recovering');
+                const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+                    type: 'magiclink',
+                    email: primaryEmail,
+                    options: { redirectTo: origin }
+                });
 
-    let sessionData = null;
-
-    const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-        type: 'magiclink',
-        email: primaryEmail,
-        options: { redirectTo: appUrl }
-    });
-
-    if (linkError) {
-        console.warn(`Primary email link failed: ${linkError.message}. Trying legacy email...`);
-        logTime('primary_link_failed');
-
-        // Fallback: Legacy Email
-        const legacyEmail = `${lineUserId}@line.user`;
-        const { data: legacyLinkData, error: legacyLinkError } = await supabaseAdmin.auth.admin.generateLink({
-            type: 'magiclink',
-            email: legacyEmail,
-            options: { redirectTo: appUrl }
-        });
-
-        if (legacyLinkError) {
-            throw new Error(`CRITICAL: Could not resolve user ID via link generation. Primary: ${linkError.message}, Legacy: ${legacyLinkError.message}`);
+                if (linkData?.user) {
+                    userId = linkData.user.id;
+                } else {
+                    // Try Legacy Email
+                    const legacyEmail = `${lineUserId}@line.user`;
+                    const { data: legacyLink } = await supabaseAdmin.auth.admin.generateLink({
+                        type: 'magiclink',
+                        email: legacyEmail,
+                        options: { redirectTo: origin }
+                    });
+                    if (legacyLink?.user) {
+                        userId = legacyLink.user.id;
+                        finalEmail = legacyEmail;
+                    }
+                }
+            }
+        } catch (e) {
+            console.error('Create/Recover failed:', e);
         }
-
-        sessionData = legacyLinkData;
-        finalEmail = legacyEmail;
-        logTime('legacy_user_resolved');
-    } else {
-        sessionData = linkData;
-        logTime('primary_user_resolved');
-    }
-
-    // Capture User ID from Link Response
-    // sessionData should contain { user: User, properties: ... }
-    if (!userId && sessionData?.user) {
-        userId = sessionData.user.id;
     }
 
     if (!userId) {
-        // This should theoretically never happen if generateLink succeeds
-        throw new Error('User ID missing in link generation response');
+        throw new Error('Critical: Failed to resolve User ID.');
     }
 
-    // 3. Sync Profile (Now we definitely have userId)
+    // 4. Update Profile & Link
     const updateData = {
         id: userId,
         line_user_id: lineUserId,
@@ -238,6 +193,15 @@ async function handleAuth(request, logTime, timings) {
 
     await supabaseAdmin.from('profiles').upsert(updateData, { onConflict: 'id' });
     logTime('profile_synced');
+
+    const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.admin.generateLink({
+        type: 'magiclink',
+        email: finalEmail,
+        options: { redirectTo: process.env.NEXT_PUBLIC_APP_URL || origin }
+    });
+
+    if (sessionError) throw new Error(`Link Gen Failed: ${sessionError.message}`);
+    logTime('link_generated');
 
     return {
         success: true,
