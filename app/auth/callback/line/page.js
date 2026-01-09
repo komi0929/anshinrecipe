@@ -58,6 +58,12 @@ function LineCallbackContent() {
                 }
 
                 // Call API route to handle authentication
+                console.log('Fetching auth status from API...');
+
+                // Add a timeout signal to prevent indefinite waiting
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+
                 const response = await fetch('/api/auth/line', {
                     method: 'POST',
                     headers: {
@@ -68,7 +74,10 @@ function LineCallbackContent() {
                         redirectUri: window.location.origin + '/auth/callback/line',
                         isProRegistration: isProRegistration
                     }),
+                    signal: controller.signal
                 });
+
+                clearTimeout(timeoutId);
 
                 if (!response.ok) {
                     const errorData = await response.json();
@@ -89,7 +98,11 @@ function LineCallbackContent() {
 
             } catch (error) {
                 console.error('LINE callback error:', error);
-                setError(error.message || '認証処理中にエラーが発生しました');
+                let message = error.message || '認証処理中にエラーが発生しました';
+                if (error.name === 'AbortError') {
+                    message = 'サーバーからの応答がタイムアウトしました。ネット環境を確認し、もう一度お試しください。';
+                }
+                setError(message);
                 setLoading(false);
                 // Extend timeout to give user time to read the error
                 setTimeout(() => router.push('/login'), 8000);
