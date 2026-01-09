@@ -72,35 +72,87 @@ async function handleAuth(request, logTime, timings) {
     const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     const validRedirectUri = redirectUri || `${origin}/auth/callback/line`;
 
-    // 1. Get LINE Token & Profile (Sequential)
+    // Internal Fetch with Timeout
+    const fetchWithTimeout = async (url, options, timeout = 5000) => {
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), timeout);
+        try {
+            const response = await fetch(url, { ...options, signal: controller.signal });
+            clearTimeout(id);
+            return response;
+        } catch (e) {
+            clearTimeout(id);
+            throw e;
+        }
+    };
+
+    // 1. Exchange code for access token & ID Token
+    // We request openid scope implicitly or explicitly to get id_token.
+    // This allows us to SKIP user profile fetch entirely -> FAST.
     const tokenParams = new URLSearchParams({
         grant_type: 'authorization_code',
-        code,
+        code: code,
         redirect_uri: validRedirectUri,
         client_id: LINE_CHANNEL_ID,
         client_secret: LINE_CHANNEL_SECRET,
     });
 
-    const tokenRes = await fetch('https://api.line.me/oauth2/v2.1/token', {
+    const tokenResponse = await fetchWithTimeout('https://api.line.me/oauth2/v2.1/token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: tokenParams.toString(),
     });
-    logTime('line_token_received');
+    logTime('line_token_exchanged');
 
-    if (!tokenRes.ok) {
-        const err = await tokenRes.json();
-        throw new Error(`LINE Token Error: ${err.error_description || err.error}`);
+    if (!tokenResponse.ok) {
+        const error = await tokenResponse.json();
+        return Response.json({ error: `LINE token exchange failed: ${error.error_description || error.error || 'unknown'}` }, { status: 400 });
     }
-    const { access_token } = await tokenRes.json();
 
-    const profileRes = await fetch('https://api.line.me/v2/profile', {
-        headers: { 'Authorization': `Bearer ${access_token}` },
-    });
-    logTime('line_profile_received');
+    const tokenData = await tokenResponse.json();
+    const { id_token } = tokenData;
 
-    if (!profileRes.ok) throw new Error('Failed to fetch LINE profile');
-    const { userId: lineUserId, displayName, pictureUrl } = await profileRes.json();
+    if (!id_token) {
+        // Fallback if id_token is missing (e.g. old channel settings)
+        // But we really want it for speed.
+        throw new Error('No id_token returned from LINE. Ensure openid scope is requested.');
+    }
+
+    // Optimization: Decode ID Token locally instead of fetching profile
+    // ID Token contains sub (userId), name, picture.
+
+    const decodeJwt = (token) => {
+        try {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+            return JSON.parse(jsonPayload);
+        } catch (e) {
+            throw new Error('Failed to decode ID token');
+        }
+    };
+
+    const idTokenPayload = decodeJwt(id_token);
+    const lineUserId = idTokenPayload.sub;
+    const displayName = idTokenPayload.name;
+    const pictureUrl = idTokenPayload.picture;
+
+    logTime('id_token_decoded_locally');
+
+    // Optimization: Decode ID Token locally instead of fetching profile
+    // ID Token contains sub (userId), name, picture.
+
+    // (decodeJwt is already defined above, avoiding duplication)
+
+
+    const idTokenPayload = decodeJwt(id_token);
+    const lineUserId = idTokenPayload.sub;
+    const displayName = idTokenPayload.name;
+    const pictureUrl = idTokenPayload.picture;
+
+    logTime('id_token_decoded_locally');
 
     // 2. ID Resolution Strategy (The "Magic Link" Shortcut)
     // Instead of searching (which is slow or broken), we simply:
