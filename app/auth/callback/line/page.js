@@ -60,15 +60,13 @@ function LineCallbackContent() {
                 // Call API route to handle authentication
                 console.log('Fetching auth status from API...');
 
-                // Add a timeout signal to prevent indefinite waiting
+                // 30s timeout to allow for system latency
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+                const timeoutId = setTimeout(() => controller.abort(), 30000);
 
                 const response = await fetch('/api/auth/line', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         code,
                         redirectUri: window.location.origin + '/auth/callback/line',
@@ -81,10 +79,12 @@ function LineCallbackContent() {
 
                 if (!response.ok) {
                     const errorData = await response.json();
+                    if (errorData.debug) console.log('Auth error debug:', errorData.debug);
                     throw new Error(errorData.error || '認証に失敗しました');
                 }
 
                 const data = await response.json();
+                if (data.debug) console.log('Auth success debug:', data.debug);
 
                 // Use the magic link to authenticate
                 if (data.redirectUrl) {
@@ -100,11 +100,10 @@ function LineCallbackContent() {
                 console.error('LINE callback error:', error);
                 let message = error.message || '認証処理中にエラーが発生しました';
                 if (error.name === 'AbortError') {
-                    message = 'サーバーからの応答がタイムアウトしました。ネット環境を確認し、もう一度お試しください。';
+                    message = '認証サーバーの応答がタイムアウトしました(30s)。通信環境の良い場所で再度お試しください。';
                 }
                 setError(message);
                 setLoading(false);
-                // Extend timeout to give user time to read the error
                 setTimeout(() => router.push('/login'), 8000);
             }
         };
