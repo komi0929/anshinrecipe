@@ -123,12 +123,17 @@ async function handleAuth(request, logTime, timings) {
         }
     }
 
-    // 4. Parallel Execution: Upsert Profile & Generate Link
-    // We run these in parallel to save precious milliseconds.
+    // 4. Update Profile (Conditional) & Link Generation
+    // Optimization: Skip Upsert for existing users to avoid DB Row Locks (Pro User Timeout Fix)
+    // We only Upsert if:
+    // 1. It is a new user (userId solved via Create) -> likely need to create profile
+    // 2. It is a Pro Registration (need to set is_pro=true)
+    // 3. Profile info changed? (skipped for speed, we prioritize login success)
 
-    // a) Prepare Upsert Promise
+    const shouldUpsert = isProRegistration || !existingProfile; // heuristic: if we found them in profiles, we skip upsert.
+
     const updateData = {
-        id: userId, // this might be null, but upsert needs ID usually. Wait, if null, we can't upsert yet.
+        id: userId,
         line_user_id: lineUserId,
         display_name: displayName,
         updated_at: new Date().toISOString()
@@ -139,35 +144,40 @@ async function handleAuth(request, logTime, timings) {
     }
     if (isProRegistration) updateData.is_pro = true;
 
-    // We can only upsert if we HAVE a userId. 
-    // If we don't have it (skipped create), we need to get it from the link first.
-    // So parallelization is possible only if we have userId.
-
     let sessionData = null;
-    let finalLinkUserId = userId; // Local var to hold resolved ID
+    let finalLinkUserId = userId;
 
     if (userId) {
-        // CASE 1: We know the ID. Run Upsert and GenLink in Parallel.
-        logTime('parallel_exec_start');
+        logTime(`exec_start_upsert=${shouldUpsert}`);
 
-        const upsertPromise = supabaseAdmin.from('profiles').upsert(updateData, { onConflict: 'id' });
+        const promises = [];
 
+        // Always generate link
         const linkPromise = supabaseAdmin.auth.admin.generateLink({
             type: 'magiclink',
-            email: finalEmail, // Use resolved email (primary or legacy)
+            email: finalEmail,
             options: { redirectTo: process.env.NEXT_PUBLIC_APP_URL || origin }
         });
+        promises.push(linkPromise);
 
+        // Conditional Upsert
+        if (shouldUpsert) {
+            const upsertPromise = supabaseAdmin.from('profiles').upsert(updateData, { onConflict: 'id' });
+            promises.push(upsertPromise);
+        } else {
+            logTime('upsert_skipped_for_speed');
+        }
 
-        const [upsertRes, linkRes] = await Promise.all([upsertPromise, linkPromise]);
-        logTime('parallel_exec_done');
+        const results = await Promise.all(promises);
+        const linkRes = results[0]; // generateLink is always first
+        // upsertRes is results[1] if exists, but we don't block on it if we don't care about result content.
 
         if (linkRes.error) throw new Error(`Link Gen Failed: ${linkRes.error.message}`);
         sessionData = linkRes.data;
 
     } else {
-        // CASE 2: We don't know ID yet (Zombie User). Must GenLink FIRST to get ID, then Upsert.
-        // This is the slower path but handles the conflict case.
+        // CASE 2: Zombie User (No ID yet). Validation/Recovery path.
+        // We MUST Generate link first to get ID. Then we MUST upsert (because we didn't find them in DB).
         logTime('recovery_exec_start');
 
         const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
@@ -176,7 +186,6 @@ async function handleAuth(request, logTime, timings) {
             options: { redirectTo: origin }
         });
 
-        // Try Legacy if primary failed
         if (linkError) {
             const legacyEmail = `${lineUserId}@line.user`;
             const { data: legacyLink, error: legacyError } = await supabaseAdmin.auth.admin.generateLink({
@@ -193,7 +202,7 @@ async function handleAuth(request, logTime, timings) {
             finalLinkUserId = linkData.user.id;
         }
 
-        // Now we can upsert
+        // Always upsert for new/recovered users to ensure profile consistency
         updateData.id = finalLinkUserId;
         await supabaseAdmin.from('profiles').upsert(updateData, { onConflict: 'id' });
         logTime('recovery_exec_done');
