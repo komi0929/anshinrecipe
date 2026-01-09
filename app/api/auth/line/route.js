@@ -14,8 +14,15 @@ const supabaseAdmin = createClient(supabaseUrl || 'https://placeholder.supabase.
 const LINE_CHANNEL_ID = process.env.NEXT_PUBLIC_LINE_CHANNEL_ID;
 const LINE_CHANNEL_SECRET = process.env.LINE_CHANNEL_SECRET;
 
+// 両方のメールドメインをサポート（新旧互換性）
+const EMAIL_DOMAINS = ['@line.anshin-recipe.app', '@line.user'];
+
 export async function POST(request) {
+    const startTime = Date.now();
+    const log = (msg) => console.log(`[AUTH ${Date.now() - startTime}ms] ${msg}`);
+
     try {
+        log('START');
         const { code, redirectUri, isProRegistration } = await request.json();
 
         if (!code) {
@@ -24,7 +31,8 @@ export async function POST(request) {
 
         const validRedirectUri = redirectUri || `${request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/callback/line`;
 
-        // Exchange code for access token
+        // 1. Exchange code for access token
+        log('LINE_TOKEN_START');
         const tokenParams = new URLSearchParams({
             grant_type: 'authorization_code',
             code: code,
@@ -35,91 +43,136 @@ export async function POST(request) {
 
         const tokenResponse = await fetch('https://api.line.me/oauth2/v2.1/token', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: tokenParams.toString(),
         });
 
         if (!tokenResponse.ok) {
             const error = await tokenResponse.json();
-            console.error('LINE token exchange error:', error);
+            log(`LINE_TOKEN_ERROR: ${JSON.stringify(error)}`);
             return Response.json({ error: 'Failed to exchange code for token' }, { status: 400 });
         }
 
         const tokenData = await tokenResponse.json();
         const accessToken = tokenData.access_token;
+        log('LINE_TOKEN_DONE');
 
-        // Get LINE user profile
+        // 2. Get LINE user profile
+        log('LINE_PROFILE_START');
         const profileResponse = await fetch('https://api.line.me/v2/profile', {
-            headers: {
-                'Authorization': `Bearer ${accessToken}`,
-            },
+            headers: { 'Authorization': `Bearer ${accessToken}` },
         });
 
         if (!profileResponse.ok) {
-            console.error('LINE profile fetch error');
+            log('LINE_PROFILE_ERROR');
             return Response.json({ error: 'Failed to get LINE profile' }, { status: 400 });
         }
 
         const lineProfile = await profileResponse.json();
         const { userId: lineUserId, displayName, pictureUrl } = lineProfile;
+        log(`LINE_PROFILE_DONE: ${lineUserId}, ${displayName}`);
 
-        // Debug log for pictureUrl
-        console.log('LINE Profile:', { lineUserId, displayName, pictureUrl: pictureUrl || 'NOT PROVIDED' });
-
-        // Check if user already exists - fetch both picture_url and avatar_url
-        const { data: existingProfile } = await supabaseAdmin
+        // 3. Check if user already exists in profiles table
+        log('PROFILE_LOOKUP_START');
+        const { data: existingProfile, error: profileLookupError } = await supabaseAdmin
             .from('profiles')
             .select('id, picture_url, avatar_url')
             .eq('line_user_id', lineUserId)
-            .single();
+            .maybeSingle();  // maybeSingleはnullを返し、エラーにならない
+
+        if (profileLookupError) {
+            log(`PROFILE_LOOKUP_ERROR: ${profileLookupError.message}`);
+        }
+        log(`PROFILE_LOOKUP_DONE: ${existingProfile ? 'FOUND' : 'NOT_FOUND'}`);
 
         let userId;
+        let resolvedEmail = null;
 
         if (existingProfile) {
-            // Existing user - update profile
+            // 既存ユーザー - プロファイル更新
+            log('EXISTING_USER_UPDATE');
             userId = existingProfile.id;
 
-            // Determine the best avatar: LINE's pictureUrl > existing avatar_url > existing picture_url
-            const bestAvatar = pictureUrl || existingProfile.avatar_url || existingProfile.picture_url;
-
-            // Always update avatar from LINE if provided, otherwise keep existing
-            const updateData = {
-                display_name: displayName,
-            };
-
-            // Only update avatar fields if LINE provides a new one
+            const updateData = { display_name: displayName };
             if (pictureUrl) {
                 updateData.picture_url = pictureUrl;
                 updateData.avatar_url = pictureUrl;
-                console.log('Updating avatar with LINE pictureUrl:', pictureUrl);
-            } else {
-                console.log('LINE pictureUrl not provided, keeping existing avatar:', existingProfile.avatar_url);
             }
-
-            // プロユーザー登録フローからのログインの場合、is_proをtrueに設定
             if (isProRegistration) {
                 updateData.is_pro = true;
-                console.log('Pro registration detected, setting is_pro to true');
             }
 
-            await supabaseAdmin
+            const { error: updateError } = await supabaseAdmin
                 .from('profiles')
                 .update(updateData)
                 .eq('id', userId);
+
+            if (updateError) {
+                log(`PROFILE_UPDATE_ERROR: ${updateError.message}`);
+            } else {
+                log('PROFILE_UPDATE_DONE');
+            }
+
+            // 既存ユーザーのメールアドレスを特定（セッション生成用）
+            log('FIND_USER_EMAIL');
+            for (const domain of EMAIL_DOMAINS) {
+                const testEmail = `${lineUserId}${domain}`;
+                try {
+                    const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+                        type: 'magiclink',
+                        email: testEmail,
+                    });
+                    if (!linkError && linkData?.user) {
+                        resolvedEmail = testEmail;
+                        log(`FOUND_EMAIL: ${testEmail}`);
+                        break;
+                    }
+                } catch (e) {
+                    // このメールでは見つからない、次を試す
+                }
+            }
+
+            if (!resolvedEmail) {
+                // メールが見つからない場合、Auth APIから直接取得
+                log('FALLBACK_GET_USER_BY_ID');
+                try {
+                    const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(userId);
+                    if (authUser?.user?.email) {
+                        resolvedEmail = authUser.user.email;
+                        log(`FOUND_EMAIL_BY_ID: ${resolvedEmail}`);
+                    }
+                } catch (e) {
+                    log(`GET_USER_BY_ID_ERROR: ${e.message}`);
+                }
+            }
+
         } else {
-            // Check if auth user exists but profile doesn't
-            const dummyEmail = `${lineUserId}@line.anshin-recipe.app`;
+            // プロファイルが見つからない - Auth userを探すか新規作成
+            log('NO_PROFILE_FOUND');
 
-            // Try to get existing auth user
-            const { data: existingAuthUser } = await supabaseAdmin.auth.admin.listUsers();
-            const authUser = existingAuthUser.users.find(u => u.email === dummyEmail);
+            // 両方のメールドメインでAuth userを探す（generateLinkで高速検索）
+            for (const domain of EMAIL_DOMAINS) {
+                const testEmail = `${lineUserId}${domain}`;
+                log(`TRYING_EMAIL: ${testEmail}`);
+                try {
+                    const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+                        type: 'magiclink',
+                        email: testEmail,
+                    });
+                    if (!linkError && linkData?.user) {
+                        userId = linkData.user.id;
+                        resolvedEmail = testEmail;
+                        log(`FOUND_AUTH_USER: ${testEmail}`);
+                        break;
+                    }
+                } catch (e) {
+                    // このメールでは見つからない
+                }
+            }
 
-            if (authUser) {
-                // Auth user exists but profile doesn't - create profile only
-                userId = authUser.id;
-
+            if (userId) {
+                // Auth userは存在するがprofileがない - profileを作成
+                log('CREATE_MISSING_PROFILE');
                 const { error: profileError } = await supabaseAdmin
                     .from('profiles')
                     .upsert({
@@ -129,20 +182,22 @@ export async function POST(request) {
                         picture_url: pictureUrl,
                         avatar_url: pictureUrl,
                         is_pro: isProRegistration || false,
-                    }, {
-                        onConflict: 'id'
-                    });
+                    }, { onConflict: 'id' });
 
                 if (profileError) {
-                    console.error('Profile upsert error:', profileError);
+                    log(`CREATE_PROFILE_ERROR: ${profileError.message}`);
                     return Response.json({ error: 'Failed to create profile' }, { status: 500 });
                 }
+                log('CREATE_PROFILE_DONE');
+
             } else {
-                // New user - create auth user and profile
+                // 完全新規ユーザー
+                log('CREATE_NEW_USER');
+                const newEmail = `${lineUserId}@line.anshin-recipe.app`;  // 新規は新ドメインを使用
                 const dummyPassword = generateSecurePassword();
 
                 const { data: authData, error: signUpError } = await supabaseAdmin.auth.admin.createUser({
-                    email: dummyEmail,
+                    email: newEmail,
                     password: dummyPassword,
                     email_confirm: true,
                     user_metadata: {
@@ -152,27 +207,15 @@ export async function POST(request) {
                 });
 
                 if (signUpError) {
-                    // If email already exists, try to find the user
-                    if (signUpError.code === 'email_exists' || signUpError.message?.includes('User already registered')) {
-                        console.log('Email exists, finding existing user...');
-                        const { data: allUsers } = await supabaseAdmin.auth.admin.listUsers();
-                        const existingUser = allUsers.users.find(u => u.email === dummyEmail);
-
-                        if (existingUser) {
-                            userId = existingUser.id;
-                        } else {
-                            console.error('Could not find existing user');
-                            return Response.json({ error: 'Failed to find user' }, { status: 500 });
-                        }
-                    } else {
-                        console.error('Supabase user creation error:', signUpError);
-                        return Response.json({ error: 'Failed to create user' }, { status: 500 });
-                    }
-                } else {
-                    userId = authData.user.id;
+                    log(`CREATE_USER_ERROR: ${signUpError.message}`);
+                    return Response.json({ error: 'Failed to create user' }, { status: 500 });
                 }
 
-                // Create profile using upsert to avoid conflicts
+                userId = authData.user.id;
+                resolvedEmail = newEmail;
+                log(`NEW_USER_CREATED: ${userId}`);
+
+                // プロファイル作成
                 const { error: profileError } = await supabaseAdmin
                     .from('profiles')
                     .upsert({
@@ -182,28 +225,38 @@ export async function POST(request) {
                         picture_url: pictureUrl,
                         avatar_url: pictureUrl,
                         is_pro: isProRegistration || false,
-                    }, {
-                        onConflict: 'id'
-                    });
+                    }, { onConflict: 'id' });
 
                 if (profileError) {
-                    console.error('Profile creation error:', profileError);
-                    return Response.json({ error: 'Failed to create profile' }, { status: 500 });
+                    log(`CREATE_PROFILE_ERROR: ${profileError.message}`);
                 }
+                log('NEW_PROFILE_CREATED');
             }
         }
 
-        // Generate session token for the user
+        // 4. Generate session link
+        if (!resolvedEmail) {
+            log('NO_RESOLVED_EMAIL - FATAL');
+            return Response.json({ error: 'Could not resolve user email' }, { status: 500 });
+        }
+
+        log(`GENERATE_SESSION: ${resolvedEmail}`);
         const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.admin.generateLink({
             type: 'magiclink',
-            email: `${lineUserId}@line.anshin-recipe.app`,
+            email: resolvedEmail,
         });
 
         if (sessionError) {
-            console.error('Session generation error:', sessionError);
+            log(`SESSION_ERROR: ${sessionError.message}`);
             return Response.json({ error: 'Failed to create session' }, { status: 500 });
         }
 
+        if (!sessionData?.properties?.action_link) {
+            log('NO_ACTION_LINK');
+            return Response.json({ error: 'Failed to create session link' }, { status: 500 });
+        }
+
+        log('SUCCESS');
         return Response.json({
             success: true,
             userId: userId,
@@ -211,7 +264,7 @@ export async function POST(request) {
         });
 
     } catch (error) {
-        console.error('LINE auth error:', error);
+        console.error('[AUTH] Unhandled error:', error);
         return Response.json({ error: 'Internal server error' }, { status: 500 });
     }
 }
