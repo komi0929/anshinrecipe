@@ -155,6 +155,29 @@ export async function POST(request) {
         if (dbResult.status === 'fulfilled' && dbResult.value?.data?.id) {
             userId = dbResult.value.data.id;
             log('FOUND_VIA_DB');
+
+            // Need to determine the correct email for this user
+            // Check if primary email works, otherwise try legacy
+            if (primaryEmailResult.status === 'fulfilled' && primaryEmailResult.value?.data?.user?.id === userId) {
+                resolvedEmail = primaryEmail;
+                log('RESOLVED_EMAIL_PRIMARY');
+            } else if (legacyEmailResult.status === 'fulfilled' && legacyEmailResult.value?.data?.user?.id === userId) {
+                resolvedEmail = legacyEmail;
+                log('RESOLVED_EMAIL_LEGACY');
+            } else {
+                // If neither email lookup succeeded but we found the user via DB,
+                // we need to look up the auth user directly
+                try {
+                    const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(userId);
+                    if (authUser?.user?.email) {
+                        resolvedEmail = authUser.user.email;
+                        log(`RESOLVED_EMAIL_FROM_AUTH: ${resolvedEmail}`);
+                    }
+                } catch (e) {
+                    // Fall back to primary email (will create new session)
+                    log('RESOLVED_EMAIL_FALLBACK_PRIMARY');
+                }
+            }
         } else if (primaryEmailResult.status === 'fulfilled' && primaryEmailResult.value?.data?.user) {
             userId = primaryEmailResult.value.data.user.id;
             resolvedEmail = primaryEmail;
@@ -214,38 +237,71 @@ export async function POST(request) {
         }
 
         // Run profile update and session link generation in parallel
-        const [profileResult, sessionResult] = await Promise.allSettled([
-            withTimeout(
-                supabaseAdmin.from('profiles').upsert(profileData, { onConflict: 'id' }),
-                2000,
-                'PROFILE_UPSERT'
-            ),
-            withTimeout(
+        // CRITICAL: Profile update MUST succeed - retry if needed
+        log('PROFILE_UPSERT_START');
+        let profileSuccess = false;
+        let profileAttempts = 0;
+        const maxAttempts = 2;
+
+        while (!profileSuccess && profileAttempts < maxAttempts) {
+            profileAttempts++;
+            try {
+                const { error: upsertError } = await withTimeout(
+                    supabaseAdmin.from('profiles').upsert(profileData, { onConflict: 'id' }),
+                    4000, // Increased timeout
+                    'PROFILE_UPSERT'
+                );
+
+                if (upsertError) {
+                    log(`PROFILE_UPSERT_ERROR_ATTEMPT_${profileAttempts}: ${upsertError.message}`);
+                    if (profileAttempts >= maxAttempts) {
+                        return Response.json({
+                            error: 'プロファイル更新に失敗しました',
+                            details: upsertError.message
+                        }, { status: 500 });
+                    }
+                } else {
+                    profileSuccess = true;
+                    log(`PROFILE_UPSERT_SUCCESS_ATTEMPT_${profileAttempts}`);
+                }
+            } catch (e) {
+                log(`PROFILE_UPSERT_TIMEOUT_ATTEMPT_${profileAttempts}: ${e.message}`);
+                if (profileAttempts >= maxAttempts) {
+                    return Response.json({
+                        error: 'プロファイル更新がタイムアウトしました',
+                        details: e.message
+                    }, { status: 504 });
+                }
+            }
+        }
+
+        // Generate session link (only after profile is saved)
+        log('SESSION_LINK_START');
+        checkTimeout();
+
+        let sessionData = null;
+        try {
+            const { data, error: sessionError } = await withTimeout(
                 supabaseAdmin.auth.admin.generateLink({ type: 'magiclink', email: resolvedEmail }),
-                2000,
+                4000,
                 'SESSION_LINK'
-            )
-        ]);
-        log('FINAL_STEPS_DONE');
+            );
 
-        // Log profile result (non-blocking, don't fail on this)
-        if (profileResult.status === 'rejected') {
-            log(`PROFILE_UPDATE_WARNING: ${profileResult.reason?.message}`);
-        } else {
-            log('PROFILE_UPDATE_SUCCESS');
+            if (sessionError) {
+                log(`SESSION_LINK_ERROR: ${sessionError.message}`);
+                return Response.json({ error: 'Failed to create session', details: sessionError.message }, { status: 500 });
+            }
+            sessionData = data;
+        } catch (e) {
+            log(`SESSION_LINK_TIMEOUT: ${e.message}`);
+            return Response.json({ error: 'セッション作成がタイムアウトしました', details: e.message }, { status: 504 });
         }
 
-        // Session link is required
-        if (sessionResult.status === 'rejected') {
-            log(`SESSION_LINK_FAILED: ${sessionResult.reason?.message}`);
-            return Response.json({ error: 'Failed to create session', details: sessionResult.reason?.message }, { status: 500 });
-        }
-
-        const sessionData = sessionResult.value?.data;
         if (!sessionData?.properties?.action_link) {
             log('SESSION_LINK_NO_URL');
             return Response.json({ error: 'Failed to create session - no action link' }, { status: 500 });
         }
+        log('SESSION_LINK_DONE');
 
         log('SUCCESS');
         return Response.json({
