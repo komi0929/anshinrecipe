@@ -33,22 +33,22 @@ CREATE TRIGGER update_profiles_updated_at
 -- 5. Enable Row Level Security (RLS)
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 
--- 6. RLS Policies for profiles
--- Allow anyone to read profiles (for displaying user info on recipes, reports, etc.)
-CREATE POLICY "Anyone can view profiles" ON profiles
+-- 6. RLS Policies for profiles (Optimized with SELECT auth.uid())
+-- Allow anyone to read profiles
+CREATE POLICY "profiles_select_all" ON profiles
     FOR SELECT USING (true);
 
--- Allow authenticated users to insert their own profile
-CREATE POLICY "Users can create own profile" ON profiles
-    FOR INSERT WITH CHECK (auth.uid() = id);
+-- Allow users to insert their own profile (Support upsert)
+CREATE POLICY "profiles_insert_own" ON profiles
+    FOR INSERT WITH CHECK ((SELECT auth.uid()) = id);
 
 -- Allow users to update their own profile
-CREATE POLICY "Users can update own profile" ON profiles
-    FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "profiles_update_own" ON profiles
+    FOR UPDATE USING ((SELECT auth.uid()) = id);
 
 -- Allow users to delete their own profile
-CREATE POLICY "Users can delete own profile" ON profiles
-    FOR DELETE USING (auth.uid() = id);
+CREATE POLICY "profiles_delete_own" ON profiles
+    FOR DELETE USING ((SELECT auth.uid()) = id);
 
 -- Verification query (optional - run this to verify)
 -- SELECT * FROM information_schema.tables WHERE table_name = 'profiles';

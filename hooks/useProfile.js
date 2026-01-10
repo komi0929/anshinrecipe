@@ -114,6 +114,7 @@ export const useProfile = () => {
         if (!user) return;
         try {
             const { error } = await supabase
+                .from('profiles')
                 .upsert({
                     id: user.id,
                     username: name,
