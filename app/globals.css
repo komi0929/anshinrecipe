@@ -984,3 +984,75 @@ textarea {
     border-radius: var(--radius-md);
     font-weight: 700;
 }
+
+/* ============================================
+   RIPPLE EFFECT - Material Design Inspired
+   ============================================ */
+.btn-ripple {
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-ripple::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 10%, transparent 10%);
+    background-size: 1000% 1000%;
+    background-position: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: background-size 0.5s, opacity 0.3s;
+}
+
+.btn-ripple:active::after {
+    background-size: 0% 0%;
+    opacity: 1;
+    transition: 0s;
+}
+
+/* ============================================
+   SCROLL HEADER - Shrink on Scroll
+   ============================================ */
+.header-shrink {
+    transition: all 0.3s ease;
+}
+
+.header-shrink.scrolled {
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+}
+
+.header-shrink.scrolled .header-logo {
+    height: 50px !important;
+    transition: height 0.3s ease;
+}
+
+.header-logo {
+    transition: height 0.3s ease;
+}
+
+/* ============================================
+   SKELETON SHIMMER - Enhanced Loading
+   ============================================ */
+.skeleton-shimmer {
+    background: linear-gradient(90deg,
+            var(--color-background) 25%,
+            #f0f0f0 50%,
+            var(--color-background) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}
