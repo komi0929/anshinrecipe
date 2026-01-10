@@ -115,12 +115,12 @@ export const useProfile = () => {
         try {
             const { error } = await supabase
                 .from('profiles')
-                .upsert({
-                    id: user.id,
+                .update({
                     username: name,
                     display_name: name,
                     updated_at: new Date()
-                });
+                })
+                .eq('id', user.id);
 
             if (error) throw error;
             mutateProfile(prev => prev ? { ...prev, profile: { ...prev.profile, userName: name } } : prev, false);
