@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Heart, Bookmark, Star } from 'lucide-react';
@@ -14,8 +14,32 @@ export const RecipeCard = ({ recipe, isSaved, onToggleSave, isLiked, onToggleLik
     const { previewImage } = useRecipes();
     const { user } = useProfile();
     const router = useRouter();
+    const cardRef = useRef(null);
 
-    // Prefetch on hover for faster navigation
+    // 🚀 Intersection Observer for mobile prefetch (100px before entering viewport)
+    useEffect(() => {
+        if (priority) return; // Skip for priority cards (already loaded)
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        router.prefetch(`/recipe/${recipe.id}`);
+                        observer.unobserve(entry.target);
+                    }
+                });
+            },
+            { rootMargin: '100px' }
+        );
+
+        if (cardRef.current) {
+            observer.observe(cardRef.current);
+        }
+
+        return () => observer.disconnect();
+    }, [recipe.id, router, priority]);
+
+    // Prefetch on hover for faster navigation (desktop)
     const handleMouseEnter = useCallback(() => {
         router.prefetch(`/recipe/${recipe.id}`);
     }, [router, recipe.id]);
@@ -59,7 +83,7 @@ export const RecipeCard = ({ recipe, isSaved, onToggleSave, isLiked, onToggleLik
     const isProUser = recipe.author?.is_pro || recipe.author?.isPro || false;
 
     return (
-        <Link href={`/recipe/${recipe.id}`} className="recipe-card-visual" onMouseEnter={handleMouseEnter}>
+        <Link ref={cardRef} href={`/recipe/${recipe.id}`} className="recipe-card-visual" onMouseEnter={handleMouseEnter}>
             <div className="card-visual-container">
                 {/* Pro User Badge */}
                 {isProUser && (

@@ -7,6 +7,31 @@ const withPWA = require("@ducanh2912/next-pwa").default({
     disable: process.env.NODE_ENV === "development", // Disable PWA in dev mode
     workboxOptions: {
         disableDevLogs: true,
+        // 🚀 Stale-While-Revalidate for Supabase API calls
+        runtimeCaching: [
+            {
+                urlPattern: /^https:\/\/.*\.supabase\.co\/.*/,
+                handler: 'StaleWhileRevalidate',
+                options: {
+                    cacheName: 'supabase-api-cache',
+                    expiration: {
+                        maxEntries: 100,
+                        maxAgeSeconds: 60 * 60, // 1 hour
+                    },
+                },
+            },
+            {
+                urlPattern: /^https:\/\/i\.ytimg\.com\/.*/,
+                handler: 'CacheFirst',
+                options: {
+                    cacheName: 'youtube-thumbnail-cache',
+                    expiration: {
+                        maxEntries: 200,
+                        maxAgeSeconds: 60 * 60 * 24 * 7, // 1 week
+                    },
+                },
+            },
+        ],
     },
 });
 
