@@ -1,5 +1,35 @@
 # 改善ログ
 
+## 2026-01-10 - Nani式UX改善 Phase 2 & 3 完全実装
+
+**ステータス**: 🚀 本番反映済み
+
+**変更内容**:
+
+### Phase 2: 体験向上
+- **下書き自動保存**: `useDraftAutoSave.js` フックによる3秒デバウンス自動保存（既存機能、確認済み）
+- **RecipeCard先読み強化**: `IntersectionObserver`でビューポート100px手前からページをプリフェッチ（モバイル対応）
+- **閲覧履歴キャッシュ**: `useRecentlyViewed.js` フック新規作成。LocalStorageに最大20件保存、ネットワーク遅延ゼロで履歴表示可能
+- **ハートアニメーション**: `HeartBurst.jsx/css` 新規作成。いいね時に6方向へパーティクルが飛び散るエフェクト
+
+### Phase 3: 高度な最適化
+- **Service Worker強化**: `next.config.js`にStale-While-Revalidateキャッシュ戦略を追加
+  - Supabase API: 1時間キャッシュ（100エントリ）
+  - YouTubeサムネイル: 1週間キャッシュ（200エントリ）
+- **エラーハンドリング統一**: `error.js` による統一エラーUI（既存機能、確認済み）
+
+**関連ファイル**:
+- `hooks/useRecentlyViewed.js` (新規)
+- `components/HeartBurst.jsx` (新規)
+- `components/HeartBurst.css` (新規)
+- `components/RecipeCard.jsx` (IntersectionObserver追加)
+- `next.config.js` (runtimeCaching追加)
+
+**確認ポイント**:
+- [x] ビルド成功
+- [x] 本番デプロイ完了
+- [x] Service Worker runtimeCaching有効化確認
+
 ## 2026-01-09 - LINEログイン認証エラーの根本解決（自動修復・全件検索実装）
 
 **ステータス**: 🚀 本番反映済み
