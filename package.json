@@ -12,6 +12,7 @@
     "@ducanh2912/next-pwa": "^10.2.9",
     "@google/generative-ai": "^0.24.1",
     "@supabase/supabase-js": "^2.86.2",
+    "@vis.gl/react-google-maps": "^1.7.1",
     "cheerio": "^1.1.2",
     "googleapis": "^169.0.0",
     "lucide-react": "^0.555.0",

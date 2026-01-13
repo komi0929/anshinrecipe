@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, PlusCircle, Heart, User } from 'lucide-react';
+import { Home, PlusCircle, Heart, User, Map } from 'lucide-react';
 import { useProfile } from '../hooks/useProfile';
 import { useNotifications } from '../hooks/useNotifications';
 import './BottomNav.css';
@@ -34,6 +34,14 @@ const BottomNav = () => {
             >
                 <PlusCircle size={24} />
                 <span>追加</span>
+            </Link>
+
+            <Link
+                href="/map"
+                className={`nav-item ${pathname === '/map' || pathname.startsWith('/map/') ? 'active' : ''}`}
+            >
+                <Map size={24} />
+                <span>地図</span>
             </Link>
 
             <Link

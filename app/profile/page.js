@@ -19,89 +19,49 @@ import { Input } from '@/components/ui/Input';
 import { uploadImage } from '@/lib/imageUpload';
 import AllergySelector from '@/components/AllergySelector';
 import IconPicker from '@/components/IconPicker';
-import { ChevronDown, ChevronUp } from 'lucide-react';
-
-// ... imports
+import { useMapData } from '@/hooks/useMapData';
 
 export default function ProfilePage() {
-    // ... hook destructuring
     const {
         user, profile, loading, likedRecipeIds,
+        visitedRestaurantIds, wishlistRestaurantIds,
         updateUserName, updateAvatar,
         addChild, updateChild, deleteChild,
+        toggleUserRestaurant,
         deleteAccount
     } = useProfile();
     const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications(user?.id);
+    const { restaurants } = useMapData();
     const router = useRouter();
     const fileInputRef = useRef(null);
-    const childFileInputRef = useRef(null); // New ref for child photo
+    const childFileInputRef = useRef(null);
 
-    // Local state for editing
+    // Local state
+    const [activeTab, setActiveTab] = useState('profile'); // 'profile', 'map', 'recipes'
     const [isEditingName, setIsEditingName] = useState(false);
     const [newName, setNewName] = useState('');
     const [showChildModal, setShowChildModal] = useState(false);
-    const [editingChild, setEditingChild] = useState(null); // null = new, object = edit
+    const [editingChild, setEditingChild] = useState(null);
 
-    // Modals for Child Edits
     const [childName, setChildName] = useState('');
     const [childIcon, setChildIcon] = useState('👶');
-    const [childPhoto, setChildPhoto] = useState(null); // URL string
-    const [childPhotoFile, setChildPhotoFile] = useState(null); // File object
+    const [childPhoto, setChildPhoto] = useState(null);
+    const [childPhotoFile, setChildPhotoFile] = useState(null);
     const [childAllergens, setChildAllergens] = useState([]);
+    const [formErrors, setFormErrors] = useState({});
 
-
-    const [customAllergen, setCustomAllergen] = useState(''); // Free text input
-    const [formErrors, setFormErrors] = useState({}); // Validation errors
-
-    // Inquiry Modal
     const [showInquiryModal, setShowInquiryModal] = useState(false);
     const [showFAQModal, setShowFAQModal] = useState(false);
     const [showAnnouncementsModal, setShowAnnouncementsModal] = useState(false);
-    const [announcementTab, setAnnouncementTab] = useState('roadmap'); // 'roadmap', 'updates', 'news'
-    const [expandedFaqIndex, setExpandedFaqIndex] = useState(null); // For FAQ accordion
-
-    const ALLERGEN_OPTIONS = [
-        '卵', '乳', '小麦', 'えび', 'かに', 'そば', '落花生', // 特定原材料7品目
-        'アーモンド', 'あわび', 'いか', 'いくら', 'オレンジ', 'カシューナッツ', 'キウイフルーツ',
-        '牛肉', 'くるみ', 'ごま', 'さけ', 'さば', '大豆', '鶏肉', 'バナナ',
-        '豚肉', 'まつたけ', 'もも', 'やまいも', 'りんご', 'ゼラチン' // 特定原材料に準ずる21品目
-    ];
+    const [announcementTab, setAnnouncementTab] = useState('roadmap');
+    const [expandedFaqIndex, setExpandedFaqIndex] = useState(null);
 
     useEffect(() => {
-        if (!loading && !user) {
-            router.push('/login');
-        }
+        if (!loading && !user) router.push('/login');
     }, [user, loading, router]);
 
-    // Show skeleton while loading - prevents blank flash
     if (loading || !user) {
-        return (
-            <div className="min-h-screen bg-background">
-                <div className="pt-6 pb-2 px-6">
-                    <div className="h-8 w-32 bg-slate-200 rounded-lg animate-pulse" />
-                </div>
-                <div className="px-4 space-y-6">
-                    {/* Profile card skeleton */}
-                    <div className="bg-white rounded-[32px] p-6 shadow-sm flex items-center gap-4">
-                        <div className="w-20 h-20 rounded-full bg-slate-200 animate-pulse" />
-                        <div className="flex-1">
-                            <div className="h-6 w-24 bg-slate-200 rounded animate-pulse mb-2" />
-                            <div className="h-4 w-16 bg-slate-100 rounded animate-pulse" />
-                        </div>
-                    </div>
-                    {/* Badges skeleton */}
-                    <div className="flex gap-4">
-                        {[1, 2, 3, 4].map(i => (
-                            <div key={i} className="w-14 h-14 rounded-full bg-slate-200 animate-pulse" />
-                        ))}
-                    </div>
-                    {/* Children skeleton */}
-                    <div className="bg-white rounded-[24px] p-4 shadow-sm">
-                        <div className="h-12 bg-slate-100 rounded animate-pulse" />
-                    </div>
-                </div>
-            </div>
-        );
+        return <div className="min-h-screen bg-background flex items-center justify-center"><Loader2 className="animate-spin text-primary" size={32} /></div>;
     }
 
     const handleUpdateName = async () => {
@@ -113,57 +73,28 @@ export default function ProfilePage() {
 
     const handleFileChange = async (e) => {
         const file = e.target.files?.[0];
-        if (file) {
-            await updateAvatar(file);
-        }
+        if (file) await updateAvatar(file);
     };
 
     const handleSaveChild = async () => {
-        // Validate all required fields
         const errors = {};
-        if (!childName.trim()) {
-            errors.name = 'お名前を入力してください';
-        }
-        if (childAllergens.length === 0) {
-            errors.allergens = 'アレルギーを最低1つ選択してください';
-        }
-
+        if (!childName.trim()) errors.name = 'お名前を入力してください';
+        if (childAllergens.length === 0) errors.allergens = 'アレルギーを選択してください';
         setFormErrors(errors);
-
-        if (Object.keys(errors).length > 0) {
-            return;
-        }
+        if (Object.keys(errors).length > 0) return;
 
         let photoUrl = childPhoto;
-
-        // Upload new photo if selected
         if (childPhotoFile) {
-            try {
-                photoUrl = await uploadImage(childPhotoFile, 'child-photos');
-            } catch (error) {
-                console.error('Child photo upload failed:', error);
-                alert('写真のアップロードに失敗しました');
-                return;
-            }
+            try { photoUrl = await uploadImage(childPhotoFile, 'child-photos'); }
+            catch (error) { alert('写真のアップロードに失敗しました'); return; }
         }
 
-        const childData = {
-            name: childName,
-            icon: childIcon,
-            photo: photoUrl,
-            allergens: childAllergens
-        };
-
+        const childData = { name: childName, icon: childIcon, photo: photoUrl, allergens: childAllergens };
         try {
-            if (editingChild) {
-                await updateChild(editingChild.id, childData);
-            } else {
-                await addChild(childData);
-            }
+            if (editingChild) await updateChild(editingChild.id, childData);
+            else await addChild(childData);
             closeChildModal();
-        } catch (error) {
-            console.error('Error saving child:', error);
-        }
+        } catch (error) { console.error('Error saving child:', error); }
     };
 
     const openChildModal = (child = null) => {
@@ -181,7 +112,6 @@ export default function ProfilePage() {
             setChildAllergens([]);
         }
         setChildPhotoFile(null);
-        setCustomAllergen('');
         setShowChildModal(true);
     };
 
@@ -192,720 +122,286 @@ export default function ProfilePage() {
     };
 
     const handleSignOut = async () => {
-        try {
-            const { error } = await supabase.auth.signOut();
-            if (error) throw error;
-        } catch (error) {
-            console.error('Error signing out:', error);
-        } finally {
-            window.location.href = '/login';
-        }
+        await supabase.auth.signOut();
+        window.location.href = '/login';
     };
 
     const handleDeleteAccount = async () => {
-        if (confirm('本当にアカウントを削除しますか？\nこの操作は取り消せません。\n保存したレシピや登録情報がすべて削除されます。')) {
+        if (confirm('本当にアカウントを削除しますか？')) {
             await deleteAccount();
             router.push('/');
         }
     };
 
     return (
-        <div className="min-h-screen bg-background">
-            {/* Header Area */}
-            <div className="pt-6 pb-0 px-6">
-                <h1 className="text-2xl font-bold text-text-main">マイページ</h1>
+        <div className="min-h-screen bg-background pb-20">
+            {/* Tab Switcher */}
+            <div className="px-6 pt-6 mb-6">
+                <div className="flex bg-slate-100 p-1 rounded-2xl">
+                    <button onClick={() => setActiveTab('profile')} className={`flex-1 py-2 text-sm font-bold rounded-xl transition-all ${activeTab === 'profile' ? 'bg-white shadow-sm text-primary' : 'text-slate-500'}`}>プロフィール</button>
+                    <button onClick={() => setActiveTab('map')} className={`flex-1 py-2 text-sm font-bold rounded-xl transition-all ${activeTab === 'map' ? 'bg-white shadow-sm text-primary' : 'text-slate-500'}`}>マップ記録</button>
+                    <button onClick={() => setActiveTab('recipes')} className={`flex-1 py-2 text-sm font-bold rounded-xl transition-all ${activeTab === 'recipes' ? 'bg-white shadow-sm text-primary' : 'text-slate-500'}`}>マイレシピ</button>
+                </div>
             </div>
 
-            <div className="px-4 space-y-4">
-
-                {/* 1. Profile Card */}
-                <div className="bg-white rounded-[32px] p-6 shadow-sm flex items-center gap-4">
-                    <div
-                        className="relative group cursor-pointer"
-                        onClick={() => fileInputRef.current?.click()}
-                    >
-                        <div className="w-20 h-20 rounded-full overflow-hidden bg-orange-100 border-4 border-white shadow-md relative">
-                            {profile.avatarUrl ? (
-                                <Image
-                                    src={profile.avatarUrl}
-                                    alt="Avatar"
-                                    fill
-                                    className="object-cover"
-                                />
-                            ) : (
-                                <div className="w-full h-full flex items-center justify-center text-orange-300">
-                                    <User size={40} />
+            <div className="px-4 space-y-6">
+                {activeTab === 'profile' && (
+                    <>
+                        {/* Profile Card */}
+                        <div className="bg-white rounded-[32px] p-6 shadow-sm flex items-center gap-4">
+                            <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                                <div className="w-20 h-20 rounded-full overflow-hidden bg-orange-100 border-4 border-white shadow-md relative">
+                                    {profile.avatarUrl ? <Image src={profile.avatarUrl} alt="Avatar" fill className="object-cover" /> : <div className="w-full h-full flex items-center justify-center text-orange-300"><User size={40} /></div>}
                                 </div>
-                            )}
-                        </div>
-                        <div className="absolute inset-0 bg-black/30 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Camera className="text-white" size={24} />
-                        </div>
-                        <input
-                            type="file"
-                            ref={fileInputRef}
-                            className="hidden"
-                            accept="image/*"
-                            onChange={handleFileChange}
-                        />
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                        {isEditingName ? (
-                            <div className="flex items-center gap-2">
-                                <Input
-                                    type="text"
-                                    value={newName}
-                                    onChange={(e) => setNewName(e.target.value)}
-                                    placeholder="新しい名前"
-                                    autoFocus
-                                    className="h-10 text-sm"
-                                />
-                                <Button
-                                    size="sm"
-                                    onClick={handleUpdateName}
-                                >
-                                    保存
-                                </Button>
+                                <div className="absolute inset-0 bg-black/30 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><Camera className="text-white" size={24} /></div>
+                                <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
                             </div>
-                        ) : (
-                            <div className="flex items-center gap-1">
-                                <h2 className="text-xl font-bold text-text-main">{profile.userName || 'ユーザー'}</h2>
-                                <button
-                                    onClick={() => {
-                                        setNewName(profile.userName || '');
-                                        setIsEditingName(true);
-                                    }}
-                                    className="p-1 text-slate-400 hover:text-primary transition-colors"
-                                >
-                                    <Pencil size={16} />
+                            <div className="flex-1 min-w-0">
+                                {isEditingName ? (
+                                    <div className="flex items-center gap-2">
+                                        <Input type="text" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="名前" autoFocus className="h-10 text-sm" />
+                                        <Button size="sm" onClick={handleUpdateName}>保存</Button>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center gap-1">
+                                        <h2 className="text-xl font-bold text-text-main">{profile.userName || 'ユーザー'}</h2>
+                                        <button onClick={() => { setNewName(profile.userName || ''); setIsEditingName(true); }} className="p-1 text-slate-400 hover:text-primary transition-colors"><Pencil size={16} /></button>
+                                    </div>
+                                )}
+                                <p className="text-xs text-text-sub mt-1">マイレシピ公式メンバー</p>
+                            </div>
+                        </div>
+
+                        {/* Badges */}
+                        <div>
+                            <h3 className="text-sm font-bold text-text-sub mb-3 ml-2">獲得バッジ</h3>
+                            <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+                                {/* Simple Badge UI for now */}
+                                <div className="flex flex-col items-center min-w-[72px]">
+                                    <div className="w-14 h-14 rounded-full bg-amber-50 border-2 border-amber-200 flex items-center justify-center shadow-sm text-2xl">🥇</div>
+                                    <span className="text-[11px] font-bold text-text-main mt-1">はじめて</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Children Settings */}
+                        <div>
+                            <h3 className="text-sm font-bold text-text-sub mb-3 ml-2">お子様の設定</h3>
+                            <div className="bg-white rounded-[24px] overflow-hidden shadow-sm">
+                                {profile.children?.map((child) => (
+                                    <div key={child.id} className="p-4 flex items-center justify-between border-b border-slate-50 last:border-none active:bg-slate-50 cursor-pointer" onClick={() => openChildModal(child)}>
+                                        <div className="flex items-center gap-4 flex-1">
+                                            <div className="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center text-2xl border border-orange-100">
+                                                {child.icon || '👶'}
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="font-bold text-text-main">{child.name}</span>
+                                                <span className="text-xs text-orange-600 font-bold">{child.allergens?.join('・')} 不使用</span>
+                                            </div>
+                                        </div>
+                                        <ChevronRight className="text-slate-300" size={20} />
+                                    </div>
+                                ))}
+                                <button className="w-full p-4 flex items-center justify-center gap-2 text-primary font-bold hover:bg-orange-50" onClick={() => openChildModal(null)}>
+                                    <Plus size={18} /> お子様を追加する
                                 </button>
                             </div>
-                        )}
-                        <p className="text-xs text-text-sub mt-1">
-                            ママ・パパの名前
-                        </p>
-                    </div>
-                </div>
-
-                {/* 1.5 Badges (New) */}
-                <div>
-                    <h3 className="text-sm font-bold text-text-sub mb-3 ml-2">獲得バッジ</h3>
-                    <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
-                        <div className="flex flex-col items-center min-w-[72px]">
-                            <div className={`relative w-14 h-14 rounded-full flex items-center justify-center border-2 mb-2 ${profile.stats?.recipeCount > 0 ? 'bg-amber-50 border-amber-200 shadow-sm' : 'bg-slate-100 border-slate-200'}`}>
-                                <span className={`text-2xl ${profile.stats?.recipeCount > 0 ? '' : 'grayscale opacity-40'}`}>🍳</span>
-                                {(!profile.stats?.recipeCount) && (
-                                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-slate-400 rounded-full flex items-center justify-center">
-                                        <span className="text-[8px] text-white">🔒</span>
-                                    </div>
-                                )}
-                            </div>
-                            <span className={`text-[11px] font-bold ${profile.stats?.recipeCount > 0 ? 'text-text-main' : 'text-slate-400'}`}>初投稿</span>
-                            <span className={`text-[10px] text-center leading-tight ${profile.stats?.recipeCount > 0 ? 'text-amber-500' : 'text-slate-500 font-medium'}`}>
-                                {profile.stats?.recipeCount > 0 ? '獲得済み' : (
-                                    <>レシピ投稿<br />あと1回</>
-                                )}
-                            </span>
                         </div>
 
-                        <div className="flex flex-col items-center min-w-[72px]">
-                            <div className={`relative w-14 h-14 rounded-full flex items-center justify-center border-2 mb-2 ${profile.stats?.reportCount > 0 ? 'bg-amber-50 border-amber-200 shadow-sm' : 'bg-slate-100 border-slate-200'}`}>
-                                <span className={`text-2xl ${profile.stats?.reportCount > 0 ? '' : 'grayscale opacity-40'}`}>💬</span>
-                                {(!profile.stats?.reportCount) && (
-                                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-slate-400 rounded-full flex items-center justify-center">
-                                        <span className="text-[8px] text-white">🔒</span>
-                                    </div>
-                                )}
-                            </div>
-                            <span className={`text-[11px] font-bold ${profile.stats?.reportCount > 0 ? 'text-text-main' : 'text-slate-400'}`}>初レポート</span>
-                            <span className={`text-[10px] text-center leading-tight ${profile.stats?.reportCount > 0 ? 'text-amber-500' : 'text-slate-500 font-medium'}`}>
-                                {profile.stats?.reportCount > 0 ? '獲得済み' : (
-                                    <>レポ投稿<br />あと1回</>
-                                )}
-                            </span>
-                        </div>
-
-                        {/* NEW BADGES */}
-                        <div className="flex flex-col items-center min-w-[72px]">
-                            <div className={`relative w-14 h-14 rounded-full flex items-center justify-center border-2 mb-2 ${likedRecipeIds?.length >= 10 ? 'bg-amber-50 border-amber-200 shadow-sm' : 'bg-slate-100 border-slate-200'}`}>
-                                <span className={`text-2xl ${likedRecipeIds?.length >= 10 ? '' : 'grayscale opacity-40'}`}>😋</span>
-                                {(likedRecipeIds?.length || 0) < 10 && (
-                                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-slate-400 rounded-full flex items-center justify-center">
-                                        <span className="text-[8px] text-white">🔒</span>
-                                    </div>
-                                )}
-                            </div>
-                            <span className={`text-[11px] font-bold ${likedRecipeIds?.length >= 10 ? 'text-text-main' : 'text-slate-400'}`}>食通</span>
-                            <span className={`text-[10px] text-center leading-tight ${likedRecipeIds?.length >= 10 ? 'text-amber-500' : 'text-slate-500 font-medium'}`}>
-                                {likedRecipeIds?.length >= 10 ? '獲得済み' : (
-                                    <>いいね！<br />あと{(10 - (likedRecipeIds?.length || 0))}回</>
-                                )}
-                            </span>
-                        </div>
-
-                        <div className="flex flex-col items-center min-w-[72px]">
-                            <div className={`relative w-14 h-14 rounded-full flex items-center justify-center border-2 mb-2 ${profile.stats?.recipeCount >= 10 ? 'bg-amber-50 border-amber-200 shadow-sm' : 'bg-slate-100 border-slate-200'}`}>
-                                <span className={`text-2xl ${profile.stats?.recipeCount >= 10 ? '' : 'grayscale opacity-40'}`}>👨‍🍳</span>
-                                {(!profile.stats?.recipeCount || profile.stats.recipeCount < 10) && (
-                                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-slate-400 rounded-full flex items-center justify-center">
-                                        <span className="text-[8px] text-white">🔒</span>
-                                    </div>
-                                )}
-                            </div>
-                            <span className={`text-[11px] font-bold ${profile.stats?.recipeCount >= 10 ? 'text-text-main' : 'text-slate-400'}`}>シェフ</span>
-                            <span className={`text-[10px] text-center leading-tight ${profile.stats?.recipeCount >= 10 ? 'text-amber-500' : 'text-slate-500 font-medium'}`}>
-                                {profile.stats?.recipeCount >= 10 ? '獲得済み' : (
-                                    <>レシピ投稿<br />あと{(10 - (profile.stats?.recipeCount || 0))}回</>
-                                )}
-                            </span>
-                        </div>
-
-                        <div className="flex flex-col items-center min-w-[72px]">
-                            <div className={`relative w-14 h-14 rounded-full flex items-center justify-center border-2 mb-2 ${profile.stats?.reportCount >= 5 ? 'bg-amber-50 border-amber-200 shadow-sm' : 'bg-slate-100 border-slate-200'}`}>
-                                <span className={`text-2xl ${profile.stats?.reportCount >= 5 ? '' : 'grayscale opacity-40'}`}>📝</span>
-                                {(!profile.stats?.reportCount || profile.stats.reportCount < 5) && (
-                                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-slate-400 rounded-full flex items-center justify-center">
-                                        <span className="text-[8px] text-white">🔒</span>
-                                    </div>
-                                )}
-                            </div>
-                            <span className={`text-[11px] font-bold ${profile.stats?.reportCount >= 5 ? 'text-text-main' : 'text-slate-400'}`}>レポーター</span>
-                            <span className={`text-[10px] text-center leading-tight ${profile.stats?.reportCount >= 5 ? 'text-amber-500' : 'text-slate-500 font-medium'}`}>
-                                {profile.stats?.reportCount >= 5 ? '獲得済み' : (
-                                    <>レポ投稿<br />あと{(5 - (profile.stats?.reportCount || 0))}回</>
-                                )}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                {/* 1.7 Pro Settings Link (For Pro Users only) */}
-                {profile.isPro && (
-                    <div className="mb-4">
-                        <Link
-                            href="/profile/pro-settings"
-                            className="w-full p-4 flex items-center justify-between bg-gradient-to-r from-amber-50 to-orange-50 rounded-[24px] border border-amber-200 shadow-sm hover:shadow-md transition-all group"
-                        >
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm text-amber-500">
-                                    <Star size={20} fill="currentColor" />
-                                </div>
-                                <div>
-                                    <span className="font-bold text-slate-800">プロ設定を編集する</span>
-                                    <p className="text-[11px] text-amber-600 font-medium">SNSリンク・自己紹介の管理</p>
-                                </div>
-                            </div>
-                            <ChevronRight className="text-amber-400 group-hover:translate-x-1 transition-transform" size={20} />
-                        </Link>
-                    </div>
-                )}
-
-                {/* 2. Children Settings */}
-                <div>
-                    <h3 className="text-sm font-bold text-text-sub mb-3 ml-2">お子様の設定</h3>
-                    <div className="bg-white rounded-[24px] overflow-hidden shadow-sm">
-                        {profile.children?.map((child, index) => (
-                            <div
-                                key={child.id}
-                                className="p-4 flex items-center justify-between border-b border-slate-50 last:border-none active:bg-slate-50 transition-colors cursor-pointer"
-                                onClick={() => openChildModal(child)}
-                            >
-                                <div className="flex items-center gap-4 flex-1">
-                                    <div className="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center text-2xl border border-orange-100 flex-shrink-0">
-                                        {child.icon || '👶'}
-                                    </div>
-                                    <div className="flex items-center gap-2 flex-wrap flex-1">
-                                        <span className="font-bold text-text-main">{child.name}</span>
-                                        {child.allergens && child.allergens.length > 0 ? (
-                                            <div className="flex flex-wrap gap-1">
-                                                {child.allergens.map(a => (
-                                                    <span key={a} className="text-xs px-2 py-0.5 bg-orange-50 text-orange-600 rounded-full font-bold border border-orange-200">
-                                                        {a}なし
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <span className="text-xs px-2 py-0.5 bg-green-50 text-green-600 rounded-full font-bold">
-                                                アレルギーなし
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-                                <ChevronRight className="text-slate-300 flex-shrink-0" size={20} />
-                            </div>
-                        ))}
-                        <button
-                            className="w-full p-4 flex items-center justify-center gap-2 text-primary font-bold hover:bg-orange-50 transition-colors"
-                            onClick={() => openChildModal(null)}
-                        >
-                            <Plus size={18} />
-                            お子様を追加する
-                        </button>
-                    </div>
-                </div>
-
-                {/* 3. App Info */}
-                <div>
-                    <h3 className="text-sm font-bold text-text-sub mb-3 ml-2">アプリについて</h3>
-                    <div className="bg-white rounded-[24px] overflow-hidden shadow-sm">
-                        <button
-                            onClick={() => setShowAnnouncementsModal(true)}
-                            className="w-full p-4 flex items-center justify-between border-b border-slate-50 last:border-none hover:bg-slate-50 transition-colors text-left"
-                        >
-                            <div className="flex items-center gap-3 text-text-main">
-                                <Info size={20} className="text-slate-400" />
-                                <span>お知らせ</span>
-                            </div>
-                            <ChevronRight className="text-slate-300" size={20} />
-                        </button>
-                        <button
-                            onClick={() => setShowFAQModal(true)}
-                            className="w-full p-4 flex items-center justify-between border-b border-slate-50 last:border-none hover:bg-slate-50 transition-colors text-left"
-                        >
-                            <div className="flex items-center gap-3 text-text-main">
-                                <HelpCircle size={20} className="text-slate-400" />
-                                <span>よくある質問 (Q&A)</span>
-                            </div>
-                            <ChevronRight className="text-slate-300" size={20} />
-                        </button>
-                        <button
-                            onClick={() => setShowInquiryModal(true)}
-                            className="w-full p-4 flex items-center justify-between border-b border-slate-50 last:border-none hover:bg-slate-50 transition-colors text-left"
-                        >
-                            <div className="flex items-center gap-3 text-text-main">
-                                <Mail size={20} className="text-slate-400" />
-                                <span>お問い合わせ</span>
-                            </div>
-                            <ChevronRight className="text-slate-300" size={20} />
-                        </button>
-                        <Link
-                            href="/team"
-                            className="w-full p-4 flex items-center justify-between border-b border-slate-50 last:border-none hover:bg-slate-50 transition-colors"
-                        >
-                            <div className="flex items-center gap-3 text-text-main">
-                                <Users size={20} className="text-slate-400" />
-                                <span>だれがやってるの？</span>
-                            </div>
-                            <ChevronRight className="text-slate-300" size={20} />
-                        </Link>
-                    </div>
-                </div>
-
-                {/* 4. Quick Save Guide */}
-                <div>
-                    <h3 className="text-sm font-bold text-text-sub mb-3 ml-2">便利な使い方</h3>
-                    <div className="bg-white rounded-[24px] overflow-hidden shadow-sm">
-                        <Link
-                            href="/quick-save-guide"
-                            className="w-full p-4 flex items-center justify-between hover:bg-slate-50 transition-colors border-b border-slate-50 bg-emerald-50/10"
-                        >
-                            <div className="flex items-center gap-3 text-text-main">
-                                <div className="w-8 h-8 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center shadow-sm">
-                                    <Smartphone size={16} className="text-white" />
-                                </div>
-                                <div className="flex-1">
-                                    <div className="flex items-center gap-2">
-                                        <span className="font-bold text-slate-800">ホーム画面に追加</span>
-                                        <span className="text-[10px] bg-emerald-500 text-white px-2 py-0.5 rounded-full font-black animate-pulse">推奨</span>
-                                    </div>
-                                    <p className="text-xs text-emerald-600 font-bold">アプリのように全画面で見やすくなります！</p>
-                                </div>
-                            </div>
-                            <ChevronRight className="text-emerald-300" size={20} />
-                        </Link>
-                        <Link
-                            href="/sns-save-guide"
-                            className="w-full p-4 flex items-center justify-between hover:bg-slate-50 transition-colors"
-                        >
-                            <div className="flex items-center gap-3 text-text-main">
-                                <div className="w-8 h-8 bg-gradient-to-br from-orange-400 to-amber-500 rounded-full flex items-center justify-center">
-                                    <Zap size={16} className="text-white" />
-                                </div>
-                                <div>
-                                    <span className="font-medium">SNSからかんたん保存</span>
-                                    <p className="text-xs text-slate-400">インスタやTikTokのURLを共有するだけ</p>
-                                </div>
-                            </div>
-                            <ChevronRight className="text-slate-300" size={20} />
-                        </Link>
-                    </div>
-                </div>
-
-                {/* 5. Account Actions */}
-                <div>
-                    <h3 className="text-sm font-bold text-text-sub mb-3 ml-2">アカウント</h3>
-                    <div className="bg-white rounded-[24px] overflow-hidden shadow-sm mb-4">
-                        <button
-                            onClick={handleSignOut}
-                            className="w-full p-4 flex items-center justify-between border-b border-slate-50 last:border-none hover:bg-slate-50 transition-colors text-left"
-                        >
-                            <div className="flex items-center gap-3 text-text-main">
-                                <LogOut size={20} className="text-slate-400" />
-                                <span>ログアウト</span>
-                            </div>
-                        </button>
-                        <button
-                            onClick={handleDeleteAccount}
-                            className="w-full p-4 flex items-center justify-between border-b border-slate-50 last:border-none hover:bg-rose-50 transition-colors text-left"
-                        >
-                            <div className="flex items-center gap-3 text-alert">
-                                <Trash2 size={20} />
-                                <span>アカウントを削除する</span>
-                            </div>
-                        </button>
-                    </div>
-                    <p className="text-xs text-slate-400 px-4 leading-relaxed">
-                        アカウントを削除すると、保存したレシピや登録情報はすべて削除され、元に戻すことはできません。
-                    </p>
-                </div>
-
-            </div>
-
-            {/* Child Edit Modal */}
-            {showChildModal && (
-                <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={closeChildModal}>
-                    <div
-                        className="bg-white w-full max-w-md rounded-t-[32px] sm:rounded-[32px] p-6 shadow-2xl animate-in slide-in-from-bottom duration-300 mb-[env(safe-area-inset-bottom)] pb-12 sm:pb-6"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-xl font-bold text-text-main">
-                                {editingChild ? 'お子様情報を編集' : 'お子様を追加'}
-                            </h3>
-                            <button
-                                onClick={closeChildModal}
-                                className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200"
-                            >
-                                ×
+                        {/* App Info */}
+                        <div className="bg-white rounded-[24px] overflow-hidden shadow-sm">
+                            <button onClick={() => setShowAnnouncementsModal(true)} className="w-full p-4 flex items-center justify-between border-b border-slate-50 hover:bg-slate-50 text-left">
+                                <div className="flex items-center gap-3 text-text-main"><Info size={20} className="text-slate-400" /><span>お知らせ</span></div>
+                                <ChevronRight className="text-slate-300" size={20} />
+                            </button>
+                            <button onClick={() => setShowFAQModal(true)} className="w-full p-4 flex items-center justify-between border-b border-slate-50 hover:bg-slate-50 text-left">
+                                <div className="flex items-center gap-3 text-text-main"><HelpCircle size={20} className="text-slate-400" /><span>よくある質問 (Q&A)</span></div>
+                                <ChevronRight className="text-slate-300" size={20} />
+                            </button>
+                            <button onClick={() => setShowInquiryModal(true)} className="w-full p-4 flex items-center justify-between hover:bg-slate-50 text-left">
+                                <div className="flex items-center gap-3 text-text-main"><Mail size={20} className="text-slate-400" /><span>お問い合わせ</span></div>
+                                <ChevronRight className="text-slate-300" size={20} />
                             </button>
                         </div>
 
-                        <div className="space-y-6 max-h-[70vh] overflow-y-auto px-1 pb-24">
-                            {/* Photo / Icon Selection */}
-                            <div className="flex flex-col items-center gap-4">
-                                <div
-                                    className="relative w-24 h-24 rounded-full bg-slate-100 border-4 border-white shadow-lg flex items-center justify-center overflow-hidden cursor-pointer group"
-                                    onClick={() => childFileInputRef.current?.click()}
-                                >
-                                    {childPhotoFile ? (
-                                        <img src={URL.createObjectURL(childPhotoFile)} className="w-full h-full object-cover" />
-                                    ) : childPhoto ? (
-                                        <img src={childPhoto} className="w-full h-full object-cover" />
-                                    ) : childIcon && childIcon !== '👶' ? (
-                                        <span className="text-5xl">{childIcon}</span>
-                                    ) : (
-                                        <Camera className="text-slate-400" size={32} />
-                                    )}
-                                </div>
-                                <input
-                                    type="file"
-                                    ref={childFileInputRef}
-                                    className="hidden"
-                                    accept="image/*"
-                                    onChange={(e) => {
-                                        if (e.target.files?.[0]) setChildPhotoFile(e.target.files[0]);
-                                    }}
-                                />
-
-                                {/* Icon Picker Toggle */}
-                                <div className="w-full">
-                                    <div className="flex justify-center mb-2">
-                                        <p className="text-sm text-slate-400">アイコンでも設定できます</p>
-                                    </div>
-                                    <IconPicker
-                                        selected={childIcon}
-                                        onChange={(icon) => {
-                                            setChildIcon(icon);
-                                            setChildPhoto(null);
-                                            setChildPhotoFile(null);
-                                        }}
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Name Input */}
-                            <div>
-                                <label className="text-sm font-bold text-text-sub mb-2 block">
-                                    お名前 <span className="text-rose-500">*</span>
-                                </label>
-                                <Input
-                                    type="text"
-                                    value={childName}
-                                    onChange={(e) => {
-                                        setChildName(e.target.value);
-                                        if (formErrors.name) setFormErrors(prev => ({ ...prev, name: null }));
-                                    }}
-                                    placeholder="たろう"
-                                    className={formErrors.name ? 'border-rose-500' : ''}
-                                />
-                                {formErrors.name && (
-                                    <p className="text-rose-500 text-xs mt-1">{formErrors.name}</p>
-                                )}
-                            </div>
-
-                            {/* Allergens */}
-                            <div>
-                                <div className="mb-2">
-                                    <span className="text-sm font-bold text-text-sub">
-                                        アレルギー <span className="text-rose-500">*</span>
-                                    </span>
-                                </div>
-                                <AllergySelector
-                                    selected={childAllergens}
-                                    onChange={(allergens) => {
-                                        setChildAllergens(allergens);
-                                        if (formErrors.allergens) setFormErrors(prev => ({ ...prev, allergens: null }));
-                                    }}
-                                />
-                                {formErrors.allergens && (
-                                    <p className="text-rose-500 text-xs mt-1">{formErrors.allergens}</p>
-                                )}
-                            </div>
-
-                            {/* Privacy Disclaimer */}
-                            <div className="bg-slate-50 rounded-2xl p-4 mt-4">
-                                <p className="text-xs text-slate-500 leading-relaxed text-center">
-                                    🔒 お子さまのお名前・アイコンはあなた以外には表示されません。
-                                </p>
-                            </div>
+                        {/* Account Actions */}
+                        <div className="bg-white rounded-[24px] overflow-hidden shadow-sm">
+                            <button onClick={handleSignOut} className="w-full p-4 flex items-center justify-between border-b border-slate-50 hover:bg-slate-50 text-left">
+                                <div className="flex items-center gap-3 text-text-main"><LogOut size={20} className="text-slate-400" /><span>ログアウト</span></div>
+                            </button>
+                            <button onClick={handleDeleteAccount} className="w-full p-4 flex items-center justify-between hover:bg-rose-50 text-left text-alert font-bold">
+                                <div className="flex items-center gap-3"><Trash2 size={20} /><span>アカウントを削除する</span></div>
+                            </button>
                         </div>
+                    </>
+                )}
 
-                        <div className="mt-8 flex gap-3">
-                            {editingChild && (
-                                <button
-                                    onClick={() => {
-                                        if (confirm('本当に削除しますか？')) {
-                                            deleteChild(editingChild.id);
-                                            closeChildModal();
-                                        }
-                                    }}
-                                    className="w-12 h-12 flex items-center justify-center rounded-full bg-rose-50 text-rose-500 hover:bg-rose-100 transition-colors"
-                                >
-                                    <Trash2 size={20} />
-                                </button>
+                {activeTab === 'map' && (
+                    <div className="space-y-6">
+                        <div>
+                            <h3 className="text-sm font-bold text-text-sub mb-3 ml-2">行ったお店 ({visitedRestaurantIds.length})</h3>
+                            {visitedRestaurantIds.length > 0 ? (
+                                <div className="bg-white rounded-[24px] overflow-hidden shadow-sm">
+                                    {visitedRestaurantIds.map((id) => {
+                                        const rest = restaurants.find(r => r.id === id);
+                                        return (
+                                            <div key={id} className="p-4 flex items-center justify-between border-b border-slate-50 last:border-none">
+                                                <Link href={`/map/${id}`} className="flex items-center gap-3 flex-1">
+                                                    <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center text-orange-500 flex-shrink-0">
+                                                        <MapPin size={20} />
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="font-bold text-slate-700 text-sm line-clamp-1">{rest?.name || '読み込み中...'}</span>
+                                                        <span className="text-[10px] text-slate-400">来店済み</span>
+                                                    </div>
+                                                </Link>
+                                                <button onClick={(e) => { e.preventDefault(); toggleUserRestaurant(id, 'visited'); }} className="text-xs bg-slate-50 text-slate-400 px-3 py-1 rounded-full font-bold ml-2">削除</button>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            ) : (
+                                <div className="bg-slate-50 rounded-[24px] p-8 text-center border-2 border-dashed border-slate-200 text-slate-400 text-sm">記録がありません</div>
                             )}
-                            <Button
-                                onClick={handleSaveChild}
-                                className="flex-1"
-                            >
-                                {editingChild ? '保存する' : '追加する'}
-                            </Button>
+                        </div>
+                        <div>
+                            <h3 className="text-sm font-bold text-text-sub mb-3 ml-2">行きたいお店 ({wishlistRestaurantIds.length})</h3>
+                            {wishlistRestaurantIds.length > 0 ? (
+                                <div className="bg-white rounded-[24px] overflow-hidden shadow-sm">
+                                    {wishlistRestaurantIds.map((id) => {
+                                        const rest = restaurants.find(r => r.id === id);
+                                        return (
+                                            <div key={id} className="p-4 flex items-center justify-between border-b border-slate-50 last:border-none">
+                                                <Link href={`/map/${id}`} className="flex items-center gap-3 flex-1">
+                                                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-blue-500 flex-shrink-0">
+                                                        <Star size={20} fill="currentColor" />
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="font-bold text-slate-700 text-sm line-clamp-1">{rest?.name || '読み込み中...'}</span>
+                                                        <span className="text-[10px] text-blue-400">保存済み</span>
+                                                    </div>
+                                                </Link>
+                                                <button onClick={(e) => { e.preventDefault(); toggleUserRestaurant(id, 'wishlist'); }} className="text-xs bg-slate-50 text-slate-400 px-3 py-1 rounded-full font-bold ml-2">削除</button>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            ) : (
+                                <div className="bg-slate-50 rounded-[24px] p-8 text-center border-2 border-dashed border-slate-200 text-slate-400 text-sm">保存がありません</div>
+                            )}
                         </div>
                     </div>
-                </div>
-            )}
+                )}
 
-            {/* FAQ Modal */}
-            {showFAQModal && (
-                <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setShowFAQModal(false)}>
-                    <div
-                        className="bg-white w-full max-w-md max-h-[80vh] rounded-[32px] p-6 shadow-2xl animate-in zoom-in-95 duration-200 overflow-y-auto"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-xl font-bold text-text-main">よくある質問 (Q&A)</h3>
-                            <button onClick={() => setShowFAQModal(false)} className="text-slate-400 hover:text-slate-600">×</button>
+                {activeTab === 'recipes' && (
+                    <div className="bg-white rounded-[32px] p-10 text-center shadow-sm border border-slate-100">
+                        <div className="w-16 h-16 bg-orange-50 rounded-full flex items-center justify-center mx-auto mb-4 text-orange-400"><FileText size={32} /></div>
+                        <h4 className="font-bold text-slate-800 mb-2">投稿・お気に入りレシピ</h4>
+                        <p className="text-sm text-slate-500 mb-6">まだレシピがありません</p>
+                        <Link href="/" className="inline-block py-3 px-8 bg-primary text-white rounded-full font-bold text-sm shadow-md active:scale-95">レシピを探す</Link>
+                    </div>
+                )}
+            </div>
+
+            {/* Child Modal */}
+            {showChildModal && (
+                <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={closeChildModal}>
+                    <div className="bg-white w-full max-w-md rounded-t-[32px] sm:rounded-[32px] p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
+                        <h3 className="text-xl font-bold mb-6">{editingChild ? 'お子様情報を編集' : 'お子様を追加'}</h3>
+                        <div className="space-y-6 max-h-[70vh] overflow-y-auto">
+                            <div className="flex flex-col items-center gap-4">
+                                <div className="w-24 h-24 rounded-full bg-slate-100 border-4 border-white shadow-lg flex items-center justify-center overflow-hidden cursor-pointer" onClick={() => childFileInputRef.current?.click()}>
+                                    {childPhotoFile ? <img src={URL.createObjectURL(childPhotoFile)} className="w-full h-full object-cover" /> : childPhoto ? <img src={childPhoto} className="w-full h-full object-cover" /> : <Camera className="text-slate-400" size={32} />}
+                                </div>
+                                <input type="file" ref={childFileInputRef} className="hidden" accept="image/*" onChange={e => { if (e.target.files?.[0]) setChildPhotoFile(e.target.files[0]); }} />
+                                <IconPicker selected={childIcon} onChange={icon => { setChildIcon(icon); setChildPhoto(null); setChildPhotoFile(null); }} />
+                            </div>
+                            <div>
+                                <label className="text-sm font-bold text-text-sub mb-2 block">お名前</label>
+                                <Input type="text" value={childName} onChange={e => setChildName(e.target.value)} placeholder="たろう" className={formErrors.name ? 'border-rose-500' : ''} />
+                                {formErrors.name && <p className="text-rose-500 text-xs mt-1">{formErrors.name}</p>}
+                            </div>
+                            <div>
+                                <label className="text-sm font-bold text-text-sub mb-2 block">アレルギー</label>
+                                <AllergySelector selected={childAllergens} onChange={setChildAllergens} />
+                                {formErrors.allergens && <p className="text-rose-500 text-xs mt-1">{formErrors.allergens}</p>}
+                            </div>
                         </div>
-                        <div className="space-y-3">
-                            {[
-                                { q: 'レポート投稿とは？', a: '他の人のレシピを作った際に、感想や写真を投稿できる機能です。投稿すると作者へ通知が届きます。' },
-                                { q: '非公開レシピとは？', a: '自分だけが見られるレシピです。SNSで見つけたレシピのメモ保管場所として便利です。' },
-                                { q: 'アレルゲン判定について', a: 'お子様のアレルギー情報とレシピの「含まないアレルゲン」情報を照合して、安全性を判定しています。' },
-                                { q: '獲得バッジとは？', a: 'アプリをたくさん使うほど種類が増えていく勲章です。プロフィールで進捗を確認できます。' },
-                                { q: 'レシピの保存方法は？', a: 'レシピ詳細ページの右上にある「保存（しおり）」アイコンをタップすると、保存済みタブに追加されます。' },
-                                { q: '外部サイトのレシピも登録できる？', a: 'はい。WebサイトやSNSのURLを入力すると、タイトルや画像を自動で取得して簡単に登録できます。' },
-                                { q: 'お子様の追加・編集方法は？', a: 'プロフィールの「お子様の設定」からいつでも追加や内容の変更が可能です。' },
-                                { q: '通知が届くタイミングは？', a: '自分のレシピが「いいね」「保存」「レポート投稿」された時、および運営からのお知らせが届きます。' },
-                                { q: '退会するとデータはどうなる？', a: 'アカウントを削除すると、これまで投稿したレシピや登録したお子様の情報は即座にすべて消去されます。' },
-                                { q: 'アレルギー情報の入力ミスを見つけた', a: 'レシピの編集画面からいつでもアレルゲン情報を修正できます。正確な情報の登録をお願いします。' }
-                            ].map((item, i) => (
-                                <button
-                                    key={i}
-                                    onClick={() => setExpandedFaqIndex(expandedFaqIndex === i ? null : i)}
-                                    className="w-full text-left bg-slate-50 rounded-xl p-4 transition-all hover:bg-slate-100"
-                                >
-                                    <div className="flex items-center justify-between gap-2">
-                                        <div className="flex items-start gap-2 flex-1">
-                                            <span className="shrink-0 text-orange-400 font-bold text-lg">Q.</span>
-                                            <p className="font-bold text-slate-700">{item.q}</p>
-                                        </div>
-                                        <span className={`transition-transform duration-200 text-slate-400 ${expandedFaqIndex === i ? 'rotate-180' : ''}`}>
-                                            ▼
-                                        </span>
-                                    </div>
-                                    {expandedFaqIndex === i && (
-                                        <div className="mt-3 pt-3 border-t border-slate-200 flex gap-2 animate-in slide-in-from-top-2 duration-200">
-                                            <span className="shrink-0 font-bold text-primary text-lg">A.</span>
-                                            <p className="text-sm text-slate-600 leading-relaxed">{item.a}</p>
-                                        </div>
-                                    )}
-                                </button>
-                            ))}
+                        <div className="mt-8 flex gap-3">
+                            {editingChild && <button onClick={() => { if (confirm('削除しますか？')) { deleteChild(editingChild.id); closeChildModal(); } }} className="w-12 h-12 flex items-center justify-center rounded-full bg-rose-50 text-rose-50"><Trash2 size={20} className="text-rose-500" /></button>}
+                            <Button onClick={handleSaveChild} className="flex-1">{editingChild ? '保存する' : '追加する'}</Button>
                         </div>
-                        <Button
-                            onClick={() => setShowFAQModal(false)}
-                            className="mt-8 w-full"
-                        >
-                            閉じる
-                        </Button>
                     </div>
                 </div>
             )}
 
             {/* Announcements Modal */}
             {showAnnouncementsModal && (
-                <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setShowAnnouncementsModal(false)}>
-                    <div
-                        className="bg-white w-full max-w-md max-h-[85vh] rounded-[32px] p-6 shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col"
-                        onClick={(e) => e.stopPropagation()}
-                    >
+                <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowAnnouncementsModal(false)}>
+                    <div className="bg-white w-full max-w-md max-h-[85vh] rounded-[32px] p-6 shadow-2xl overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
                         <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-xl font-bold text-text-main">お知らせ</h3>
-                            <button onClick={() => setShowAnnouncementsModal(false)} className="text-slate-400 hover:text-slate-600 text-xl">×</button>
+                            <h3 className="text-xl font-bold">お知らせ</h3>
+                            <button onClick={() => setShowAnnouncementsModal(false)} className="text-slate-400 text-xl">×</button>
                         </div>
-
-                        {/* Tab Switcher */}
-                        <div className="flex bg-slate-100 p-1 rounded-2xl mb-4 space-x-1">
-                            {[
-                                { id: 'roadmap', label: '改善予定' },
-                                { id: 'updates', label: '改善履歴' },
-                                { id: 'news', label: 'お知らせ' }
-                            ].map((tab) => (
-                                <button
-                                    key={tab.id}
-                                    onClick={() => setAnnouncementTab(tab.id)}
-                                    className={`flex-1 py-2 text-sm font-bold rounded-xl transition-all ${announcementTab === tab.id ? 'bg-white text-primary shadow-sm' : 'text-text-sub'}`}
-                                >
-                                    {tab.label}
+                        <div className="flex bg-slate-100 p-1 rounded-2xl mb-4">
+                            {['roadmap', 'updates', 'news'].map(t => (
+                                <button key={t} onClick={() => setAnnouncementTab(t)} className={`flex-1 py-2 text-xs font-bold rounded-xl ${announcementTab === t ? 'bg-white shadow-sm text-primary' : 'text-text-sub'}`}>
+                                    {t === 'roadmap' ? '予定' : t === 'updates' ? '履歴' : '全体'}
                                 </button>
                             ))}
                         </div>
-
-                        {/* Tab Content */}
-                        <div className="flex-1 overflow-y-auto">
-                            {announcementTab === 'roadmap' && (
-                                <div className="space-y-4">
-                                    <p className="text-sm text-slate-500 mb-3">今後追加予定の機能</p>
-                                    <div className="flex flex-wrap gap-2">
-                                        {[
-                                            { name: 'レシピ検索の強化', status: 'wip' },
-                                            { name: '食材からレシピ提案', status: 'planned' },
-                                            { name: 'ダークモード', status: 'planned' },
-                                            { name: '多言語対応', status: 'planned' },
-                                            { name: 'お気に入りフォルダ', status: 'planned' },
-                                            { name: 'プッシュ通知', status: 'wip' },
-                                        ].map((item, i) => (
-                                            <span key={i} className={`px-3 py-1.5 rounded-full text-xs font-bold ${item.status === 'wip' ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-500'}`}>
-                                                {item.status === 'wip' && <span className="mr-1">🚧</span>}
-                                                {item.name}
-                                            </span>
-                                        ))}
-                                    </div>
-                                    <div className="mt-6 pt-4 border-t border-slate-100">
-                                        <p className="text-sm text-slate-500 mb-3">実装済み機能</p>
-                                        <div className="flex flex-wrap gap-2">
-                                            {['Q&A機能', '通知機能', 'レポート投稿', 'バッジ機能', 'アレルゲン自動判定'].map((item, i) => (
-                                                <span key={i} className="px-3 py-1.5 rounded-full text-xs font-bold bg-green-100 text-green-600">
-                                                    ✓ {item}
-                                                </span>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {announcementTab === 'updates' && (
-                                <div className="space-y-4">
-                                    {[
-                                        { date: '2025年12月20日', title: 'UI/UXの大幅改善', desc: 'Q&Aの折りたたみ表示、ロゴサイズ調整、お問い合わせリンクの追加など多数の改善を行いました。' },
-                                        { date: '2025年12月18日', title: 'UI/UXの改善', desc: 'レシピ詳細画面の画像表示、通知機能の強化、Q&Aセクションを追加しました。' },
-                                        { date: '2025年12月17日', title: 'レシピ投稿機能の強化', desc: 'アレルゲン自動判定、公開設定のデフォルト化を実装しました。' },
-                                        { date: '2025年12月16日', title: 'ログイン不具合の修正', desc: 'LINEログインが正常に動作しない問題を解消しました。' },
-                                        { date: '2025年12月12日', title: '画像読み込み高速化', desc: 'レシピ登録時のOGP画像取得を高速化しました。' },
-                                    ].map((update, i) => (
-                                        <div key={i} className="bg-slate-50 rounded-2xl p-4">
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <span className="text-lg">✨</span>
-                                                <span className="text-xs text-blue-500 font-bold">{update.date}</span>
-                                            </div>
-                                            <h4 className="font-bold text-slate-700 mb-1">{update.title}</h4>
-                                            <p className="text-xs text-slate-500 leading-relaxed">{update.desc}</p>
-                                        </div>
-                                    ))}
-                                    <div className="pt-4 border-t border-slate-100">
-                                        <p className="text-sm text-slate-500 mb-3">ご意見・ご要望をお聞かせください</p>
-                                        <button
-                                            onClick={() => { setShowAnnouncementsModal(false); setShowInquiryModal(true); }}
-                                            className="w-full py-3 bg-primary text-white rounded-xl font-bold transition-all hover:bg-orange-600"
-                                        >
-                                            📩 お問い合わせはこちら
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-
-                            {announcementTab === 'news' && (
-                                <div className="space-y-4">
-                                    <div className="bg-orange-50 rounded-2xl p-4 border border-orange-100">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <span className="text-lg">📢</span>
-                                            <span className="text-xs text-orange-500 font-bold">2025年12月18日</span>
-                                        </div>
-                                        <h4 className="font-bold text-slate-700 mb-1">あんしんレシピへようこそ！</h4>
-                                        <p className="text-xs text-slate-500 leading-relaxed">
-                                            アレルギーっ子のパパ・ママのためのレシピ共有アプリです。ご意見・ご要望はお気軽に<button onClick={() => { setShowAnnouncementsModal(false); setShowInquiryModal(true); }} className="text-primary underline font-bold">お問い合わせ</button>からお寄せください。
-                                        </p>
-                                    </div>
-                                    <p className="text-center text-sm text-slate-400 py-8">新しいお知らせはありません</p>
-                                </div>
-                            )}
+                        <div className="flex-1 overflow-y-auto space-y-4">
+                            <div className="bg-slate-50 p-4 rounded-2xl font-bold text-sm">✨ 新機能：マップ記録が追加されました！</div>
+                            <p className="text-xs text-slate-500 leading-relaxed">これまでの改善履歴やお知らせは順次更新予定です。</p>
                         </div>
+                        <Button onClick={() => setShowAnnouncementsModal(false)} className="mt-4">閉じる</Button>
+                    </div>
+                </div>
+            )}
 
-                        <Button onClick={() => setShowAnnouncementsModal(false)} className="mt-4 w-full">
-                            閉じる
-                        </Button>
+            {/* FAQ Modal */}
+            {showFAQModal && (
+                <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowFAQModal(false)}>
+                    <div className="bg-white w-full max-w-md max-h-[80vh] rounded-[32px] p-6 shadow-2xl overflow-y-auto" onClick={e => e.stopPropagation()}>
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-xl font-bold">よくある質問</h3>
+                            <button onClick={() => setShowFAQModal(false)} className="text-slate-400">×</button>
+                        </div>
+                        <div className="space-y-3">
+                            {[
+                                { q: 'お店の保存方法は？', a: 'マップの店舗詳細ページにある「保存」ボタンをタップしてください。' },
+                                { q: '行ったお店の記録はどうやる？', a: 'お店のメニュー詳細ページの「来店済み」にチェックを入れると記録されます。' }
+                            ].map((item, i) => (
+                                <div key={i} className="bg-slate-50 p-4 rounded-2xl">
+                                    <p className="font-bold text-sm text-slate-700 mb-2">Q. {item.q}</p>
+                                    <p className="text-xs text-slate-500">A. {item.a}</p>
+                                </div>
+                            ))}
+                        </div>
+                        <Button onClick={() => setShowFAQModal(false)} className="mt-8 w-full">閉じる</Button>
                     </div>
                 </div>
             )}
 
             {/* Inquiry Modal */}
             {showInquiryModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div
-                        className="bg-white w-full max-w-sm rounded-[32px] p-6 shadow-2xl animate-in zoom-in-95 duration-200"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <h3 className="text-xl font-bold text-center mb-6 text-text-main">お問い合わせ</h3>
+                <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowInquiryModal(false)}>
+                    <div className="bg-white w-full max-w-xs rounded-[32px] p-8 text-center shadow-2xl" onClick={e => e.stopPropagation()}>
+                        <h3 className="text-xl font-bold mb-6">お問い合わせ</h3>
                         <div className="space-y-4">
-                            <a
-                                href="https://line.me/R/ti/p/@668fqaht"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center justify-center gap-3 w-full py-4 bg-[#06C755] text-white rounded-2xl font-bold shadow-sm hover:shadow-md transition-all active:scale-95"
-                            >
-                                <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/LINE_logo.svg" alt="LINE" className="w-6 h-6" />
-                                LINEで問い合わせる
+                            <a href="https://line.me/R/ti/p/@668fqaht" target="_blank" className="flex items-center justify-center gap-3 w-full py-4 bg-[#06C755] text-white rounded-2xl font-bold">
+                                <MessageCircle size={20} /> LINEで相談
                             </a>
-                            <a
-                                href="mailto:y.kominami@hitokoto1.co.jp"
-                                className="flex items-center justify-center gap-3 w-full py-4 bg-slate-100 text-slate-700 rounded-2xl font-bold hover:bg-slate-200 transition-colors active:scale-95"
-                            >
-                                <Mail size={20} />
-                                メールで問い合わせる
+                            <a href="mailto:support@anshinrecipe.com" className="flex items-center justify-center gap-3 w-full py-4 bg-slate-100 text-slate-700 rounded-2xl font-bold">
+                                <Mail size={20} /> メールを送る
                             </a>
                         </div>
-                        <button
-                            onClick={() => setShowInquiryModal(false)}
-                            className="mt-6 w-full py-3 text-sm font-bold text-slate-400 hover:text-slate-600"
-                        >
-                            キャンセル
-                        </button>
+                        <button onClick={() => setShowInquiryModal(false)} className="mt-6 text-sm font-bold text-slate-400">閉じる</button>
                     </div>
                 </div>
             )}
 
             <Footer />
-        </div >
+        </div>
     );
 }

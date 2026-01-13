@@ -265,7 +265,7 @@ const RecipeListPage = () => {
     // ----------------------------------------------------
 
     // 1. Auth Loading - Show minimal loading to prevent flash
-    if (profileLoading) {
+    if (initializing || (user && profileLoading)) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-[#fcfcfc]">
                 <div className="text-center">
@@ -418,16 +418,10 @@ const RecipeListPage = () => {
         );
     }
 
-    // 3. Logged In but No Children -> Onboarding Wizard
-    // 3. Show empty state for logged-in users without children
-    // CRITICAL: Wait for profile data to be fully loaded (profile.id exists)
-    // This prevents incorrect flash of "register child" screen
-    if (profileLoading || !profile?.id) {
-        return null; // Wait for profile data to fully load
-    }
-
-    // Pro Users can skip child registration - they can post recipes with direct allergen selection
-    if (profile?.children?.length === 0 && !profile?.isPro) {
+    // 3. Logged In but Profile or Children Setup Required
+    // If user exists but profile record is missing, or they have no children, show onboarding.
+    // Pro users are handled separately.
+    if (user && (!profile?.id || (profile?.children?.length === 0 && !profile?.isPro))) {
         return (
             <div className="container max-w-md mx-auto min-h-screen bg-background">
                 <div className="pt-6 pb-4 px-4 text-center">
@@ -445,20 +439,21 @@ const RecipeListPage = () => {
 
                 <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
                     <div className="w-20 h-20 bg-gradient-to-br from-orange-100 to-amber-50 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-orange-100">
-                        <span className="text-4xl">👶</span>
+                        <span className="text-4xl">{!profile?.id ? '👋' : '👶'}</span>
                     </div>
                     <h2 className="text-xl font-bold text-slate-700 mb-3">
-                        お子様を登録しましょう
+                        {!profile?.id ? 'はじめまして！' : 'お子様を登録しましょう'}
                     </h2>
                     <p className="text-slate-500 text-sm mb-6 leading-relaxed">
-                        アレルギー情報を登録すると<br />
-                        すべての機能が使用いただけます
+                        {!profile?.id
+                            ? 'プロフィールの初期設定が必要です。\n設定画面から作成を完了してください。'
+                            : 'アレルギー情報を登録すると\nすべての機能が使用いただけます'}
                     </p>
                     <Link
                         href="/profile"
                         className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-400 to-amber-400 text-white px-8 py-4 rounded-full font-bold shadow-lg shadow-orange-200 hover:shadow-xl transition-all active:scale-95"
                     >
-                        お子様を登録する
+                        {!profile?.id ? 'プロフィール設定へ' : 'お子様を登録する'}
                     </Link>
                 </div>
             </div>
@@ -468,220 +463,246 @@ const RecipeListPage = () => {
 
     // 4. Main Feed (Logged In & Setup Complete)
     return (
-        <div className="container max-w-md mx-auto min-h-screen bg-background">
-            {/* Child Registration Onboarding Popup */}
-            <ChildOnboardingPopup profile={profile} />
+        <div className="app-container min-h-screen bg-background">
+            <div className="content-wrapper pb-32">
+                {/* Child Registration Onboarding Popup */}
+                <ChildOnboardingPopup profile={profile} />
 
-            {/* PWA Install Prompt */}
-            <PWAInstallPrompt />
+                {/* PWA Install Prompt */}
+                <PWAInstallPrompt />
 
-            {/* Clipboard Recipe Detector (for iOS users) */}
+                {/* Clipboard Recipe Detector (for iOS users) */}
 
 
-            {/* Header with Personalization */}
-            <div className="pt-4 pb-2 px-4 flex items-center justify-between">
-                <div>
-                    <Image
-                        src="/logo.png"
-                        alt="あんしんレシピ"
-                        width={450} // Increased for 150% size
-                        height={113}
-                        priority
-                        className="h-[90px] w-auto object-contain"
-                    />
-                    {/* Greeting Logic: Random message */}
-                    <p className="text-xs text-text-sub font-bold mt-1 ml-1 flex items-center gap-1">
-                        <Sparkles size={12} className="text-yellow-400" />
-                        {greeting}
-                    </p>
+                {/* Header with Personalization */}
+                <div className="pt-4 pb-2 px-4 flex items-center justify-between">
+                    <div>
+                        <Image
+                            src="/logo.png"
+                            alt="あんしんレシピ"
+                            width={450} // Increased for 150% size
+                            height={113}
+                            priority
+                            className="h-[90px] w-auto object-contain"
+                        />
+                        {/* Greeting Logic: Random message */}
+                        <p className="text-xs text-text-sub font-bold mt-1 ml-1 flex items-center gap-1">
+                            <Sparkles size={12} className="text-yellow-400" />
+                            {greeting}
+                        </p>
+                    </div>
                 </div>
-            </div>
 
-            {user && (
-                <>
-                    {/* Tab Switcher */}
-                    <div className="flex bg-slate-100 p-1 rounded-2xl mb-3 mx-4 space-x-1">
-                        {['recommend', 'saved', 'mine'].map((tab) => {
-                            const labels = { recommend: 'みんなの投稿', saved: '保存済み', mine: '自分の投稿' };
-                            const isActive = activeTab === tab;
-                            return (
-                                <button
-                                    key={tab}
-                                    onClick={() => setActiveTab(tab)}
-                                    className={`
+                {user && (
+                    <>
+                        {/* Tab Switcher */}
+                        <div className="flex bg-slate-100 p-1 rounded-2xl mb-3 mx-4 space-x-1">
+                            {['recommend', 'saved', 'mine'].map((tab) => {
+                                const labels = { recommend: 'みんなの投稿', saved: '保存済み', mine: '自分の投稿' };
+                                const isActive = activeTab === tab;
+                                return (
+                                    <button
+                                        key={tab}
+                                        onClick={() => setActiveTab(tab)}
+                                        className={`
                                         flex-1 py-2.5 text-sm font-bold rounded-xl transition-all duration-200
                                         ${isActive
-                                            ? 'bg-white text-primary shadow-sm'
-                                            : 'text-text-sub hover:text-text-main hover:bg-white/50'
-                                        }
+                                                ? 'bg-white text-primary shadow-sm'
+                                                : 'text-text-sub hover:text-text-main hover:bg-white/50'
+                                            }
                                     `}
-                                >
-                                    {labels[tab]}
-                                </button>
-                            );
-                        })}
-                    </div>
-
-                    <div className="px-4 mb-3">
-                        <div className="relative">
-                            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 font-bold" size={20} />
-                            <input
-                                type="text"
-                                id="header-search-input" // For CoachMark
-                                placeholder="レシピ名、食材、タグで検索..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full bg-white border-2 border-transparent rounded-full pr-5 py-3.5 text-slate-700 placeholder-slate-400 transition-all outline-none focus:border-orange-300 focus:shadow-[0_0_0_4px_rgba(251,146,60,0.1)] shadow-sm"
-                                style={{ paddingLeft: '64px' }}
-                            />
+                                    >
+                                        {labels[tab]}
+                                    </button>
+                                );
+                            })}
                         </div>
-                    </div>
 
-                    {/* Sort Toggle */}
-                    <div className="flex items-center gap-2 px-4 mb-3 overflow-x-auto pb-1 scrollbar-hide">
-                        <span className="text-xs text-slate-400 whitespace-nowrap">並び替え:</span>
-                        <button
-                            onClick={() => setSortOrder(sortOrder === 'newest' ? null : 'newest')}
-                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap flex-shrink-0 ${sortOrder === 'newest' ? 'bg-primary text-white shadow-sm' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
-                        >
-                            🕐 新着順
-                        </button>
-                        <button
-                            onClick={() => setSortOrder(sortOrder === 'likes' ? null : 'likes')}
-                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap flex-shrink-0 ${sortOrder === 'likes' ? 'bg-primary text-white shadow-sm' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
-                        >
-                            ❤️ いいね！順
-                        </button>
-                        <button
-                            onClick={() => setSortOrder(sortOrder === 'saves' ? null : 'saves')}
-                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap flex-shrink-0 ${sortOrder === 'saves' ? 'bg-primary text-white shadow-sm' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
-                        >
-                            📚 保存数順
-                        </button>
-                    </div>
+                        {/* Main Content Info */}
+                        <div className="mt-4 px-4 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">Feed</span>
+                                <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse"></div>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                {/* Optional: Add Filter pill indicator here */}
+                            </div>
+                        </div>
 
-                    {/* Child Selection Row */}
-                    {profile?.children?.length > 0 && (
-                        <div className="flex gap-2 px-4 mb-4 overflow-x-auto pb-2 scrollbar-hide">
-                            {/* Only show "全員" button if there are 2+ children */}
-                            {profile.children.length > 1 && (
-                                <button
-                                    className={`
+                        {/* Sort Toggle */}
+                        <div className="flex items-center gap-2 px-4 mb-3 overflow-x-auto pb-1 scrollbar-hide">
+                            <span className="text-xs text-slate-400 whitespace-nowrap">並び替え:</span>
+                            <button
+                                onClick={() => setSortOrder(sortOrder === 'newest' ? null : 'newest')}
+                                className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap flex-shrink-0 ${sortOrder === 'newest' ? 'bg-primary text-white shadow-sm' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                            >
+                                🕐 新着順
+                            </button>
+                            <button
+                                onClick={() => setSortOrder(sortOrder === 'likes' ? null : 'likes')}
+                                className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap flex-shrink-0 ${sortOrder === 'likes' ? 'bg-primary text-white shadow-sm' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                            >
+                                ❤️ いいね！順
+                            </button>
+                            <button
+                                onClick={() => setSortOrder(sortOrder === 'saves' ? null : 'saves')}
+                                className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap flex-shrink-0 ${sortOrder === 'saves' ? 'bg-primary text-white shadow-sm' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                            >
+                                📚 保存数順
+                            </button>
+                        </div>
+
+                        {/* Child Selection Row */}
+                        {profile?.children?.length > 0 && (
+                            <div className="flex gap-2 px-4 mb-4 overflow-x-auto pb-2 scrollbar-hide">
+                                {/* Only show "全員" button if there are 2+ children */}
+                                {profile.children.length > 1 && (
+                                    <button
+                                        className={`
                                         px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap
                                         ${selectedChildId === null
-                                            ? 'bg-primary text-white shadow-md shadow-orange-200'
-                                            : 'bg-white text-text-sub border border-slate-100 hover:bg-slate-50'
-                                        }
+                                                ? 'bg-primary text-white shadow-md shadow-orange-200'
+                                                : 'bg-white text-text-sub border border-slate-100 hover:bg-slate-50'
+                                            }
                                     `}
-                                    onClick={() => setSelectedChildId(null)}
-                                >
-                                    全員
-                                </button>
-                            )}
-                            {profile.children.map(child => (
-                                <button
-                                    key={child.id}
-                                    className={`
+                                        onClick={() => setSelectedChildId(null)}
+                                    >
+                                        全員
+                                    </button>
+                                )}
+                                {profile.children.map(child => (
+                                    <button
+                                        key={child.id}
+                                        className={`
                                         px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap flex items-center gap-2
                                         ${selectedChildId === child.id || (profile.children.length === 1 && selectedChildId === null)
-                                            ? 'bg-primary text-white shadow-md shadow-orange-200'
-                                            : 'bg-white text-text-sub border border-slate-100 hover:bg-slate-50'
-                                        }
+                                                ? 'bg-primary text-white shadow-md shadow-orange-200'
+                                                : 'bg-white text-text-sub border border-slate-100 hover:bg-slate-50'
+                                            }
                                     `}
-                                    onClick={() => setSelectedChildId(child.id)}
-                                >
-                                    <span>{child.icon || '👶'}</span>
-                                    {child.name}
-                                </button>
-                            ))}
-                        </div>
-                    )}
+                                        onClick={() => setSelectedChildId(child.id)}
+                                    >
+                                        <span>{child.icon || '👶'}</span>
+                                        {child.name}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
 
-                    {/* Scene Selection Row */}
-                    <div className="flex gap-2 px-4 mb-6 overflow-x-auto pb-2 scrollbar-hide">
-                        <button
-                            className={`
+                        {/* Scene Selection Row */}
+                        <div className="flex gap-2 px-4 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+                            <button
+                                className={`
                                 px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap
                                 ${selectedScene === null
-                                    ? 'bg-primary text-white shadow-md shadow-orange-200'
-                                    : 'bg-white text-text-sub border border-slate-100 hover:bg-slate-50'
-                                }
-                            `}
-                            onClick={() => setSelectedScene(null)}
-                        >
-                            すべてのシーン
-                        </button>
-                        {MEAL_SCENES.map(scene => (
-                            <button
-                                key={scene}
-                                className={`
-                                    px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap flex items-center gap-1.5
-                                    ${selectedScene === scene
                                         ? 'bg-primary text-white shadow-md shadow-orange-200'
                                         : 'bg-white text-text-sub border border-slate-100 hover:bg-slate-50'
                                     }
-                                `}
-                                onClick={() => setSelectedScene(scene)}
+                            `}
+                                onClick={() => setSelectedScene(null)}
                             >
-                                <span>{SCENE_ICONS[scene] || '🍽️'}</span>
-                                {scene}
+                                すべてのシーン
                             </button>
-                        ))}
-                    </div>
-                </>
-            )}
-
-            {/* Recipe Grid - CSS Grid Layout for stability */}
-            <div className="px-2 grid grid-cols-2 gap-2 pb-24">
-                {loading || tabLoading || !imagesLoaded ? (
-                    Array.from({ length: 6 }).map((_, i) => (
-                        <div key={i}>
-                            <RecipeCardSkeleton />
+                            {MEAL_SCENES.map(scene => (
+                                <button
+                                    key={scene}
+                                    className={`
+                                    px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap flex items-center gap-1.5
+                                    ${selectedScene === scene
+                                            ? 'bg-primary text-white shadow-md shadow-orange-200'
+                                            : 'bg-white text-text-sub border border-slate-100 hover:bg-slate-50'
+                                        }
+                                `}
+                                    onClick={() => setSelectedScene(scene)}
+                                >
+                                    <span>{SCENE_ICONS[scene] || '🍽️'}</span>
+                                    {scene}
+                                </button>
+                            ))}
                         </div>
-                    ))
-                ) : filteredRecipes.length > 0 ? (
-                    filteredRecipes.map((recipe, index) => (
-                        <div key={recipe.id}>
-                            <RecipeCard
-                                recipe={recipe}
-                                profile={profile}
-                                isSaved={savedRecipeIds?.includes(recipe.id)}
-                                onToggleSave={() => toggleSave(recipe.id)}
-                                isLiked={likedRecipeIds?.includes(recipe.id)}
-                                onToggleLike={() => toggleLike(recipe.id)}
-                                priority={index < 4}
-                            />
-                        </div>
-                    ))
-                ) : (
-                    <div className="col-span-full py-10 text-center break-inside-avoid">
-                        <div className="mb-4 text-6xl opacity-20 filter grayscale">
-                            {activeTab === 'saved' ? '🔖' : activeTab === 'mine' ? '🍳' : '📚'}
-                        </div>
-                        <h3 className="text-lg font-bold text-slate-700 mb-2">
-                            {activeTab === 'saved' ? '保存したレシピはありません' :
-                                activeTab === 'mine' ? 'まだ投稿がありません' :
-                                    searchTerm || selectedScene ? 'レシピが見つかりませんでした' :
-                                        'まだ他のユーザーの投稿がありません'}
-                        </h3>
-                        <p className="text-slate-500 text-sm mb-6 whitespace-pre-line">
-                            {activeTab === 'saved' ? '気に入ったレシピを保存して、\nあなただけのレシピブックを作りましょう！' :
-                                activeTab === 'mine' ? 'お子さまのためのレシピを記録しませんか？' :
-                                    searchTerm || selectedScene ? '検索条件を変えて試してみてください' :
-                                        '新しいレシピが投稿されるのをお待ちください✨\nあなたも「自分の投稿」から投稿できます！'}
-                        </p>
-                        {activeTab === 'mine' && (
-                            <Link href="/recipe/new">
-                                <Button className="bg-orange-500 text-white shadow-lg shadow-orange-200">
-                                    最初のレシピを投稿
-                                </Button>
-                            </Link>
-                        )}
-                    </div>
+                    </>
                 )}
-            </div>
 
+                {/* Recipe Grid - Updated to use responsive columns */}
+                <div className="recipe-grid px-2 pb-24">
+                    {loading || tabLoading || !imagesLoaded ? (
+                        Array.from({ length: 10 }).map((_, i) => (
+                            <div key={i}>
+                                <RecipeCardSkeleton />
+                            </div>
+                        ))
+                    ) : filteredRecipes.length > 0 ? (
+                        filteredRecipes.map((recipe, index) => (
+                            <div key={recipe.id}>
+                                <RecipeCard
+                                    recipe={recipe}
+                                    profile={profile}
+                                    isSaved={savedRecipeIds?.includes(recipe.id)}
+                                    onToggleSave={() => toggleSave(recipe.id)}
+                                    isLiked={likedRecipeIds?.includes(recipe.id)}
+                                    onToggleLike={() => toggleLike(recipe.id)}
+                                    priority={index < 4}
+                                />
+                            </div>
+                        ))
+                    ) : (
+                        <div className="col-span-full py-20 text-center">
+                            <div className="mb-6 text-7xl opacity-30 animate-bounce">
+                                {activeTab === 'saved' ? '🔖' : activeTab === 'mine' ? '🍳' : '🔍'}
+                            </div>
+                            <h3 className="text-xl font-bold text-slate-700 mb-2">
+                                {activeTab === 'saved' ? '保存したレシピはありません' :
+                                    activeTab === 'mine' ? 'まだ投稿がありません' :
+                                        searchTerm || selectedScene ? 'レシピが見つかりませんでした' :
+                                            'まだ投稿がありません'}
+                            </h3>
+                            <p className="text-slate-500 text-sm mb-8 whitespace-pre-line max-w-xs mx-auto">
+                                {activeTab === 'saved' ? '気に入ったレシピを保存して、\nあなただけのレシピ帳を作りましょう！' :
+                                    activeTab === 'mine' ? 'お子さまのためのレシピを記録しませんか？' :
+                                        searchTerm || selectedScene ? '検索条件を変えて試してみてください' :
+                                            '新しいレシピが投稿されるのをお待ちください✨'}
+                            </p>
+                            {activeTab === 'mine' && (
+                                <Link href="/recipe/new">
+                                    <Button className="bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-xl shadow-orange-200 px-8 py-6 rounded-2xl">
+                                        最初のレシピを投稿する
+                                    </Button>
+                                </Link>
+                            )}
+                        </div>
+                    )}
+                </div>
 
+            </div> {/* End content-wrapper */}
+
+            {/* Floating Search & Filter Bar - Mobile First Thumb-Friendly */}
+            {user && (
+                <div className="fixed bottom-[80px] left-0 right-0 z-[900] px-4 pointer-events-none">
+                    <div className="content-wrapper pointer-events-auto">
+                        <div className="relative max-w-md mx-auto group">
+                            {/* Glassmorphic Search Bar */}
+                            <div className="absolute inset-0 bg-white/40 backdrop-blur-xl rounded-full border border-white/40 shadow-2xl transition-all duration-300 group-focus-within:ring-4 group-focus-within:ring-orange-200 group-focus-within:bg-white/80"></div>
+
+                            <div className="relative flex items-center p-1">
+                                <Search className="ml-4 text-orange-400 font-bold shrink-0" size={22} />
+                                <input
+                                    type="text"
+                                    placeholder="レシピ、食材、タグで探す..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="w-full bg-transparent border-none py-4 px-3 text-slate-700 placeholder-slate-400 outline-none font-bold text-base"
+                                />
+                                <button
+                                    onClick={() => setSearchTerm('')}
+                                    className={`mr-2 h-8 w-8 rounded-full flex items-center justify-center bg-slate-100 text-slate-400 hover:bg-slate-200 transition-opacity ${searchTerm ? 'opacity-100' : 'opacity-0'}`}
+                                >
+                                    ×
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

@@ -58,6 +58,11 @@
     --shadow-sm: 0 2px 8px rgba(251, 146, 60, 0.05);
     --shadow-md: 0 4px 16px rgba(251, 146, 60, 0.1);
     --shadow-lg: 0 8px 24px rgba(251, 146, 60, 0.15);
+
+    /* Glass Effect */
+    --glass-bg: rgba(255, 255, 255, 0.8);
+    --glass-border: rgba(255, 255, 255, 0.3);
+    --glass-blur: blur(12px);
 }
 
 * {
@@ -100,18 +105,31 @@ textarea {
     color: var(--color-text-main);
 }
 
-/* Mobile First Container */
+/* Responsive Container Strategy */
 #root,
 .app-container {
-    max-width: 480px;
+    width: 100%;
     margin: 0 auto;
     min-height: 100vh;
     background-color: var(--color-background);
-    /* Changed from surface to background for floating effect */
-    box-shadow: 0 0 40px rgba(0, 0, 0, 0.05);
     position: relative;
     display: flex;
     flex-direction: column;
+}
+
+/* Allow content to be centered and constrained on very large screens */
+.content-wrapper {
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 var(--spacing-md);
+}
+
+@media (min-width: 768px) {
+    .app-container {
+        /* Slight shadow on sides for PC to feel more like a framed app if desired, 
+           but user complained about narrowness, so we let it breathe. */
+    }
 }
 
 /* Utility Classes */
@@ -423,11 +441,22 @@ textarea {
     align-items: start;
 }
 
-.recipe-grid>* {
-    width: 100%;
-    height: auto;
-    min-width: 0;
-    /* Prevent overflow */
+@media (min-width: 640px) {
+    .recipe-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (min-width: 1024px) {
+    .recipe-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (min-width: 1280px) {
+    .recipe-grid {
+        grid-template-columns: repeat(5, 1fr);
+    }
 }
 
 /* Sticky Filter Bar */

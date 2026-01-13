@@ -1,0 +1,436 @@
+/* Map Page Container */
+.map-page-container {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    /* calc(100vh - bottom-nav-height) handled by layout */
+    overflow: hidden;
+    background: #F8FAFC;
+    font-family: var(--font-noto-sans-jp);
+    /* Ensure font is available */
+}
+
+/* 
+   Search & Filter Section 
+   - Floating Glassmorphism design
+*/
+.map-search-bar-container {
+    position: absolute;
+    bottom: 120px;
+    /* Adjusted to be above bottom-nav and toggle button */
+    left: 16px;
+    right: 16px;
+    z-index: 50;
+    /* Above map */
+    display: flex;
+    flex-direction: column-reverse;
+    /* Icons below input or vice versa? Let's keep input at bottom */
+    gap: 12px;
+}
+
+@media (min-width: 1024px) {
+    .map-search-bar-container {
+        top: 24px;
+        bottom: auto;
+        left: 24px;
+        width: 360px;
+    }
+}
+
+.map-search-bar {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    border-radius: 24px;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+    border: 1px solid var(--glass-border);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.map-search-bar:focus-within {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(249, 115, 22, 0.15);
+    /* Orange tint on focus */
+    border-color: rgba(249, 115, 22, 0.3);
+}
+
+.map-search-icon {
+    color: #94A3B8;
+}
+
+.map-search-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 16px;
+    background: transparent;
+    color: #334155;
+    font-weight: 500;
+}
+
+.map-search-input::placeholder {
+    color: #CBD5E1;
+}
+
+/* Quick Filters */
+.map-quick-filters {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    padding-left: 4px;
+    /* Space for shadow */
+    margin-left: -4px;
+    scrollbar-width: none;
+    /* Hide scrollbar */
+}
+
+.map-quick-filters::-webkit-scrollbar {
+    display: none;
+}
+
+.map-filter-chip {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(8px);
+    border: 1px solid #E2E8F0;
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-size: 13px;
+    color: #475569;
+    font-weight: 700;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.map-filter-chip.active {
+    background: #FFF7ED;
+    /* Orange 50 */
+    border-color: #F97316;
+    color: #C2410C;
+    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.2);
+    transform: scale(1.05);
+}
+
+/* 
+   Content Area (Map & List)
+*/
+.map-content {
+    width: 100%;
+    height: 100%;
+}
+
+.map-list-view {
+    width: 100%;
+    height: 100%;
+    background: #F1F5F9;
+    overflow-y: auto;
+    /* content padding handled in inner div */
+}
+
+.list-content-padding {
+    padding: 24px 16px 120px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+@media (min-width: 1024px) {
+    .list-content-padding {
+        padding-top: 100px;
+    }
+}
+
+/* List Card Design */
+.map-list-card {
+    background: white;
+    border-radius: 20px;
+    padding: 12px;
+    display: flex;
+    gap: 16px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+    border: 1px solid white;
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.map-list-card:active {
+    transform: scale(0.98);
+}
+
+.card-image-container {
+    width: 88px;
+    height: 88px;
+    border-radius: 16px;
+    overflow: hidden;
+    flex-shrink: 0;
+    position: relative;
+    background: #F1F5F9;
+}
+
+.card-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.card-image-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    background: #FFF7ED;
+}
+
+.menu-count-badge {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    background: #F97316;
+    color: white;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-top-left-radius: 10px;
+}
+
+.card-content {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.card-title {
+    font-size: 16px;
+    font-weight: 800;
+    color: #1E293B;
+    line-height: 1.4;
+    margin-bottom: 2px;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.card-rating {
+    font-size: 12px;
+    color: #F59E0B;
+    font-weight: 700;
+    background: #FEF3C7;
+    padding: 2px 6px;
+    border-radius: 6px;
+    margin-left: 8px;
+    flex-shrink: 0;
+}
+
+.card-address {
+    font-size: 11px;
+    color: #64748B;
+    margin-bottom: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.card-menu-highlight {
+    background: #F8FAFC;
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+}
+
+.highlight-label {
+    color: #F97316;
+    font-weight: 700;
+    font-size: 10px;
+    flex-shrink: 0;
+}
+
+.menu-name {
+    color: #334155;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.more-count {
+    color: #94A3B8;
+    font-size: 10px;
+}
+
+.card-tags {
+    display: flex;
+    gap: 4px;
+}
+
+.tag-chip {
+    font-size: 10px;
+    color: #64748B;
+    background: #F1F5F9;
+    padding: 2px 8px;
+    border-radius: 99px;
+}
+
+/* 
+   Floating Toggle Button 
+*/
+.map-view-toggle-btn {
+    position: absolute;
+    bottom: 200px;
+    /* Above search bar on mobile */
+    right: 20px;
+    background: #1E293B;
+    color: white;
+    border: none;
+    border-radius: var(--radius-full);
+    padding: 14px 28px;
+    font-size: 14px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    z-index: 60;
+    transition: all 0.2s;
+}
+
+@media (min-width: 1024px) {
+    .map-view-toggle-btn {
+        display: none !important;
+    }
+}
+
+.map-view-toggle-btn:active {
+    transform: scale(0.95);
+}
+
+.loading-state,
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 50vh;
+    color: #64748B;
+    font-weight: 500;
+}
+
+.reset-btn {
+    margin-top: 16px;
+    padding: 8px 20px;
+    background: white;
+    border: 1px solid #CBD5E1;
+    border-radius: 99px;
+    font-size: 14px;
+    color: #334155;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.spinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid #CBD5E1;
+    border-top-color: #F97316;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 16px;
+}
+
+/* =========================================
+   Responsive Design & Split View Logic
+   ========================================= */
+
+/* Mobile Default: Hide elements based on class toggling */
+.hidden-mobile {
+    display: none;
+}
+
+/* Map View Container defaults */
+.map-view-container {
+    width: 100%;
+    height: 100%;
+}
+
+/* Desktop Styles (min-width: 1024px) */
+@media (min-width: 1024px) {
+
+    /* Container becomes Flex Row */
+    .map-content {
+        display: flex;
+        flex-direction: row-reverse;
+        /* Map on Right, List on Left */
+    }
+
+    /* List View: Fixed Width on Left */
+    .map-list-view {
+        width: 400px;
+        flex-shrink: 0;
+        border-right: 1px solid #E2E8F0;
+        position: relative;
+        z-index: 20;
+        box-shadow: 4px 0 24px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Ensure visibility on desktop even if 'hidden-mobile' class is present */
+    .hidden-mobile {
+        display: block !important;
+    }
+
+    /* Map View: Flex Grow on Right */
+    .map-view-container {
+        flex: 1;
+        position: relative;
+    }
+
+    /* Search Bar: Move inside the List View visually (or keep absolute but constrained) */
+    /* Let's constrain it to the list view width */
+    .map-search-bar-container {
+        width: 380px;
+        /* slightly less than list view width */
+        left: 10px;
+        right: auto;
+    }
+
+    /* Adjust List Padding to account for Search Bar */
+    .list-content-padding {
+        padding-top: 140px;
+        /* Keep same space for search */
+        padding-bottom: 40px;
+        /* Less bottom padding needed */
+    }
+
+    /* Hide Mobile Toggle Button */
+    .mobile-only {
+        display: none !important;
+    }
+
+    /* Adjust Card Styles for Desktop List */
+    .map-list-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.06);
+        border-color: #FED7AA;
+        /* Orange 200 */
+    }
+}

@@ -1,0 +1,195 @@
+[
+    {
+        "id": "seed-rest-1",
+        "name": "アレルギー対応カフェ しあわせ",
+        "address": "福岡県福岡市中央区天神2-1-1",
+        "lat": 33.5900,
+        "lng": 130.4000,
+        "phone": "092-000-0000",
+        "opening_hours": {
+            "mon": "10:00-18:00",
+            "tue": "10:00-18:00",
+            "wed": "closed",
+            "thu": "10:00-18:00",
+            "fri": "10:00-18:00",
+            "sat": "10:00-18:00",
+            "sun": "10:00-18:00"
+        },
+        "place_id": "dummy_place_id_1",
+        "contamination_level": "strict",
+        "website_url": "https://example.com",
+        "tags": [
+            "Cafe",
+            "Sweets"
+        ],
+        "features": {
+            "kids_chair": true,
+            "diaper_change": true,
+            "stroller_access": true
+        },
+        "compatibility": [
+            {
+                "allergen": "wheat",
+                "status": "safe",
+                "details": "Rice flour used exclusively"
+            },
+            {
+                "allergen": "milk",
+                "status": "safe",
+                "details": "Soy milk used"
+            },
+            {
+                "allergen": "egg",
+                "status": "safe",
+                "details": "No eggs in kitchen"
+            },
+            {
+                "allergen": "nut",
+                "status": "removable",
+                "details": "Some toppings use almond"
+            }
+        ],
+        "menus": [
+            {
+                "name": "ふわふわ米粉パンケーキ",
+                "description": "小麦・卵・乳不使用。豆乳ホイップたっぷりの人気No.1メニュー。",
+                "price": 1200,
+                "image_url": "https://images.unsplash.com/photo-1506084868230-bb9d95c24759?auto=format&fit=crop&w=500&q=60",
+                "allergens": [],
+                "tags": [
+                    "low_allergen",
+                    "kids",
+                    "sweets"
+                ]
+            },
+            {
+                "name": "キッズカレープレート",
+                "description": "7大アレルゲン不使用。野菜たっぷりの甘口カレー。",
+                "price": 800,
+                "image_url": "https://images.unsplash.com/photo-1634563630245-c4193557e563?auto=format&fit=crop&w=500&q=60",
+                "allergens": [],
+                "tags": [
+                    "7_major_free",
+                    "kids",
+                    "lunch"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "seed-rest-2",
+        "name": "安心うどん 博多店",
+        "address": "福岡県福岡市博多区博多駅前1-1-1",
+        "lat": 33.5905,
+        "lng": 130.4200,
+        "phone": "092-000-0001",
+        "opening_hours": {
+            "mon": "11:00-20:00",
+            "tue": "11:00-20:00",
+            "wed": "11:00-20:00",
+            "thu": "11:00-20:00",
+            "fri": "11:00-20:00",
+            "sat": "11:00-20:00",
+            "sun": "11:00-20:00"
+        },
+        "place_id": "dummy_place_id_2",
+        "contamination_level": "normal",
+        "website_url": "https://example.com/udon",
+        "tags": [
+            "Japanese",
+            "Udon"
+        ],
+        "features": {
+            "kids_chair": true,
+            "diaper_change": false,
+            "stroller_access": true
+        },
+        "compatibility": [
+            {
+                "allergen": "wheat",
+                "status": "contaminated",
+                "details": "Main menu is wheat"
+            },
+            {
+                "allergen": "milk",
+                "status": "safe",
+                "details": "No milk used"
+            },
+            {
+                "allergen": "egg",
+                "status": "removable",
+                "details": "Can remove egg topping"
+            }
+        ],
+        "menus": [
+            {
+                "name": "おこめ麺の天ぷらセット",
+                "description": "グルテンフリー麺に変更可能。天ぷらは米粉を使用。",
+                "price": 980,
+                "image_url": "https://images.unsplash.com/photo-1626887574765-a82f7c006509?auto=format&fit=crop&w=500&q=60",
+                "allergens": [
+                    "shrimp"
+                ],
+                "tags": [
+                    "gluten_free",
+                    "lunch"
+                ]
+            },
+            {
+                "name": "豆乳プリン",
+                "description": "食後のデザートに。卵・乳不使用です。",
+                "price": 300,
+                "image_url": "https://images.unsplash.com/photo-1588636577888-0ca1a8d052d1?auto=format&fit=crop&w=500&q=60",
+                "allergens": [],
+                "tags": [
+                    "dessert",
+                    "7_major_free"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "seed-rest-3",
+        "name": "Italian Kitchen SOL",
+        "address": "福岡県福岡市中央区大名1-1-1",
+        "lat": 33.5860,
+        "lng": 130.3960,
+        "phone": "092-000-0002",
+        "place_id": "dummy_place_id_3",
+        "contamination_level": "normal",
+        "website_url": "https://example.com/sol",
+        "tags": [
+            "Italian",
+            "Pasta"
+        ],
+        "features": {
+            "kids_chair": true,
+            "private_room": true
+        },
+        "compatibility": [
+            {
+                "allergen": "wheat",
+                "status": "safe",
+                "details": "Gluten-free pasta available"
+            },
+            {
+                "allergen": "milk",
+                "status": "removable",
+                "details": "Can change to oil base"
+            }
+        ],
+        "menus": [
+            {
+                "name": "GFパスタ・ポモドーロ",
+                "description": "トウモロコシ粉のパスタを使用。ソースも自家製で安心。",
+                "price": 1400,
+                "image_url": "https://images.unsplash.com/photo-1598912660163-e847c501168f?auto=format&fit=crop&w=500&q=60",
+                "allergens": [],
+                "tags": [
+                    "gluten_free",
+                    "vegan"
+                ]
+            }
+        ]
+    }
+]

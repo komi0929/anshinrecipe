@@ -1,0 +1,200 @@
+.review-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.review-modal-container {
+    background: white;
+    width: 100%;
+    max-width: 480px;
+    border-radius: 24px;
+    padding: 24px;
+    position: relative;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.close-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    color: #94A3B8;
+    padding: 4px;
+}
+
+.modal-title {
+    font-size: 20px;
+    font-weight: 700;
+    text-align: center;
+    color: #334155;
+    margin-bottom: 4px;
+}
+
+.modal-subtitle {
+    font-size: 14px;
+    text-align: center;
+    color: #94A3B8;
+    margin-bottom: 24px;
+}
+
+.review-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.stars-input {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.star-btn {
+    transition: transform 0.1s;
+}
+
+.star-btn:active {
+    transform: scale(0.9);
+}
+
+.section-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 700;
+    color: #64748B;
+    margin-bottom: 8px;
+}
+
+.allergens-chips {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.allergen-chip-select {
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1px solid #E2E8F0;
+    background: #F8FAFC;
+    color: #64748B;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+.allergen-chip-select.selected {
+    background: #FFF7ED;
+    border-color: #F97316;
+    color: #F97316;
+}
+
+.review-textarea {
+    width: 100%;
+    border: 1px solid #E2E8F0;
+    border-radius: 16px;
+    padding: 16px;
+    font-size: 16px;
+    resize: none;
+    outline: none;
+}
+
+.review-textarea:focus {
+    border-color: #F97316;
+    box-shadow: 0 0 0 3px #FFF7ED;
+}
+
+.image-upload-placeholder {
+    border: 2px dashed #FED7AA;
+    /* Orange 200 */
+    background: #FFF7ED;
+    /* Orange 50 */
+    border-radius: 16px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.image-upload-placeholder:hover {
+    background: #FFEDD5;
+    /* Orange 100 */
+    border-color: #FDBA74;
+    /* Orange 300 */
+}
+
+.upload-icon {
+    color: #FB923C;
+    /* Orange 400 */
+    margin-bottom: 4px;
+}
+
+.upload-text {
+    color: #EA580C;
+    /* Orange 600 */
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.upload-subtext {
+    color: #FB923C;
+    /* Orange 400 */
+    font-size: 11px;
+}
+
+.submit-btn {
+    background: #F97316;
+    color: white;
+    font-weight: 700;
+    padding: 16px;
+    border-radius: 9999px;
+    margin-top: 8px;
+    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.2);
+    transition: all 0.2s;
+}
+
+.submit-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.submit-btn:active {
+    transform: scale(0.98);
+}
+
+.menu-name-input {
+    width: 100%;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 14px 16px;
+    font-size: 16px;
+    outline: none;
+    transition: all 0.2s;
+    background: #F8FAFC;
+    color: #334155;
+    font-weight: 700;
+}
+
+.menu-name-input:focus {
+    background: white;
+    border-color: #F97316;
+    box-shadow: 0 0 0 3px #FFF7ED;
+}

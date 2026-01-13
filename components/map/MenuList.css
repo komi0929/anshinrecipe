@@ -1,0 +1,171 @@
+/* Menu List Section */
+.menu-list-section {
+    margin-bottom: 32px;
+    position: relative;
+    /* Optional: background highlight */
+}
+
+/* Horizontal Scrolling Container */
+.menu-scroll-container {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    padding: 4px 24px 24px 24px;
+    /* Top padding for shadow */
+    scroll-snap-type: x mandatory;
+    scroll-padding: 24px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+
+.menu-scroll-container::-webkit-scrollbar {
+    display: none;
+}
+
+/* Menu Card */
+.menu-card {
+    flex: 0 0 280px;
+    /* Slightly wider */
+    scroll-snap-align: start;
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(0, 0, 0, 0.02);
+    transition: transform 0.2s;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.menu-card:active {
+    transform: scale(0.98);
+}
+
+.menu-image-wrapper {
+    position: relative;
+    height: 180px;
+    /* Taller image */
+    width: 100%;
+}
+
+.menu-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Badge for 7 Major Allergens Free */
+.menu-tag-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(4px);
+    color: #F97316;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 6px 10px;
+    border-radius: 99px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    letter-spacing: 0.05em;
+}
+
+.menu-content {
+    padding: 16px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.menu-name {
+    font-weight: 800;
+    font-size: 17px;
+    color: #1E293B;
+    margin-bottom: 6px;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.menu-desc {
+    font-size: 12px;
+    color: #64748B;
+    margin-bottom: auto;
+    /* Push footer down */
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.menu-footer {
+    margin-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    border-top: 1px solid #F1F5F9;
+    padding-top: 12px;
+}
+
+.source-link-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 12px;
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 99px;
+    color: #64748B;
+    font-size: 11px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 0.2s;
+    width: fit-content;
+}
+
+.source-link-btn:hover {
+    background: #F1F5F9;
+    color: #1E293B;
+    border-color: #CBD5E1;
+}
+
+.allergen-info-box {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.menu-price {
+    font-weight: 800;
+    color: #F97316;
+    font-size: 16px;
+    letter-spacing: -0.01em;
+}
+
+/* Allergen Tags Style */
+.allergen-tag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 24px;
+    padding: 0 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    background: #F1F5F9;
+    color: #64748B;
+}
+
+.allergen-safe-text {
+    font-size: 11px;
+    color: #10B981;
+    /* Emerald 500 */
+    font-weight: 800;
+    background: #ECFDF5;
+    padding: 4px 8px;
+    border-radius: 6px;
+}
