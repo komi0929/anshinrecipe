@@ -4,6 +4,7 @@ import { DataProvider } from '../components/DataProvider'
 import BottomNav from '../components/BottomNav'
 import GoogleAnalytics from '../components/GoogleAnalytics'
 import './globals.css'
+import ForceUnregisterSW from '../components/ForceUnregisterSW'
 
 const zenMaruGothic = Zen_Maru_Gothic({
     weight: ['400', '700'],
@@ -66,7 +67,8 @@ import PWAInstallPrompt from '@/components/PWAInstallPrompt';
 export default function RootLayout({ children }) {
     return (
         <html lang="ja" className={zenMaruGothic.variable} suppressHydrationWarning>
-            <body suppressHydrationWarning>
+            <body className={`${zenMaruGothic.className} bg-[#fcfcfc] pb-20`}>
+                <ForceUnregisterSW />
                 <DataProvider>
                     <GoogleAnalytics GA_MEASUREMENT_ID={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
                     <ToastProvider>

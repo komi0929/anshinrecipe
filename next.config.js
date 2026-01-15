@@ -4,7 +4,7 @@ const withPWA = require("@ducanh2912/next-pwa").default({
     aggressiveFrontEndNavCaching: false, // Disable to prevent stale HTML
     reloadOnOnline: true,
     swcMinify: true,
-    disable: process.env.NODE_ENV === "development",
+    disable: true, // Force disable PWA
     skipWaiting: true, // Immediately activate new service worker
     register: true,
     workboxOptions: {
