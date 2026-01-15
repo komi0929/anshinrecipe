@@ -1,32 +1,49 @@
 const withPWA = require("@ducanh2912/next-pwa").default({
     dest: "public",
-    cacheOnFrontEndNav: true,
-    aggressiveFrontEndNavCaching: true,
+    cacheOnFrontEndNav: false, // Disable aggressive caching for navigation
+    aggressiveFrontEndNavCaching: false, // Disable to prevent stale HTML
     reloadOnOnline: true,
     swcMinify: true,
-    disable: process.env.NODE_ENV === "development", // Disable PWA in dev mode
+    disable: process.env.NODE_ENV === "development",
+    skipWaiting: true, // Immediately activate new service worker
+    register: true,
     workboxOptions: {
         disableDevLogs: true,
-        // 🚀 Runtime caching for Supabase API calls
+        skipWaiting: true,
+        clientsClaim: true, // Take control of all clients immediately
+        // 🚀 Runtime caching for different resources
         runtimeCaching: [
-            // Auth and profile related - always get fresh data
+            // HTML pages - ALWAYS get fresh from network
+            {
+                urlPattern: /^https:\/\/.*\.(com|vercel\.app)\/?.*$/,
+                handler: 'NetworkFirst',
+                options: {
+                    cacheName: 'html-cache',
+                    networkTimeoutSeconds: 3,
+                    expiration: {
+                        maxEntries: 32,
+                        maxAgeSeconds: 60 * 60, // 1 hour
+                    },
+                },
+            },
+            // Auth and profile related - NEVER cache
             {
                 urlPattern: /^https:\/\/.*\.supabase\.co\/auth\/.*/,
-                handler: 'NetworkOnly', // Never cache auth
+                handler: 'NetworkOnly',
             },
             {
                 urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/v1\/(profiles|children|saved_recipes|likes)\?.*/,
-                handler: 'NetworkFirst', // Profile data - prefer network
+                handler: 'NetworkFirst',
                 options: {
                     cacheName: 'supabase-profile-cache',
                     networkTimeoutSeconds: 5,
                     expiration: {
                         maxEntries: 50,
-                        maxAgeSeconds: 60, // Only 1 minute cache
+                        maxAgeSeconds: 60,
                     },
                 },
             },
-            // Other Supabase API calls - use stale-while-revalidate
+            // Other Supabase API calls
             {
                 urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/v1\/.*/,
                 handler: 'StaleWhileRevalidate',
@@ -34,7 +51,7 @@ const withPWA = require("@ducanh2912/next-pwa").default({
                     cacheName: 'supabase-api-cache',
                     expiration: {
                         maxEntries: 100,
-                        maxAgeSeconds: 60 * 60, // 1 hour
+                        maxAgeSeconds: 60 * 60,
                     },
                 },
             },
@@ -45,7 +62,7 @@ const withPWA = require("@ducanh2912/next-pwa").default({
                     cacheName: 'youtube-thumbnail-cache',
                     expiration: {
                         maxEntries: 200,
-                        maxAgeSeconds: 60 * 60 * 24 * 7, // 1 week
+                        maxAgeSeconds: 60 * 60 * 24 * 7,
                     },
                 },
             },
