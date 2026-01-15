@@ -1,23 +1,19 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { MapContainer } from '@/components/map/MapContainer';
-import { Search, Map as MapIcon, List, Check } from 'lucide-react';
+import { Search, Map as MapIcon, List, Check, Loader2 } from 'lucide-react';
 import { useMapData } from '@/hooks/useMapData';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useProfile } from '@/hooks/useProfile';
 import { LoginBenefitCard } from '@/components/map/LoginBenefitCard';
+import { ReviewModal } from '@/components/map/ReviewModal';
 import './MapPage.css';
 
 // Wrapper for MapContainer to pass restaurants from hook
 const MapContainerWrapper = ({ restaurants }) => {
     return <MapContainer restaurants={restaurants} />
 }
-
-import { useSearchParams } from 'next/navigation';
-import { ReviewModal } from '@/components/map/ReviewModal';
-
-// ... (MapContainerWrapper remains same)
 
 // Simple Modal for Selecting a Restaurant
 const SelectRestaurantModal = ({ isOpen, onClose, onSelect }) => {
@@ -57,7 +53,7 @@ const SelectRestaurantModal = ({ isOpen, onClose, onSelect }) => {
                         >
                             <div className="w-10 h-10 rounded-lg bg-slate-200 overflow-hidden shrink-0">
                                 {r.menus?.[0]?.image_url ? (
-                                    <img src={r.menus[0].image_url} className="w-full h-full object-cover" />
+                                    <img src={r.menus[0].image_url} className="w-full h-full object-cover" alt={r.name} />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center text-lg">🍳</div>
                                 )}
@@ -80,7 +76,8 @@ const SelectRestaurantModal = ({ isOpen, onClose, onSelect }) => {
     );
 };
 
-export default function MapPage() {
+// Main content component that uses useSearchParams
+function MapPageContent() {
     const { user, profile } = useProfile();
     const [viewMode, setViewMode] = useState('map'); // 'map' or 'list'
     const [searchQuery, setSearchQuery] = useState('');
@@ -315,5 +312,18 @@ export default function MapPage() {
                 onClose={handleReviewClose}
             />
         </div>
+    );
+}
+
+// Default export with Suspense boundary for useSearchParams
+export default function MapPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex items-center justify-center min-h-screen bg-slate-50">
+                <Loader2 className="animate-spin text-orange-500" size={32} />
+            </div>
+        }>
+            <MapPageContent />
+        </Suspense>
     );
 }
