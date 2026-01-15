@@ -1,39 +1,51 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import seedData from '@/data/fukuoka_restaurants_seed.json';
 
-// filters: { tags: [], allergens: [] }
-// allergens: ['wheat', 'egg', 'milk'] -> Show restaurants that are SAFE for these (AND logic or OR logic? Usually AND for multiple allergies)
+// filters: { tags: [], allergens: [], searchQuery: '' }
+// allergens: ['wheat', 'egg', 'milk'] -> Show restaurants that are SAFE for these
 export const useMapData = (filters = {}) => {
     const [restaurants, setRestaurants] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Initial Fetch
+    // Fetch from Supabase
     useEffect(() => {
         const fetchRestaurants = async () => {
+            setLoading(true);
+            setError(null);
+
             try {
-                setLoading(true);
-                // Try fetching from DB
-                const { data, error } = await supabase
+                // Fetch restaurants with their menus
+                const { data, error: fetchError } = await supabase
                     .from('restaurants')
                     .select(`
                         *,
-                        restaurant_compatibility(*),
-                        menus(*)
-                    `);
+                        menus (*)
+                    `)
+                    .order('created_at', { ascending: false });
 
-                if (error) throw error;
-
-                if (data && data.length > 0) {
-                    setRestaurants(data);
-                } else {
-                    console.log('Using seed data for map');
-                    setRestaurants(seedData);
+                if (fetchError) {
+                    throw fetchError;
                 }
+
+                // Transform data to match expected structure
+                const transformedData = (data || []).map(restaurant => ({
+                    ...restaurant,
+                    // Ensure compatibility array exists for filtering
+                    compatibility: restaurant.compatibility || [],
+                    // Ensure menus array exists
+                    menus: restaurant.menus || [],
+                    // Ensure features object exists
+                    features: restaurant.features || {},
+                    // Ensure tags array exists
+                    tags: restaurant.tags || []
+                }));
+
+                setRestaurants(transformedData);
             } catch (err) {
-                console.warn('Map data fetch failed (using seed data):', err);
-                setRestaurants(seedData);
+                console.error('Error fetching restaurants:', err);
+                setError(err.message);
+                setRestaurants([]);
             } finally {
                 setLoading(false);
             }

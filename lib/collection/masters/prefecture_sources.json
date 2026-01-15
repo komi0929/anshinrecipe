@@ -1,0 +1,39 @@
+[
+    {
+        "area": "fukuoka",
+        "name": "福岡県",
+        "urls": [
+            "https://www.fukuoka-yokamon.com/search?q=アレルギー",
+            "https://www.city.fukuoka.lg.jp/search/?q=アレルギー対応+飲食店"
+        ]
+    },
+    {
+        "area": "tokyo",
+        "name": "東京都",
+        "urls": [
+            "https://www.fukushihoken.metro.tokyo.lg.jp/shokuhin/engai/index.html",
+            "https://www.sangyo-rodo.metro.tokyo.lg.jp/tourism/kakunin/"
+        ]
+    },
+    {
+        "area": "osaka",
+        "name": "大阪府",
+        "urls": [
+            "https://www.pref.osaka.lg.jp/shokuhin/allergy/index.html"
+        ]
+    },
+    {
+        "area": "aichi",
+        "name": "愛知県",
+        "urls": [
+            "https://www.pref.aichi.jp/soshiki/kenkotaisaku/allergy-shoku.html"
+        ]
+    },
+    {
+        "area": "hiroshima",
+        "name": "広島県",
+        "urls": [
+            "https://www.pref.hiroshima.lg.jp/soshiki/58/allergy-guide.html"
+        ]
+    }
+]

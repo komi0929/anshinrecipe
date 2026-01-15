@@ -20,6 +20,27 @@ export async function GET() {
     }
 }
 
+export async function PATCH(request) {
+    try {
+        const { id, ...updates } = await request.json();
+
+        // Update updated_at automatically
+        updates.updated_at = new Date().toISOString();
+
+        const { data, error } = await supabase
+            .from('restaurants')
+            .update(updates)
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) throw error;
+        return NextResponse.json({ success: true, data });
+    } catch (error) {
+        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    }
+}
+
 export async function DELETE(request) {
     try {
         const { id } = await request.json();

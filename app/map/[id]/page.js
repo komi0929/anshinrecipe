@@ -2,33 +2,32 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useMapData } from '@/hooks/useMapData'; // We might need to export this properly or move logic
-import { ArrowLeft, MapPin, Clock, Phone, Globe, Star, AlertTriangle, CheckCircle, HelpCircle } from 'lucide-react';
-import './RestaurantDetailPage.css';
+import { useMapData } from '@/hooks/useMapData';
+import { ArrowLeft, MapPin, Phone, Globe, Star, AlertTriangle, CheckCircle, HelpCircle, Instagram, ShieldCheck, Plus } from 'lucide-react';
 import { MenuList } from '@/components/map/MenuList';
 import { ReviewModal } from '@/components/map/ReviewModal';
+import { ReviewList } from '@/components/map/ReviewList';
+import { MenuGallery } from '@/components/map/MenuGallery';
+import { BookmarkButton } from '@/components/social/BookmarkButton';
+import './RestaurantDetailPage.css';
 
 export default function RestaurantDetailPage() {
     const params = useParams();
     const router = useRouter();
-    // In a real app we'd fetch specific ID here, but reusing hook for simplicity in mock
     const { restaurants, loading } = useMapData();
     const [restaurant, setRestaurant] = useState(null);
+    const [activeTab, setActiveTab] = useState('menu'); // 'menu', 'reviews', 'gallery'
     const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
 
     useEffect(() => {
         if (!loading && restaurants.length > 0) {
-            // Match by ID or Place ID from seed
-            // Note: Seed IDs are not UUIDs currently in the JSON (they rely on index or place_id). 
-            // We'll search by place_id if UUID search fails or just index if passed.
-            // For this phase, let's assume we pass ID.
             const found = restaurants.find(r => r.id === params.id || r.place_id === params.id);
             if (found) setRestaurant(found);
         }
     }, [params.id, restaurants, loading]);
 
-    if (loading) return <div className="p-8 text-center">読み込み中...</div>;
-    if (!restaurant) return <div className="p-8 text-center">店舗が見つかりませんでした</div>;
+    if (loading) return <div className="p-8 text-center text-gray-500 font-medium animate-pulse">読み込み中...</div>;
+    if (!restaurant) return <div className="p-8 text-center text-red-500 font-bold">店舗が見つかりませんでした</div>;
 
     const getStatusIcon = (status) => {
         switch (status) {
@@ -39,157 +38,214 @@ export default function RestaurantDetailPage() {
         }
     };
 
-    const getStatusLabel = (status) => {
-        switch (status) {
-            case 'safe': return '対応可';
-            case 'removable': return '除去可';
-            case 'contaminated': return '不可';
-            default: return '不明';
-        }
-    };
-
     return (
-        <div className="restaurant-detail-page pb-20">
+        <div className="restaurant-detail-page pb-24 bg-white min-h-screen">
             {/* Header Image */}
-            <div className="restaurant-hero h-48 bg-gray-200 relative">
-                {/* Placeholder for now */}
-                <div className="absolute inset-0 flex items-center justify-center text-gray-400">
-                    Image Placeholder
+            <div className="restaurant-hero h-72 bg-slate-200 relative overflow-hidden group">
+                {(restaurant.image_url || restaurant.menus?.[0]?.image_url) ? (
+                    <img
+                        src={restaurant.image_url || restaurant.menus?.[0]?.image_url}
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        alt={restaurant.name}
+                    />
+                ) : (
+                    <div className="absolute inset-0 flex items-center justify-center text-slate-400 bg-slate-100">
+                        <Globe size={48} className="opacity-20" />
+                    </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+
+                {/* Top Actions */}
+                <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center z-10">
+                    <button
+                        onClick={() => router.back()}
+                        className="bg-white/90 p-3 rounded-full shadow-lg backdrop-blur-md text-slate-700 hover:bg-white transition-all"
+                    >
+                        <ArrowLeft size={20} />
+                    </button>
+                    <div className="flex gap-3">
+                        {/* Bookmark Button */}
+                        <BookmarkButton restaurantId={restaurant.id} className="shadow-lg" />
+                    </div>
                 </div>
+            </div>
+
+            <div className="max-w-3xl mx-auto w-full relative z-10 px-0 sm:px-4">
+                <div className="bg-white rounded-t-3xl sm:rounded-3xl relative -mt-10 p-6 sm:shadow-xl sm:border border-slate-100 min-h-[500px]">
+
+                    {/* Address with Google Maps Link */}
+                    <div className="mb-6">
+                        <div className="flex items-center gap-2 mb-2">
+                            <span className="text-[10px] font-bold bg-orange-500 text-white px-3 py-1 rounded-full uppercase tracking-widest shadow-sm shadow-orange-200">
+                                {restaurant.tags?.[0] || '飲食店'}
+                            </span>
+                            <div className="flex items-center gap-1 text-amber-400">
+                                <Star size={14} fill="currentColor" />
+                                <span className="text-xs font-bold text-slate-700">4.5</span>
+                            </div>
+                        </div>
+                        <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-tight mb-2">{restaurant.name}</h1>
+                        <a
+                            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(restaurant.name + ' ' + restaurant.address)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 text-sm text-slate-500 hover:bg-slate-50 p-2 -ml-2 rounded-lg transition-colors group/map"
+                        >
+                            <MapPin size={16} className="text-orange-500 shrink-0 group-hover/map:scale-110 transition-transform" />
+                            <span className="font-medium line-clamp-1 underline decoration-slate-300 decoration-dotted underline-offset-4 group-hover/map:text-orange-600 group-hover/map:decoration-orange-300">{restaurant.address}</span>
+                        </a>
+                    </div>
+
+                    {/* Action Bar (Call/Web) */}
+                    <div className="flex gap-3 mb-8 pb-4 overflow-x-auto scrollbar-none">
+                        {restaurant.phone && (
+                            <a href={`tel:${restaurant.phone}`} className="flex items-center gap-2 px-5 py-3 bg-slate-50 rounded-2xl text-slate-700 font-bold hover:bg-slate-100 transition-colors border border-slate-200 shrink-0">
+                                <Phone size={18} /> <span>電話</span>
+                            </a>
+                        )}
+                        {restaurant.instagram_url && (
+                            <a href={restaurant.instagram_url} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-5 py-3 bg-gradient-to-tr from-purple-50 to-pink-50 text-pink-600 rounded-2xl font-bold border border-pink-100 shrink-0">
+                                <Instagram size={18} /> <span>Instagram</span>
+                            </a>
+                        )}
+                        {restaurant.website_url && (
+                            <a href={restaurant.website_url} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-5 py-3 bg-slate-50 rounded-2xl text-slate-700 font-bold hover:bg-slate-100 transition-colors border border-slate-200 shrink-0">
+                                <Globe size={18} /> <span>Web</span>
+                            </a>
+                        )}
+                    </div>
+
+                    {/* NEW: Horizontal Menu Highlight */}
+                    <div className="mb-8">
+                        <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
+                            <span className="text-xl">🍽️</span> これが食べられる！
+                        </h3>
+                        <div className="flex gap-4 overflow-x-auto pb-4 -mx-6 px-6 scrollbar-hide snap-x">
+                            {restaurant.menus?.map((menu, index) => (
+                                <div key={menu.id || index} className="snap-center shrink-0 w-40">
+                                    <div className="aspect-square rounded-2xl overflow-hidden mb-2 bg-slate-100 relative">
+                                        {menu.image_url ? (
+                                            <img src={menu.image_url} className="w-full h-full object-cover" alt={menu.name} />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-2xl">🍳</div>
+                                        )}
+                                    </div>
+                                    <div className="font-bold text-sm text-slate-800 line-clamp-1">{menu.name}</div>
+                                    <div className="text-xs text-slate-400">¥{menu.price}</div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Features Sections: Allergy & Kids */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                        {/* Allergy Support */}
+                        <div className="bg-orange-50/50 p-5 rounded-3xl border border-orange-100">
+                            <h3 className="font-bold text-orange-800 mb-4 flex items-center gap-2">
+                                <ShieldCheck size={18} className="text-orange-500" />
+                                アレルギー対応
+                            </h3>
+                            <div className="grid grid-cols-2 gap-3">
+                                {[
+                                    { label: '7大表示', key: 'allergen_label', icon: '📋' },
+                                    { label: 'コンタミ対策', key: 'contamination', icon: '🛡️' },
+                                    { label: '除去食対応', key: 'removal', icon: '🍽️' },
+                                    { label: 'アレルギー表', key: 'chart', icon: '📊' }
+                                ].map(item => (
+                                    <div key={item.key} className="bg-white p-3 rounded-xl border border-orange-100 flex flex-col items-center justify-center text-center shadow-sm">
+                                        <div className="text-lg mb-1">{item.icon}</div>
+                                        <div className="text-[10px] font-bold text-slate-600">{item.label}</div>
+                                        <div className="text-xs font-bold text-orange-500 mt-1">◯</div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Kids Support */}
+                        <div className="bg-blue-50/50 p-5 rounded-3xl border border-blue-100">
+                            <h3 className="font-bold text-blue-800 mb-4 flex items-center gap-2">
+                                <span className="text-blue-500">👶</span>
+                                キッズ対応
+                            </h3>
+                            <div className="grid grid-cols-2 gap-3">
+                                {[
+                                    { label: 'キッズチェア', key: 'kids_chair', icon: '🪑' },
+                                    { label: 'ベビーカー', key: 'stroller', icon: '🛒' },
+                                    { label: 'おむつ交換', key: 'diaper', icon: '🚻' },
+                                    { label: '離乳食持込', key: 'baby_food', icon: '🍼' }
+                                ].map(item => (
+                                    <div key={item.key} className="bg-white p-3 rounded-xl border border-blue-100 flex flex-col items-center justify-center text-center shadow-sm">
+                                        <div className="text-lg mb-1">{item.icon}</div>
+                                        <div className="text-[10px] font-bold text-slate-600">{item.label}</div>
+                                        <div className="text-xs font-bold text-blue-500 mt-1">
+                                            {/* Dummy check based on tags or simple heuristic for now */}
+                                            {restaurant.features?.[item.key] || restaurant.features?.[item.key + '_access'] || '◯'}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* TABS */}
+                    <div className="flex items-center gap-6 border-b border-slate-100 mb-6 sticky top-0 bg-white z-20 pt-2">
+                        <button
+                            onClick={() => setActiveTab('menu')}
+                            className={`pb-3 text-sm font-bold border-b-2 transition-all ${activeTab === 'menu' ? 'border-orange-500 text-orange-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+                        >
+                            メニュー詳細
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('reviews')}
+                            className={`pb-3 text-sm font-bold border-b-2 transition-all ${activeTab === 'reviews' ? 'border-orange-500 text-orange-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+                        >
+                            口コミ・記録
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('gallery')}
+                            className={`pb-3 text-sm font-bold border-b-2 transition-all ${activeTab === 'gallery' ? 'border-orange-500 text-orange-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+                        >
+                            写真
+                        </button>
+                    </div>
+
+                    {/* TAB CONTENT */}
+                    <div className="min-h-[300px]">
+                        {activeTab === 'menu' && (
+                            <MenuList menus={restaurant.menus} />
+                        )}
+
+                        {activeTab === 'reviews' && (
+                            <div className="animate-fadeIn">
+                                <ReviewList restaurantId={restaurant.id} />
+                            </div>
+                        )}
+
+                        {activeTab === 'gallery' && (
+                            <div className="animate-fadeIn">
+                                <MenuGallery restaurantId={restaurant.id} />
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {/* Floating Review Button - Positioned above BottomNav */}
+            <div className="fixed bottom-28 right-6 z-30">
                 <button
-                    onClick={() => router.back()}
-                    className="absolute top-4 left-4 bg-white/90 p-2 rounded-full shadow-sm"
+                    onClick={() => setIsReviewModalOpen(true)}
+                    className="bg-orange-600 hover:bg-orange-700 text-white p-4 rounded-full shadow-xl shadow-orange-200 transition-all hover:scale-105 active:scale-95 flex items-center justify-center font-bold gap-2"
                 >
-                    <ArrowLeft size={20} className="text-gray-700" />
+                    <Plus size={24} strokeWidth={3} />
+                    <span className="hidden sm:inline">投稿する</span>
                 </button>
             </div>
 
-            {/* Content Container for Desktop */}
-            <div className="max-w-3xl mx-auto w-full relative z-10">
-                {/* Content */}
-                <div className="bg-white -mt-4 rounded-t-3xl relative p-6 shadow-sm min-h-screen lg:rounded-3xl lg:mt-[-40px] lg:shadow-xl lg:mb-10 lg:min-h-0">
-                    <div className="mb-1">
-                        <span className="text-xs font-bold bg-orange-100 text-orange-600 px-2 py-1 rounded-full">
-                            {restaurant.tags?.[0] || '飲食店'}
-                        </span>
-                    </div>
-                    <h1 className="text-2xl font-bold text-gray-800 mb-2">{restaurant.name}</h1>
-
-                    <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">
-                        <MapPin size={16} />
-                        <span>{restaurant.address}</span>
-                    </div>
-
-                    {/* ✨ Menu First - Display Menus Top */}
-                    <MenuList menus={restaurant.menus} />
-                    <div className="mb-4 border-b border-gray-100" />
-
-                    {/* Allergen Status Grid */}
-                    <div className="mb-8">
-                        <h2 className="font-bold text-gray-700 mb-3 text-lg px-2">アレルギー対応状況</h2>
-                        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                            {['wheat', 'milk', 'egg', 'nut'].map(allergen => {
-                                const comp = restaurant.compatibility?.find(c => c.allergen === allergen);
-                                const status = comp?.status || 'unknown';
-
-                                const allergenName = {
-                                    wheat: '小麦',
-                                    milk: '乳',
-                                    egg: '卵',
-                                    nut: 'ナッツ類'
-                                }[allergen];
-
-                                return (
-                                    <div key={allergen} className="border border-gray-100 rounded-xl p-3 flex items-center justify-between bg-gray-50">
-                                        <span className="font-bold text-gray-600">{allergenName}</span>
-                                        <div className="flex items-center gap-1 text-sm font-bold">
-                                            {getStatusIcon(status)}
-                                            <span className={
-                                                status === 'safe' ? 'text-green-600' :
-                                                    status === 'removable' ? 'text-yellow-600' :
-                                                        status === 'contaminated' ? 'text-red-500' : 'text-gray-400'
-                                            }>
-                                                {getStatusLabel(status)}
-                                            </span>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                        {restaurant.contamination_level === 'strict' && (
-                            <div className="mt-3 bg-green-50 text-green-700 p-3 rounded-lg text-sm flex items-start gap-2">
-                                <CheckCircle size={16} className="mt-1 flex-shrink-0" />
-                                <p>
-                                    <strong>厳格なコンタミネーション管理</strong><br />
-                                    専用の調理器具・エリアを使用しています。
-                                </p>
-                            </div>
-                        )}
-                        {/* 子どもの安心対応 Section */}
-                        <div className="mb-8 p-4 bg-blue-50 rounded-2xl border border-blue-100">
-                            <h2 className="font-bold text-blue-900 mb-3 text-lg flex items-center gap-2">
-                                👶 子どもの安心対応
-                            </h2>
-
-                            <div className="space-y-2">
-                                {restaurant.child_status === 'confirmed' ? (
-                                    <>
-                                        {/* Template points to check */}
-                                        <div className="flex items-center gap-2 text-blue-800 text-sm font-bold">
-                                            <CheckCircle size={16} />
-                                            <span>お子様メニュー: 対応あり</span>
-                                        </div>
-                                        <div className="flex items-center gap-2 text-blue-800 text-sm font-bold">
-                                            <CheckCircle size={16} />
-                                            <span>設備: {restaurant.features?.kids_chair ? 'キッズチェアあり' : '確認中'}</span>
-                                        </div>
-                                        {restaurant.child_details && (
-                                            <p className="text-xs text-blue-600 mt-2 bg-white/50 p-2 rounded-lg">
-                                                備考: {restaurant.child_details.note || '詳細情報の提供をお待ちしております'}
-                                            </p>
-                                        )}
-                                    </>
-                                ) : (
-                                    <div className="flex items-center gap-2 text-blue-600/60 text-sm font-bold italic">
-                                        <HelpCircle size={16} />
-                                        <span>対応内容を確認中です</span>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Info Section */}
-                        <div className="space-y-4 mb-8">
-                            <h2 className="font-bold text-gray-700 text-lg">店舗詳細情報</h2>
-
-                            <div className="flex items-start gap-3">
-                                <Clock className="text-gray-400 mt-1" size={18} />
-                                <div className="text-sm text-gray-600">
-                                    {/* Simple display, structured data handling later */}
-                                    <p>営業中: 10:00 - 18:00</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* FAB for Review (Absolute to relative container on desktop) */}
-                        <div className="fixed bottom-24 right-4 group lg:absolute lg:bottom-8 lg:right-8">
-                            <button
-                                onClick={() => setIsReviewModalOpen(true)}
-                                className="bg-orange-500 text-white rounded-full p-4 shadow-lg flex items-center gap-2 hover:bg-orange-600 transition-all font-bold"
-                            >
-                                <Star size={20} fill="currentColor" />
-                                <span>口コミを投稿</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <ReviewModal
-                    restaurantId={restaurant.id}
-                    isOpen={isReviewModalOpen}
-                    onClose={() => setIsReviewModalOpen(false)}
-                />
-            </div>
+            <ReviewModal
+                restaurantId={restaurant.id}
+                isOpen={isReviewModalOpen}
+                onClose={() => setIsReviewModalOpen(false)}
+            />
         </div>
     );
 }

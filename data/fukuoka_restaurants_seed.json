@@ -6,6 +6,8 @@
         "lat": 33.5900,
         "lng": 130.4000,
         "phone": "092-000-0000",
+        "image_url": "https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=800&q=80",
+        "instagram_url": "https://instagram.com/happysmile_cafe",
         "opening_hours": {
             "mon": "10:00-18:00",
             "tue": "10:00-18:00",

@@ -4,10 +4,6 @@ import { supabase } from '@/lib/supabaseClient';
 import { useToast } from '@/components/Toast';
 import { uploadImage } from '@/lib/imageUpload';
 
-// Global cache for auth session to prevent refetching
-let cachedSession = null;
-let sessionInitialized = false;
-
 // Fetcher function for SWR
 const fetchProfileData = async (userId) => {
     if (!userId) return null;
@@ -53,10 +49,11 @@ const fetchProfileData = async (userId) => {
 };
 
 export const useProfile = () => {
-    const [user, setUser] = useState(cachedSession?.user ?? null);
-    const [initializing, setInitializing] = useState(!sessionInitialized);
+    const [user, setUser] = useState(null);
+    const [isAuthLoading, setIsAuthLoading] = useState(true);
     const { addToast } = useToast();
 
+    // Use SWR only if we have a user
     const { data: profileData, mutate: mutateProfile } = useSWR(
         user?.id ? ['profile', user.id] : null,
         ([, userId]) => fetchProfileData(userId),
@@ -67,34 +64,43 @@ export const useProfile = () => {
         }
     );
 
-    const profile = profileData?.profile ?? { id: null, userName: '', avatarUrl: '', children: [], stats: { recipeCount: 0, reportCount: 0 } };
+    const profile = profileData?.profile ?? null;
     const savedRecipeIds = profileData?.savedRecipeIds ?? [];
     const likedRecipeIds = profileData?.likedRecipeIds ?? [];
     const visitedRestaurantIds = profileData?.visitedRestaurantIds ?? [];
     const wishlistRestaurantIds = profileData?.wishlistRestaurantIds ?? [];
 
-    const loading = initializing || (user && !profileData);
+    const loading = isAuthLoading || (user && !profileData);
 
     useEffect(() => {
+        let mounted = true;
+
         const getSession = async () => {
-            if (sessionInitialized && cachedSession) {
-                setUser(cachedSession.user);
-                setInitializing(false);
-                return;
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (mounted) {
+                    setUser(session?.user ?? null);
+                    setIsAuthLoading(false);
+                }
+            } catch (error) {
+                console.error('Session check failed', error);
+                if (mounted) setIsAuthLoading(false);
             }
-            const { data: { session } } = await supabase.auth.getSession();
-            cachedSession = session;
-            sessionInitialized = true;
-            setUser(session?.user ?? null);
-            setInitializing(false);
         };
+
         getSession();
+
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-            cachedSession = session;
-            setUser(session?.user ?? null);
-            if (!session) mutateProfile(null, false);
+            if (mounted) {
+                setUser(session?.user ?? null);
+                if (!session) mutateProfile(null, false);
+            }
         });
-        return () => subscription.unsubscribe();
+
+        return () => {
+            mounted = false;
+            subscription.unsubscribe();
+        };
     }, [mutateProfile]);
 
     const fetchProfile = useCallback(async () => {

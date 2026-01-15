@@ -61,8 +61,12 @@ const RecipeListPage = () => {
         }
     }, [tabFromUrl]);
 
-    // Random greeting - stable per session
-    const [greeting] = useState(() => GREETINGS[Math.floor(Math.random() * GREETINGS.length)]);
+    // Random greeting - set on client side to avoid hydration mismatch
+    const [greeting, setGreeting] = useState('');
+
+    useEffect(() => {
+        setGreeting(GREETINGS[Math.floor(Math.random() * GREETINGS.length)]);
+    }, []);
 
     useEffect(() => {
         // No artificial delay needed, stabilize by checking actual data loading
@@ -265,7 +269,7 @@ const RecipeListPage = () => {
     // ----------------------------------------------------
 
     // 1. Auth Loading - Show minimal loading to prevent flash
-    if (initializing || (user && profileLoading)) {
+    if (profileLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-[#fcfcfc]">
                 <div className="text-center">
@@ -677,31 +681,42 @@ const RecipeListPage = () => {
 
             {/* Floating Search & Filter Bar - Mobile First Thumb-Friendly */}
             {user && (
-                <div className="fixed bottom-[80px] left-0 right-0 z-[900] px-4 pointer-events-none">
-                    <div className="content-wrapper pointer-events-auto">
-                        <div className="relative max-w-md mx-auto group">
-                            {/* Glassmorphic Search Bar */}
-                            <div className="absolute inset-0 bg-white/40 backdrop-blur-xl rounded-full border border-white/40 shadow-2xl transition-all duration-300 group-focus-within:ring-4 group-focus-within:ring-orange-200 group-focus-within:bg-white/80"></div>
+                <>
+                    {/* Floating Recipe Memo Button - New Request */}
+                    <Link
+                        href="/recipe/new"
+                        className="fixed bottom-[190px] right-5 z-[910] bg-orange-500 text-white px-5 py-3 rounded-full font-bold shadow-lg shadow-orange-200/50 flex items-center gap-2 transition-transform hover:scale-105 active:scale-95 animate-in fade-in slide-in-from-bottom-4"
+                    >
+                        <PlusCircle size={20} />
+                        <span>レシピメモ</span>
+                    </Link>
 
-                            <div className="relative flex items-center p-1">
-                                <Search className="ml-4 text-orange-400 font-bold shrink-0" size={22} />
-                                <input
-                                    type="text"
-                                    placeholder="レシピ、食材、タグで探す..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full bg-transparent border-none py-4 px-3 text-slate-700 placeholder-slate-400 outline-none font-bold text-base"
-                                />
-                                <button
-                                    onClick={() => setSearchTerm('')}
-                                    className={`mr-2 h-8 w-8 rounded-full flex items-center justify-center bg-slate-100 text-slate-400 hover:bg-slate-200 transition-opacity ${searchTerm ? 'opacity-100' : 'opacity-0'}`}
-                                >
-                                    ×
-                                </button>
+                    <div className="fixed bottom-[112px] left-0 right-0 z-[900] px-4 pointer-events-none">
+                        <div className="content-wrapper pointer-events-auto">
+                            <div className="relative max-w-md mx-auto group">
+                                {/* Glassmorphic Search Bar */}
+                                <div className="absolute inset-0 bg-white/40 backdrop-blur-xl rounded-full border border-white/40 shadow-2xl transition-all duration-300 group-focus-within:ring-4 group-focus-within:ring-orange-200 group-focus-within:bg-white/80"></div>
+
+                                <div className="relative flex items-center p-1">
+                                    <Search className="ml-4 text-orange-400 font-bold shrink-0" size={22} />
+                                    <input
+                                        type="text"
+                                        placeholder="レシピ、食材、タグで探す..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        className="w-full bg-transparent border-none py-4 px-3 text-slate-700 placeholder-slate-400 outline-none font-bold text-base"
+                                    />
+                                    <button
+                                        onClick={() => setSearchTerm('')}
+                                        className={`mr-2 h-8 w-8 rounded-full flex items-center justify-center bg-slate-100 text-slate-400 hover:bg-slate-200 transition-opacity ${searchTerm ? 'opacity-100' : 'opacity-0'}`}
+                                    >
+                                        ×
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                </>
             )}
         </div>
     );

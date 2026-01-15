@@ -5,13 +5,13 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Heart, Bookmark, Star } from 'lucide-react';
 import './RecipeCard.css';
-import { useRecipes } from '../hooks/useRecipes';
+import { useRecipePreview } from '../hooks/useRecipePreview';
 import { useProfile } from '../hooks/useProfile';
 
 export const RecipeCard = ({ recipe, isSaved, onToggleSave, isLiked, onToggleLike, priority = false }) => {
     const [localIsSaved, setLocalIsSaved] = useState(false);
     const [localIsLiked, setLocalIsLiked] = useState(false);
-    const { previewImage } = useRecipes();
+    const { previewImage } = useRecipePreview();
     const { user } = useProfile();
     const router = useRouter();
     const cardRef = useRef(null);
@@ -100,7 +100,7 @@ export const RecipeCard = ({ recipe, isSaved, onToggleSave, isLiked, onToggleLik
                         alt={recipe.title}
                         className="card-visual-image"
                         loading={priority ? "eager" : "lazy"}
-                        fetchpriority={priority ? "high" : "auto"}
+                        fetchPriority={priority ? "high" : "auto"}
                     />
                 ) : (
                     <div className="card-visual-placeholder">

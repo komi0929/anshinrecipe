@@ -1,3 +1,5 @@
+/* Inheriting previous styles but adding new ones for Type Config */
+
 .review-modal-overlay {
     position: fixed;
     top: 0;
@@ -30,24 +32,60 @@
     top: 20px;
     right: 20px;
     color: #94A3B8;
-    padding: 4px;
+    padding: 8px;
+    z-index: 10;
 }
 
-.modal-title {
-    font-size: 20px;
-    font-weight: 700;
+.type-selection {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 24px;
+}
+
+.type-card {
+    border: 1px solid #E2E8F0;
+    border-radius: 16px;
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     text-align: center;
+    transition: all 0.2s;
+    background: #F8FAFC;
+    cursor: pointer;
+}
+
+.type-card:hover {
+    border-color: #F97316;
+    background: #FFF7ED;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.icon-circle {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+}
+
+.type-card h3 {
+    font-weight: 700;
     color: #334155;
     margin-bottom: 4px;
 }
 
-.modal-subtitle {
-    font-size: 14px;
-    text-align: center;
-    color: #94A3B8;
-    margin-bottom: 24px;
+.type-card p {
+    font-size: 11px;
+    color: #64748B;
+    line-height: 1.4;
 }
 
+/* Form Styles */
 .review-form {
     display: flex;
     flex-direction: column;
@@ -58,106 +96,120 @@
     display: flex;
     justify-content: center;
     gap: 8px;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
 }
 
-.star-btn {
-    transition: transform 0.1s;
-}
-
-.star-btn:active {
-    transform: scale(0.9);
-}
-
-.section-label {
-    display: block;
-    font-size: 14px;
-    font-weight: 700;
-    color: #64748B;
-    margin-bottom: 8px;
-}
-
-.allergens-chips {
+.image-upload-placeholder {
+    width: 100%;
+    height: 160px;
+    border: 2px dashed #FED7AA;
+    background: #FFF7ED;
+    border-radius: 16px;
     display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #F97316;
+    cursor: pointer;
+    overflow: hidden;
+    position: relative;
+}
+
+.menu-selection-section {
+    background: #F8FAFC;
+    padding: 16px;
+    border-radius: 16px;
+}
+
+.search-input-wrapper {
+    display: flex;
+    align-items: center;
     gap: 8px;
-    flex-wrap: wrap;
+    background: white;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #E2E8F0;
+}
+
+.search-input-wrapper input {
+    width: 100%;
+    outline: none;
+    font-size: 14px;
+}
+
+.menu-list-scroll {
+    max-height: 150px;
+    overflow-y: auto;
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.menu-select-item {
+    text-align: left;
+    padding: 10px;
+    background: white;
+    border-radius: 8px;
+    font-size: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid transparent;
+}
+
+.menu-select-item:hover {
+    border-color: #F97316;
+}
+
+.menu-select-item .price {
+    font-size: 12px;
+    color: #94A3B8;
+}
+
+.custom-trigger {
+    color: #F97316;
+    justify-content: center;
+    font-weight: 700;
+    margin-top: 4px;
+}
+
+.selected-menu-display {
+    display: flex;
+    align-items: center;
+    background: white;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #F97316;
 }
 
 .allergen-chip-select {
-    padding: 8px 16px;
+    padding: 6px 12px;
+    background: #F1F5F9;
     border-radius: 20px;
-    border: 1px solid #E2E8F0;
-    background: #F8FAFC;
+    font-size: 13px;
     color: #64748B;
-    font-size: 14px;
-    font-weight: 600;
+    border: 1px solid transparent;
+    transition: all 0.2s;
     display: flex;
     align-items: center;
-    gap: 6px;
-    transition: all 0.2s;
+    gap: 4px;
 }
 
 .allergen-chip-select.selected {
     background: #FFF7ED;
     border-color: #F97316;
     color: #F97316;
+    font-weight: 700;
 }
 
 .review-textarea {
     width: 100%;
     border: 1px solid #E2E8F0;
-    border-radius: 16px;
-    padding: 16px;
-    font-size: 16px;
-    resize: none;
+    border-radius: 12px;
+    padding: 12px;
     outline: none;
-}
-
-.review-textarea:focus {
-    border-color: #F97316;
-    box-shadow: 0 0 0 3px #FFF7ED;
-}
-
-.image-upload-placeholder {
-    border: 2px dashed #FED7AA;
-    /* Orange 200 */
-    background: #FFF7ED;
-    /* Orange 50 */
-    border-radius: 16px;
-    padding: 24px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.image-upload-placeholder:hover {
-    background: #FFEDD5;
-    /* Orange 100 */
-    border-color: #FDBA74;
-    /* Orange 300 */
-}
-
-.upload-icon {
-    color: #FB923C;
-    /* Orange 400 */
-    margin-bottom: 4px;
-}
-
-.upload-text {
-    color: #EA580C;
-    /* Orange 600 */
-    font-weight: 700;
-    font-size: 14px;
-}
-
-.upload-subtext {
-    color: #FB923C;
-    /* Orange 400 */
-    font-size: 11px;
+    font-size: 15px;
 }
 
 .submit-btn {
@@ -166,35 +218,19 @@
     font-weight: 700;
     padding: 16px;
     border-radius: 9999px;
-    margin-top: 8px;
     box-shadow: 0 4px 12px rgba(249, 115, 22, 0.2);
-    transition: all 0.2s;
 }
 
-.submit-btn:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
+.modal-title {
+    font-size: 18px;
+    font-weight: 800;
+    text-align: center;
+    color: #1E293B;
 }
 
-.submit-btn:active {
-    transform: scale(0.98);
-}
-
-.menu-name-input {
-    width: 100%;
-    border: 1px solid #E2E8F0;
-    border-radius: 12px;
-    padding: 14px 16px;
-    font-size: 16px;
-    outline: none;
-    transition: all 0.2s;
-    background: #F8FAFC;
-    color: #334155;
-    font-weight: 700;
-}
-
-.menu-name-input:focus {
-    background: white;
-    border-color: #F97316;
-    box-shadow: 0 0 0 3px #FFF7ED;
+.modal-subtitle {
+    font-size: 13px;
+    text-align: center;
+    color: #64748B;
+    margin-top: 4px;
 }

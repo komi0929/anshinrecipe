@@ -13,10 +13,13 @@ const BottomNav = () => {
     const { user, profile } = useProfile();
     const { unreadCount } = useNotifications(user?.id);
 
-    // Don't show bottom nav if user is not logged in or on login/welcome pages
-    if (!user || pathname === '/login' || pathname === '/welcome') {
+    // Don't show bottom nav on login/welcome pages
+    if (pathname === '/login' || pathname === '/welcome') {
         return null;
     }
+
+    // Context-Aware Mode
+    const isMapMode = pathname?.startsWith('/map');
 
     return (
         <nav className="bottom-nav">
@@ -28,17 +31,21 @@ const BottomNav = () => {
                 <span>レシピ</span>
             </Link>
 
+            {/* Center Button Removed per request
             <Link
                 href="/recipe/new"
                 className={`nav-item ${pathname === '/recipe/new' ? 'active' : ''}`}
             >
-                <PlusCircle size={24} />
-                <span>追加</span>
+                <div className="bg-orange-400 text-white p-3 -mt-6 rounded-full shadow-lg border-4 border-white transform transition-transform active:scale-95">
+                    <PlusCircle size={24} />
+                </div>
+                <span className="font-bold text-orange-400 text-[10px]">レシピ</span>
             </Link>
+            */}
 
             <Link
                 href="/map"
-                className={`nav-item ${pathname === '/map' || pathname.startsWith('/map/') ? 'active' : ''}`}
+                className={`nav-item ${pathname?.startsWith('/map') && pathname !== '/map/post' ? 'active' : ''}`}
             >
                 <Map size={24} />
                 <span>地図</span>

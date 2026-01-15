@@ -461,7 +461,7 @@
 /* Floating Action Bar */
 .floating-action-bar {
     position: fixed;
-    bottom: 80px;
+    bottom: 112px;
     /* Above tab bar */
     left: 50%;
     transform: translateX(-50%);

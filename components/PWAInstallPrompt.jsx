@@ -69,52 +69,35 @@ const PWAInstallPrompt = () => {
     if (isInstalled || !showPrompt) return null;
 
     return (
-        <div className="fixed bottom-20 left-4 right-4 z-50 animate-in slide-in-from-bottom-4 duration-300">
-            <div className="bg-gradient-to-r from-orange-500 to-amber-500 rounded-2xl p-4 shadow-2xl shadow-orange-500/30">
-                <button
-                    onClick={handleDismiss}
-                    className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center text-white/70 hover:text-white transition-colors"
-                >
-                    <X size={20} />
-                </button>
-
-                <div className="flex items-start gap-4">
-                    <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center flex-shrink-0 shadow-md">
-                        <img
-                            src="/icon-512x512.png"
-                            alt="あんしんレシピ"
-                            className="w-10 h-10 rounded-lg"
-                        />
-                    </div>
-
-                    <div className="flex-1 text-white min-w-0">
-                        <h3 className="font-bold text-lg mb-1">アプリをインストール</h3>
-                        <p className="text-white/90 text-sm leading-relaxed">
-                            ホーム画面に追加して、いつでも素早くアクセス！
-                        </p>
-                    </div>
+        <div className="fixed bottom-24 left-4 right-4 z-50 animate-in slide-in-from-bottom-2 duration-500 flex justify-center">
+            <div className="w-full max-w-sm bg-white/95 backdrop-blur-md rounded-2xl p-3 shadow-2xl border border-orange-100 flex items-center gap-3">
+                <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm">
+                    <Download size={20} className="text-white" />
                 </div>
 
-                {isIOS ? (
-                    <div className="mt-4 bg-white/20 rounded-xl p-3">
-                        <p className="text-white text-sm font-medium mb-2">インストール方法:</p>
-                        <div className="flex items-center gap-2 text-white/90 text-sm">
-                            <Share size={18} />
-                            <span>共有ボタン</span>
-                            <span>→</span>
-                            <Plus size={18} />
-                            <span>ホーム画面に追加</span>
-                        </div>
-                    </div>
-                ) : (
+                <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-xs text-slate-900">アプリとして保存しませんか？</h3>
+                    <p className="text-slate-500 text-[10px] truncate">
+                        {isIOS ? '共有ボタンから「ホーム画面に追加」' : 'ワンタップでホーム画面に追加できます'}
+                    </p>
+                </div>
+
+                <div className="flex items-center gap-1">
+                    {!isIOS && (
+                        <button
+                            onClick={handleInstall}
+                            className="bg-orange-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg hover:bg-orange-600 transition-colors"
+                        >
+                            追加
+                        </button>
+                    )}
                     <button
-                        onClick={handleInstall}
-                        className="mt-4 w-full bg-white text-orange-600 font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all active:scale-98"
+                        onClick={handleDismiss}
+                        className="p-1.5 text-slate-300 hover:text-slate-500 transition-colors"
                     >
-                        <Download size={20} />
-                        今すぐインストール
+                        <X size={16} />
                     </button>
-                )}
+                </div>
             </div>
         </div>
     );

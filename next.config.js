@@ -38,6 +38,7 @@ const withPWA = require("@ducanh2912/next-pwa").default({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     images: {
+        unoptimized: true,
         remotePatterns: [
             {
                 protocol: 'https',
@@ -66,6 +67,14 @@ const nextConfig = {
             {
                 protocol: 'https',
                 hostname: 'profile.line-scdn.net',
+            },
+            {
+                protocol: 'https',
+                hostname: 'obs.line-scdn.net',
+            },
+            {
+                protocol: 'https',
+                hostname: 'lh3.googleusercontent.com',
             },
         ],
     },

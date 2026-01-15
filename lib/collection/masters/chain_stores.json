@@ -1,0 +1,221 @@
+[
+    {
+        "brandName": "モスバーガー",
+        "searchQuery": "モスバーガー",
+        "officialUrl": "https://www.mos.jp/menu/category/?c_id=26",
+        "menus": [
+            {
+                "name": "ポークサンド＜米粉＞",
+                "description": "小麦・卵・乳・そば・落花生・えび・かに不使用の低アレルゲンバーガー。",
+                "supportedAllergens": [
+                    "小麦",
+                    "卵",
+                    "乳",
+                    "そば",
+                    "ナッツ"
+                ],
+                "isSubstitution": true
+            },
+            {
+                "name": "ポークロール＜米粉＞",
+                "description": "特定原材料7品目不使用のドッグタイプ。",
+                "supportedAllergens": [
+                    "小麦",
+                    "卵",
+                    "乳",
+                    "そば",
+                    "ナッツ"
+                ],
+                "isSubstitution": true
+            }
+        ]
+    },
+    {
+        "brandName": "CoCo壱番屋",
+        "searchQuery": "CoCo壱番屋",
+        "officialUrl": "https://www.ichibanya.co.jp/menu/allergy/",
+        "menus": [
+            {
+                "name": "特定原材料（7品目）を使用しないカレー",
+                "description": "卵・乳・小麦・そば・落花生・えび・かになし。米粉使用のカレールー。",
+                "supportedAllergens": [
+                    "小麦",
+                    "卵",
+                    "乳",
+                    "そば",
+                    "ナッツ"
+                ],
+                "isSubstitution": true
+            }
+        ]
+    },
+    {
+        "brandName": "ロイヤルホスト",
+        "searchQuery": "ロイヤルホスト",
+        "officialUrl": "https://www.royalhost.jp/menu/grand/low_allergen/",
+        "menus": [
+            {
+                "name": "低アレルゲン おこさまハンバーグプレート",
+                "description": "特定原材料7品目不使用のハンバーグプレート。",
+                "supportedAllergens": [
+                    "小麦",
+                    "卵",
+                    "乳",
+                    "そば",
+                    "ナッツ"
+                ],
+                "isSubstitution": true
+            },
+            {
+                "name": "低アレルゲン 米粉のパン",
+                "description": "特定原材料7品目不使用のモチモチしたパン。",
+                "supportedAllergens": [
+                    "小麦",
+                    "卵",
+                    "乳",
+                    "そば",
+                    "ナッツ"
+                ],
+                "isSubstitution": true
+            }
+        ]
+    },
+    {
+        "brandName": "ガスト",
+        "searchQuery": "ガスト",
+        "officialUrl": "https://www.skylark.co.jp/gusto/menu/allergy/index.html",
+        "menus": [
+            {
+                "name": "低アレルゲンお子様プレート",
+                "description": "特定原材料7品目不使用のキッズプレート。",
+                "supportedAllergens": [
+                    "小麦",
+                    "卵",
+                    "乳",
+                    "そば",
+                    "ナッツ"
+                ],
+                "isSubstitution": true
+            }
+        ]
+    },
+    {
+        "brandName": "くら寿司",
+        "searchQuery": "くら寿司",
+        "officialUrl": "https://www.kurasushi.co.jp/menu/",
+        "menus": [
+            {
+                "name": "シャリ（米・酢）",
+                "description": "基本的に寿司のシャリは小麦・卵・乳不使用。（ネタによるコンタミは要注意）",
+                "supportedAllergens": [
+                    "卵",
+                    "乳"
+                ],
+                "isSubstitution": false
+            },
+            {
+                "name": "低アレルゲンメニュー（要確認）",
+                "description": "一部店舗で対応、またはデザートに乳・卵不使用シャーベット等あり。",
+                "supportedAllergens": [
+                    "卵",
+                    "乳"
+                ],
+                "isSubstitution": false
+            }
+        ]
+    },
+    {
+        "brandName": "ミスタードーナツ",
+        "searchQuery": "ミスタードーナツ",
+        "officialUrl": "https://www.misterdonut.jp/m_menu/allergy.html",
+        "menus": [
+            {
+                "name": "ふかふか焼きドーナッツ プレーン",
+                "description": "特定原材料7品目不使用の米粉ドーナツ（冷凍販売の場合あり）。",
+                "supportedAllergens": [
+                    "小麦",
+                    "卵",
+                    "乳",
+                    "そば",
+                    "ナッツ"
+                ],
+                "isSubstitution": true
+            }
+        ]
+    },
+    {
+        "brandName": "サーティワンアイスクリーム",
+        "searchQuery": "サーティワン",
+        "officialUrl": "https://www.31ice.co.jp/contents/product/allergy/",
+        "menus": [
+            {
+                "name": "オレンジソルベ",
+                "description": "卵・乳・小麦不使用의 ソルベ。",
+                "supportedAllergens": [
+                    "卵",
+                    "乳",
+                    "小麦"
+                ],
+                "isSubstitution": false
+            }
+        ]
+    },
+    {
+        "brandName": "シャトレーゼ",
+        "searchQuery": "シャトレーゼ",
+        "officialUrl": "https://www.chateraise.co.jp/ec/c/callergy/",
+        "menus": [
+            {
+                "name": "乳と卵と小麦粉を使用していない生クリームケーキ",
+                "description": "卵・乳・小麦不使用。豆乳クリームと米粉スポンジを使用。",
+                "supportedAllergens": [
+                    "小麦",
+                    "卵",
+                    "乳"
+                ],
+                "isSubstitution": true,
+                "tags": [
+                    "Takeout",
+                    "Cake",
+                    "Sweets"
+                ]
+            },
+            {
+                "name": "卵と小麦粉を使用していないショートケーキ",
+                "description": "卵・小麦不使用。食物アレルギー対応のデコレーションケーキ。",
+                "supportedAllergens": [
+                    "小麦",
+                    "卵"
+                ],
+                "isSubstitution": true,
+                "tags": [
+                    "Takeout",
+                    "Cake",
+                    "Sweets"
+                ]
+            }
+        ]
+    },
+    {
+        "brandName": "銀座コージーコーナー",
+        "searchQuery": "コージーコーナー",
+        "officialUrl": "https://www.cozycorner.co.jp/product/allergy/",
+        "menus": [
+            {
+                "name": "小麦と卵と乳を使わないデコレーション",
+                "description": "特定原材料7品目不使用。米粉と豆乳クリームのケーキ。",
+                "supportedAllergens": [
+                    "小麦",
+                    "卵",
+                    "乳"
+                ],
+                "isSubstitution": true,
+                "tags": [
+                    "Takeout",
+                    "Cake",
+                    "Sweets"
+                ]
+            }
+        ]
+    }
+]

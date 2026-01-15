@@ -17,12 +17,30 @@ export async function GET() {
     }
 }
 
+// Update Candidate (Edit before approval)
+export async function PATCH(request) {
+    try {
+        const { id, ...updates } = await request.json();
+        const { data, error } = await supabase
+            .from('candidate_restaurants')
+            .update(updates)
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) throw error;
+        return NextResponse.json({ success: true, data });
+    } catch (error) {
+        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    }
+}
+
 // Approve Candidate
 export async function POST(request) {
     try {
-        const { candidateId } = await request.json();
+        const { candidateId, selectedMenuIndices, selectedImage, editedCandidates } = await request.json();
 
-        // 1. Fetch Candidate Data
+        // 1. Fetch Candidate Data (Base)
         const { data: candidate, error: fetchError } = await supabase
             .from('candidate_restaurants')
             .select('*')
@@ -31,63 +49,101 @@ export async function POST(request) {
 
         if (fetchError) throw fetchError;
 
+        // Merge edited data if provided
+        const finalData = editedCandidates ? { ...candidate, ...editedCandidates } : candidate;
+
         // 2. Insert into Live Restaurants table
+        const metaSource = candidate.sources?.find(s => s.type === 'system_metadata');
+        const meta = metaSource?.data || {};
+
+        const restaurantData = {
+            name: finalData.shopName || finalData.shop_name, // Handle key diffs between FE and DB
+            address: finalData.address,
+            lat: finalData.lat,
+            lng: finalData.lng,
+            reliability_score: finalData.reliability_score || candidate.reliability_score,
+            sources: candidate.sources?.filter(s => s.type !== 'system_metadata'),
+            is_verified: true,
+            last_collected_at: new Date().toISOString(),
+            image_url: selectedImage || (meta.images?.[0]?.url),
+            phone: finalData.phone || meta.phone,
+            opening_hours: meta.opening_hours ?? candidate.opening_hours ?? {},
+            website_url: finalData.website_url || meta.website_url,
+            instagram_url: finalData.instagram_url,
+            tags: meta.tags ?? candidate.tags ?? [],
+            features: finalData.features || meta.features || {}, // Use edited features
+            contamination_level: meta.contamination_level ?? candidate.contamination_level ?? 'unknown'
+        };
+
         const { data: restaurant, error: insertError } = await supabase
             .from('restaurants')
-            .insert([{
-                name: candidate.shop_name,
-                address: candidate.address,
-                lat: candidate.lat,
-                lng: candidate.lng,
-                reliability_score: candidate.reliability_score,
-                sources: candidate.sources,
-                is_verified: true,
-                last_collected_at: new Date().toISOString()
-            }])
+            .insert([restaurantData])
             .select()
             .single();
 
         if (insertError) throw insertError;
 
-        // 3. Insert Menus into normalized table
-        if (candidate.menus && candidate.menus.length > 0) {
-            const menuInserts = candidate.menus.map(m => ({
+        // 3. Insert FILTERED Menus into normalized table
+        if (finalData.menus && finalData.menus.length > 0) {
+            // Apply human selection filter
+            const menusToInsert = selectedMenuIndices
+                ? finalData.menus.filter((_, idx) => selectedMenuIndices.includes(idx))
+                : finalData.menus;
+
+            const menuInserts = menusToInsert.map(m => ({
                 restaurant_id: restaurant.id,
                 name: m.name,
                 description: m.description || '',
                 price: m.price || 0,
-                // In candidate, supportedAllergens means "SAFE for these".
-                // In DB 'menus' table, 'allergens' usually means "CONTAINS".
-                // We'll store supportedAllergens in 'tags' or handle mapping logic.
-                tags: [...(m.tags || []), ...m.supportedAllergens.map(a => `${a}_free`)]
+                // allergens column (legacy but standard) = contained
+                allergens: m.allergens_contained || [],
+                // New granular columns
+                allergens_contained: m.allergens_contained || [],
+                allergens_removable: m.allergens_removable || [],
+
+                tags: [...(m.tags || []), ...(m.allergens_contained?.length === 0 ? ['allergen_free'] : [])],
+                child_status: 'checking', // Default to checking unless explicitly set
+                child_details: { note: m.description }
             }));
 
-            await supabase.from('menus').insert(menuInserts);
+            if (menuInserts.length > 0) {
+                await supabase.from('menus').insert(menuInserts);
+            }
 
-            // 4. Create compatibility entries based on supported allergens
-            // Flatten all supported allergens from all menus for this shop
-            const allSupported = Array.from(new Set(candidate.menus.flatMap(m => m.supportedAllergens)));
+            // 4. Create compatibility entries (Optional: depending on design, menus table might be enough now)
+            // But for search optimization, we might keep it.
+            // Using logic: If menu has NO allergens contained, it is SAFE.
+            // If menu has allergen REMOVABLE, it is REMOVABLE.
 
-            if (allSupported.length > 0) {
-                const allergenMap = {
-                    '小麦': 'wheat',
-                    '卵': 'egg',
-                    '乳': 'milk',
-                    'ナッツ': 'nut',
-                    'そば': 'buckwheat',
-                };
+            // Collect all safe/removable statuses for the restaurant
+            const compatibilityMap = {}; // { wheat: { safe: bool, removable: bool } }
 
-                const compInserts = allSupported
-                    .filter(a => allergenMap[a])
-                    .map(a => ({
-                        restaurant_id: restaurant.id,
-                        allergen: allergenMap[a],
-                        status: 'safe'
-                    }));
+            menusToInsert.forEach(m => {
+                const contained = m.allergens_contained || [];
+                const removable = m.allergens_removable || [];
+                const allMajor = ['wheat', 'egg', 'milk', 'buckwheat', 'peanut', 'shrimp', 'crab'];
 
-                if (compInserts.length > 0) {
-                    await supabase.from('restaurant_compatibility').insert(compInserts);
-                }
+                allMajor.forEach(allergen => {
+                    if (!compatibilityMap[allergen]) compatibilityMap[allergen] = { safe: false, removable: false };
+
+                    if (!contained.includes(allergen)) {
+                        compatibilityMap[allergen].safe = true; // At least one menu is safe
+                    }
+                    if (removable.includes(allergen)) {
+                        compatibilityMap[allergen].removable = true;
+                    }
+                });
+            });
+
+            const compInserts = Object.entries(compatibilityMap).flatMap(([allergen, status]) => {
+                const entries = [];
+                if (status.safe) entries.push({ restaurant_id: restaurant.id, allergen, status: 'safe' });
+                else if (status.removable) entries.push({ restaurant_id: restaurant.id, allergen, status: 'removable' });
+                return entries;
+            });
+
+            if (compInserts.length > 0) {
+                await supabase.from('restaurant_compatibility').insert(compInserts);
             }
         }
 

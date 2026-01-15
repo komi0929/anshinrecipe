@@ -3,12 +3,14 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES ('recipe-images', 'recipe-images', true)
 ON CONFLICT (id) DO NOTHING;
 
--- Policy to allow public access to view images
+-- Policy: Public Access
+DROP POLICY IF EXISTS "Public Access" ON storage.objects;
 CREATE POLICY "Public Access"
 ON storage.objects FOR SELECT
 USING ( bucket_id = 'recipe-images' );
 
--- Policy to allow authenticated users to upload images
+-- Policy: Authenticated Users Upload
+DROP POLICY IF EXISTS "Authenticated Users Upload" ON storage.objects;
 CREATE POLICY "Authenticated Users Upload"
 ON storage.objects FOR INSERT
 WITH CHECK (
@@ -16,7 +18,8 @@ WITH CHECK (
   auth.role() = 'authenticated'
 );
 
--- Policy to allow users to update their own images (optional, if needed)
+-- Policy: Users Check (Optional for robustness)
+DROP POLICY IF EXISTS "Users Update Own Images" ON storage.objects;
 CREATE POLICY "Users Update Own Images"
 ON storage.objects FOR UPDATE
 USING (
@@ -24,7 +27,7 @@ USING (
   auth.uid() = owner
 );
 
--- Policy to allow users to delete their own images
+DROP POLICY IF EXISTS "Users Delete Own Images" ON storage.objects;
 CREATE POLICY "Users Delete Own Images"
 ON storage.objects FOR DELETE
 USING (
