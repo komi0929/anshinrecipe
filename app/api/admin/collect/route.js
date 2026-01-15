@@ -10,11 +10,6 @@ export async function POST(request) {
             return NextResponse.json({ error: 'Area is required' }, { status: 400 });
         }
 
-        // Trigger the orchestrator
-        // In a real production environment, this should be offloaded to a background queue (e.g., BullMQ, Inngest)
-        // For this implementation, we await it (or we could fire and forget if looking for async)
-        // User asked for "Data Collection Start" -> "Automatic Execution".
-
         console.log(`[API] Received collection request for ${area}`);
 
         const result = await autoCollectAreaData(area);
@@ -22,6 +17,11 @@ export async function POST(request) {
         return NextResponse.json({ success: true, data: result });
     } catch (error) {
         console.error('Collection API Error:', error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+        // Return detailed error info for debugging
+        return NextResponse.json({
+            error: error.message || 'Internal Server Error',
+            details: error.toString(),
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        }, { status: 500 });
     }
 }
