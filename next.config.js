@@ -7,10 +7,28 @@ const withPWA = require("@ducanh2912/next-pwa").default({
     disable: process.env.NODE_ENV === "development", // Disable PWA in dev mode
     workboxOptions: {
         disableDevLogs: true,
-        // 🚀 Stale-While-Revalidate for Supabase API calls
+        // 🚀 Runtime caching for Supabase API calls
         runtimeCaching: [
+            // Auth and profile related - always get fresh data
             {
-                urlPattern: /^https:\/\/.*\.supabase\.co\/.*/,
+                urlPattern: /^https:\/\/.*\.supabase\.co\/auth\/.*/,
+                handler: 'NetworkOnly', // Never cache auth
+            },
+            {
+                urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/v1\/(profiles|children|saved_recipes|likes)\?.*/,
+                handler: 'NetworkFirst', // Profile data - prefer network
+                options: {
+                    cacheName: 'supabase-profile-cache',
+                    networkTimeoutSeconds: 5,
+                    expiration: {
+                        maxEntries: 50,
+                        maxAgeSeconds: 60, // Only 1 minute cache
+                    },
+                },
+            },
+            // Other Supabase API calls - use stale-while-revalidate
+            {
+                urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/v1\/.*/,
                 handler: 'StaleWhileRevalidate',
                 options: {
                     cacheName: 'supabase-api-cache',
