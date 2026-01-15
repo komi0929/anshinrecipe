@@ -73,7 +73,18 @@ const fetchProfileData = async (userId) => {
 };
 
 export const useProfile = () => {
-    const [user, setUser] = useState(null);
+    // Check localStorage for cached auth state to prevent flash
+    const [user, setUser] = useState(() => {
+        if (typeof window !== 'undefined') {
+            const cached = localStorage.getItem('anshin_auth_user');
+            if (cached) {
+                try {
+                    return JSON.parse(cached);
+                } catch { return null; }
+            }
+        }
+        return null;
+    });
     const [isAuthLoading, setIsAuthLoading] = useState(true);
     const { addToast } = useToast();
 
@@ -82,10 +93,10 @@ export const useProfile = () => {
         user?.id ? ['profile', user.id] : null,
         ([, userId]) => fetchProfileData(userId),
         {
-            revalidateOnFocus: true,      // Focus時に再検証
-            revalidateOnReconnect: true,   // 再接続時に再検証
-            revalidateOnMount: true,       // マウント時に再検証
-            dedupingInterval: 2000,        // 重複排除間隔を短く（2秒）
+            revalidateOnFocus: true,
+            revalidateOnReconnect: true,
+            revalidateOnMount: true,
+            dedupingInterval: 2000,
         }
     );
 
@@ -104,12 +115,22 @@ export const useProfile = () => {
             try {
                 const { data: { session } } = await supabase.auth.getSession();
                 if (mounted) {
-                    setUser(session?.user ?? null);
+                    const sessionUser = session?.user ?? null;
+                    setUser(sessionUser);
+                    // Cache auth state to localStorage
+                    if (sessionUser) {
+                        localStorage.setItem('anshin_auth_user', JSON.stringify({ id: sessionUser.id, email: sessionUser.email }));
+                    } else {
+                        localStorage.removeItem('anshin_auth_user');
+                    }
                     setIsAuthLoading(false);
                 }
             } catch (error) {
                 console.error('Session check failed', error);
-                if (mounted) setIsAuthLoading(false);
+                if (mounted) {
+                    localStorage.removeItem('anshin_auth_user');
+                    setIsAuthLoading(false);
+                }
             }
         };
 
@@ -117,7 +138,14 @@ export const useProfile = () => {
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
             if (mounted) {
-                setUser(session?.user ?? null);
+                const sessionUser = session?.user ?? null;
+                setUser(sessionUser);
+                // Update localStorage cache
+                if (sessionUser) {
+                    localStorage.setItem('anshin_auth_user', JSON.stringify({ id: sessionUser.id, email: sessionUser.email }));
+                } else {
+                    localStorage.removeItem('anshin_auth_user');
+                }
                 if (!session) mutateProfile(null, false);
             }
         });
