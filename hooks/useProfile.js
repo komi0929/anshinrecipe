@@ -13,48 +13,63 @@ const fetchProfileData = async (userId) => {
 
     console.log('[useProfile] fetchProfileData: Fetching for userId:', userId);
 
-    const [profileRes, childrenRes, savedRes, likedRes, recipeCountRes, reportCountRes, userRestRes] = await Promise.all([
-        supabase.from('profiles').select('*').eq('id', userId).single(),
-        supabase.from('children').select('*').eq('user_id', userId),
-        supabase.from('saved_recipes').select('recipe_id').eq('user_id', userId),
-        supabase.from('likes').select('recipe_id').eq('user_id', userId).eq('reaction_type', 'yummy'),
-        supabase.from('recipes').select('*', { count: 'exact', head: true }).eq('user_id', userId),
-        supabase.from('tried_reports').select('*', { count: 'exact', head: true }).eq('user_id', userId),
-        supabase.from('user_restaurants').select('restaurant_id, status').eq('user_id', userId),
-    ]);
+    try {
+        const [profileRes, childrenRes, savedRes, likedRes, recipeCountRes, reportCountRes] = await Promise.all([
+            supabase.from('profiles').select('*').eq('id', userId).single(),
+            supabase.from('children').select('*').eq('user_id', userId),
+            supabase.from('saved_recipes').select('recipe_id').eq('user_id', userId),
+            supabase.from('likes').select('recipe_id').eq('user_id', userId).eq('reaction_type', 'yummy'),
+            supabase.from('recipes').select('*', { count: 'exact', head: true }).eq('user_id', userId),
+            supabase.from('tried_reports').select('*', { count: 'exact', head: true }).eq('user_id', userId),
+            // Note: user_restaurants table removed - doesn't exist
+        ]);
 
-    console.log('[useProfile] profileRes:', profileRes);
-    console.log('[useProfile] profileRes.error:', profileRes.error);
-    console.log('[useProfile] profileRes.data:', profileRes.data);
+        console.log('[useProfile] profileRes:', profileRes);
+        console.log('[useProfile] profileRes.error:', profileRes.error);
+        console.log('[useProfile] profileRes.data:', profileRes.data);
 
-    const profileData = profileRes.data;
-    const childrenData = childrenRes.data || [];
-    const savedData = savedRes.data || [];
-    const likedData = likedRes.data || [];
-    const userRestData = userRestRes.data || [];
+        const profileData = profileRes.data;
+        const childrenData = childrenRes.data || [];
+        const savedData = savedRes.data || [];
+        const likedData = likedRes.data || [];
 
-    return {
-        profile: profileData ? {
-            id: profileData.id,
-            userName: profileData.username || profileData.display_name || '',
-            avatarUrl: profileData.avatar_url || profileData.picture_url || '',
-            children: childrenData,
-            stats: {
-                recipeCount: recipeCountRes.count || 0,
-                reportCount: reportCountRes.count || 0
+        if (!profileData) {
+            console.log('[useProfile] No profile data found for user');
+            return {
+                profile: null,
+                savedRecipeIds: [],
+                likedRecipeIds: [],
+                visitedRestaurantIds: [],
+                wishlistRestaurantIds: [],
+            };
+        }
+
+        return {
+            profile: {
+                id: profileData.id,
+                userName: profileData.username || profileData.display_name || '',
+                avatarUrl: profileData.avatar_url || profileData.picture_url || '',
+                children: childrenData,
+                stats: {
+                    recipeCount: recipeCountRes.count || 0,
+                    reportCount: reportCountRes.count || 0
+                },
+                isPro: profileData.is_pro || false,
+                bio: profileData.bio || '',
+                instagramUrl: profileData.instagram_url || '',
+                twitterUrl: profileData.twitter_url || '',
+                youtubeUrl: profileData.youtube_url || '',
+                blogUrl: profileData.blog_url || ''
             },
-            isPro: profileData.is_pro || false,
-            bio: profileData.bio || '',
-            instagramUrl: profileData.instagram_url || '',
-            twitterUrl: profileData.twitter_url || '',
-            youtubeUrl: profileData.youtube_url || '',
-            blogUrl: profileData.blog_url || ''
-        } : null,
-        savedRecipeIds: savedData.map(item => item.recipe_id),
-        likedRecipeIds: likedData.map(item => item.recipe_id),
-        visitedRestaurantIds: userRestData.filter(i => i.status === 'visited').map(i => i.restaurant_id),
-        wishlistRestaurantIds: userRestData.filter(i => i.status === 'wishlist').map(i => i.restaurant_id),
-    };
+            savedRecipeIds: savedData.map(item => item.recipe_id),
+            likedRecipeIds: likedData.map(item => item.recipe_id),
+            visitedRestaurantIds: [],  // TODO: Add when user_restaurants table exists
+            wishlistRestaurantIds: [], // TODO: Add when user_restaurants table exists
+        };
+    } catch (error) {
+        console.error('[useProfile] Error fetching profile data:', error);
+        return null;
+    }
 };
 
 export const useProfile = () => {
