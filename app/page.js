@@ -35,7 +35,7 @@ const GREETINGS = [
 
 const RecipeListPage = () => {
     const { recipes, loading, refreshRecipes } = useRecipes();
-    const { profile, user, loading: profileLoading, savedRecipeIds, toggleSave, likedRecipeIds, toggleLike } = useProfile();
+    const { profile, user, loading: profileLoading, isAuthLoading, savedRecipeIds, toggleSave, likedRecipeIds, toggleLike } = useProfile();
     const [searchTerm, setSearchTerm] = useState('');
     // 🚀 useDeferredValue: Separates input state from heavy computation for smoother typing
     const deferredSearchTerm = useDeferredValue(searchTerm);
@@ -288,8 +288,8 @@ const RecipeListPage = () => {
     }
 
     // 2. Not Logged In -> Original Landing Page
-    // 2. Not Logged In -> Original Landing Page
-    if (!user) {
+    // IMPORTANT: Only show login screen AFTER auth check is complete
+    if (!user && !isAuthLoading) {
         return (
             <div className="min-h-screen flex flex-col bg-gradient-to-b from-orange-50 to-white">
                 <div className="flex-1 flex flex-col items-center px-4 py-8 max-w-[480px] mx-auto w-full">

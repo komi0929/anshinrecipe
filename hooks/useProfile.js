@@ -233,7 +233,7 @@ export const useProfile = () => {
     };
 
     return {
-        user, profile, loading, savedRecipeIds, likedRecipeIds, visitedRestaurantIds, wishlistRestaurantIds,
+        user, profile, loading, isAuthLoading, savedRecipeIds, likedRecipeIds, visitedRestaurantIds, wishlistRestaurantIds,
         updateUserName, updateAvatar, addChild, updateChild, deleteChild, toggleSave, toggleLike, toggleUserRestaurant, deleteAccount, updateProProfile
     };
 };
