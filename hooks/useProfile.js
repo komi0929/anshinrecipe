@@ -82,9 +82,10 @@ export const useProfile = () => {
         user?.id ? ['profile', user.id] : null,
         ([, userId]) => fetchProfileData(userId),
         {
-            revalidateOnFocus: false,
-            revalidateOnReconnect: false,
-            dedupingInterval: 60000,
+            revalidateOnFocus: true,      // Focus時に再検証
+            revalidateOnReconnect: true,   // 再接続時に再検証
+            revalidateOnMount: true,       // マウント時に再検証
+            dedupingInterval: 2000,        // 重複排除間隔を短く（2秒）
         }
     );
 
