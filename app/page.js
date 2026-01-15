@@ -425,7 +425,8 @@ const RecipeListPage = () => {
     // 3. Logged In but Profile or Children Setup Required
     // If user exists but profile record is missing, or they have no children, show onboarding.
     // Pro users are handled separately.
-    if (user && (!profile?.id || (profile?.children?.length === 0 && !profile?.isPro))) {
+    // IMPORTANT: Wait for profile to finish loading before showing this screen
+    if (user && !profileLoading && (!profile?.id || (profile?.children?.length === 0 && !profile?.isPro))) {
         return (
             <div className="container max-w-md mx-auto min-h-screen bg-background">
                 <div className="pt-6 pb-4 px-4 text-center">
