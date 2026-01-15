@@ -275,179 +275,178 @@ export default function ProfilePage() {
                     <MapPin size={18} /> マイマップ
                 </button>
             </div>
-        </div>
 
-            {/* 4. Content Area */ }
-    <div className="px-4 py-6">
-        {appMode === 'map' ? (
-            <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-                {/* MAP CONTENT */}
-                <div className="flex items-center gap-4 mb-6 border-b border-slate-200 px-2">
-                    {['bookmarks', 'reviews', 'likes'].map(tab => (
-                        <button
-                            key={tab}
-                            onClick={() => setMapTab(tab)}
-                            className={`pb-2 text-sm font-bold border-b-2 transition-all px-2 ${mapTab === tab ? 'border-blue-500 text-blue-600' : 'border-transparent text-slate-400'}`}
-                        >
-                            {tab === 'bookmarks' && '行きたい'}
-                            {tab === 'reviews' && '食べた！'}
-                            {tab === 'likes' && 'いいね'}
-                        </button>
-                    ))}
-                </div>
+            {/* 4. Content Area */}
+            <div className="px-4 py-6">
+                {appMode === 'map' ? (
+                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                        {/* MAP CONTENT */}
+                        <div className="flex items-center gap-4 mb-6 border-b border-slate-200 px-2">
+                            {['bookmarks', 'reviews', 'likes'].map(tab => (
+                                <button
+                                    key={tab}
+                                    onClick={() => setMapTab(tab)}
+                                    className={`pb-2 text-sm font-bold border-b-2 transition-all px-2 ${mapTab === tab ? 'border-blue-500 text-blue-600' : 'border-transparent text-slate-400'}`}
+                                >
+                                    {tab === 'bookmarks' && '行きたい'}
+                                    {tab === 'reviews' && '食べた！'}
+                                    {tab === 'likes' && 'いいね'}
+                                </button>
+                            ))}
+                        </div>
 
-                {isLoadingData ? (
-                    <div className="flex justify-center py-10"><Loader2 className="animate-spin text-blue-400" /></div>
-                ) : (
-                    <div className="space-y-4">
-                        {mapTab === 'bookmarks' && (
-                            mapData.bookmarks.length === 0 ? <EmptyState icon={<Bookmark size={48} />} text="行きたいお店を保存しましょう" color="blue" /> :
-                                mapData.bookmarks.map(b => {
-                                    const r = restaurants.find(rest => rest.id === b.restaurant_id);
-                                    return r ? <div key={b.restaurant_id} className="bg-white p-4 rounded-2xl shadow-sm flex justify-between items-center" onClick={() => router.push(`/map/${r.id}`)}>
-                                        <div className="font-bold text-slate-700">{r.name}</div>
-                                        <ChevronRight size={16} className="text-slate-300" />
-                                    </div> : null
-                                })
+                        {isLoadingData ? (
+                            <div className="flex justify-center py-10"><Loader2 className="animate-spin text-blue-400" /></div>
+                        ) : (
+                            <div className="space-y-4">
+                                {mapTab === 'bookmarks' && (
+                                    mapData.bookmarks.length === 0 ? <EmptyState icon={<Bookmark size={48} />} text="行きたいお店を保存しましょう" color="blue" /> :
+                                        mapData.bookmarks.map(b => {
+                                            const r = restaurants.find(rest => rest.id === b.restaurant_id);
+                                            return r ? <div key={b.restaurant_id} className="bg-white p-4 rounded-2xl shadow-sm flex justify-between items-center" onClick={() => router.push(`/map/${r.id}`)}>
+                                                <div className="font-bold text-slate-700">{r.name}</div>
+                                                <ChevronRight size={16} className="text-slate-300" />
+                                            </div> : null
+                                        })
+                                )}
+                                {mapTab === 'reviews' && (
+                                    mapData.reviews.length === 0 ? <EmptyState icon={<Camera size={48} />} text="食べたお店を記録しましょう" color="blue" /> :
+                                        mapData.reviews.map(r => (
+                                            <div key={r.id} className="bg-white p-4 rounded-2xl shadow-sm mb-3">
+                                                <div className="text-sm font-bold text-slate-800">{r.restaurants?.name}</div>
+                                                <div className="text-xs text-slate-500 mt-1">{r.menus?.name || 'メニュー記録なし'}</div>
+                                                {r.comment && <div className="mt-2 text-sm bg-slate-50 p-2 rounded-lg">{r.comment}</div>}
+                                            </div>
+                                        ))
+                                )}
+                            </div>
                         )}
-                        {mapTab === 'reviews' && (
-                            mapData.reviews.length === 0 ? <EmptyState icon={<Camera size={48} />} text="食べたお店を記録しましょう" color="blue" /> :
-                                mapData.reviews.map(r => (
-                                    <div key={r.id} className="bg-white p-4 rounded-2xl shadow-sm mb-3">
-                                        <div className="text-sm font-bold text-slate-800">{r.restaurants?.name}</div>
-                                        <div className="text-xs text-slate-500 mt-1">{r.menus?.name || 'メニュー記録なし'}</div>
-                                        {r.comment && <div className="mt-2 text-sm bg-slate-50 p-2 rounded-lg">{r.comment}</div>}
-                                    </div>
-                                ))
+                    </div>
+                ) : (
+                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                        {/* KITCHEN CONTENT */}
+                        <div className="flex items-center gap-4 mb-6 border-b border-slate-200 px-2">
+                            {['my_recipes', 'saved', 'reports'].map(tab => (
+                                <button
+                                    key={tab}
+                                    onClick={() => setKitchenTab(tab)}
+                                    className={`pb-2 text-sm font-bold border-b-2 transition-all px-2 ${kitchenTab === tab ? 'border-orange-500 text-orange-600' : 'border-transparent text-slate-400'}`}
+                                >
+                                    {tab === 'my_recipes' && 'レシピ'}
+                                    {tab === 'saved' && '保存'}
+                                    {tab === 'reports' && 'つくレポ'}
+                                </button>
+                            ))}
+                        </div>
+
+                        {isLoadingData ? (
+                            <div className="flex justify-center py-10"><Loader2 className="animate-spin text-orange-400" /></div>
+                        ) : (
+                            <div className="space-y-4">
+                                {kitchenTab === 'my_recipes' && (
+                                    kitchenData.myRecipes.length === 0 ?
+                                        <div className="text-center py-8">
+                                            <EmptyState icon={<Utensils size={48} />} text="レシピを投稿してみましょう" color="orange" />
+                                            <Button className="mt-4 bg-orange-400 hover:bg-orange-500 text-white" onClick={() => router.push('/recipe/new')}>投稿する</Button>
+                                        </div> :
+                                        kitchenData.myRecipes.map(r => (
+                                            <div key={r.id} onClick={() => router.push(`/recipe/${r.id}`)} className="bg-white p-3 rounded-2xl shadow-sm flex gap-3 items-center cursor-pointer">
+                                                <div className="w-16 h-16 bg-slate-100 rounded-xl overflow-hidden relative shrink-0">
+                                                    {r.image && <Image src={r.image} fill className="object-cover" alt={r.title} />}
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <div className="font-bold text-slate-800 truncate">{r.title}</div>
+                                                    <div className="text-xs text-slate-400 mt-1">❤ {r.likes_count || 0}</div>
+                                                </div>
+                                            </div>
+                                        ))
+                                )}
+                                {kitchenTab === 'saved' && (
+                                    kitchenData.savedRecipes.length === 0 ? <EmptyState icon={<Heart size={48} />} text="お気に入りのレシピを保存" color="orange" /> :
+                                        kitchenData.savedRecipes.map(s => (
+                                            <div key={s.id} onClick={() => router.push(`/recipe/${s.recipes?.id}`)} className="bg-white p-3 rounded-2xl shadow-sm flex gap-3 items-center cursor-pointer">
+                                                <div className="w-16 h-16 bg-slate-100 rounded-xl overflow-hidden relative shrink-0">
+                                                    {s.recipes?.image && <Image src={s.recipes.image} fill className="object-cover" alt={s.recipes.title} />}
+                                                </div>
+                                                <div className="font-bold text-slate-800 truncate">{s.recipes?.title}</div>
+                                            </div>
+                                        ))
+                                )}
+                            </div>
                         )}
                     </div>
                 )}
             </div>
-        ) : (
-            <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-                {/* KITCHEN CONTENT */}
-                <div className="flex items-center gap-4 mb-6 border-b border-slate-200 px-2">
-                    {['my_recipes', 'saved', 'reports'].map(tab => (
-                        <button
-                            key={tab}
-                            onClick={() => setKitchenTab(tab)}
-                            className={`pb-2 text-sm font-bold border-b-2 transition-all px-2 ${kitchenTab === tab ? 'border-orange-500 text-orange-600' : 'border-transparent text-slate-400'}`}
-                        >
-                            {tab === 'my_recipes' && 'レシピ'}
-                            {tab === 'saved' && '保存'}
-                            {tab === 'reports' && 'つくレポ'}
-                        </button>
-                    ))}
-                </div>
 
-                {isLoadingData ? (
-                    <div className="flex justify-center py-10"><Loader2 className="animate-spin text-orange-400" /></div>
-                ) : (
-                    <div className="space-y-4">
-                        {kitchenTab === 'my_recipes' && (
-                            kitchenData.myRecipes.length === 0 ?
-                                <div className="text-center py-8">
-                                    <EmptyState icon={<Utensils size={48} />} text="レシピを投稿してみましょう" color="orange" />
-                                    <Button className="mt-4 bg-orange-400 hover:bg-orange-500 text-white" onClick={() => router.push('/recipe/new')}>投稿する</Button>
-                                </div> :
-                                kitchenData.myRecipes.map(r => (
-                                    <div key={r.id} onClick={() => router.push(`/recipe/${r.id}`)} className="bg-white p-3 rounded-2xl shadow-sm flex gap-3 items-center cursor-pointer">
-                                        <div className="w-16 h-16 bg-slate-100 rounded-xl overflow-hidden relative shrink-0">
-                                            {r.image && <Image src={r.image} fill className="object-cover" alt={r.title} />}
-                                        </div>
-                                        <div className="min-w-0">
-                                            <div className="font-bold text-slate-800 truncate">{r.title}</div>
-                                            <div className="text-xs text-slate-400 mt-1">❤ {r.likes_count || 0}</div>
-                                        </div>
-                                    </div>
-                                ))
-                        )}
-                        {kitchenTab === 'saved' && (
-                            kitchenData.savedRecipes.length === 0 ? <EmptyState icon={<Heart size={48} />} text="お気に入りのレシピを保存" color="orange" /> :
-                                kitchenData.savedRecipes.map(s => (
-                                    <div key={s.id} onClick={() => router.push(`/recipe/${s.recipes?.id}`)} className="bg-white p-3 rounded-2xl shadow-sm flex gap-3 items-center cursor-pointer">
-                                        <div className="w-16 h-16 bg-slate-100 rounded-xl overflow-hidden relative shrink-0">
-                                            {s.recipes?.image && <Image src={s.recipes.image} fill className="object-cover" alt={s.recipes.title} />}
-                                        </div>
-                                        <div className="font-bold text-slate-800 truncate">{s.recipes?.title}</div>
-                                    </div>
-                                ))
-                        )}
-                    </div>
-                )}
-            </div>
-        )}
-    </div>
+            {/* Modals placeholders */}
+            {/* Keeping existing modals logic if needed */}
+            {
+                showChildModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
+                        <div className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-xl">
+                            <h3 className="text-lg font-bold mb-4 text-center">{editingChild ? 'お子様情報を編集' : 'お子様を追加'}</h3>
 
-    {/* Modals placeholders */ }
-    {/* Keeping existing modals logic if needed */ }
-    {
-        showChildModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
-                <div className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-xl">
-                    <h3 className="text-lg font-bold mb-4 text-center">{editingChild ? 'お子様情報を編集' : 'お子様を追加'}</h3>
+                            <div className="flex justify-center mb-6">
+                                <div className="w-24 h-24 rounded-full bg-orange-50 border-2 border-orange-100 flex items-center justify-center text-4xl relative cursor-pointer" onClick={() => childFileInputRef.current?.click()}>
+                                    {childPhoto ? <img src={childPhoto} className="w-full h-full rounded-full object-cover" /> : childIcon}
+                                    <div className="absolute bottom-0 right-0 bg-white rounded-full p-2 shadow-md border border-slate-100"><Camera size={16} className="text-orange-400" /></div>
+                                </div>
+                                <input type="file" ref={childFileInputRef} className="hidden" accept="image/*" onChange={async (e) => { const f = e.target.files?.[0]; if (f) setChildPhotoFile(f); }} />
+                            </div>
 
-                    <div className="flex justify-center mb-6">
-                        <div className="w-24 h-24 rounded-full bg-orange-50 border-2 border-orange-100 flex items-center justify-center text-4xl relative cursor-pointer" onClick={() => childFileInputRef.current?.click()}>
-                            {childPhoto ? <img src={childPhoto} className="w-full h-full rounded-full object-cover" /> : childIcon}
-                            <div className="absolute bottom-0 right-0 bg-white rounded-full p-2 shadow-md border border-slate-100"><Camera size={16} className="text-orange-400" /></div>
-                        </div>
-                        <input type="file" ref={childFileInputRef} className="hidden" accept="image/*" onChange={async (e) => { const f = e.target.files?.[0]; if (f) setChildPhotoFile(f); }} />
-                    </div>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="text-xs font-bold text-slate-500 mb-1 block">お名前</label>
+                                    <Input value={childName} onChange={(e) => setChildName(e.target.value)} placeholder="例: はなちゃん" className="bg-slate-50 border-none" />
+                                    {formErrors.name && <p className="text-red-500 text-xs mt-1">{formErrors.name}</p>}
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-slate-500 mb-1 block">アレルギー</label>
+                                    <AllergySelector selectedAllergens={childAllergens} onChange={setChildAllergens} />
+                                    {formErrors.allergens && <p className="text-red-500 text-xs mt-1">{formErrors.allergens}</p>}
+                                </div>
+                            </div>
 
-                    <div className="space-y-4">
-                        <div>
-                            <label className="text-xs font-bold text-slate-500 mb-1 block">お名前</label>
-                            <Input value={childName} onChange={(e) => setChildName(e.target.value)} placeholder="例: はなちゃん" className="bg-slate-50 border-none" />
-                            {formErrors.name && <p className="text-red-500 text-xs mt-1">{formErrors.name}</p>}
-                        </div>
-                        <div>
-                            <label className="text-xs font-bold text-slate-500 mb-1 block">アレルギー</label>
-                            <AllergySelector selectedAllergens={childAllergens} onChange={setChildAllergens} />
-                            {formErrors.allergens && <p className="text-red-500 text-xs mt-1">{formErrors.allergens}</p>}
+                            <div className="flex gap-3 mt-8">
+                                <Button variant="ghost" className="flex-1" onClick={closeChildModal}>キャンセル</Button>
+                                <Button className="flex-1 bg-orange-500 hover:bg-orange-600 text-white" onClick={handleSaveChild}>保存する</Button>
+                            </div>
+                            {editingChild && (
+                                <button onClick={async () => { if (confirm('本当に削除しますか？')) { await deleteChild(editingChild.id); closeChildModal(); } }} className="w-full mt-4 text-xs text-red-400 py-2">このお子様を削除</button>
+                            )}
                         </div>
                     </div>
-
-                    <div className="flex gap-3 mt-8">
-                        <Button variant="ghost" className="flex-1" onClick={closeChildModal}>キャンセル</Button>
-                        <Button className="flex-1 bg-orange-500 hover:bg-orange-600 text-white" onClick={handleSaveChild}>保存する</Button>
+                )
+            }
+            {/* Announcements Modal */}
+            {
+                showAnnouncementsModal && (
+                    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowAnnouncementsModal(false)}>
+                        <div className="bg-white w-full max-w-md max-h-[85vh] rounded-[32px] p-6 shadow-2xl overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-xl font-bold">お知らせ</h3>
+                                <button onClick={() => setShowAnnouncementsModal(false)} className="text-slate-400 text-xl">×</button>
+                            </div>
+                            <div className="bg-slate-50 p-4 rounded-2xl font-bold text-sm">✨ 新機能：活動記録が見られるようになりました！</div>
+                            <Button onClick={() => setShowAnnouncementsModal(false)} className="mt-4">閉じる</Button>
+                        </div>
                     </div>
-                    {editingChild && (
-                        <button onClick={async () => { if (confirm('本当に削除しますか？')) { await deleteChild(editingChild.id); closeChildModal(); } }} className="w-full mt-4 text-xs text-red-400 py-2">このお子様を削除</button>
-                    )}
-                </div>
-            </div>
-        )
-    }
-    {/* Announcements Modal */ }
-    {
-        showAnnouncementsModal && (
-            <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowAnnouncementsModal(false)}>
-                <div className="bg-white w-full max-w-md max-h-[85vh] rounded-[32px] p-6 shadow-2xl overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
-                    <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-xl font-bold">お知らせ</h3>
-                        <button onClick={() => setShowAnnouncementsModal(false)} className="text-slate-400 text-xl">×</button>
+                )
+            }
+
+            {
+                showInquiryModal && (
+                    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowInquiryModal(false)}>
+                        <div className="bg-white w-full max-w-xs rounded-[32px] p-8 text-center shadow-2xl" onClick={e => e.stopPropagation()}>
+                            <h3 className="text-xl font-bold mb-6">お問い合わせ</h3>
+                            <a href="mailto:support@anshinrecipe.com" className="flex items-center justify-center gap-3 w-full py-4 bg-slate-100 text-slate-700 rounded-2xl font-bold"><Mail size={20} /> メール</a>
+                            <button onClick={() => setShowInquiryModal(false)} className="mt-6 text-sm font-bold text-slate-400">閉じる</button>
+                        </div>
                     </div>
-                    <div className="bg-slate-50 p-4 rounded-2xl font-bold text-sm">✨ 新機能：活動記録が見られるようになりました！</div>
-                    <Button onClick={() => setShowAnnouncementsModal(false)} className="mt-4">閉じる</Button>
-                </div>
-            </div>
-        )
-    }
+                )
+            }
 
-    {
-        showInquiryModal && (
-            <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowInquiryModal(false)}>
-                <div className="bg-white w-full max-w-xs rounded-[32px] p-8 text-center shadow-2xl" onClick={e => e.stopPropagation()}>
-                    <h3 className="text-xl font-bold mb-6">お問い合わせ</h3>
-                    <a href="mailto:support@anshinrecipe.com" className="flex items-center justify-center gap-3 w-full py-4 bg-slate-100 text-slate-700 rounded-2xl font-bold"><Mail size={20} /> メール</a>
-                    <button onClick={() => setShowInquiryModal(false)} className="mt-6 text-sm font-bold text-slate-400">閉じる</button>
-                </div>
-            </div>
-        )
-    }
-
-    <Footer />
+            <Footer />
         </div >
     );
 }
