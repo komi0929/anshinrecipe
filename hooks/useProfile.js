@@ -6,7 +6,12 @@ import { uploadImage } from '@/lib/imageUpload';
 
 // Fetcher function for SWR
 const fetchProfileData = async (userId) => {
-    if (!userId) return null;
+    if (!userId) {
+        console.log('[useProfile] fetchProfileData: No userId provided');
+        return null;
+    }
+
+    console.log('[useProfile] fetchProfileData: Fetching for userId:', userId);
 
     const [profileRes, childrenRes, savedRes, likedRes, recipeCountRes, reportCountRes, userRestRes] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', userId).single(),
@@ -17,6 +22,10 @@ const fetchProfileData = async (userId) => {
         supabase.from('tried_reports').select('*', { count: 'exact', head: true }).eq('user_id', userId),
         supabase.from('user_restaurants').select('restaurant_id, status').eq('user_id', userId),
     ]);
+
+    console.log('[useProfile] profileRes:', profileRes);
+    console.log('[useProfile] profileRes.error:', profileRes.error);
+    console.log('[useProfile] profileRes.data:', profileRes.data);
 
     const profileData = profileRes.data;
     const childrenData = childrenRes.data || [];
