@@ -8,7 +8,7 @@ import { useRecipes } from '@/hooks/useRecipes';
 import { useProfile } from '@/hooks/useProfile';
 import { supabase } from '@/lib/supabaseClient';
 
-import { Search, Plus, User as UserIcon, Grid, Bookmark, Heart, Baby, BookHeart, Sparkles } from 'lucide-react';
+import { Search, Plus, User as UserIcon, Grid, Bookmark, Heart, Baby, BookHeart, Sparkles, PlusCircle } from 'lucide-react';
 import { RecipeCardSkeleton } from '@/components/Skeleton';
 import { RecipeCard } from '../components/RecipeCard';
 import { MEAL_SCENES, SCENE_ICONS } from '@/lib/constants';
