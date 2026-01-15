@@ -10,7 +10,8 @@ export async function POST(request) {
             return NextResponse.json({ error: 'Area is required' }, { status: 400 });
         }
 
-        console.log(`[API] Received collection request for ${area}`);
+        console.log(`[API v2.0] Received collection request for ${area}`);
+        console.log(`[API v2.0] ENV CHECK - MAPS_KEY: ${!!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}, CSE_ID: ${!!process.env.GOOGLE_CSE_ID}`);
 
         const result = await autoCollectAreaData(area);
 
