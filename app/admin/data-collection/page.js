@@ -6,7 +6,10 @@ import { Button } from '@/components/ui/Button';
 import { supabase } from '@/lib/supabaseClient';
 
 export default function DataCollectionAdminPage() {
-    const [selectedArea, setSelectedArea] = useState('福岡県');
+    const [selectedPrefecture, setSelectedPrefecture] = useState('福岡県');
+    const [selectedMunicipality, setSelectedMunicipality] = useState('');
+    const [municipalities, setMunicipalities] = useState([]);
+    const [collectionHistory, setCollectionHistory] = useState([]);
     const [isCollecting, setIsCollecting] = useState(false);
     const [status, setStatus] = useState('idle');
     const [logs, setLogs] = useState([]);
@@ -17,6 +20,88 @@ export default function DataCollectionAdminPage() {
     const [liveData, setLiveData] = useState([]);
     const [reports, setReports] = useState([]);
     const [editingItem, setEditingItem] = useState(null);
+
+    // Prefecture to Municipality mapping
+    const PREFECTURE_MUNICIPALITIES = {
+        '福岡県': [
+            { code: '40130', name: '福岡市中央区' },
+            { code: '40131', name: '福岡市博多区' },
+            { code: '40132', name: '福岡市東区' },
+            { code: '40133', name: '福岡市南区' },
+            { code: '40134', name: '福岡市西区' },
+            { code: '40135', name: '福岡市城南区' },
+            { code: '40136', name: '福岡市早良区' },
+            { code: '40202', name: '北九州市小倉北区' },
+            { code: '40203', name: '北九州市小倉南区' },
+            { code: '40204', name: '北九州市八幡東区' },
+            { code: '40205', name: '北九州市八幡西区' },
+            { code: '40206', name: '北九州市戸畑区' },
+            { code: '40207', name: '北九州市門司区' },
+            { code: '40208', name: '北九州市若松区' },
+            { code: '40230', name: '久留米市' },
+        ],
+        '東京都': [
+            { code: '13101', name: '千代田区' },
+            { code: '13102', name: '中央区' },
+            { code: '13103', name: '港区' },
+            { code: '13104', name: '新宿区' },
+            { code: '13105', name: '文京区' },
+            { code: '13106', name: '台東区' },
+            { code: '13107', name: '墨田区' },
+            { code: '13108', name: '江東区' },
+            { code: '13109', name: '品川区' },
+            { code: '13110', name: '目黒区' },
+            { code: '13111', name: '大田区' },
+            { code: '13112', name: '世田谷区' },
+            { code: '13113', name: '渋谷区' },
+            { code: '13114', name: '中野区' },
+            { code: '13115', name: '杉並区' },
+            { code: '13116', name: '豊島区' },
+            { code: '13117', name: '北区' },
+            { code: '13118', name: '荒川区' },
+            { code: '13119', name: '板橋区' },
+            { code: '13120', name: '練馬区' },
+            { code: '13121', name: '足立区' },
+            { code: '13122', name: '葛飾区' },
+            { code: '13123', name: '江戸川区' },
+        ],
+        '大阪府': [
+            { code: '27102', name: '大阪市北区' },
+            { code: '27103', name: '大阪市都島区' },
+            { code: '27104', name: '大阪市福島区' },
+            { code: '27106', name: '大阪市中央区' },
+            { code: '27107', name: '大阪市西区' },
+            { code: '27108', name: '大阪市港区' },
+            { code: '27109', name: '大阪市大正区' },
+            { code: '27111', name: '大阪市浪速区' },
+            { code: '27113', name: '大阪市天王寺区' },
+            { code: '27119', name: '梅田・難波エリア' },
+        ],
+    };
+
+    // Update municipalities when prefecture changes
+    useEffect(() => {
+        setMunicipalities(PREFECTURE_MUNICIPALITIES[selectedPrefecture] || []);
+        setSelectedMunicipality('');
+    }, [selectedPrefecture]);
+
+    // Fetch collection history
+    useEffect(() => {
+        fetchCollectionHistory();
+    }, []);
+
+    const fetchCollectionHistory = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('data_collection_jobs')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(20);
+            if (!error) setCollectionHistory(data || []);
+        } catch (e) {
+            console.error('Fetch history error:', e);
+        }
+    };
 
     // Initial Load
     useEffect(() => {
@@ -77,22 +162,27 @@ export default function DataCollectionAdminPage() {
     };
 
     const handleStartCollection = async () => {
+        const area = selectedMunicipality || selectedPrefecture;
         setIsCollecting(true);
         setStatus('processing');
-        setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] 処理を開始しました: ${selectedArea}`]);
+        setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] 処理を開始しました: ${area}`]);
         setActiveTab('inbox');
 
         try {
             const response = await fetch('/api/admin/collect', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ area: selectedArea })
+                body: JSON.stringify({
+                    area: area,
+                    municipalityCode: selectedMunicipality ? municipalities.find(m => m.name === selectedMunicipality)?.code : null
+                })
             });
 
             const data = await response.json();
 
             if (data.success) {
                 await fetchCandidates();
+                await fetchCollectionHistory(); // Refresh history
                 setStatus('complete');
                 setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] 収集・保存完了。承認待ちボックスを確認してください。`]);
             } else {
@@ -156,7 +246,7 @@ export default function DataCollectionAdminPage() {
     const deleteLiveData = async (id) => {
         if (confirm('本番データを削除しますか？')) {
             try {
-                const res = await fetch('/api/restaurants', { // Assuming a DELETE endpoint for restaurants
+                const res = await fetch('/api/restaurants', {
                     method: 'DELETE',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ id })
@@ -175,53 +265,157 @@ export default function DataCollectionAdminPage() {
         }
     };
 
+    // Format relative time
+    const formatRelativeTime = (dateString) => {
+        if (!dateString) return '未収集';
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+
+        if (diffDays > 30) return `${Math.floor(diffDays / 30)}ヶ月前`;
+        if (diffDays > 0) return `${diffDays}日前`;
+        if (diffHours > 0) return `${diffHours}時間前`;
+        return '直近';
+    };
+
     return (
-        <div className="min-h-screen bg-slate-50 p-8">
-            <div className="max-w-5xl mx-auto space-y-8">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
+            <div className="max-w-6xl mx-auto space-y-6">
                 {/* Header */}
                 <div className="flex justify-between items-center">
                     <div>
-                        <h1 className="text-2xl font-bold text-slate-900 mb-2">データ収集コンソール (Production)</h1>
-                        <p className="text-slate-500 text-sm">収集データはまず承認待ちに入ります。内容を確認して本番反映してください。</p>
+                        <h1 className="text-2xl font-black text-slate-900 mb-1">データ収集コンソール</h1>
+                        <p className="text-slate-500 text-sm">市町村単位でデータを収集し、承認して本番反映します</p>
                     </div>
                 </div>
 
-                {/* Control Panel (Compact) */}
-                <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex items-center justify-between gap-6">
-                    <div className="flex-1 flex items-center gap-4">
-                        <select
-                            value={selectedArea}
-                            onChange={(e) => setSelectedArea(e.target.value)}
-                            className="h-10 rounded-lg border-slate-200 bg-slate-50 font-bold px-3 outline-none"
-                        >
-                            <option value="福岡県">福岡県</option>
-                            <option value="東京都">東京都</option>
-                        </select>
-                        <Button
-                            onClick={handleStartCollection}
-                            disabled={isCollecting}
-                            size="sm"
-                        >
-                            {isCollecting ? <><Loader2 className="animate-spin mr-2" size={16} /> 収集中...</> : <><Play className="fill-current mr-2" size={16} /> 収集開始</>}
-                        </Button>
+                {/* NEW: Area Selection with Municipality */}
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                        {/* Prefecture */}
+                        <div>
+                            <label className="block text-xs font-bold text-slate-500 mb-2">都道府県</label>
+                            <select
+                                value={selectedPrefecture}
+                                onChange={(e) => setSelectedPrefecture(e.target.value)}
+                                className="w-full h-12 rounded-xl border-slate-200 bg-slate-50 font-bold px-4 outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
+                            >
+                                <option value="福岡県">福岡県</option>
+                                <option value="東京都">東京都</option>
+                                <option value="大阪府">大阪府</option>
+                            </select>
+                        </div>
+
+                        {/* Municipality */}
+                        <div>
+                            <label className="block text-xs font-bold text-slate-500 mb-2">市区町村（任意）</label>
+                            <select
+                                value={selectedMunicipality}
+                                onChange={(e) => setSelectedMunicipality(e.target.value)}
+                                className="w-full h-12 rounded-xl border-slate-200 bg-slate-50 font-bold px-4 outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
+                            >
+                                <option value="">全域（県単位）</option>
+                                {municipalities.map(m => (
+                                    <option key={m.code} value={m.name}>{m.name}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Collect Button */}
+                        <div>
+                            <Button
+                                onClick={handleStartCollection}
+                                disabled={isCollecting}
+                                className="w-full h-12"
+                            >
+                                {isCollecting ? (
+                                    <><Loader2 className="animate-spin mr-2" size={18} /> 収集中...</>
+                                ) : (
+                                    <><Play className="fill-current mr-2" size={18} /> 収集開始</>
+                                )}
+                            </Button>
+                        </div>
                     </div>
-                    {/* Log Ticker */}
-                    <div className="flex-1 text-right">
-                        <span className="text-xs font-mono text-slate-400 truncate max-w-md inline-block">
+
+                    {/* Status Log */}
+                    <div className="mt-4 pt-4 border-t border-slate-100">
+                        <span className="text-xs font-mono text-slate-400">
                             {logs.length > 0 ? logs[logs.length - 1] : '準備完了'}
                         </span>
                     </div>
                 </div>
 
+                {/* NEW: Collection History */}
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                    <h2 className="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">
+                        <Database size={16} className="text-orange-500" />
+                        収集履歴
+                    </h2>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                            <thead>
+                                <tr className="border-b border-slate-100">
+                                    <th className="text-left py-2 px-3 font-bold text-slate-500 text-xs">エリア</th>
+                                    <th className="text-left py-2 px-3 font-bold text-slate-500 text-xs">収集日時</th>
+                                    <th className="text-left py-2 px-3 font-bold text-slate-500 text-xs">経過</th>
+                                    <th className="text-left py-2 px-3 font-bold text-slate-500 text-xs">ステータス</th>
+                                    <th className="text-left py-2 px-3 font-bold text-slate-500 text-xs">件数</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {collectionHistory.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={5} className="text-center py-8 text-slate-400">収集履歴がありません</td>
+                                    </tr>
+                                ) : (
+                                    collectionHistory.slice(0, 10).map((job) => (
+                                        <tr key={job.id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                                            <td className="py-3 px-3 font-bold text-slate-800">{job.area}</td>
+                                            <td className="py-3 px-3 text-slate-600">
+                                                {new Date(job.created_at).toLocaleDateString('ja-JP', {
+                                                    year: 'numeric', month: '2-digit', day: '2-digit',
+                                                    hour: '2-digit', minute: '2-digit'
+                                                })}
+                                            </td>
+                                            <td className="py-3 px-3">
+                                                <span className={`text-xs px-2 py-1 rounded-full font-bold ${formatRelativeTime(job.created_at) === '直近' ? 'bg-green-100 text-green-700' :
+                                                        formatRelativeTime(job.created_at).includes('日') ? 'bg-yellow-100 text-yellow-700' :
+                                                            'bg-slate-100 text-slate-600'
+                                                    }`}>
+                                                    {formatRelativeTime(job.created_at)}
+                                                </span>
+                                            </td>
+                                            <td className="py-3 px-3">
+                                                <span className={`text-xs px-2 py-1 rounded-full font-bold ${job.status === 'completed' ? 'bg-green-100 text-green-700' :
+                                                        job.status === 'processing' ? 'bg-blue-100 text-blue-700' :
+                                                            job.status === 'failed' ? 'bg-red-100 text-red-700' :
+                                                                'bg-slate-100 text-slate-600'
+                                                    }`}>
+                                                    {job.status === 'completed' ? '完了' :
+                                                        job.status === 'processing' ? '処理中' :
+                                                            job.status === 'failed' ? '失敗' : job.status}
+                                                </span>
+                                            </td>
+                                            <td className="py-3 px-3 text-slate-600">{job.collected_count || '-'}</td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
                 {/* Tabs */}
                 <div className="flex gap-1 bg-slate-200/50 p-1 rounded-xl w-fit">
-                    <button onClick={() => setActiveTab('inbox')} className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'inbox' ? 'bg-white shadow-sm text-primary' : 'text-slate-500 hover:text-slate-700'}`}>
+                    <button onClick={() => setActiveTab('inbox')} className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'inbox' ? 'bg-white shadow-sm text-orange-600' : 'text-slate-500 hover:text-slate-700'}`}>
                         承認待ち ({candidates.length})
                     </button>
-                    <button onClick={() => setActiveTab('live')} className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'live' ? 'bg-white shadow-sm text-primary' : 'text-slate-500 hover:text-slate-700'}`}>
+                    <button onClick={() => setActiveTab('live')} className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'live' ? 'bg-white shadow-sm text-orange-600' : 'text-slate-500 hover:text-slate-700'}`}>
                         本番データ ({liveData.length})
                     </button>
-                    <button onClick={() => setActiveTab('reports')} className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'reports' ? 'bg-white shadow-sm text-primary' : 'text-slate-500 hover:text-slate-700'}`}>
+                    <button onClick={() => setActiveTab('reports')} className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'reports' ? 'bg-white shadow-sm text-orange-600' : 'text-slate-500 hover:text-slate-700'}`}>
                         不備報告 ({reports.length})
                     </button>
                 </div>
