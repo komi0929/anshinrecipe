@@ -32,6 +32,9 @@ export default function AdminPage() {
     const [announcementLoading, setAnnouncementLoading] = useState(false);
     const [newAnnouncement, setNewAnnouncement] = useState({ title: '', content: '', emoji: '📢' });
 
+    // Map (Anshin Map) stats for unified dashboard
+    const [mapStats, setMapStats] = useState(null);
+
     useEffect(() => {
         // セッショントークンの有効性をサーバーサイドで検証
         const validateSession = async () => {
@@ -113,6 +116,22 @@ export default function AdminPage() {
             .select('*, recipe:recipes!recipe_id(id,title), user:profiles!user_id(username)')
             .order('created_at', { ascending: false }).limit(10);
         setActivity(acts || []);
+
+        // Load Map (Anshin Map) stats
+        const [pendingCandidates, pendingReports, totalShops, todayReviews] = await Promise.all([
+            supabase.from('candidate_restaurants').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+            supabase.from('restaurant_reports').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+            supabase.from('restaurants').select('id', { count: 'exact', head: true }),
+            supabase.from('reviews').select('id', { count: 'exact', head: true }).gte('created_at', new Date().toISOString().split('T')[0])
+        ]);
+
+        setMapStats({
+            pendingCandidates: pendingCandidates.count || 0,
+            pendingReports: pendingReports.count || 0,
+            totalShops: totalShops.count || 0,
+            todayReviews: todayReviews.count || 0
+        });
+
         setLoading(false);
     };
 
@@ -357,7 +376,8 @@ export default function AdminPage() {
             <div style={{ display: 'flex', gap: '0', background: '#161b22', borderBottom: '1px solid #30363d' }}>
                 {[
                     { id: 'dashboard', label: '📊 ダッシュボード' },
-                    { id: 'content', label: '📋 コンテンツ管理' },
+                    { id: 'map', label: '🗺️ あんしんマップ' },
+                    { id: 'content', label: '📝 コンテンツ管理' },
                     { id: 'users', label: '👥 ユーザー管理' },
                     { id: 'announcements', label: '📢 お知らせ管理' }
                 ].map(tab => (
@@ -379,6 +399,63 @@ export default function AdminPage() {
                     </button>
                 ))}
             </div>
+
+            {/* Map (Anshin Map) Tab */}
+            {activeTab === 'map' && (
+                <div style={{ padding: '24px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
+                        {/* Pending Candidates */}
+                        <a href="/admin/data-collection" style={{ textDecoration: 'none' }}>
+                            <div style={{ ...css.kpi, cursor: 'pointer', transition: 'border-color 0.2s', border: (mapStats?.pendingCandidates || 0) > 0 ? '2px solid #f97316' : '1px solid #30363d' }}>
+                                <div style={css.kpiLabel}>承認待ち候補</div>
+                                <div style={{ ...css.kpiVal, color: (mapStats?.pendingCandidates || 0) > 0 ? '#f97316' : '#fff' }}>
+                                    {mapStats?.pendingCandidates ?? '-'}
+                                </div>
+                                <div style={{ fontSize: '11px', color: '#8b949e' }}>→ 承認画面へ</div>
+                            </div>
+                        </a>
+                        {/* Pending Reports */}
+                        <a href="/admin/data-collection" style={{ textDecoration: 'none' }}>
+                            <div style={{ ...css.kpi, cursor: 'pointer', transition: 'border-color 0.2s', border: (mapStats?.pendingReports || 0) > 0 ? '2px solid #ef4444' : '1px solid #30363d' }}>
+                                <div style={css.kpiLabel}>未解決報告</div>
+                                <div style={{ ...css.kpiVal, color: (mapStats?.pendingReports || 0) > 0 ? '#ef4444' : '#fff' }}>
+                                    {mapStats?.pendingReports ?? '-'}
+                                </div>
+                                <div style={{ fontSize: '11px', color: '#8b949e' }}>→ 報告一覧へ</div>
+                            </div>
+                        </a>
+                        {/* Total Shops */}
+                        <a href="/admin/shops" style={{ textDecoration: 'none' }}>
+                            <div style={{ ...css.kpi, cursor: 'pointer' }}>
+                                <div style={css.kpiLabel}>登録店舗数</div>
+                                <div style={css.kpiVal}>{mapStats?.totalShops ?? '-'}</div>
+                                <div style={{ fontSize: '11px', color: '#8b949e' }}>→ 店舗一覧へ</div>
+                            </div>
+                        </a>
+                        {/* Today Reviews */}
+                        <div style={css.kpi}>
+                            <div style={css.kpiLabel}>今日の口コミ</div>
+                            <div style={{ ...css.kpiVal, color: (mapStats?.todayReviews || 0) > 0 ? '#10b981' : '#fff' }}>
+                                {mapStats?.todayReviews ?? '-'}
+                            </div>
+                            <div style={{ fontSize: '11px', color: '#8b949e' }}>ユーザー投稿</div>
+                        </div>
+                    </div>
+
+                    {/* Quick Actions */}
+                    <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                        <a href="/admin/data-collection" style={{ ...css.btn, textDecoration: 'none', background: '#f97316' }}>
+                            🔍 データ収集・承認
+                        </a>
+                        <a href="/admin/shops" style={{ ...css.btn, textDecoration: 'none' }}>
+                            🏪 店舗管理
+                        </a>
+                        <a href="/map" target="_blank" rel="noopener" style={{ ...css.btn, textDecoration: 'none' }}>
+                            🗺️ マップ確認（本番）
+                        </a>
+                    </div>
+                </div>
+            )}
 
             {/* Content Management Tab */}
             {activeTab === 'content' && (

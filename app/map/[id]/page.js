@@ -3,9 +3,10 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useMapData } from '@/hooks/useMapData';
-import { ArrowLeft, MapPin, Phone, Globe, Star, AlertTriangle, CheckCircle, HelpCircle, Instagram, ShieldCheck, Plus } from 'lucide-react';
+import { ArrowLeft, MapPin, Phone, Globe, Star, AlertTriangle, CheckCircle, HelpCircle, Instagram, ShieldCheck, Plus, Flag } from 'lucide-react';
 import { MenuList } from '@/components/map/MenuList';
 import { ReviewModal } from '@/components/map/ReviewModal';
+import { ReportModal } from '@/components/map/ReportModal';
 import { ReviewList } from '@/components/map/ReviewList';
 import { MenuGallery } from '@/components/map/MenuGallery';
 import { SafetyVoiceCard } from '@/components/map/SafetyVoiceCard';
@@ -19,6 +20,8 @@ export default function RestaurantDetailPage() {
     const [restaurant, setRestaurant] = useState(null);
     const [activeTab, setActiveTab] = useState('menu'); // 'menu', 'reviews', 'gallery'
     const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+    const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+    const [menuToReport, setMenuToReport] = useState(null); // For menu-level reports
 
     useEffect(() => {
         if (!loading && restaurants.length > 0) {
@@ -238,7 +241,10 @@ export default function RestaurantDetailPage() {
                     <div className="min-h-[300px]">
                         {activeTab === 'menu' && (
                             <>
-                                <MenuList menus={restaurant.menus} />
+                                <MenuList
+                                    menus={restaurant.menus}
+                                    onReportMenu={(menu) => setMenuToReport(menu)}
+                                />
                                 <SafetyVoiceCard features={restaurant.features} />
                             </>
                         )}
@@ -275,6 +281,39 @@ export default function RestaurantDetailPage() {
                 isOpen={isReviewModalOpen}
                 onClose={() => setIsReviewModalOpen(false)}
             />
+
+            {/* Report Modal - Shop Level */}
+            <ReportModal
+                type="shop"
+                restaurantId={restaurant.id}
+                restaurantName={restaurant.name}
+                isOpen={isReportModalOpen}
+                onClose={() => setIsReportModalOpen(false)}
+            />
+
+            {/* Report Modal - Menu Level */}
+            {menuToReport && (
+                <ReportModal
+                    type="menu"
+                    restaurantId={restaurant.id}
+                    menuId={menuToReport.id}
+                    restaurantName={restaurant.name}
+                    menuName={menuToReport.name}
+                    isOpen={!!menuToReport}
+                    onClose={() => setMenuToReport(null)}
+                />
+            )}
+
+            {/* Report Button - Bottom of page */}
+            <div className="fixed bottom-28 left-6 z-30">
+                <button
+                    onClick={() => setIsReportModalOpen(true)}
+                    className="bg-slate-600 hover:bg-slate-700 text-white p-3 rounded-full shadow-lg transition-all hover:scale-105 active:scale-95 flex items-center justify-center"
+                    title="問題を報告"
+                >
+                    <Flag size={20} />
+                </button>
+            </div>
         </div>
     );
 }

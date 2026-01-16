@@ -1,10 +1,10 @@
 'use client';
 
 import React from 'react';
-import { Star, ChevronRight } from 'lucide-react';
+import { Star, ChevronRight, Flag } from 'lucide-react';
 import './MenuList.css';
 
-export const MenuList = ({ menus }) => {
+export const MenuList = ({ menus, onReportMenu }) => {
     if (!menus || menus.length === 0) return null;
 
     return (
@@ -40,7 +40,19 @@ export const MenuList = ({ menus }) => {
                         {/* Content */}
                         <div className="p-4 flex flex-col flex-1">
                             <div className="flex justify-between items-start mb-1">
-                                <h3 className="font-bold text-slate-800 text-base leading-tight line-clamp-2 pr-1">{menu.name}</h3>
+                                <h3 className="font-bold text-slate-800 text-base leading-tight line-clamp-2 pr-1 flex-1">{menu.name}</h3>
+                                {onReportMenu && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onReportMenu(menu);
+                                        }}
+                                        className="p-1.5 hover:bg-slate-100 rounded-full transition-colors shrink-0"
+                                        title="問題を報告"
+                                    >
+                                        <Flag size={14} className="text-slate-400 hover:text-rose-500" />
+                                    </button>
+                                )}
                             </div>
                             <p className="text-[11px] text-slate-500 leading-relaxed line-clamp-2 mb-3 h-[32px]">{menu.description}</p>
 

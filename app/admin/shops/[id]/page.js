@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
-import { ArrowLeft, Save, Trash2, Plus, Image, MapPin, Phone, Globe, Instagram } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Plus, Image, MapPin, Phone, Globe, Instagram, AlertTriangle, CheckCircle } from 'lucide-react';
 
 export default function ShopDetailPage() {
     const params = useParams();
@@ -12,6 +12,7 @@ export default function ShopDetailPage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [menus, setMenus] = useState([]);
+    const [reports, setReports] = useState([]);
 
     useEffect(() => {
         loadShop();
@@ -35,8 +36,26 @@ export default function ShopDetailPage() {
                 .order('created_at', { ascending: true });
 
             setMenus(menuData || []);
+
+            // Load reports for this shop
+            const { data: reportData } = await supabase
+                .from('restaurant_reports')
+                .select('*')
+                .eq('restaurant_id', params.id)
+                .eq('status', 'pending')
+                .order('created_at', { ascending: false });
+
+            setReports(reportData || []);
         }
         setLoading(false);
+    };
+
+    const resolveReport = async (reportId) => {
+        await supabase
+            .from('restaurant_reports')
+            .update({ status: 'resolved' })
+            .eq('id', reportId);
+        setReports(reports.filter(r => r.id !== reportId));
     };
 
     const handleSave = async () => {
@@ -265,6 +284,45 @@ export default function ShopDetailPage() {
                         />
                     </div>
                 </div>
+
+                {/* Reports Section */}
+                {reports.length > 0 && (
+                    <div className="bg-rose-50 rounded-2xl p-6 shadow-sm border border-rose-100 mb-6">
+                        <div className="flex items-center gap-2 mb-4">
+                            <AlertTriangle size={20} className="text-rose-500" />
+                            <h2 className="text-sm font-bold text-rose-600">未解決の報告 ({reports.length}件)</h2>
+                        </div>
+                        <div className="space-y-3">
+                            {reports.map(report => (
+                                <div key={report.id} className="bg-white p-4 rounded-xl border border-rose-100">
+                                    <div className="flex items-start justify-between">
+                                        <div>
+                                            <span className="text-xs font-bold text-rose-500 uppercase tracking-wider">
+                                                {report.issue_type}
+                                            </span>
+                                            {report.menu_id && (
+                                                <span className="text-xs text-slate-400 ml-2">(メニュー報告)</span>
+                                            )}
+                                            {report.details && (
+                                                <p className="text-sm text-slate-600 mt-1">{report.details}</p>
+                                            )}
+                                            <p className="text-[10px] text-slate-400 mt-2">
+                                                {new Date(report.created_at).toLocaleDateString()}
+                                            </p>
+                                        </div>
+                                        <button
+                                            onClick={() => resolveReport(report.id)}
+                                            className="flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg hover:bg-emerald-100 transition-colors"
+                                        >
+                                            <CheckCircle size={14} />
+                                            解決済み
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 {/* Menus */}
                 <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
