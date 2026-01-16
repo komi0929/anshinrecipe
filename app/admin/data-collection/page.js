@@ -20,70 +20,41 @@ export default function DataCollectionAdminPage() {
     const [liveData, setLiveData] = useState([]);
     const [reports, setReports] = useState([]);
     const [editingItem, setEditingItem] = useState(null);
+    const [showOnlyAllergyRelevant, setShowOnlyAllergyRelevant] = useState(true);
 
-    // Prefecture to Municipality mapping
-    const PREFECTURE_MUNICIPALITIES = {
-        '福岡県': [
-            { code: '40130', name: '福岡市中央区' },
-            { code: '40131', name: '福岡市博多区' },
-            { code: '40132', name: '福岡市東区' },
-            { code: '40133', name: '福岡市南区' },
-            { code: '40134', name: '福岡市西区' },
-            { code: '40135', name: '福岡市城南区' },
-            { code: '40136', name: '福岡市早良区' },
-            { code: '40202', name: '北九州市小倉北区' },
-            { code: '40203', name: '北九州市小倉南区' },
-            { code: '40204', name: '北九州市八幡東区' },
-            { code: '40205', name: '北九州市八幡西区' },
-            { code: '40206', name: '北九州市戸畑区' },
-            { code: '40207', name: '北九州市門司区' },
-            { code: '40208', name: '北九州市若松区' },
-            { code: '40230', name: '久留米市' },
-        ],
-        '東京都': [
-            { code: '13101', name: '千代田区' },
-            { code: '13102', name: '中央区' },
-            { code: '13103', name: '港区' },
-            { code: '13104', name: '新宿区' },
-            { code: '13105', name: '文京区' },
-            { code: '13106', name: '台東区' },
-            { code: '13107', name: '墨田区' },
-            { code: '13108', name: '江東区' },
-            { code: '13109', name: '品川区' },
-            { code: '13110', name: '目黒区' },
-            { code: '13111', name: '大田区' },
-            { code: '13112', name: '世田谷区' },
-            { code: '13113', name: '渋谷区' },
-            { code: '13114', name: '中野区' },
-            { code: '13115', name: '杉並区' },
-            { code: '13116', name: '豊島区' },
-            { code: '13117', name: '北区' },
-            { code: '13118', name: '荒川区' },
-            { code: '13119', name: '板橋区' },
-            { code: '13120', name: '練馬区' },
-            { code: '13121', name: '足立区' },
-            { code: '13122', name: '葛飾区' },
-            { code: '13123', name: '江戸川区' },
-        ],
-        '大阪府': [
-            { code: '27102', name: '大阪市北区' },
-            { code: '27103', name: '大阪市都島区' },
-            { code: '27104', name: '大阪市福島区' },
-            { code: '27106', name: '大阪市中央区' },
-            { code: '27107', name: '大阪市西区' },
-            { code: '27108', name: '大阪市港区' },
-            { code: '27109', name: '大阪市大正区' },
-            { code: '27111', name: '大阪市浪速区' },
-            { code: '27113', name: '大阪市天王寺区' },
-            { code: '27119', name: '梅田・難波エリア' },
-        ],
+    // All 47 prefectures of Japan
+    const ALL_PREFECTURES = [
+        '北海道', '青森県', '岩手県', '宮城県', '秋田県', '山形県', '福島県',
+        '茨城県', '栃木県', '群馬県', '埼玉県', '千葉県', '東京都', '神奈川県',
+        '新潟県', '富山県', '石川県', '福井県', '山梨県', '長野県', '岐阜県',
+        '静岡県', '愛知県', '三重県', '滋賀県', '京都府', '大阪府', '兵庫県',
+        '奈良県', '和歌山県', '鳥取県', '島根県', '岡山県', '広島県', '山口県',
+        '徳島県', '香川県', '愛媛県', '高知県', '福岡県', '佐賀県', '長崎県',
+        '熊本県', '大分県', '宮崎県', '鹿児島県', '沖縄県'
+    ];
+
+    // Municipality input - user types freely or selects from suggestions
+    const [municipalityInput, setMunicipalityInput] = useState('');
+
+    // Common municipalities for quick selection (major cities)
+    const MAJOR_CITIES = {
+        '北海道': ['札幌市', '函館市', '旭川市', '小樽市'],
+        '宮城県': ['仙台市青葉区', '仙台市宮城野区', '仙台市太白区'],
+        '埼玉県': ['さいたま市大宮区', 'さいたま市浦和区', '川越市', '越谷市'],
+        '千葉県': ['千葉市中央区', '船橋市', '柏市', '松戸市'],
+        '東京都': ['千代田区', '中央区', '港区', '新宿区', '渋谷区', '豊島区', '世田谷区', '品川区', '目黒区', '大田区', '杉並区', '練馬区', '足立区', '江戸川区', '葛飾区', '板橋区', '中野区', '北区', '荒川区', '台東区', '墨田区', '江東区', '文京区', '八王子市', '町田市', '立川市', '武蔵野市', '三鷹市'],
+        '神奈川県': ['横浜市中区', '横浜市西区', '横浜市神奈川区', '川崎市川崎区', '川崎市中原区', '相模原市', '藤沢市', '横須賀市'],
+        '愛知県': ['名古屋市中区', '名古屋市中村区', '名古屋市東区', '名古屋市千種区', '名古屋市昭和区', '名古屋市瑞穂区', '豊田市', '岡崎市'],
+        '京都府': ['京都市中京区', '京都市下京区', '京都市東山区', '京都市左京区', '京都市北区', '京都市上京区'],
+        '大阪府': ['大阪市北区', '大阪市中央区', '大阪市浪速区', '大阪市天王寺区', '大阪市西区', '大阪市福島区', '堺市', '東大阪市', '豊中市', '吹田市'],
+        '兵庫県': ['神戸市中央区', '神戸市東灘区', '神戸市灘区', '姫路市', '西宮市', '尼崎市'],
+        '広島県': ['広島市中区', '広島市南区', '広島市西区', '福山市', '呉市'],
+        '福岡県': ['福岡市中央区', '福岡市博多区', '福岡市東区', '福岡市南区', '福岡市西区', '福岡市城南区', '福岡市早良区', '北九州市小倉北区', '北九州市小倉南区', '北九州市八幡東区', '北九州市八幡西区', '久留米市', '飯塚市', '大牟田市'],
+        '沖縄県': ['那覇市', '浦添市', '宜野湾市', '沖縄市', '名護市']
     };
 
-    // Update municipalities when prefecture changes
-    useEffect(() => {
-        setMunicipalities(PREFECTURE_MUNICIPALITIES[selectedPrefecture] || []);
-        setSelectedMunicipality('');
-    }, [selectedPrefecture]);
+    // Update municipality suggestions when prefecture changes
+    const municipalitySuggestions = MAJOR_CITIES[selectedPrefecture] || [];
 
     // Fetch collection history
     useEffect(() => {
@@ -302,25 +273,31 @@ export default function DataCollectionAdminPage() {
                                 onChange={(e) => setSelectedPrefecture(e.target.value)}
                                 className="w-full h-12 rounded-xl border-slate-200 bg-slate-50 font-bold px-4 outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
                             >
-                                <option value="福岡県">福岡県</option>
-                                <option value="東京都">東京都</option>
-                                <option value="大阪府">大阪府</option>
+                                {ALL_PREFECTURES.map(pref => (
+                                    <option key={pref} value={pref}>{pref}</option>
+                                ))}
                             </select>
                         </div>
 
                         {/* Municipality */}
                         <div>
                             <label className="block text-xs font-bold text-slate-500 mb-2">市区町村（任意）</label>
-                            <select
-                                value={selectedMunicipality}
-                                onChange={(e) => setSelectedMunicipality(e.target.value)}
-                                className="w-full h-12 rounded-xl border-slate-200 bg-slate-50 font-bold px-4 outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
-                            >
-                                <option value="">全域（県単位）</option>
-                                {municipalities.map(m => (
-                                    <option key={m.code} value={m.name}>{m.name}</option>
-                                ))}
-                            </select>
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    list="municipality-suggestions"
+                                    value={selectedMunicipality}
+                                    onChange={(e) => setSelectedMunicipality(e.target.value)}
+                                    placeholder="例: 渋谷区"
+                                    className="w-full h-12 rounded-xl border-slate-200 bg-slate-50 font-bold px-4 outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
+                                />
+                                <datalist id="municipality-suggestions">
+                                    <option value="全域（県単位）" />
+                                    {municipalitySuggestions.map(m => (
+                                        <option key={m} value={m} />
+                                    ))}
+                                </datalist>
+                            </div>
                         </div>
 
                         {/* Collect Button */}
@@ -423,20 +400,50 @@ export default function DataCollectionAdminPage() {
                 {/* Content Area */}
                 {activeTab === 'inbox' && (
                     <div className="space-y-4">
-                        {candidates.length === 0 ? (
-                            <div className="text-center py-20 text-slate-400 bg-white rounded-2xl border-2 border-dashed border-slate-100">
-                                承認待ちのデータはありません。
-                            </div>
-                        ) : (
-                            candidates.map((shop, i) => (
+                        {/* Filter Toggle */}
+                        <div className="flex justify-end items-center gap-2 mb-2">
+                            <label className="flex items-center gap-2 cursor-pointer bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors">
+                                <input
+                                    type="checkbox"
+                                    checked={showOnlyAllergyRelevant}
+                                    onChange={(e) => setShowOnlyAllergyRelevant(e.target.checked)}
+                                    className="w-4 h-4 rounded text-orange-500 focus:ring-orange-500"
+                                />
+                                <span className="text-sm font-bold text-slate-700">アレルギー情報ありのみ表示</span>
+                            </label>
+                        </div>
+
+                        {(() => {
+                            // Filter logic
+                            const validCandidates = candidates.filter(c => {
+                                if (!showOnlyAllergyRelevant) return true;
+                                // Check if has allergy info (removable or contained) or reliable source
+                                const hasMenuAllergies = c.menus?.some(m =>
+                                    (m.allergens_contained && m.allergens_contained.length > 0) ||
+                                    (m.allergens_removable && m.allergens_removable.length > 0) ||
+                                    (m.supportedAllergens && m.supportedAllergens.length > 0)
+                                );
+                                const hasFeatures = c.features?.allergy && Object.values(c.features.allergy).some(v => v);
+                                return hasMenuAllergies || hasFeatures;
+                            });
+
+                            if (validCandidates.length === 0) {
+                                return (
+                                    <div className="text-center py-20 text-slate-400 bg-white rounded-2xl border-2 border-dashed border-slate-100">
+                                        {candidates.length > 0 ? '条件に一致する候補はありません（全表示に切り替えてみてください）' : '承認待ちのデータはありません。'}
+                                    </div>
+                                );
+                            }
+
+                            return validCandidates.map((shop, i) => (
                                 <CandidateCard
                                     key={shop.id || i}
                                     data={shop}
                                     onApprove={(options) => approveCandidate(shop.id, { ...options, shopName: shop.shopName })}
                                     onReject={() => rejectCandidate(shop.id)}
                                 />
-                            ))
-                        )}
+                            ));
+                        })()}
                     </div>
                 )}
 
