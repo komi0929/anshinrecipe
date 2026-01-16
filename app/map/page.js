@@ -8,6 +8,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useProfile } from '@/hooks/useProfile';
 import { LoginBenefitCard } from '@/components/map/LoginBenefitCard';
 import { ReviewModal } from '@/components/map/ReviewModal';
+import { RequestCollectionModal } from '@/components/map/RequestCollectionModal';
 import './MapPage.css';
 
 // Wrapper for MapContainer to pass restaurants from hook
@@ -85,10 +86,10 @@ function MapPageContent() {
     const [hasAutoSet, setHasAutoSet] = useState(false);
     const router = useRouter();
     const searchParams = useSearchParams();
-
     // Review Post Flow States
     const [isSelectModalOpen, setIsSelectModalOpen] = useState(false);
     const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+    const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
     const [reviewTargetRestaurant, setReviewTargetRestaurant] = useState(null);
 
     // Check for ?action=post
@@ -263,6 +264,15 @@ function MapPageContent() {
                                 <button onClick={() => { setSearchQuery(''); setSelectedAllergens([]) }} className="reset-btn">
                                     条件をリセット
                                 </button>
+                                <div className="mt-8 pt-6 border-t border-slate-100 w-full">
+                                    <p className="text-xs text-slate-400 mb-2">知っているお店が見つかりませんか？</p>
+                                    <button
+                                        onClick={() => setIsRequestModalOpen(true)}
+                                        className="text-orange-500 text-sm font-bold underline hover:text-orange-600"
+                                    >
+                                        お店の調査をリクエストする
+                                    </button>
+                                </div>
                             </div>
                         ) : (
                             <>
@@ -310,6 +320,11 @@ function MapPageContent() {
                 isOpen={isReviewModalOpen}
                 restaurantId={reviewTargetRestaurant?.id}
                 onClose={handleReviewClose}
+            />
+
+            <RequestCollectionModal
+                isOpen={isRequestModalOpen}
+                onClose={() => setIsRequestModalOpen(false)}
             />
         </div>
     );
