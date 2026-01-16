@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
 
 export default function AdminPage() {
@@ -425,13 +426,13 @@ export default function AdminPage() {
                             </div>
                         </a>
                         {/* Total Shops */}
-                        <a href="/admin/shops" style={{ textDecoration: 'none' }}>
+                        <Link href="/admin/shops" style={{ textDecoration: 'none' }}>
                             <div style={{ ...css.kpi, cursor: 'pointer' }}>
                                 <div style={css.kpiLabel}>登録店舗数</div>
                                 <div style={css.kpiVal}>{mapStats?.totalShops ?? '-'}</div>
                                 <div style={{ fontSize: '11px', color: '#8b949e' }}>→ 店舗一覧へ</div>
                             </div>
-                        </a>
+                        </Link>
                         {/* Today Reviews */}
                         <div style={css.kpi}>
                             <div style={css.kpiLabel}>今日の口コミ</div>
@@ -447,9 +448,9 @@ export default function AdminPage() {
                         <a href="/admin/data-collection" style={{ ...css.btn, textDecoration: 'none', background: '#f97316' }}>
                             🔍 データ収集・承認
                         </a>
-                        <a href="/admin/shops" style={{ ...css.btn, textDecoration: 'none' }}>
+                        <Link href="/admin/shops" style={{ ...css.btn, textDecoration: 'none' }}>
                             🏪 店舗管理
-                        </a>
+                        </Link>
                         <a href="/map" target="_blank" rel="noopener" style={{ ...css.btn, textDecoration: 'none' }}>
                             🗺️ マップ確認（本番）
                         </a>

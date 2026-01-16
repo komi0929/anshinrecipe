@@ -1,0 +1,29 @@
+
+ｧｪ STARTING DATA COLLECTION TEST ｧｪ
+Area: 遖丞ｲ｡蟶ょ忽螟壼玄
+Target: maps
+----------------------------------------
+[Phase 1] Collecting Data...
+[GoogleMaps] Searching for allergy-friendly places in 遖丞ｲ｡蟶ょ忽螟壼玄...
+(node:18832) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/soyst/OneDrive/%E3%83%87%E3%82%B9%E3%82%AF%E3%83%88%E3%83%83%E3%83%97/%E3%81%82%E3%82%93%E3%81%97%E3%82%93%E3%83%AC%E3%82%B7%E3%83%94/lib/collection/collectors/google_maps.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\soyst\OneDrive\繝・せ繧ｯ繝医ャ繝予縺ゅｓ縺励ｓ繝ｬ繧ｷ繝能package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[GoogleMaps] Query "Allergy friendly restaurants in 遖丞ｲ｡蟶ょ忽螟壼玄" returned 20 results
+[GoogleMaps] Query "Gluten free restaurants in 遖丞ｲ｡蟶ょ忽螟壼玄" returned 20 results
+[GoogleMaps] Query "繧｢繝ｬ繝ｫ繧ｮ繝ｼ蟇ｾ蠢・繧ｫ繝輔ぉ 遖丞ｲ｡蟶ょ忽螟壼玄" returned 20 results
+[GoogleMaps] Query "繧ｰ繝ｫ繝・Φ繝輔Μ繝ｼ 遖丞ｲ｡蟶ょ忽螟壼玄" returned 3 results
+[GoogleMaps] Query "蜊ｵ荳堺ｽｿ逕ｨ 繧ｱ繝ｼ繧ｭ螻・遖丞ｲ｡蟶ょ忽螟壼玄" returned 20 results
+[GoogleMaps] Query "荵ｳ陬ｽ蜩∽ｸ堺ｽｿ逕ｨ 繧ｹ繧､繝ｼ繝・遖丞ｲ｡蟶ょ忽螟壼玄" returned 20 results
+[GoogleMaps] Query "繧｢繝ｬ繝ｫ繧ｮ繝ｼ蟇ｾ蠢・繝・う繧ｯ繧｢繧ｦ繝・遖丞ｲ｡蟶ょ忽螟壼玄" returned 20 results
+[GoogleMaps] Query "邀ｳ邊峨せ繧､繝ｼ繝・蟆る摩蠎・遖丞ｲ｡蟶ょ忽螟壼玄" returned 12 results
+ -> Google Maps found: 1 items
+
+[Phase 2] Simulating Pipeline Processing...
+ -> Total Input: 1
+ -> Passed Filter: 0
+ -> Filtered Out: 1
+
+[Phase 3] Generating Report...
+笨・Test Complete!
+Report: C:\Users\soyst\OneDrive\繝・せ繧ｯ繝医ャ繝予縺ゅｓ縺励ｓ繝ｬ繧ｷ繝能test_results\test_report_2026-01-15T23-45-11-079Z.csv
