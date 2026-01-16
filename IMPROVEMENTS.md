@@ -1,5 +1,31 @@
 # 改善ログ
 
+## 2026-01-17 - 管理画面・マップUI機能の完全版リリース＆画像投稿対応
+
+**ステータス**: 🚀 本番反映済み
+
+**変更内容**:
+- **管理画面 (Admin Dashboard) の強化**:
+  - `CandidateInspectionModal` の実装: 候補データの詳細閲覧・承認・却下フローを確立。
+  - データ収集ロジック (`miner.js`, `scout.js`) の本番適用。
+- **あんしんマップ (Map) UI/UX改善**:
+  - `MenuList`, `MenuGallery` のデザイン刷新。
+  - `SafetyVoiceCard` (ユーザーの声) の表示改善。
+- **画像投稿インフラの整備**:
+  - `tried_reports` (つくってみたレポート) 用のStorageバケット `recipe-images` のポリシー設定。
+  - `TriedReportForm` での画像アップロード機能の疎通確認。
+
+**関連ファイル**:
+- `components/admin/CandidateInspectionModal.jsx`
+- `app/admin/data-collection/page.js`
+- `components/map/MenuList.jsx`
+- `data/migrations/create_storage_bucket.sql`
+
+**確認ポイント**:
+- [x] 管理画面で候補データの承認・却下ができること
+- [x] マップ画面でメニューリストが崩れずに表示されること
+- [x] 画像付きレポートが投稿できること（Storage権限設定済み）
+
 ## 2026-01-14 - 外食マップ：アレルギー表示の高級化・視認性改善
 
 **ステータス**: ✅ 実装完了
