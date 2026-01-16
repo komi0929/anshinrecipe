@@ -96,11 +96,11 @@ export async function POST(request) {
                 // We need to INVERT the logic: if supportedAllergens says "小麦" (safe from wheat),
                 // then allergens_contained should NOT include wheat.
 
-                // All major allergens
-                const ALL_ALLERGENS = ['小麦', '卵', '乳', 'そば', '落花生', 'えび', 'かに', 'ナッツ'];
+                // All major allergens - STRICTLY LIMITED TO 4 TYPES per USER RULE
+                const ALL_ALLERGENS = ['小麦', '卵', '乳', 'ナッツ'];
 
                 // supportedAllergens = allergens this menu is SAFE FROM (removed)
-                const safeFrom = m.supportedAllergens || [];
+                const safeFrom = m.supportedAllergens || m.safe_from_allergens || [];
 
                 // allergens_contained = allergens this menu CONTAINS (opposite of supportedAllergens)
                 // If menu is safe from wheat, it does NOT contain wheat
@@ -111,6 +111,10 @@ export async function POST(request) {
                     name: m.name,
                     description: m.description || '',
                     price: m.price || 0,
+                    // AUDIT FIX: These fields were previously MISSING, causing all images to be lost
+                    image_url: m.image_url || m.source_image_url || null,
+                    source_image_url: m.source_image_url || null,
+                    evidence_url: m.evidence_url || null,
                     // allergens column (for frontend filtering) = what's contained
                     allergens: contained,
                     // Granular columns
@@ -120,8 +124,8 @@ export async function POST(request) {
                     safe_from_allergens: safeFrom,
 
                     tags: [...(m.tags || []), ...(contained.length === 0 ? ['allergen_free'] : [])],
-                    child_status: 'checking',
-                    child_details: { note: m.description }
+                    child_status: m.child_status || 'checking',
+                    child_details: m.child_details || { note: m.description }
                 };
             });
 
@@ -140,7 +144,7 @@ export async function POST(request) {
             menusToInsert.forEach(m => {
                 const contained = m.allergens_contained || [];
                 const removable = m.allergens_removable || [];
-                const allMajor = ['wheat', 'egg', 'milk', 'buckwheat', 'peanut', 'shrimp', 'crab'];
+                const allMajor = ['wheat', 'egg', 'milk', 'nut'];
 
                 allMajor.forEach(allergen => {
                     if (!compatibilityMap[allergen]) compatibilityMap[allergen] = { safe: false, removable: false };

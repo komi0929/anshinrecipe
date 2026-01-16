@@ -30,9 +30,17 @@ export const MenuList = ({ menus, onReportMenu }) => {
                                     <span className="text-xs">No Image</span>
                                 </div>
                             )}
+                        </div>
+                        {/* Tags / Badges */}
+                        <div className="absolute top-2 right-2 flex flex-col gap-1 items-end">
                             {menu.tags?.includes('8_major_free') && (
-                                <span className="absolute top-2 right-2 bg-emerald-500/90 backdrop-blur text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-sm">
-                                    特定原材料8種不使用
+                                <span className="bg-emerald-500/90 backdrop-blur text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-sm">
+                                    主要アレルゲン不使用
+                                </span>
+                            )}
+                            {menu.is_user_submitted && (
+                                <span className="bg-orange-500/90 backdrop-blur text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-sm flex items-center gap-1">
+                                    <span className="text-[8px]">👤</span> ユーザー投稿
                                 </span>
                             )}
                         </div>

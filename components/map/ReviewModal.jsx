@@ -143,7 +143,7 @@ export const ReviewModal = ({ restaurantId, isOpen, onClose }) => {
                 user_id: user?.id,
                 rating,
                 content,
-                price_paid: pricePaid ? parseInt(pricePaid) : null,
+                price_paid: pricePaid ? parseInt(pricePaid, 10) : null,
                 allergens_safe: safeAllergens,
                 visit_date: new Date().toISOString(),
                 review_type: reviewType,
@@ -305,6 +305,20 @@ export const ReviewModal = ({ restaurantId, isOpen, onClose }) => {
                                         autoFocus
                                     />
                                 )}
+                            </div>
+                        )}
+
+                        {/* Price Input (Always show for context) */}
+                        {reviewType === 'menu_post' && (
+                            <div className="mt-4 mb-2">
+                                <label className="section-label">支払った金額 (数値のみ)</label>
+                                <input
+                                    type="number"
+                                    className="menu-name-input w-full"
+                                    placeholder="例: 1200"
+                                    value={pricePaid}
+                                    onChange={(e) => setPricePaid(e.target.value)}
+                                />
                             </div>
                         )}
 

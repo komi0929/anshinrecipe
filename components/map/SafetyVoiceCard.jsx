@@ -6,21 +6,10 @@ import { Sparkles, MessageCircle, AlertCircle } from 'lucide-react';
 export const SafetyVoiceCard = ({ features }) => {
     // Generate summary based on features
     const points = [];
-    // Allergy 4 points
-    if (features?.allergy?.contamination === '◯') points.push("コンタミネーションへの配慮が見受けられます");
-    if (features?.allergy?.removal === '◯') points.push("除去食や対応メニューの相談が可能のようです");
-    if (features?.allergy?.chart === '◯') points.push("アレルギー一覧表の提供があるようです");
-    if (features?.allergy?.allergen_label === '◯') points.push("メニューにアレルギー表示があります");
-
-    // Kids 4 points
-    if (features?.kids?.kids_chair === '◯') points.push("子供用椅子の用意があるとの情報があります");
-    if (features?.kids?.stroller === '◯') points.push("ベビーカーでの入店が可能です");
-    if (features?.kids?.diaper === '◯') points.push("おむつ交換台やスペースがあるようです");
-    if (features?.kids?.baby_food === '◯') points.push("離乳食の持ち込みが可能です");
-
-    // Facility: Parking
-    if (features?.parking === '◯' || features?.parking === true) points.push("🅿️ 駐車場があります");
-    if (features?.wheelchair_accessible === '◯' || features?.wheelchair_accessible === true) points.push("♿ バリアフリー対応です");
+    // AI Voice logic should focus on QUALITATIVE insights from reviews/text, not simple boolean flags.
+    // Since we only have boolean flags which are already displayed in the Grid below,
+    // we remove this redundant display to avoid clutter.
+    // Future: Add points.push(...) only when we have analyzed TEXT summary from reviews.
 
     if (points.length === 0) return null;
 

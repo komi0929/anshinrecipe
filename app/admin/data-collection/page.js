@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { MapPin, Play, Database, CheckCircle, AlertCircle, Loader2, ArrowRight, FileText, Globe, Instagram, Star, Edit3, Phone, CheckSquare, Square, ShieldCheck } from 'lucide-react';
+import { MapPin, Play, Database, CheckCircle, AlertCircle, Loader2, ArrowRight, FileText, Globe, Instagram, Star, Edit3, Phone, CheckSquare, Square, ShieldCheck, Eye, Search } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { supabase } from '@/lib/supabaseClient';
+import { CandidateInspectionModal } from '@/components/admin/CandidateInspectionModal';
 
 export default function DataCollectionAdminPage() {
     const [selectedPrefecture, setSelectedPrefecture] = useState('福岡県');
@@ -20,6 +21,7 @@ export default function DataCollectionAdminPage() {
     const [liveData, setLiveData] = useState([]);
     const [reports, setReports] = useState([]);
     const [editingItem, setEditingItem] = useState(null);
+    const [inspectingCandidate, setInspectingCandidate] = useState(null); // Modal State
     const [showOnlyAllergyRelevant, setShowOnlyAllergyRelevant] = useState(true);
 
     // All 47 prefectures of Japan
@@ -439,13 +441,28 @@ export default function DataCollectionAdminPage() {
                                 <CandidateCard
                                     key={shop.id || i}
                                     data={shop}
-                                    onApprove={(options) => approveCandidate(shop.id, { ...options, shopName: shop.shopName })}
-                                    onReject={() => rejectCandidate(shop.id)}
+                                    onInspect={() => setInspectingCandidate(shop)}
+                                // onApprove/Reject handles are now passed to modal, but we keep them here if needed for inline actions (optional)
                                 />
                             ));
                         })()}
                     </div>
                 )}
+
+                {/* INSPECTION MODAL */}
+                <CandidateInspectionModal
+                    candidate={inspectingCandidate}
+                    isOpen={!!inspectingCandidate}
+                    onClose={() => setInspectingCandidate(null)}
+                    onApprove={async (options) => {
+                        await approveCandidate(inspectingCandidate.id, { ...options, shopName: inspectingCandidate.shopName });
+                        setInspectingCandidate(null);
+                    }}
+                    onReject={async () => {
+                        await rejectCandidate(inspectingCandidate.id);
+                        setInspectingCandidate(null);
+                    }}
+                />
 
                 {activeTab === 'live' && (
                     <div className="space-y-4">
@@ -506,586 +523,71 @@ export default function DataCollectionAdminPage() {
 }
 
 
-function CandidateCard({ data, onApprove, onReject }) {
-    const [isEditing, setIsEditing] = useState(false);
-    const [isEnriching, setIsEnriching] = useState(false);
-
-    // Standard Definitions
-    const ALLERGEN_LABELS = { wheat: '小麦', egg: '卵', milk: '乳', buckwheat: 'そば', peanut: '落花生', shrimp: 'えび', crab: 'かに' };
-    const ALLERGEN_KEYS = Object.keys(ALLERGEN_LABELS);
-
-    const FEATURE_LABELS = {
-        child: {
-            kids_menu: 'お子様メニュー',
-            kids_chair: 'キッズチェア',
-            stroller_access: 'ベビーカー入店',
-            diaper_change: 'おむつ交換台'
-        },
-        allergy: {
-            allergen_table: 'アレルギー一覧表',
-            staff_trained: 'スタッフ講習受講',
-            kitchen_separation: '調理器具区分け',
-            contamination_policy: 'コンタミ対策公開'
-        }
-    };
-
-    const [editedData, setEditedData] = useState({
-        shopName: data.shopName,
-        address: data.address,
-        phone: data.phone,
-        website_url: data.website_url,
-        instagram_url: data.instagram_url,
-        menus: (data.menus || []).map(m => ({
-            ...m,
-            allergens_contained: m.allergens_contained || [],
-            allergens_removable: m.allergens_removable || [],
-            supportedAllergens: m.supportedAllergens || []
-        })),
-        features: data.features || { child: {}, allergy: {} },
-        metadata: data.metadata || {} // New field for extended metadata (hours, parking, etc)
-    });
-
-    const [selectedMenus, setSelectedMenus] = useState(data.menus.map((_, i) => i));
-    const [selectedImage, setSelectedImage] = useState(null);
-
-    const updateFeature = (category, key) => {
-        setEditedData(prev => {
-            const currentVal = prev.features?.[category]?.[key];
-            return {
-                ...prev,
-                features: {
-                    ...prev.features,
-                    [category]: {
-                        ...(prev.features?.[category] || {}),
-                        [key]: !currentVal
-                    }
-                }
-            };
-        });
-    };
-
-    // New: Handle Enrichment
-    const handleEnrich = async () => {
-        setIsEnriching(true);
-        try {
-            const res = await fetch('/api/admin/enrich', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    candidateId: data.id,
-                    shopName: editedData.shopName,
-                    address: editedData.address
-                })
-            });
-            const result = await res.json();
-            if (result.success && result.verifiedData) {
-                // Merge Data
-                const enriched = result.verifiedData;
-                setEditedData(prev => ({
-                    ...prev,
-                    features: {
-                        ...prev.features,
-                        parking: enriched.features.parking,
-                        payment: enriched.features.payment,
-                        accessibility: enriched.features.accessibility
-                    },
-                    metadata: {
-                        ...prev.metadata,
-                        opening_hours: enriched.metadata.opening_hours,
-                        national_phone: enriched.metadata.phone
-                    },
-                    website_url: enriched.metadata.website_url || prev.website_url
-                }));
-                alert('詳細情報を取得・更新しました！');
-            } else {
-                alert('情報の取得に失敗しました: ' + (result.error || 'Unknown error'));
-            }
-        } catch (e) {
-            console.error(e);
-            alert('エラーが発生しました');
-        } finally {
-            setIsEnriching(false);
-        }
-    };
-
+function CandidateCard({ data, onInspect }) {
     const isReliable = data.finalReliabilityScore >= 70;
-
-    // Extract images from metadata
     const meta = data.sources?.find(s => s.type === 'system_metadata')?.data || {};
     const images = meta.images || [];
+    const mainImage = images.length > 0 ? images[0].url : null;
+    const menuCount = data.menus?.length || 0;
 
-    const handleSaveEdits = async () => {
-        try {
-            const res = await fetch('/api/admin/candidates', {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    id: data.id,
-                    shop_name: editedData.shopName,
-                    address: editedData.address,
-                    phone: editedData.phone,
-                    website_url: editedData.website_url,
-                    instagram_url: editedData.instagram_url,
-                    menus: editedData.menus,
-                    features: editedData.features, // Save extended features
-                    metadata: editedData.metadata
-                })
-            });
-            if (res.ok) {
-                setIsEditing(false);
-            }
-        } catch (e) {
-            alert('保存に失敗しました');
-        }
-    };
-
-    const addMenu = () => {
-        setEditedData(prev => ({
-            ...prev,
-            menus: [...prev.menus, { name: '新メニュー', supportedAllergens: [], description: '', valueScore: 100 }]
-        }));
-        setSelectedMenus(prev => [...prev, editedData.menus.length]);
-    };
-
-    const removeMenu = (idx) => {
-        setEditedData(prev => ({
-            ...prev,
-            menus: prev.menus.filter((_, i) => i !== idx)
-        }));
-        setSelectedMenus(prev => prev.filter(i => i !== idx));
-    };
-
-    const updateMenu = (idx, field, value) => {
-        setEditedData(prev => {
-            const newMenus = [...prev.menus];
-            newMenus[idx] = { ...newMenus[idx], [field]: value };
-            return { ...prev, menus: newMenus };
-        });
-    };
-
-    const toggleMenuSelection = (idx) => {
-        if (isEditing) return; // Disable selection while editing content
-        setSelectedMenus(prev =>
-            prev.includes(idx) ? prev.filter(i => i !== idx) : [...prev, idx]
-        );
-    };
+    // Check allergy status
+    const hasAllergyInfo = data.menus?.some(m => m.allergens_contained?.length > 0 || m.allergens_removable?.length > 0);
 
     return (
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 group hover:ring-2 hover:ring-primary/20 transition-all">
-            <div className="flex flex-col md:flex-row justify-between gap-6">
-                <div className="flex-1 space-y-4">
-                    {/* Header Section */}
-                    <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                            {/* Diff Badge */}
-                            <div className="flex items-center gap-2 mb-1">
-                                {data.isUpdate ? (
-                                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-100 text-amber-700 border border-amber-200">
-                                        🔄 更新
-                                    </span>
-                                ) : (
-                                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-green-100 text-green-700 border border-green-200">
-                                        ✨ 新規
-                                    </span>
-                                )}
-                            </div>
-                            {isEditing ? (
-                                <input
-                                    className="text-lg font-bold text-slate-900 w-full border-b border-primary outline-none"
-                                    value={editedData.shopName}
-                                    onChange={(e) => setEditedData({ ...editedData, shopName: e.target.value })}
-                                />
-                            ) : (
-                                <h3 className="text-lg font-bold text-slate-900">{editedData.shopName}</h3>
-                            )}
-                            <div className="flex items-center gap-2 text-xs text-slate-500 mt-1">
-                                <MapPin size={12} className="text-orange-500" />
-                                {isEditing ? (
-                                    <input
-                                        className="w-full border-b border-slate-200 outline-none"
-                                        value={editedData.address}
-                                        onChange={(e) => setEditedData({ ...editedData, address: e.target.value })}
-                                        placeholder="店舗住所"
-                                    />
-                                ) : (
-                                    editedData.address || '住所未設定'
-                                )}
-                            </div>
-                            <div className="flex items-center gap-2 text-xs text-slate-500 mt-1">
-                                <Phone size={12} className="text-blue-500" />
-                                {isEditing ? (
-                                    <input
-                                        className="w-full border-b border-slate-200 outline-none"
-                                        value={editedData.phone || ''}
-                                        onChange={(e) => setEditedData({ ...editedData, phone: e.target.value })}
-                                        placeholder="電話番号"
-                                    />
-                                ) : (
-                                    editedData.phone || meta.phone || '電話番号なし'
-                                )}
-                            </div>
-                            <div className="flex items-center gap-2 text-xs text-slate-500 mt-1">
-                                <Globe size={12} />
-                                {isEditing ? (
-                                    <input
-                                        className="w-full border-b border-slate-200 outline-none"
-                                        value={editedData.website_url || ''}
-                                        onChange={(e) => setEditedData({ ...editedData, website_url: e.target.value })}
-                                        placeholder="公式URL"
-                                    />
-                                ) : (
-                                    editedData.website_url || meta.website_url || 'URLなし'
-                                )}
-                            </div>
-                            <div className="flex items-center gap-2 text-xs text-pink-500 mt-1">
-                                <Instagram size={12} />
-                                {isEditing ? (
-                                    <input
-                                        className="w-full border-b border-pink-200 outline-none text-pink-600"
-                                        value={editedData.instagram_url || ''}
-                                        onChange={(e) => setEditedData({ ...editedData, instagram_url: e.target.value })}
-                                        placeholder="Instagram URL"
-                                    />
-                                ) : (
-                                    editedData.instagram_url || 'SNS未登録'
-                                )}
-                            </div>
-                        </div>
-                        <span className={`text-[10px] px-2 py-0.5 rounded font-bold border ${isReliable ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-yellow-50 text-yellow-700 border-yellow-100'}`}>
-                            信頼度: {data.finalReliabilityScore}
-                        </span>
-                    </div>
-
-                    {/* Image Discovery Gallery */}
-                    <div>
-                        <div className="text-[10px] font-bold text-slate-400 uppercase mb-2 flex justify-between">
-                            <span>掲載写真を選択</span>
-                            {!images.length && <span className="text-yellow-500">候補写真なし (手動追加可)</span>}
-                        </div>
-                        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                            {/* Manual URL input in editing mode if no images or just because */}
-                            {isEditing && (
-                                <div className="flex-shrink-0 w-20 h-20 rounded-lg border-2 border-dashed border-slate-200 flex items-center justify-center p-1">
-                                    <input
-                                        type="text"
-                                        placeholder="URL貼付"
-                                        className="w-full h-full text-[8px] outline-none bg-transparent text-center"
-                                        value={selectedImage || ''}
-                                        onChange={(e) => setSelectedImage(e.target.value)}
-                                    />
-                                </div>
-                            )}
-                            {images.map((img, idx) => (
-                                <div
-                                    key={idx}
-                                    onClick={() => setSelectedImage(img.url)}
-                                    className={`relative flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden cursor-pointer border-2 transition-all ${selectedImage === img.url ? 'border-primary ring-2 ring-primary/20' : 'border-transparent opacity-60 hover:opacity-100'}`}
-                                >
-                                    <img src={img.url} className="w-full h-full object-cover" alt="Candidate" />
-                                    {selectedImage === img.url && (
-                                        <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
-                                            <CheckCircle size={20} className="text-white fill-primary" />
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Menus Section */}
-                    <div>
-                        <div className="flex justify-between items-center mb-2">
-                            <div className="text-[10px] font-bold text-slate-400 uppercase">メニュー構成</div>
-                            {isEditing && (
-                                <button onClick={addMenu} className="text-[10px] font-bold text-primary hover:text-primary-dark">
-                                    + メニューを追加
-                                </button>
-                            )}
-                        </div>
-                        <div className="space-y-2">
-                            {editedData.menus.map((menu, j) => (
-                                <div key={j} className={`group/menu relative border rounded-xl p-3 transition-all ${selectedMenus.includes(j) ? 'bg-white border-slate-200 shadow-sm' : 'bg-slate-50 border-transparent opacity-40'}`}>
-                                    <div className="flex items-start gap-3">
-                                        {!isEditing && (
-                                            <div
-                                                onClick={() => toggleMenuSelection(j)}
-                                                className={`mt-1 flex-shrink-0 w-4 h-4 rounded border cursor-pointer flex items-center justify-center ${selectedMenus.includes(j) ? 'bg-orange-500 border-orange-500 text-white' : 'bg-white border-slate-300'}`}
-                                            >
-                                                {selectedMenus.includes(j) && <CheckCircle size={10} />}
-                                            </div>
-                                        )}
-                                        <div className="flex-1">
-                                            {isEditing ? (
-                                                <div className="space-y-4 bg-white p-3 rounded-lg border border-slate-200">
-                                                    <input
-                                                        className="font-bold text-sm w-full outline-none border-b border-dotted mb-2"
-                                                        value={menu.name}
-                                                        onChange={(e) => updateMenu(j, 'name', e.target.value)}
-                                                        placeholder="メニュー名"
-                                                    />
-
-                                                    {/* Granular Allergy Editor */}
-                                                    <div>
-                                                        <div className="text-[10px] font-bold text-slate-500 mb-1">アレルゲン情報 (7大)</div>
-                                                        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                                                            {ALLERGEN_KEYS.map(key => (
-                                                                <div key={key} className="flex items-center justify-between text-xs border-b border-slate-50 pb-1">
-                                                                    <span className="text-slate-600 w-12">{ALLERGEN_LABELS[key]}</span>
-                                                                    <div className="flex gap-3">
-                                                                        <label className="flex items-center gap-1 cursor-pointer">
-                                                                            <input
-                                                                                type="checkbox"
-                                                                                checked={menu.allergens_contained?.includes(key)}
-                                                                                onChange={(e) => {
-                                                                                    const isChecked = e.target.checked;
-                                                                                    const current = menu.allergens_contained || [];
-                                                                                    updateMenu(j, 'allergens_contained', isChecked ? [...current, key] : current.filter(k => k !== key));
-                                                                                }}
-                                                                                className="accent-rose-500"
-                                                                            />
-                                                                            <span className="text-[10px] text-rose-500">使用</span>
-                                                                        </label>
-                                                                        <label className="flex items-center gap-1 cursor-pointer">
-                                                                            <input
-                                                                                type="checkbox"
-                                                                                checked={menu.allergens_removable?.includes(key)}
-                                                                                onChange={(e) => {
-                                                                                    const isChecked = e.target.checked;
-                                                                                    const current = menu.allergens_removable || [];
-                                                                                    updateMenu(j, 'allergens_removable', isChecked ? [...current, key] : current.filter(k => k !== key));
-                                                                                }}
-                                                                                className="accent-blue-500"
-                                                                            />
-                                                                            <span className="text-[10px] text-blue-500">除去可</span>
-                                                                        </label>
-                                                                    </div>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-
-                                                    <textarea
-                                                        className="text-xs w-full outline-none text-slate-400 bg-slate-50 p-1 rounded"
-                                                        value={menu.description}
-                                                        onChange={(e) => updateMenu(j, 'description', e.target.value)}
-                                                        placeholder="説明文"
-                                                    />
-                                                </div>
-                                            ) : (
-                                                <>
-                                                    <div className="flex justify-between items-start">
-                                                        <span className="font-bold text-sm">{menu.name}</span>
-                                                        <div className="flex flex-col items-end gap-1">
-                                                            {/* Display Granular Allergy Badges in Preview */}
-                                                            <div className="flex flex-wrap gap-1 justify-end max-w-[150px]">
-                                                                {ALLERGEN_KEYS.map(key => {
-                                                                    const isContained = menu.allergens_contained?.includes(key);
-                                                                    const isRemovable = menu.allergens_removable?.includes(key);
-                                                                    if (isContained) return (
-                                                                        <span key={key} className="text-[9px] px-1 rounded bg-rose-50 text-rose-600 border border-rose-100 flex items-center">
-                                                                            {ALLERGEN_LABELS[key]}含
-                                                                        </span>
-                                                                    );
-                                                                    if (isRemovable) return (
-                                                                        <span key={key} className="text-[9px] px-1 rounded bg-blue-50 text-blue-600 border border-blue-100 flex items-center">
-                                                                            {ALLERGEN_LABELS[key]}除
-                                                                        </span>
-                                                                    );
-                                                                    return null;
-                                                                })}
-                                                                {(!menu.allergens_contained?.length && !menu.allergens_removable?.length) &&
-                                                                    <span className="text-[9px] text-slate-300">情報なし</span>
-                                                                }
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <p className="text-[10px] text-slate-400 mt-1 line-clamp-1">{menu.description}</p>
-                                                </>
-                                            )}
-                                        </div>
-                                        {isEditing && (
-                                            <button onClick={() => removeMenu(j)} className="text-slate-300 hover:text-rose-500 transition-colors">
-                                                <AlertCircle size={14} />
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Standard Features Section (Both Edit and View) */}
-                    <div className="mt-4 border-t border-slate-100 pt-3">
-                        <div className="text-[10px] font-bold text-slate-400 uppercase mb-2">施設・対応状況 (標準リスト)</div>
-                        {isEditing ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {/* Child Support */}
-                                <div>
-                                    <div className="flex items-center gap-1 mb-1 text-xs font-bold text-orange-600">
-                                        <CheckCircle size={10} /> 子ども対応
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        {Object.entries(FEATURE_LABELS.child).map(([key, label]) => (
-                                            <label key={key} className="flex items-center gap-1.5 cursor-pointer p-1.5 rounded-md hover:bg-orange-50 transition-colors border border-transparent hover:border-orange-100">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={!!editedData.features?.child?.[key]}
-                                                    onChange={() => updateFeature('child', key)}
-                                                    className="w-3 h-3 accent-orange-500 rounded-sm"
-                                                />
-                                                <span className={`text-[10px] ${editedData.features?.child?.[key] ? 'text-orange-700 font-bold' : 'text-slate-500'}`}>{label}</span>
-                                            </label>
-                                        ))}
-                                    </div>
-                                </div>
-                                {/* Allergy Support */}
-                                <div>
-                                    <div className="flex items-center gap-1 mb-1 text-xs font-bold text-emerald-600">
-                                        <ShieldCheck size={10} /> アレルギー対応
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        {Object.entries(FEATURE_LABELS.allergy).map(([key, label]) => (
-                                            <label key={key} className="flex items-center gap-1.5 cursor-pointer p-1.5 rounded-md hover:bg-emerald-50 transition-colors border border-transparent hover:border-emerald-100">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={!!editedData.features?.allergy?.[key]}
-                                                    onChange={() => updateFeature('allergy', key)}
-                                                    className="w-3 h-3 accent-emerald-500 rounded-sm"
-                                                />
-                                                <span className={`text-[10px] ${editedData.features?.allergy?.[key] ? 'text-emerald-700 font-bold' : 'text-slate-500'}`}>{label}</span>
-                                            </label>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        ) : (
-                            // Read-only View for Features
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <div className="flex items-center gap-1 mb-1 text-xs font-bold text-slate-400">子ども対応</div>
-                                    <div className="flex flex-wrap gap-1">
-                                        {Object.entries(FEATURE_LABELS.child).map(([key, label]) => {
-                                            const isActive = !!editedData.features?.child?.[key];
-                                            if (!isActive) return null;
-                                            return (
-                                                <span key={key} className="text-[9px] px-1.5 py-0.5 rounded bg-orange-50 text-orange-700 border border-orange-100 font-bold">
-                                                    {label}
-                                                </span>
-                                            );
-                                        })}
-                                        {Object.keys(editedData.features?.child || {}).every(k => !editedData.features?.child?.[k]) && <span className="text-[9px] text-slate-300">情報なし</span>}
-                                    </div>
-                                </div>
-                                <div>
-                                    <div className="flex items-center gap-1 mb-1 text-xs font-bold text-slate-400">アレルギー対応</div>
-                                    <div className="flex flex-wrap gap-1">
-                                        {Object.entries(FEATURE_LABELS.allergy).map(([key, label]) => {
-                                            const isActive = !!editedData.features?.allergy?.[key];
-                                            if (!isActive) return null;
-                                            return (
-                                                <span key={key} className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-100 font-bold">
-                                                    {label}
-                                                </span>
-                                            );
-                                        })}
-                                        {Object.keys(editedData.features?.allergy || {}).every(k => !editedData.features?.allergy?.[k]) && <span className="text-[9px] text-slate-300">情報なし</span>}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Extended Metadata (Parking, Payments, etc) - Added for Verification Question */}
-                    {(editedData.features?.parking || editedData.features?.payment || isEditing) && (
-                        <div className="mt-4 border-t border-slate-100 pt-3">
-                            <div className="text-[10px] font-bold text-slate-400 uppercase mb-2">その他詳細情報 (Enrichment)</div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <div className="text-xs font-bold text-slate-600 mb-1">駐車場</div>
-                                    <div className="flex gap-2">
-                                        <label className="flex items-center gap-1 text-[10px] text-slate-600">
-                                            <input type="checkbox" disabled={!isEditing} checked={!!editedData.features?.parking?.has_parking} onChange={() => { }} className="accent-slate-500" />
-                                            有
-                                        </label>
-                                        {(editedData.features?.parking?.free_parking || isEditing) && <span className="text-[10px] text-slate-400">(無料: {editedData.features?.parking?.free_parking ? '○' : '-'})</span>}
-                                        {(editedData.features?.parking?.paid_parking || isEditing) && <span className="text-[10px] text-slate-400">(有料: {editedData.features?.parking?.paid_parking ? '○' : '-'})</span>}
-                                    </div>
-                                </div>
-                                <div>
-                                    <div className="text-xs font-bold text-slate-600 mb-1">支払い</div>
-                                    <div className="flex flex-wrap gap-2 text-[10px] text-slate-600">
-                                        {editedData.features?.payment?.credit_card ? 'クレカOK' : ''}
-                                        {editedData.features?.payment?.cash_only ? '現金のみ' : ''}
-                                        {!editedData.features?.payment && <span className="text-slate-300">-</span>}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Sources (Read Only) */}
-                    <div className="pt-2">
-                        <div className="text-[10px] font-bold text-slate-400 uppercase mb-1">情報ソース</div>
-                        <div className="flex flex-wrap gap-2">
-                            {data.sources && data.sources.filter(s => s.type !== 'system_metadata').map((s, idx) => (
-                                <a key={idx} href={s.url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-primary hover:underline bg-blue-50 px-2 py-0.5 rounded">
-                                    {s.type}: {new URL(s.url).hostname}
-                                </a>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {/* Actions */}
-            <div className="flex flex-row md:flex-col gap-2 justify-center border-t md:border-t-0 md:border-l border-slate-100 pt-4 md:pt-0 md:pl-6 min-w-[140px]">
-                {!isEditing ? (
-                    <>
-                        <Button
-                            onClick={() => onApprove({
-                                selectedMenuIndices: selectedMenus,
-                                selectedImage,
-                                // Pass full edited data structure
-                                editedCandidates: editedData
-                            })}
-                            size="sm"
-                            disabled={selectedMenus.length === 0}
-                            className="w-full bg-emerald-500 hover:bg-emerald-600 shadow-emerald-200"
-                        >
-                            <CheckCircle size={16} className="mr-1" /> 承認して登録
-                        </Button>
-                        <button
-                            onClick={() => setIsEditing(true)}
-                            className="w-full py-2 text-xs font-bold text-slate-500 hover:text-blue-500 bg-slate-50 hover:bg-blue-50 rounded-lg transition-colors flex items-center justify-center gap-1"
-                        >
-                            <Edit3 size={14} /> 内容を自由編集
-                        </button>
-                    </>
+        <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100 hover:shadow-md transition-shadow flex items-start gap-4">
+            {/* Thumbnail */}
+            <div className="w-24 h-24 shrink-0 rounded-lg bg-slate-100 overflow-hidden relative">
+                {mainImage ? (
+                    <img src={mainImage} className="w-full h-full object-cover" alt={data.shopName} />
                 ) : (
-                    <div className="space-y-2">
-                        <Button
-                            onClick={handleSaveEdits}
-                            size="sm"
-                            className="w-full bg-blue-500 hover:bg-blue-600 shadow-blue-200"
-                        >
-                            保存して確定
-                        </Button>
-
-                        {/* ENRICH BUTTON (New Feature) */}
-                        <Button
-                            onClick={handleEnrich}
-                            disabled={isEnriching}
-                            size="sm"
-                            variant="outline"
-                            className="w-full border-indigo-200 text-indigo-600 hover:bg-indigo-50"
-                        >
-                            {isEnriching ? <Loader2 className="animate-spin mr-1" size={14} /> : <Database className="mr-1" size={14} />}
-                            詳細情報を自動取得
-                        </Button>
+                    <div className="w-full h-full flex items-center justify-center text-slate-300">
+                        <MapPin size={24} />
                     </div>
                 )}
-                <button onClick={onReject} className="w-full py-2 text-xs font-bold text-slate-400 hover:text-rose-500 bg-slate-50 hover:bg-rose-50 rounded-lg transition-colors flex items-center justify-center gap-1">
-                    <AlertCircle size={14} /> この候補を却下
-                </button>
+                {data.isUpdate && (
+                    <div className="absolute top-0 right-0 bg-amber-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-bl-lg">
+                        更新あり
+                    </div>
+                )}
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 min-w-0">
+                <div className="flex justify-between items-start mb-1">
+                    <h3 className="font-bold text-slate-800 text-lg truncate">{data.shopName}</h3>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border shrink-0 ${isReliable ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-yellow-50 text-yellow-700 border-yellow-100'}`}>
+                        信頼度: {data.finalReliabilityScore}
+                    </span>
+                </div>
+
+                <div className="text-xs text-slate-500 mb-2 truncate">{data.address}</div>
+
+                {/* Badge Row */}
+                <div className="flex flex-wrap gap-2 mb-3">
+                    {hasAllergyInfo && (
+                        <span className="text-[10px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-100 flex items-center gap-1">
+                            <ShieldCheck size={10} /> アレルギー情報あり
+                        </span>
+                    )}
+                    <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                        メニュー {menuCount}件
+                    </span>
+                    {data.instagram_url && (
+                        <span className="text-[10px] font-bold text-pink-600 bg-pink-50 px-2 py-0.5 rounded border border-pink-100 flex items-center gap-1">
+                            <Instagram size={10} /> Insta
+                        </span>
+                    )}
+                </div>
+
+                {/* Action */}
+                <Button
+                    onClick={onInspect}
+                    size="sm"
+                    className="w-full sm:w-auto bg-slate-800 hover:bg-slate-900 text-white shadow-lg shadow-slate-200"
+                >
+                    <Search size={14} className="mr-2" />
+                    詳細を確認して承認・修正
+                </Button>
             </div>
         </div>
     );

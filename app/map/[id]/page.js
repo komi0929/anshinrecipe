@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabaseClient';
 import { useParams, useRouter } from 'next/navigation';
 import { useMapData } from '@/hooks/useMapData';
 import { ArrowLeft, MapPin, Phone, Globe, Star, AlertTriangle, CheckCircle, HelpCircle, Instagram, ShieldCheck, Plus, Flag } from 'lucide-react';
@@ -9,7 +10,6 @@ import { ReviewModal } from '@/components/map/ReviewModal';
 import { ReportModal } from '@/components/map/ReportModal';
 import { ReviewList } from '@/components/map/ReviewList';
 import { MenuGallery } from '@/components/map/MenuGallery';
-import { SafetyVoiceCard } from '@/components/map/SafetyVoiceCard';
 import { BookmarkButton } from '@/components/social/BookmarkButton';
 import './RestaurantDetailPage.css';
 
@@ -18,11 +18,13 @@ export default function RestaurantDetailPage() {
     const router = useRouter();
     const { restaurants, loading } = useMapData();
     const [restaurant, setRestaurant] = useState(null);
+    const [customMenus, setCustomMenus] = useState([]); // User submitted menus
     const [activeTab, setActiveTab] = useState('menu'); // 'menu', 'reviews', 'gallery'
     const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
     const [isReportModalOpen, setIsReportModalOpen] = useState(false);
     const [menuToReport, setMenuToReport] = useState(null); // For menu-level reports
 
+    // 1. Fetch Restaurant Data (Existing)
     useEffect(() => {
         if (!loading && restaurants.length > 0) {
             const found = restaurants.find(r => r.id === params.id || r.place_id === params.id);
@@ -30,8 +32,66 @@ export default function RestaurantDetailPage() {
         }
     }, [params.id, restaurants, loading]);
 
+    // 2. Fetch User Submitted Menus (New)
+    useEffect(() => {
+        const fetchCustomMenus = async () => {
+            if (!restaurant?.id) return;
+
+            const { data, error } = await supabase
+                .from('reviews')
+                .select('*')
+                .eq('restaurant_id', restaurant.id)
+                .eq('review_type', 'menu_post')
+                .eq('is_own_menu', true);
+
+            if (data) {
+                // Transform reviews into "Menu-like" objects for the MenuList component
+                const formattedMenus = data.map(review => {
+                    // Start with all 4 allergens as "contained" (Unknown/Danger) by default
+                    // Then remove them if the user marked them as safe.
+                    // This is a conservative approach: "If not marked safe, assume contained/unknown"
+                    // However, MenuList logic is: if contained -> Gray/Red. If not contained -> Emerald/Safe.
+                    // So we need to populate 'allergens_contained' with everything that IS NOT in 'allergens_safe'.
+                    const validAllergens = ['wheat', 'egg', 'milk', 'nut'];
+                    const safeList = review.allergens_safe || [];
+
+                    // Logic: If user didn't mark it safe, we assume it MIGHT contain it (conservative).
+                    // In the UI, 'contained' means "Use" (Gray/Red).
+                    const contained = validAllergens.filter(a => !safeList.includes(a));
+
+                    // Logic: If "contained" is empty, it means the user marked EVERYTHING as safe.
+                    // We can treat this as "Major Allergen Free" for the badge.
+                    const tags = [];
+                    if (contained.length === 0) {
+                        tags.push('8_major_free');
+                    }
+
+                    return {
+                        id: `custom-${review.id}`,
+                        name: review.custom_menu_name,
+                        price: review.price_paid, // Confirmed Int from ReviewModal
+                        description: review.content,
+                        image_url: review.images?.[0] || null,
+                        allergens_contained: contained,
+                        allergens_removable: [], // Initialize to avoid undefined, though UI handles it
+                        tags: tags, // Consistent badge display
+                        is_user_submitted: true,
+                        source_user: review.user_id,
+                        created_at: review.created_at
+                    };
+                });
+                setCustomMenus(formattedMenus);
+            }
+        };
+
+        fetchCustomMenus();
+    }, [restaurant]); // Re-run when restaurant is set
+
     if (loading) return <div className="p-8 text-center text-gray-500 font-medium animate-pulse">読み込み中...</div>;
     if (!restaurant) return <div className="p-8 text-center text-red-500 font-bold">店舗が見つかりませんでした</div>;
+
+    // Merge Official Menus + Custom Menus
+    const displayMenus = [...(restaurant.menus || []), ...customMenus];
 
     const getStatusIcon = (status) => {
         switch (status) {
@@ -151,7 +211,7 @@ export default function RestaurantDetailPage() {
                             </h3>
                             <div className="grid grid-cols-2 gap-3">
                                 {[
-                                    { label: '7大表示', key: 'allergen_label', icon: '📋' },
+                                    { label: 'メニュー表記', key: 'allergen_label', icon: '📋' },
                                     { label: 'コンタミ対策', key: 'contamination', icon: '🛡️' },
                                     { label: '除去食対応', key: 'removal', icon: '🍽️' },
                                     { label: 'アレルギー表', key: 'chart', icon: '📊' }
@@ -242,10 +302,10 @@ export default function RestaurantDetailPage() {
                         {activeTab === 'menu' && (
                             <>
                                 <MenuList
-                                    menus={restaurant.menus}
+                                    menus={displayMenus}
                                     onReportMenu={(menu) => setMenuToReport(menu)}
                                 />
-                                <SafetyVoiceCard features={restaurant.features} />
+                                {/* Safety Voice removed as per user request (redundant) */}
                             </>
                         )}
 
