@@ -386,16 +386,22 @@ export default function ShopsPage() {
                                     )}
 
                                     <div style={{ display: 'flex', gap: '8px' }}>
-                                        <button onClick={() => startEdit(selectedShop)} style={{ ...css.btn, ...css.btnPrimary, flex: 1 }}>
-                                            ✏️ 編集
+                                        <a
+                                            href={`/admin/shops/${selectedShop.id}`}
+                                            style={{ ...css.btn, ...css.btnPrimary, textDecoration: 'none', textAlign: 'center', flex: 1 }}
+                                        >
+                                            📝 詳細編集
+                                        </a>
+                                        <button onClick={() => startEdit(selectedShop)} style={{ ...css.btn, ...css.btnSecondary }}>
+                                            ✏️ 簡易編集
                                         </button>
                                         <a
                                             href={`/map/${selectedShop.id}`}
                                             target="_blank"
                                             rel="noopener"
-                                            style={{ ...css.btn, ...css.btnSecondary, textDecoration: 'none', textAlign: 'center', flex: 1 }}
+                                            style={{ ...css.btn, ...css.btnSecondary, textDecoration: 'none', textAlign: 'center' }}
                                         >
-                                            🗺️ マップで表示
+                                            🗺️
                                         </a>
                                         <button onClick={() => deleteShop(selectedShop.id)} style={{ ...css.btn, ...css.btnDanger }}>
                                             🗑️

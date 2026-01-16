@@ -381,17 +381,17 @@ export default function DataCollectionAdminPage() {
                                             </td>
                                             <td className="py-3 px-3">
                                                 <span className={`text-xs px-2 py-1 rounded-full font-bold ${formatRelativeTime(job.created_at) === '直近' ? 'bg-green-100 text-green-700' :
-                                                        formatRelativeTime(job.created_at).includes('日') ? 'bg-yellow-100 text-yellow-700' :
-                                                            'bg-slate-100 text-slate-600'
+                                                    formatRelativeTime(job.created_at).includes('日') ? 'bg-yellow-100 text-yellow-700' :
+                                                        'bg-slate-100 text-slate-600'
                                                     }`}>
                                                     {formatRelativeTime(job.created_at)}
                                                 </span>
                                             </td>
                                             <td className="py-3 px-3">
                                                 <span className={`text-xs px-2 py-1 rounded-full font-bold ${job.status === 'completed' ? 'bg-green-100 text-green-700' :
-                                                        job.status === 'processing' ? 'bg-blue-100 text-blue-700' :
-                                                            job.status === 'failed' ? 'bg-red-100 text-red-700' :
-                                                                'bg-slate-100 text-slate-600'
+                                                    job.status === 'processing' ? 'bg-blue-100 text-blue-700' :
+                                                        job.status === 'failed' ? 'bg-red-100 text-red-700' :
+                                                            'bg-slate-100 text-slate-600'
                                                     }`}>
                                                     {job.status === 'completed' ? '完了' :
                                                         job.status === 'processing' ? '処理中' :
@@ -670,6 +670,18 @@ function CandidateCard({ data, onApprove, onReject }) {
                     {/* Header Section */}
                     <div className="flex items-start justify-between">
                         <div className="flex-1">
+                            {/* Diff Badge */}
+                            <div className="flex items-center gap-2 mb-1">
+                                {data.isUpdate ? (
+                                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-100 text-amber-700 border border-amber-200">
+                                        🔄 更新
+                                    </span>
+                                ) : (
+                                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-green-100 text-green-700 border border-green-200">
+                                        ✨ 新規
+                                    </span>
+                                )}
+                            </div>
                             {isEditing ? (
                                 <input
                                     className="text-lg font-bold text-slate-900 w-full border-b border-primary outline-none"
