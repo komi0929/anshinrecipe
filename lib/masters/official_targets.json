@@ -1,0 +1,32 @@
+[
+    {
+        "id": "mos_burger",
+        "brandName": "モスバーガー",
+        "officialUrl": "https://www.mos.jp/menu/allergy/",
+        "status": "active"
+    },
+    {
+        "id": "coco_ichi",
+        "brandName": "CoCo壱番屋",
+        "officialUrl": "https://www.ichibanya.co.jp/menu/allergy/",
+        "status": "active"
+    },
+    {
+        "id": "royal_host",
+        "brandName": "ロイヤルホスト",
+        "officialUrl": "https://www.royalhost.jp/menu/kids/",
+        "status": "active"
+    },
+    {
+        "id": "gusto",
+        "brandName": "ガスト",
+        "officialUrl": "https://www.skylark.co.jp/gusto/menu/",
+        "status": "active"
+    },
+    {
+        "id": "sukiya",
+        "brandName": "すき家",
+        "officialUrl": "https://www.sukiya.jp/menu/in/kids/",
+        "status": "active"
+    }
+]
