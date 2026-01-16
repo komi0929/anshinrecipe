@@ -90,21 +90,40 @@ export async function POST(request) {
                 ? finalData.menus.filter((_, idx) => selectedMenuIndices.includes(idx))
                 : finalData.menus;
 
-            const menuInserts = menusToInsert.map(m => ({
-                restaurant_id: restaurant.id,
-                name: m.name,
-                description: m.description || '',
-                price: m.price || 0,
-                // allergens column (legacy but standard) = contained
-                allergens: m.allergens_contained || [],
-                // New granular columns
-                allergens_contained: m.allergens_contained || [],
-                allergens_removable: m.allergens_removable || [],
+            const menuInserts = menusToInsert.map(m => {
+                // CRITICAL FIX: Collection uses 'supportedAllergens' meaning allergens the menu is SAFE FROM
+                // Frontend filtering expects 'allergens' to be allergens the menu CONTAINS
+                // We need to INVERT the logic: if supportedAllergens says "小麦" (safe from wheat),
+                // then allergens_contained should NOT include wheat.
 
-                tags: [...(m.tags || []), ...(m.allergens_contained?.length === 0 ? ['allergen_free'] : [])],
-                child_status: 'checking', // Default to checking unless explicitly set
-                child_details: { note: m.description }
-            }));
+                // All major allergens
+                const ALL_ALLERGENS = ['小麦', '卵', '乳', 'そば', '落花生', 'えび', 'かに', 'ナッツ'];
+
+                // supportedAllergens = allergens this menu is SAFE FROM (removed)
+                const safeFrom = m.supportedAllergens || [];
+
+                // allergens_contained = allergens this menu CONTAINS (opposite of supportedAllergens)
+                // If menu is safe from wheat, it does NOT contain wheat
+                const contained = m.allergens_contained || ALL_ALLERGENS.filter(a => !safeFrom.includes(a));
+
+                return {
+                    restaurant_id: restaurant.id,
+                    name: m.name,
+                    description: m.description || '',
+                    price: m.price || 0,
+                    // allergens column (for frontend filtering) = what's contained
+                    allergens: contained,
+                    // Granular columns
+                    allergens_contained: contained,
+                    allergens_removable: m.allergens_removable || [],
+                    // Add supportedAllergens as 'safe_from' for display
+                    safe_from_allergens: safeFrom,
+
+                    tags: [...(m.tags || []), ...(contained.length === 0 ? ['allergen_free'] : [])],
+                    child_status: 'checking',
+                    child_details: { note: m.description }
+                };
+            });
 
             if (menuInserts.length > 0) {
                 await supabase.from('menus').insert(menuInserts);

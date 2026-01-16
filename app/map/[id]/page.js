@@ -8,6 +8,7 @@ import { MenuList } from '@/components/map/MenuList';
 import { ReviewModal } from '@/components/map/ReviewModal';
 import { ReviewList } from '@/components/map/ReviewList';
 import { MenuGallery } from '@/components/map/MenuGallery';
+import { SafetyVoiceCard } from '@/components/map/SafetyVoiceCard';
 import { BookmarkButton } from '@/components/social/BookmarkButton';
 import './RestaurantDetailPage.css';
 
@@ -152,10 +153,12 @@ export default function RestaurantDetailPage() {
                                     { label: '除去食対応', key: 'removal', icon: '🍽️' },
                                     { label: 'アレルギー表', key: 'chart', icon: '📊' }
                                 ].map(item => (
-                                    <div key={item.key} className="bg-white p-3 rounded-xl border border-orange-100 flex flex-col items-center justify-center text-center shadow-sm">
+                                    <div key={item.key} className={`bg-white p-3 rounded-xl border flex flex-col items-center justify-center text-center shadow-sm ${restaurant.features?.[item.key] === '◯' ? 'border-orange-200 bg-orange-50/30' : 'border-slate-100 opacity-60'}`}>
                                         <div className="text-lg mb-1">{item.icon}</div>
                                         <div className="text-[10px] font-bold text-slate-600">{item.label}</div>
-                                        <div className="text-xs font-bold text-orange-500 mt-1">◯</div>
+                                        <div className={`text-xs font-bold mt-1 ${restaurant.features?.[item.key] === '◯' ? 'text-orange-500' : 'text-slate-300'}`}>
+                                            {restaurant.features?.[item.key] === '◯' ? '◯' : '-'}
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -174,16 +177,38 @@ export default function RestaurantDetailPage() {
                                     { label: 'おむつ交換', key: 'diaper', icon: '🚻' },
                                     { label: '離乳食持込', key: 'baby_food', icon: '🍼' }
                                 ].map(item => (
-                                    <div key={item.key} className="bg-white p-3 rounded-xl border border-blue-100 flex flex-col items-center justify-center text-center shadow-sm">
+                                    <div key={item.key} className={`bg-white p-3 rounded-xl border flex flex-col items-center justify-center text-center shadow-sm ${restaurant.features?.[item.key] === '◯' || restaurant.features?.[item.key + '_access'] ? 'border-blue-200 bg-blue-50/30' : 'border-slate-100 opacity-60'}`}>
                                         <div className="text-lg mb-1">{item.icon}</div>
                                         <div className="text-[10px] font-bold text-slate-600">{item.label}</div>
-                                        <div className="text-xs font-bold text-blue-500 mt-1">
-                                            {/* Dummy check based on tags or simple heuristic for now */}
-                                            {restaurant.features?.[item.key] || restaurant.features?.[item.key + '_access'] || '◯'}
+                                        <div className={`text-xs font-bold mt-1 ${restaurant.features?.[item.key] === '◯' || restaurant.features?.[item.key + '_access'] ? 'text-blue-500' : 'text-slate-300'}`}>
+                                            {restaurant.features?.[item.key] === '◯' || restaurant.features?.[item.key + '_access'] ? '◯' : '-'}
                                         </div>
                                     </div>
                                 ))}
                             </div>
+                        </div>
+                    </div>
+
+                    {/* Facilities - NEW */}
+                    <div className="bg-slate-50/50 p-5 rounded-3xl border border-slate-200 mb-8">
+                        <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2">
+                            <span>🏢</span>
+                            施設情報
+                        </h3>
+                        <div className="grid grid-cols-3 gap-3">
+                            {[
+                                { label: '駐車場', key: 'parking', icon: '🅿️' },
+                                { label: 'バリアフリー', key: 'wheelchair_accessible', icon: '♿' },
+                                { label: '個室', key: 'private_room', icon: '🚪' }
+                            ].map(item => (
+                                <div key={item.key} className={`bg-white p-3 rounded-xl border flex flex-col items-center justify-center text-center shadow-sm ${restaurant.features?.[item.key] === '◯' ? 'border-green-200 bg-green-50/30' : 'border-slate-100 opacity-60'}`}>
+                                    <div className="text-lg mb-1">{item.icon}</div>
+                                    <div className="text-[10px] font-bold text-slate-600">{item.label}</div>
+                                    <div className={`text-xs font-bold mt-1 ${restaurant.features?.[item.key] === '◯' ? 'text-green-500' : 'text-slate-300'}`}>
+                                        {restaurant.features?.[item.key] === '◯' ? '◯' : '-'}
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
 
@@ -212,8 +237,12 @@ export default function RestaurantDetailPage() {
                     {/* TAB CONTENT */}
                     <div className="min-h-[300px]">
                         {activeTab === 'menu' && (
-                            <MenuList menus={restaurant.menus} />
+                            <>
+                                <MenuList menus={restaurant.menus} />
+                                <SafetyVoiceCard features={restaurant.features} />
+                            </>
                         )}
+
 
                         {activeTab === 'reviews' && (
                             <div className="animate-fadeIn">
@@ -223,7 +252,7 @@ export default function RestaurantDetailPage() {
 
                         {activeTab === 'gallery' && (
                             <div className="animate-fadeIn">
-                                <MenuGallery restaurantId={restaurant.id} />
+                                <MenuGallery restaurantId={restaurant.id} images={restaurant.images} />
                             </div>
                         )}
                     </div>
