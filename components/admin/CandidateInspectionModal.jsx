@@ -7,8 +7,6 @@ import { MenuList } from '@/components/map/MenuList';
 import '@/app/map/[id]/RestaurantDetailPage.css'; // Reuse styles
 
 export const CandidateInspectionModal = ({ candidate, isOpen, onClose, onApprove, onReject }) => {
-    if (!isOpen || !candidate) return null;
-
     const [editedData, setEditedData] = useState(null);
     const [selectedMenuIndices, setSelectedMenuIndices] = useState([]);
     const [selectedImage, setSelectedImage] = useState(null);
@@ -42,7 +40,7 @@ export const CandidateInspectionModal = ({ candidate, isOpen, onClose, onApprove
         }
     }, [candidate]);
 
-    if (!editedData) return null;
+    if (!isOpen || !candidate || !editedData) return null;
 
     const handleApprove = () => {
         onApprove({
@@ -154,20 +152,18 @@ export const CandidateInspectionModal = ({ candidate, isOpen, onClose, onApprove
                             <div className="space-y-2">
                                 {editedData.menus.map((menu, idx) => {
                                     const isSelected = selectedMenuIndices.includes(idx);
-                                    const [isExpanded, setIsExpanded] = useState(false); // Local state for expansion
-
-                                    // Helper to update menu data
-                                    const updateMenuAllergy = (key, type, checked) => {
-                                        const newMenus = [...editedData.menus];
-                                        const currentList = newMenus[idx][type] || [];
-                                        if (checked) {
-                                            newMenus[idx][type] = [...currentList, key];
-                                        } else {
-                                            newMenus[idx][type] = currentList.filter(k => k !== key);
-                                        }
-                                        setEditedData({ ...editedData, menus: newMenus });
-                                    };
-
+                                    // Use local variable for expansion check based on parent state (we need to add this state)
+                                    // For now, let's just use a simple toggler managed by parent,
+                                    // BUT WE NEED TO ADD THE STATE FIRST.
+                                    // Let's assume we added `const [expandedMenuIds, setExpandedMenuIds] = useState(new Set());`
+                                    // or just rely on a new Approach.
+                                    // Actually, let's replace this whole block to fix the issue properly by moving state up.
+                                    // Wait, I can't add state up easily without editing the top part again.
+                                    // I will use a refactored approach where I assume `expandedMenuIndex` state exists (I will add it in next step or this one if I can overlap).
+                                    // Actually, I can't easily edit two places at once with `replace_file_content` unless they are contiguous.
+                                    // They are NOT contiguous.
+                                    // I will use `MultiReplace` but I don't have it.
+                                    // I have `multi_replace_file_content`. I will use that.
                                     return (
                                         <div
                                             key={idx}
@@ -196,15 +192,16 @@ export const CandidateInspectionModal = ({ candidate, isOpen, onClose, onApprove
                                                     className="shrink-0"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        setIsExpanded(!isExpanded);
+                                                        // Use the unified expansion state
+                                                        setActiveTab(prev => prev === `menu-${idx}` ? 'preview' : `menu-${idx}`);
                                                     }}
                                                 >
-                                                    {isExpanded ? '閉じる' : '編集'}
+                                                    {activeTab === `menu-${idx}` ? '閉じる' : '編集'}
                                                 </Button>
                                             </div>
 
                                             {/* Expanded Editor */}
-                                            {isExpanded && (
+                                            {activeTab === `menu-${idx}` && (
                                                 <div className="p-3 border-t border-slate-100 bg-slate-50/50 space-y-3">
                                                     <div>
                                                         <label className="text-[10px] font-bold text-slate-400 block mb-1">メニュー名</label>
