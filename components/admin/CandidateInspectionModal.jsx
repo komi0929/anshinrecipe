@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, CheckCircle, AlertCircle, Smartphone, MapPin, Phone, Globe, Instagram, ShieldCheck, Loader2 } from 'lucide-react';
+import { X, CheckCircle, AlertCircle, Smartphone, MapPin, Phone, Globe, Instagram, ShieldCheck, Loader2, Database } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { MenuList } from '@/components/map/MenuList';
 import '@/app/map/[id]/RestaurantDetailPage.css'; // Reuse styles
@@ -11,12 +11,13 @@ export const CandidateInspectionModal = ({ candidate, isOpen, onClose, onApprove
     const [selectedMenuIndices, setSelectedMenuIndices] = useState([]);
     const [selectedImage, setSelectedImage] = useState(null);
     const [activeTab, setActiveTab] = useState('preview'); // 'preview' | 'data'
+    const [isDiving, setIsDiving] = useState(false);
 
     // Initialize state when candidate changes
     useEffect(() => {
         if (candidate) {
             setEditedData({
-                shopName: candidate.shopName,
+                shopName: candidate.shopName || candidate.shop_name, // Handle casing
                 address: candidate.address,
                 phone: candidate.phone,
                 website_url: candidate.website_url,
@@ -41,6 +42,38 @@ export const CandidateInspectionModal = ({ candidate, isOpen, onClose, onApprove
     }, [candidate]);
 
     if (!isOpen || !candidate || !editedData) return null;
+
+    const handleDeepDive = async () => {
+        if (!confirm('公式サイトなどを解析して、より詳細なメニュー情報を取得しますか？（時間がかかります）')) return;
+        setIsDiving(true);
+        try {
+            const res = await fetch('/api/admin/candidates/deep-dive', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ candidateId: candidate.id })
+            });
+            const result = await res.json();
+            if (result.success) {
+                // Merge new data into current view
+                const newData = result.data;
+                setEditedData(prev => ({
+                    ...prev,
+                    menus: newData.menus,
+                    features: newData.features
+                }));
+                // Auto-select new menus
+                setSelectedMenuIndices(newData.menus.map((_, i) => i));
+                alert('詳細情報の取得が完了しました');
+            } else {
+                alert(`取得に失敗しました: ${result.error}`);
+            }
+        } catch (e) {
+            console.error(e);
+            alert('エラーが発生しました');
+        } finally {
+            setIsDiving(false);
+        }
+    };
 
     const handleApprove = () => {
         onApprove({
