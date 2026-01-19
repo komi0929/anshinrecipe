@@ -47,44 +47,51 @@ export async function POST(request) {
 
     // 4. Save to DB
     let savedCount = 0;
+    let errorCount = 0;
     for (const candidate of uniqueCandidates) {
       // Save to candidate_restaurants table
       // Only if reliable score > threshold OR manually reviewed?
       // We save ALL candidates as "Pending"
 
-      // Check existence
+      // Check existence by shop_name + address (place_id column doesn't exist)
       const { data: existing } = await supabase
         .from("candidate_restaurants")
         .select("id")
-        .eq("place_id", candidate.place_id)
-        .single();
+        .eq("shop_name", candidate.name)
+        .eq("address", candidate.address)
+        .maybeSingle();
 
       if (!existing) {
-        const { error: insertError } = await supabase
+        // Only use columns that exist in the DB schema
+        const { data: insertData, error: insertError } = await supabase
           .from("candidate_restaurants")
           .insert({
-            place_id: candidate.place_id,
             shop_name: candidate.name,
             address: candidate.address,
             lat: candidate.lat,
             lng: candidate.lng,
-            website_url: candidate.website_url,
-            phone: candidate.phone,
-            opening_hours: candidate.opening_hours,
-            editorial_summary: candidate.editorial_summary,
             status: "pending",
             reliability_score: candidate.finalReliabilityScore || 0,
-            features: candidate.features || {},
             sources: candidate.sources || [],
-            // IMPORTANT: We store initial menus found by web signals (Scout phase)
-            // But these are low quality. The Miner/Deep Dive gets better ones.
             menus: candidate.menus || [],
-            created_at: new Date().toISOString(),
-          });
+          })
+          .select();
 
-        if (!insertError) savedCount++;
+        if (insertError) {
+          errorCount++;
+          console.error(
+            `[CollectAPI] Insert failed for ${candidate.name}:`,
+            insertError.message,
+          );
+        } else {
+          savedCount++;
+        }
       }
     }
+
+    console.log(
+      `[CollectAPI] Insert complete: ${savedCount} saved, ${errorCount} errors`,
+    );
 
     // 5. Update Job
     await supabase
