@@ -5,20 +5,10 @@ import {
   MapPin,
   Play,
   Database,
-  CheckCircle,
-  AlertCircle,
   Loader2,
-  ArrowRight,
-  FileText,
-  Globe,
   Instagram,
-  Star,
   Edit3,
-  Phone,
-  CheckSquare,
-  Square,
   ShieldCheck,
-  Eye,
   Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -28,10 +18,10 @@ import { CandidateInspectionModal } from "@/components/admin/CandidateInspection
 export default function DataCollectionAdminPage() {
   const [selectedPrefecture, setSelectedPrefecture] = useState("福岡県");
   const [selectedMunicipality, setSelectedMunicipality] = useState("");
-  const [municipalities, setMunicipalities] = useState([]);
+  const [municipalities] = useState([]);
   const [collectionHistory, setCollectionHistory] = useState([]);
   const [isCollecting, setIsCollecting] = useState(false);
-  const [status, setStatus] = useState("idle");
+  const [, setStatus] = useState("idle");
   const [logs, setLogs] = useState([]);
 
   // Workflow State
@@ -39,9 +29,7 @@ export default function DataCollectionAdminPage() {
   const [candidates, setCandidates] = useState([]);
   const [liveData, setLiveData] = useState([]);
   const [reports, setReports] = useState([]);
-  const [editingItem, setEditingItem] = useState(null);
   const [inspectingCandidate, setInspectingCandidate] = useState(null); // Modal State
-  const [showOnlyAllergyRelevant, setShowOnlyAllergyRelevant] = useState(true);
 
   // All 47 prefectures of Japan
   const ALL_PREFECTURES = [
@@ -93,9 +81,6 @@ export default function DataCollectionAdminPage() {
     "鹿児島県",
     "沖縄県",
   ];
-
-  // Municipality input - user types freely or selects from suggestions
-  const [municipalityInput, setMunicipalityInput] = useState("");
 
   // Common municipalities for quick selection (major cities)
   const MAJOR_CITIES = {

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { scoutArea } from "@/lib/collection/scout";
-import { deepDiveCandidate } from "@/lib/collection/miner";
+
 import { deduplicateAndMerge } from "@/lib/collection/pipeline";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -9,7 +9,7 @@ import { supabase } from "@/lib/supabaseClient";
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { area, municipalityCode } = body;
+    const { area } = body;
 
     if (!area) {
       return NextResponse.json(
@@ -63,7 +63,7 @@ export async function POST(request) {
 
       if (!existing) {
         // Only use columns that exist in the DB schema
-        const { data: insertData, error: insertError } = await supabase
+        const { error: insertError } = await supabase
           .from("candidate_restaurants")
           .insert({
             shop_name: candidate.name,
