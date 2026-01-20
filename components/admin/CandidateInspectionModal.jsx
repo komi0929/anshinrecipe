@@ -106,6 +106,12 @@ export const CandidateInspectionModal = ({
         // Auto-select new menus
         setSelectedMenuIndices(newData.menus.map((_, i) => i));
 
+        // Update displayed image if found
+        if (newData.images && newData.images.length > 0) {
+          const newImg = newData.images[0].url || newData.images[0];
+          if (newImg) setSelectedImage(newImg);
+        }
+
         const debugInfo = result.debug
           ? `\n\n[Debug Info]\nMenus: ${result.debug.miner_results.menus_count}, Images: ${result.debug.miner_results.images_count}\nMaps Key: ${result.debug.has_maps_key ? "OK" : "MISSING"}\nGemini Key: ${result.debug.has_gemini_key ? "OK" : "MISSING"}\nPlace Details: ${result.debug.miner_results.place_details_success ? "Success" : "Failed"}`
           : "";
