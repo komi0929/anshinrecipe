@@ -30,6 +30,7 @@ export default function DataCollectionAdminPage() {
   const [liveData, setLiveData] = useState([]);
   const [reports, setReports] = useState([]);
   const [inspectingCandidate, setInspectingCandidate] = useState(null); // Modal State
+  const [showOnlyAllergyRelevant, setShowOnlyAllergyRelevant] = useState(true);
 
   // All 47 prefectures of Japan
   const ALL_PREFECTURES = [
