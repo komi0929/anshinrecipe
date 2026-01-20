@@ -77,19 +77,27 @@ export async function POST(request) {
     // We need to implement a mini-merge here or assume simple append
     const mergedMenus = [...(candidate.menus || []), ...deepData.menus];
 
-    // Apply Pipeline Filtering (Blocklist etc) here too!
-    // We use deduplicateAndMerge by passing a single item array?
-    const pipelineResult = deduplicateAndMerge([
-      {
-        ...currentAsShop,
-        menus: mergedMenus,
-        features: { ...currentAsShop.features, ...deepData.features },
-      },
-    ]);
+    // Debug info container
+    const debugInfo = {
+      has_gemini_key: !!process.env.GEMINI_API_KEY,
+      has_maps_key: !!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
+      has_cse_id: !!process.env.GOOGLE_CSE_ID,
+      miner_results: {},
+    };
 
-    const finalCandidate = pipelineResult[0];
+    // 4. Run Miner
+    console.log(`Running Deep Dive for ${finalCandidate.shop_name}`);
+    const deepData = await deepDiveCandidate(finalCandidate);
 
-    // 5. Update Database
+    // Log results for debug
+    debugInfo.miner_results = {
+      phone: deepData.phone,
+      website: deepData.website,
+      images_count: deepData.images?.length || 0,
+      menus_count: deepData.menus?.length || 0,
+      place_details_success: !!deepData.phone || !!deepData.website, // Approximate check
+    };
+
     const updatePayload = {
       menus: finalCandidate.menus,
       features: finalCandidate.features,
@@ -122,13 +130,20 @@ export async function POST(request) {
       .select()
       .single();
 
-    if (updateError) throw updateError;
+    if (updateError) {
+      console.error("DB Update Error:", updateError);
+      throw new Error(`DB Update Failed: ${updateError.message}`);
+    }
 
-    return NextResponse.json({ success: true, data: updated });
+    return NextResponse.json({
+      success: true,
+      data: updated,
+      debug: debugInfo,
+    });
   } catch (error) {
     console.error("Deep Dive API Error:", error);
     return NextResponse.json(
-      { success: false, error: error.message },
+      { success: false, error: error.message, stack: error.stack },
       { status: 500 },
     );
   }

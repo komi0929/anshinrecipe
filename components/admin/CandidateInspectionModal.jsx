@@ -88,7 +88,11 @@ export const CandidateInspectionModal = ({
         }));
         // Auto-select new menus
         setSelectedMenuIndices(newData.menus.map((_, i) => i));
-        alert("詳細情報の取得が完了しました");
+
+        const debugInfo = result.debug
+          ? `\n\n[Debug Info]\nMenus: ${result.debug.miner_results.menus_count}, Images: ${result.debug.miner_results.images_count}\nMaps Key: ${result.debug.has_maps_key ? "OK" : "MISSING"}\nGemini Key: ${result.debug.has_gemini_key ? "OK" : "MISSING"}\nPlace Details: ${result.debug.miner_results.place_details_success ? "Success" : "Failed"}`
+          : "";
+        alert("詳細情報の取得が完了しました" + debugInfo);
       } else {
         alert(`取得に失敗しました: ${result.error}`);
       }
