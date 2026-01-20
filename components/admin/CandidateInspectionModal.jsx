@@ -34,12 +34,15 @@ export const CandidateInspectionModal = ({
   // Initialize state when candidate changes
   useEffect(() => {
     if (candidate) {
+      const siteUrl = candidate.website_url || candidate.website;
+      const isInsta = siteUrl && siteUrl.includes("instagram.com");
+
       setEditedData({
-        shopName: candidate.shopName || candidate.shop_name, // Handle casing
+        shopName: candidate.shop_name, // Always use shop_name from candidate
         address: candidate.address,
         phone: candidate.phone,
-        website_url: candidate.website_url,
-        instagram_url: candidate.instagram_url,
+        website_url: !isInsta ? siteUrl : "",
+        instagram_url: isInsta ? siteUrl : "",
         menus: (candidate.menus || []).map((m) => ({
           ...m,
           allergens_contained: m.allergens_contained || [],
@@ -81,13 +84,20 @@ export const CandidateInspectionModal = ({
       if (result.success) {
         // Merge new data into current view
         const newData = result.data;
+
+        // Smart URL classification
+        const newSiteUrl = newData.website || newData.website_url;
+        const isNewInsta = newSiteUrl && newSiteUrl.includes("instagram.com");
+
         setEditedData((prev) => ({
           ...prev,
           menus: newData.menus,
           features: newData.features,
           phone: newData.phone || prev.phone,
+          website_url:
+            !isNewInsta && newSiteUrl ? newSiteUrl : prev.website_url,
           instagram_url:
-            newData.website_url || newData.website || prev.instagram_url, // DB field is website_url, mapped to instagram_url in UI
+            isNewInsta && newSiteUrl ? newSiteUrl : prev.instagram_url,
         }));
         // Auto-select new menus
         setSelectedMenuIndices(newData.menus.map((_, i) => i));
