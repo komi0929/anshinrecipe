@@ -85,6 +85,9 @@ export const CandidateInspectionModal = ({
           ...prev,
           menus: newData.menus,
           features: newData.features,
+          phone: newData.phone || prev.phone,
+          instagram_url:
+            newData.website_url || newData.website || prev.instagram_url, // DB field is website_url, mapped to instagram_url in UI
         }));
         // Auto-select new menus
         setSelectedMenuIndices(newData.menus.map((_, i) => i));
