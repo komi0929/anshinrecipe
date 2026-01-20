@@ -97,9 +97,14 @@ export async function POST(request) {
 
     // Prioritize Official/Instagram found by Miner
     if (deepData.website) {
-      updatePayload.website = deepData.website;
+      updatePayload.website_url = deepData.website;
     } else if (deepData.instagram) {
-      if (!updatePayload.website) updatePayload.website = deepData.instagram; // Only if empty? No, maybe overwrite. Let's stick to safe logic.
+      // If no official site but has instagram, use it as website_url?
+      // Or should we have a separate instagram frame?
+      // UI expects instagram_url separately. Let's try to populate both if possible.
+      // But for now, fixing the save logic.
+      if (!updatePayload.website_url)
+        updatePayload.website_url = deepData.instagram;
     }
 
     const { data: updated, error: updateError } = await supabase

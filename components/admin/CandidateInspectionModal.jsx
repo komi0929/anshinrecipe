@@ -219,6 +219,22 @@ export const CandidateInspectionModal = ({
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
+                  <div className="col-span-2">
+                    <label className="text-xs font-bold text-slate-500">
+                      公式サイト URL
+                    </label>
+                    <input
+                      className="w-full p-2 border border-slate-200 rounded-lg text-xs text-blue-600"
+                      value={editedData.website_url || ""}
+                      onChange={(e) =>
+                        setEditedData({
+                          ...editedData,
+                          website_url: e.target.value,
+                        })
+                      }
+                      placeholder="https://..."
+                    />
+                  </div>
                   <div>
                     <label className="text-xs font-bold text-slate-500">
                       電話番号
@@ -244,6 +260,7 @@ export const CandidateInspectionModal = ({
                           instagram_url: e.target.value,
                         })
                       }
+                      placeholder="https://instagram.com/..."
                     />
                   </div>
                 </div>
