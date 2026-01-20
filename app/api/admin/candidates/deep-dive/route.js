@@ -105,6 +105,8 @@ export async function POST(request) {
 
     // Add discovered basic info if available
     if (deepData.phone) updatePayload.phone = deepData.phone;
+    if (deepData.images && deepData.images.length > 0)
+      updatePayload.images = deepData.images;
 
     // Prioritize Official/Instagram found by Miner over existing (often empty) website
     if (deepData.website) {
