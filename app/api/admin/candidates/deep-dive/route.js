@@ -95,15 +95,21 @@ export async function POST(request) {
     if (deepData.images && deepData.images.length > 0)
       updatePayload.images = deepData.images;
 
-    // Prioritize Official/Instagram found by Miner
+    // URL Management:
+    // 1. Official Website -> 'website' column
     if (deepData.website) {
       updatePayload.website = deepData.website;
-    } else if (deepData.instagram) {
-      // If no official site but has instagram, use it as website
-      // Or should we have a separate instagram frame?
-      // UI expects instagram_url separately. Let's try to populate both if possible.
-      // But for now, fixing the save logic.
-      if (!updatePayload.website) updatePayload.website = deepData.instagram;
+    }
+
+    // 2. Instagram -> 'features' column (as instagram_url)
+    // This allows both to exist simultaneously without DB schema change
+    if (deepData.instagram) {
+      updatePayload.features.instagram_url = deepData.instagram;
+
+      // Fallback: If no official website, put instagram in main website column too
+      if (!updatePayload.website) {
+        updatePayload.website = deepData.instagram;
+      }
     }
 
     const { data: updated, error: updateError } = await supabase

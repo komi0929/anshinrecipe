@@ -35,6 +35,7 @@ export const CandidateInspectionModal = ({
   useEffect(() => {
     if (candidate) {
       const siteUrl = candidate.website_url || candidate.website;
+      const featuresInsta = candidate.features?.instagram_url;
       const isInsta = siteUrl && siteUrl.includes("instagram.com");
 
       setEditedData({
@@ -42,7 +43,7 @@ export const CandidateInspectionModal = ({
         address: candidate.address,
         phone: candidate.phone,
         website_url: !isInsta ? siteUrl : "",
-        instagram_url: isInsta ? siteUrl : "",
+        instagram_url: featuresInsta || (isInsta ? siteUrl : ""),
         menus: (candidate.menus || []).map((m) => ({
           ...m,
           allergens_contained: m.allergens_contained || [],
@@ -87,7 +88,9 @@ export const CandidateInspectionModal = ({
 
         // Smart URL classification
         const newSiteUrl = newData.website || newData.website_url;
-        const isNewInsta = newSiteUrl && newSiteUrl.includes("instagram.com");
+        const newInstaFeature = newData.features?.instagram_url;
+        const isNewInstaInWebsite =
+          newSiteUrl && newSiteUrl.includes("instagram.com");
 
         setEditedData((prev) => ({
           ...prev,
@@ -95,9 +98,10 @@ export const CandidateInspectionModal = ({
           features: newData.features,
           phone: newData.phone || prev.phone,
           website_url:
-            !isNewInsta && newSiteUrl ? newSiteUrl : prev.website_url,
+            !isNewInstaInWebsite && newSiteUrl ? newSiteUrl : prev.website_url,
           instagram_url:
-            isNewInsta && newSiteUrl ? newSiteUrl : prev.instagram_url,
+            newInstaFeature ||
+            (isNewInstaInWebsite ? newSiteUrl : prev.instagram_url),
         }));
         // Auto-select new menus
         setSelectedMenuIndices(newData.menus.map((_, i) => i));
