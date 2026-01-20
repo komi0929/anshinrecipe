@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabaseClient";
 import { deepDiveCandidate } from "@/lib/collection/miner";
-import { deduplicateAndMerge } from "@/lib/collection/pipeline";
 
 // POST /api/admin/candidates/deep-dive
 // Runs the Miner (Gemini + Scraping) on a specific candidate to get rich data
@@ -29,54 +28,6 @@ export async function POST(request) {
       `[DeepDiveAPI] Starting deep dive for ${candidate.id}:${candidate.shop_name}`,
     );
 
-    // 2. Prepare candidate object for Miner (aligning keys)
-    const minerInput = {
-      place_id: candidate.place_id,
-      name: candidate.shop_name,
-      website_url: candidate.website_url,
-      // Miner expects photo_refs to be passed if available?
-      // Usually place details response has photos. We might need to refetch google details if not stored.
-      // But we can check 'sources' to see if we have photo sources.
-      photo_refs: [], // We'd need to re-fetch from Places API if we want this, or store it.
-      // For now, Miner focuses on Website crawling if URL exists.
-    };
-
-    // 3. Run Miner
-    const deepData = await deepDiveCandidate(minerInput);
-
-    // 4. Merge with existing data (using Pipeline logic)
-    // We treat the "deepData" as an update item
-    const updateItem = {
-      shopName: candidate.shop_name,
-      address: candidate.address,
-      menus: deepData.menus,
-      features: deepData.features,
-      sources: deepData.sources_checked.map((s) => ({
-        type: s.type,
-        url: s.url,
-        data: s,
-      })),
-      evidence: deepData.evidence,
-    };
-
-    // Using simple merge for now since we are updating a single record
-    // Existing menus need to be preserved? Or overwritten?
-    // User likely wants validation. Let's append/merge.
-
-    // We'll use the pipeline's dedup logic to merge "new menus" with "old menus"
-    // But pipeline expects an array of shops.
-    const currentAsShop = {
-      shopName: candidate.shop_name,
-      address: candidate.address,
-      menus: candidate.menus || [],
-      features: candidate.features || {},
-      sources: candidate.sources || [],
-    };
-
-    // Merge!
-    // We need to implement a mini-merge here or assume simple append
-    const mergedMenus = [...(candidate.menus || []), ...deepData.menus];
-
     // Debug info container
     const debugInfo = {
       has_gemini_key: !!process.env.GEMINI_API_KEY,
@@ -85,42 +36,70 @@ export async function POST(request) {
       miner_results: {},
     };
 
-    // 4. Run Miner
-    console.log(`Running Deep Dive for ${finalCandidate.shop_name}`);
-    const deepData = await deepDiveCandidate(finalCandidate);
+    // 2. Run Miner
+    const minerInput = {
+      place_id: candidate.place_id,
+      name: candidate.shop_name,
+      website_url: candidate.website_url,
+      address: candidate.address,
+      photo_refs: [], // We don't rely on passed photo_refs for now, Miner fetches fresh if needed or uses logic
+    };
 
-    // Log results for debug
+    const deepData = await deepDiveCandidate(minerInput);
+
+    // Populate debug info
     debugInfo.miner_results = {
       phone: deepData.phone,
       website: deepData.website,
       images_count: deepData.images?.length || 0,
       menus_count: deepData.menus?.length || 0,
-      place_details_success: !!deepData.phone || !!deepData.website, // Approximate check
+      place_details_success: !!deepData.phone, // Approximate check
     };
 
+    // 3. Merge Data
+    // Simple dedupe by name: verify if new menu exists in old menu
+    const existingMenus = candidate.menus || [];
+    const newMenus = deepData.menus || [];
+
+    const combinedMenus = [...existingMenus];
+    for (const m of newMenus) {
+      if (!combinedMenus.some((ex) => ex.name === m.name)) {
+        combinedMenus.push(m);
+      }
+    }
+
+    // Merge features
+    const combinedFeatures = {
+      ...(candidate.features || {}),
+      ...deepData.features,
+    };
+
+    // Merge sources
+    const newSources = deepData.sources_checked.map((s) => ({
+      type: s.type,
+      url: s.url,
+      status: "checked",
+      extracted_at: new Date().toISOString(),
+    }));
+    const combinedSources = [...(candidate.sources || []), ...newSources];
+
+    // 4. Update Database
     const updatePayload = {
-      menus: finalCandidate.menus,
-      features: finalCandidate.features,
-      sources: [
-        ...(candidate.sources || []),
-        ...deepData.sources_checked.map((s) => ({
-          type: s.type,
-          url: s.url,
-          status: "checked",
-        })),
-      ],
+      menus: combinedMenus,
+      features: combinedFeatures,
+      sources: combinedSources,
     };
 
-    // Add discovered basic info if available
+    // Add discovered basic info if available (and overwrite if better? Yes, Miner is trustier)
     if (deepData.phone) updatePayload.phone = deepData.phone;
     if (deepData.images && deepData.images.length > 0)
       updatePayload.images = deepData.images;
 
-    // Prioritize Official/Instagram found by Miner over existing (often empty) website
+    // Prioritize Official/Instagram found by Miner
     if (deepData.website) {
       updatePayload.website = deepData.website;
     } else if (deepData.instagram) {
-      updatePayload.website = deepData.instagram;
+      if (!updatePayload.website) updatePayload.website = deepData.instagram; // Only if empty? No, maybe overwrite. Let's stick to safe logic.
     }
 
     const { data: updated, error: updateError } = await supabase
