@@ -19,6 +19,7 @@ import {
   Pencil,
   UtensilsCrossed,
   Star,
+  Check,
 } from "lucide-react";
 import {
   getReactionCounts,
@@ -305,21 +306,29 @@ const RecipeDetailPage = () => {
   const renderAllergenList = () => {
     const allergens =
       recipe.freeFromAllergens || recipe.free_from_allergens || [];
+
+    // Default list of major allergens to check against if needed, or just display the ones we have
+    // for this specific "free from" context, strictly showing what is FREE.
+
     if (allergens.length === 0) {
       return (
         <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 text-center">
-          <p className="text-slate-500 text-sm font-medium">
-            アレルギー除去情報は登録されていません
+          <p className="text-slate-400 text-xs font-bold">
+            特定原材料情報は登録されていません
           </p>
         </div>
       );
     }
+
     return (
-      <div className="allergen-list">
+      <div className="allergen-grid">
         {allergens.map((allergen) => (
-          <span key={allergen} className="allergen-chip free-from">
-            {allergen}
-          </span>
+          <div key={allergen} className="allergen-grid-item">
+            <div className="allergen-icon-check">
+              <Check size={12} strokeWidth={4} />
+            </div>
+            <span className="allergen-icon-text">{allergen}なし</span>
+          </div>
         ))}
       </div>
     );
@@ -399,7 +408,7 @@ const RecipeDetailPage = () => {
 
       <div className="recipe-info">
         <h1 className="detail-title" title={recipe.title}>
-          {displayTitle}
+          {recipe.title}
         </h1>
 
         <div className="recipe-meta">

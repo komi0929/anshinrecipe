@@ -93,8 +93,10 @@ export async function POST(request) {
     // Add discovered basic info if available (and overwrite if better? Yes, Miner is trustier)
     if (deepData.phone) updatePayload.phone = deepData.phone;
     if (deepData.shop_name) updatePayload.shop_name = deepData.shop_name;
-    if (deepData.images && deepData.images.length > 0)
-      updatePayload.images = deepData.images;
+    if (deepData.images && deepData.images.length > 0) {
+      // 'images' column might not exist, utilize 'features' jsonb
+      updatePayload.features.images = deepData.images;
+    }
 
     // URL Management:
     // 1. Official Website -> 'website' column

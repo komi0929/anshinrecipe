@@ -60,8 +60,8 @@ export const CandidateInspectionModal = ({
       const meta =
         candidate.sources?.find((s) => s.type === "system_metadata")?.data ||
         {};
-      const images = meta.images || [];
-      if (images.length > 0) setSelectedImage(images[0].url);
+      const images = candidate.features?.images || meta.images || [];
+      if (images.length > 0) setSelectedImage(images[0].url || images[0]);
     }
   }, [candidate]);
 
@@ -108,8 +108,9 @@ export const CandidateInspectionModal = ({
         setSelectedMenuIndices(newData.menus.map((_, i) => i));
 
         // Update displayed image if found
-        if (newData.images && newData.images.length > 0) {
-          const newImg = newData.images[0].url || newData.images[0];
+        const newImages = newData.features?.images || newData.images;
+        if (newImages && newImages.length > 0) {
+          const newImg = newImages[0].url || newImages[0];
           if (newImg) setSelectedImage(newImg);
         }
 
