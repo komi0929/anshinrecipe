@@ -1,108 +1,56 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import * as cheerio from "cheerio";
+import { deepDiveCandidate } from "./lib/collection/miner.js";
 import fs from "fs";
-import fetch from "node-fetch"; // Next.js environment usually has global fetch, but just in case. Actually Node 18+ has global fetch.
 
-// Load ENV manually relative to current dir
-let env = "";
-try {
-  env = fs.readFileSync(".env.local", "utf8");
-} catch (e) {
-  console.log("Error loading .env.local", e.message);
-}
-
+// Load Env
+const env = fs.readFileSync(".env.local", "utf8");
 const getEnv = (key) => {
   const match = env.match(new RegExp(`${key}=(.*)`));
   return match ? match[1] : null;
 };
 
-const GOOGLE_MAPS_KEY = getEnv("NEXT_PUBLIC_GOOGLE_MAPS_API_KEY");
-const GEMINI_KEY = getEnv("GEMINI_API_KEY") || GOOGLE_MAPS_KEY; // Try fallback
+process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = getEnv(
+  "NEXT_PUBLIC_GOOGLE_MAPS_API_KEY",
+);
+process.env.GEMINI_API_KEY = getEnv("GEMINI_API_KEY");
 
-console.log("Keys loaded:", {
-  gemini: GEMINI_KEY ? "OK (Fallback to Maps Key?)" : "MISSING",
-  google: GOOGLE_MAPS_KEY ? "OK" : "MISSING",
-});
+// Mock Candidate (Soy Stories)
+const candidate = {
+  id: "debug-test",
+  shop_name: "SoyStories", // Use shop_name to match DB schema, but deepDive uses 'name'
+  name: "SoyStories",
+  address: "福岡県福岡市中央区薬院2-2-24",
+  website_url: "https://soystories.jp/", // Explicit URL to skip CSE
+  place_id: "ChIJ-wJ1hFCRRTURtM7uC7j8T3Q", // Real ID, but we want to test fallback logic too if possible. Keep it for now.
+  photo_refs: [],
+};
 
-const TARGET_URL = "https://soystories.jp/";
-const PLACE_ID = "ChIJ-wJ1hFCRRTURtM7uC7j8T3Q";
-
-async function debugMiner() {
-  console.log("=== Debugging Official Site Extraction ===");
+async function run() {
+  console.log("Starting Deep Dive Verification...");
   try {
-    const res = await fetch(TARGET_URL);
-    const html = await res.text();
-    const $ = cheerio.load(html);
-    const text = $("body").text().replace(/\s+/g, " ").slice(0, 5000);
+    const result = await deepDiveCandidate(candidate);
+    console.log("Deep Dive Result Keys:", Object.keys(result));
+    console.log("Images found:", result.images?.length);
+    console.log("Menus found:", result.menus?.length);
+    console.log("Shop Name:", result.shop_name);
 
-    console.log("Page Text Preview:", text.substring(0, 200));
+    if (result.menus && result.menus.length > 0) {
+      console.log("First 3 Menus:");
+      console.log(JSON.stringify(result.menus.slice(0, 3), null, 2));
 
-    const genAI = new GoogleGenerativeAI(GEMINI_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-    const prompt = `
-        以下のウェブサイトテキストから、提供されている全てのメニュー情報を抽出してください。
-        アレルギー対応と明記されていなくても、商品と思われるものは全てリストアップしてください。
-
-        抽出対象:
-        - 飲食店で提供されている全てのフード、ドリンク、スイーツメニュー
-
-        JSON形式で出力:
-        [
-          { "name": "料理名", "price": 数値(不明なら0), "description": "説明", "allergen_info": "アレルギー情報" }
-        ]
-        JSONのみ出力してください。
-
-        Text:
-        ${text}
-        `;
-
-    const result = await model.generateContent(prompt);
-    console.log("Gemini Official Site Result:", result.response.text());
-  } catch (e) {
-    console.error("Official Site Error:", e);
-  }
-
-  console.log("\n=== Debugging Google Photos Extraction ===");
-  try {
-    const detailsUrl = `https://places.googleapis.com/v1/places/${PLACE_ID}?fields=photos&key=${GOOGLE_MAPS_KEY}&languageCode=ja`;
-    console.log("Fetching details from:", detailsUrl);
-    const detailsRes = await fetch(detailsUrl);
-    const details = await detailsRes.json();
-
-    console.log("Place Details Response:", JSON.stringify(details, null, 2));
-
-    if (details.photos && details.photos.length > 0) {
-      const photoName = details.photos[0].name;
-      console.log("First Photo Name:", photoName);
-
-      const photoUrl = `https://places.googleapis.com/v1/${photoName}/media?key=${GOOGLE_MAPS_KEY}&maxHeightPx=800`;
-      console.log("Fetching photo:", photoUrl);
-
-      const imgRes = await fetch(photoUrl);
-      console.log("Photo Fetch Status:", imgRes.status);
-
-      if (imgRes.ok) {
-        const arrayBuffer = await imgRes.arrayBuffer();
-        const base64 = Buffer.from(arrayBuffer).toString("base64");
-        const mimeType = imgRes.headers.get("content-type");
-
-        const genAI = new GoogleGenerativeAI(GEMINI_KEY);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-        const prompt = `この画像を分析してください。メニュー表、料理、アレルギー表の情報を抽出してください。JSONのみ。`;
-        const result = await model.generateContent([
-          prompt,
-          { inlineData: { data: base64, mimeType } },
-        ]);
-        console.log("Gemini Vision Result:", result.response.text());
+      // Check for inference
+      const inferred = result.menus.filter((m) =>
+        m.description.includes("推論"),
+      );
+      console.log(`Inferred Allergen Safety Items: ${inferred.length}`);
+      if (inferred.length > 0) {
+        console.log("Sample Inference:", inferred[0]);
       }
     } else {
-      console.log("No photos found in Place Details.");
+      console.error("FAIL: Zero menus obtained.");
     }
   } catch (e) {
-    console.error("Google Photos Error:", e);
+    console.error("Deep Dive Failed:", e);
   }
 }
 
-debugMiner();
+run();
