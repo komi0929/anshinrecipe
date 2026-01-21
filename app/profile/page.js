@@ -61,6 +61,10 @@ export default function ProfilePage() {
   const [showAllergyModal, setShowAllergyModal] = useState(false);
   const [myAllergens, setMyAllergens] = useState([]);
 
+  // Refs
+  const fileInputRef = useRef(null);
+  const childFileInputRef = useRef(null);
+
   // Pro Profile Edit
   const [showProModal, setShowProModal] = useState(false);
   const [proLinks, setProLinks] = useState({
