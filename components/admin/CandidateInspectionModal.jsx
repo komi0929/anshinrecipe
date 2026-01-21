@@ -96,6 +96,7 @@ export const CandidateInspectionModal = ({
           ...prev,
           menus: newData.menus,
           features: newData.features,
+          shopName: newData.shop_name || prev.shopName,
           phone: newData.phone || prev.phone,
           website_url:
             !isNewInstaInWebsite && newSiteUrl ? newSiteUrl : prev.website_url,
