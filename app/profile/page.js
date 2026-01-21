@@ -13,6 +13,7 @@ import {
   ChevronRight,
   Camera,
   Plus,
+  MapPin,
   Info,
   Mail,
   Pencil,
@@ -21,11 +22,6 @@ import {
   Heart,
   Bookmark,
   Utensils,
-  Instagram,
-  Twitter,
-  Youtube,
-  Globe,
-  AlertCircle,
 } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { Footer } from "@/components/Footer";
@@ -34,9 +30,11 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { uploadImage } from "@/lib/imageUpload";
 import AllergySelector from "@/components/AllergySelector";
+import IconPicker from "@/components/IconPicker";
+import { useMapData } from "@/hooks/useMapData";
 
 export default function ProfilePage() {
-  const router = useRouter();
+  console.log("ProfilePage: Render Start");
   const {
     user,
     profile,
@@ -46,35 +44,31 @@ export default function ProfilePage() {
     addChild,
     updateChild,
     deleteChild,
-    updateProProfile,
-    updateAllergens,
+    deleteAccount,
   } = useProfile();
 
-  // Layout State
-  const [kitchenTab, setKitchenTab] = useState("my_recipes");
-
-  // Editing States
-  const [isEditingName, setIsEditingName] = useState(false);
-  const [newName, setNewName] = useState("");
-  const [isEditingBio, setIsEditingBio] = useState(false);
-  const [newBio, setNewBio] = useState("");
-  const [showAllergyModal, setShowAllergyModal] = useState(false);
-  const [myAllergens, setMyAllergens] = useState([]);
-
-  // Refs
+  const { restaurants } = useMapData();
+  const router = useRouter();
   const fileInputRef = useRef(null);
   const childFileInputRef = useRef(null);
 
-  // Pro Profile Edit
-  const [showProModal, setShowProModal] = useState(false);
-  const [proLinks, setProLinks] = useState({
-    instagram: "",
-    twitter: "",
-    youtube: "",
-    blog: "",
-  });
+  // Unified Tab State: 'kitchen' (Recipe App) | 'map' (Eating Out App)
+  const [appMode, setAppMode] = useState("kitchen");
+
+  // Sub-tabs for Map
+  const [mapTab, setMapTab] = useState("bookmarks"); // 'bookmarks' | 'visited' | 'likes'
+  // Sub-tabs for Kitchen
+  const [kitchenTab, setKitchenTab] = useState("my_recipes"); // 'my_recipes' | 'saved' | 'reports'
+
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [newName, setNewName] = useState("");
 
   // Data State
+  const [mapData, setMapData] = useState({
+    bookmarks: [],
+    reviews: [],
+    likes: [],
+  });
   const [kitchenData, setKitchenData] = useState({
     myRecipes: [],
     savedRecipes: [],
@@ -100,91 +94,90 @@ export default function ProfilePage() {
     if (!loading && !user) router.push("/login");
   }, [user, loading, router]);
 
-  // Sync Profile Data to Local State
-  useEffect(() => {
-    if (profile) {
-      setMyAllergens(profile.allergens || []);
-      setProLinks({
-        instagram: profile.instagramUrl || "",
-        twitter: profile.twitterUrl || "",
-        youtube: profile.youtubeUrl || "",
-        blog: profile.blogUrl || "",
-      });
-      setNewBio(profile.bio || "");
-    }
-  }, [profile]);
-
-  // Fetch Data
+  // Fetch Data based on Mode
   useEffect(() => {
     if (!user) return;
+
     const fetchData = async () => {
       setIsLoadingData(true);
       try {
-        // Fetch Kitchen Data
-        const [myRecipes, saved, reports] = await Promise.all([
-          supabase
-            .from("recipes")
-            .select("*")
-            .eq("user_id", user.id)
-            .order("created_at", { ascending: false }),
-          supabase
-            .from("saved_recipes")
-            .select("*, recipes(*)")
-            .eq("user_id", user.id),
-          supabase
-            .from("tried_reports")
-            .select("*, recipes(*)")
-            .eq("user_id", user.id)
-            .order("created_at", { ascending: false }),
-        ]);
-        setKitchenData({
-          myRecipes: myRecipes.data || [],
-          savedRecipes: saved.data || [],
-          reports: reports.data || [],
-        });
+        if (appMode === "map") {
+          // Fetch Map Data with error handling
+          try {
+            const [bookmarks] = await Promise.all([
+              supabase
+                .from("bookmarks")
+                .select("restaurant_id, created_at")
+                .eq("user_id", user.id)
+                .order("created_at", { ascending: false }),
+              // Note: reviews and review_likes queries removed due to schema issues
+            ]);
+            setMapData({
+              bookmarks: bookmarks.data || [],
+              reviews: [], // TODO: Add when reviews table schema is fixed
+              likes: [], // TODO: Add when review_likes table schema is fixed
+            });
+          } catch (err) {
+            console.error("Error fetching map data:", err);
+            setMapData({ bookmarks: [], reviews: [], likes: [] });
+          }
+        } else {
+          // Fetch Kitchen Data
+          const [myRecipes, saved, reports] = await Promise.all([
+            supabase
+              .from("recipes")
+              .select("*")
+              .eq("user_id", user.id)
+              .order("created_at", { ascending: false }),
+            supabase
+              .from("saved_recipes")
+              .select("*, recipes(*)")
+              .eq("user_id", user.id),
+            supabase
+              .from("tried_reports")
+              .select("*, recipes(*)")
+              .eq("user_id", user.id)
+              .order("created_at", { ascending: false }),
+          ]);
+          setKitchenData({
+            myRecipes: myRecipes.data || [],
+            savedRecipes: saved.data || [],
+            reports: reports.data || [],
+          });
+        }
+      } catch (err) {
+        console.error("Error fetching profile data:", err);
       } finally {
         setIsLoadingData(false);
       }
     };
-    fetchData();
-  }, [user]);
 
-  if (loading || !user)
+    fetchData();
+  }, [appMode, user]);
+
+  if (loading || !user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="animate-spin text-orange-400" />
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="animate-spin text-primary" size={32} />
       </div>
     );
+  }
 
-  // Handlers
   const handleUpdateName = async () => {
     if (newName.trim()) {
       await updateUserName(newName);
       setIsEditingName(false);
     }
   };
+
   const handleFileChange = async (e) => {
     const file = e.target.files?.[0];
     if (file) await updateAvatar(file);
   };
-  const handleSaveAllergens = async () => {
-    await updateAllergens(myAllergens);
-    setShowAllergyModal(false);
-  };
-  const handleSaveProProfile = async () => {
-    await updateProProfile({
-      bio: newBio,
-      instagramUrl: proLinks.instagram,
-      twitterUrl: proLinks.twitter,
-      youtubeUrl: proLinks.youtube,
-      blogUrl: proLinks.blog,
-    });
-    setShowProModal(false);
-    setIsEditingBio(false);
-  };
 
-  // Child Handlers (Using useProfile hook)
+  // ... (Child handlers - kept same)
   const handleSaveChild = async () => {
+    /* ... existing logic ... */
     const errors = {};
     if (!childName.trim()) errors.name = "お名前を入力してください";
     if (childAllergens.length === 0)
@@ -196,27 +189,34 @@ export default function ProfilePage() {
     if (childPhotoFile) {
       try {
         photoUrl = await uploadImage(childPhotoFile, "child-photos");
-      } catch (e) {
-        alert("アップロード失敗");
+      } catch (error) {
+        alert("写真のアップロードに失敗しました");
         return;
       }
     }
+
     const childData = {
       name: childName,
       icon: childIcon,
       photo: photoUrl,
       allergens: childAllergens,
     };
-    if (editingChild) await updateChild(editingChild.id, childData);
-    else await addChild(childData);
-    closeChildModal();
+    try {
+      if (editingChild) await updateChild(editingChild.id, childData);
+      else await addChild(childData);
+      closeChildModal();
+    } catch (error) {
+      console.error("Error saving child:", error);
+    }
   };
+
   const openChildModal = (child = null) => {
+    /* ... existing logic ... */
     if (child) {
       setEditingChild(child);
       setChildName(child.name);
       setChildIcon(child.icon || "👶");
-      setChildPhoto(child.photo);
+      setChildPhoto(child.photo || null);
       setChildAllergens(child.allergens || []);
     } else {
       setEditingChild(null);
@@ -228,6 +228,7 @@ export default function ProfilePage() {
     setChildPhotoFile(null);
     setShowChildModal(true);
   };
+
   const closeChildModal = () => {
     setShowChildModal(false);
     setEditingChild(null);
@@ -235,445 +236,397 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-32">
-      {/* 1. Header Section */}
-      <div className="bg-white pb-6 pt-safe rounded-b-[40px] shadow-sm relative overflow-hidden transition-all duration-300">
-        {/* Background Decor */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-orange-50 rounded-full blur-3xl -mr-32 -mt-32 opacity-50 pointer-events-none" />
-        <div className="absolute top-0 left-0 w-48 h-48 bg-blue-50 rounded-full blur-3xl -ml-24 -mt-24 opacity-30 pointer-events-none" />
-
-        <div className="px-6 pt-12 relative z-10">
-          {/* Top Nav */}
-          <div className="flex justify-end mb-4">
-            <Link
-              href="/settings"
-              className="p-2 bg-slate-50 rounded-full text-slate-400 hover:bg-slate-100 transition-colors"
-            >
-              <Settings size={20} />
-            </Link>
-          </div>
-
-          {/* Profile Main */}
-          <div className="flex flex-col items-center text-center">
-            {/* Avatar */}
-            <div
-              className="relative group cursor-pointer mb-3"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <div className="w-24 h-24 rounded-full overflow-hidden bg-white border-4 border-orange-50 shadow-lg relative">
-                {profile?.avatarUrl ? (
-                  <Image
-                    src={profile.avatarUrl}
-                    alt="Avatar"
-                    fill
-                    className="object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-orange-200">
-                    <User size={40} />
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
-                  <Camera size={24} />
-                </div>
-              </div>
-              <input
-                type="file"
-                ref={fileInputRef}
-                className="hidden"
-                accept="image/*"
-                onChange={handleFileChange}
-              />
-            </div>
-
-            {/* Name */}
-            {isEditingName ? (
-              <div className="flex items-center gap-2 mb-2">
-                <Input
-                  value={newName}
-                  onChange={(e) => setNewName(e.target.value)}
-                  className="h-9 text-center font-bold"
-                  autoFocus
+    <div className="min-h-screen bg-slate-50 pb-24">
+      {/* 1. Unified Header (Account & Children) */}
+      <div className="bg-white p-6 pb-2 rounded-b-[32px] shadow-sm z-10 relative">
+        <div className="flex items-center gap-4 mb-6">
+          <div
+            className="relative group cursor-pointer"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <div className="w-16 h-16 rounded-full overflow-hidden bg-orange-100 border-2 border-white shadow-md relative">
+              {profile?.avatarUrl ? (
+                <Image
+                  src={profile.avatarUrl}
+                  alt="Avatar"
+                  fill
+                  className="object-cover"
                 />
-                <Button size="sm" onClick={handleUpdateName}>
-                  保存
-                </Button>
-              </div>
-            ) : (
-              <div className="flex items-center justify-center gap-2 mb-1">
-                <h1 className="text-xl font-black text-slate-800 tracking-tight">
-                  {profile?.userName || "ユーザー"}
-                </h1>
-                <button
-                  onClick={() => {
-                    setNewName(profile?.userName || "");
-                    setIsEditingName(true);
-                  }}
-                  className="text-slate-300 hover:text-orange-500"
-                >
-                  <Pencil size={14} />
-                </button>
-              </div>
-            )}
-
-            {/* Stats */}
-            <div className="flex items-center gap-6 text-xs font-bold text-slate-500 mb-6 bg-white/50 backdrop-blur-sm border border-slate-100 px-6 py-3 rounded-2xl shadow-sm">
-              <span className="flex flex-col items-center gap-1">
-                <Utensils size={18} className="text-orange-400 mb-0.5" />
-                <span>{profile?.stats?.recipeCount || 0} Recipes</span>
-              </span>
-              <span className="w-px h-8 bg-slate-200" />
-              <span className="flex flex-col items-center gap-1">
-                <FileText size={18} className="text-green-400 mb-0.5" />
-                <span>{profile?.stats?.reportCount || 0} Reports</span>
-              </span>
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-orange-300">
+                  <User size={32} />
+                </div>
+              )}
             </div>
-
-            {/* Bio & SNS */}
-            <div className="w-full max-w-sm mb-6">
-              {isEditingBio ? (
-                <div className="bg-slate-50 p-4 rounded-2xl text-left">
-                  <textarea
-                    className="w-full bg-transparent text-sm resize-none focus:outline-none mb-2"
-                    rows={3}
-                    placeholder="自己紹介..."
-                    value={newBio}
-                    onChange={(e) => setNewBio(e.target.value)}
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              accept="image/*"
+              onChange={handleFileChange}
+            />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-col gap-2">
+              {isEditingName ? (
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="text"
+                    value={newName}
+                    onChange={(e) => setNewName(e.target.value)}
+                    placeholder="名前"
+                    autoFocus
+                    className="h-8 text-sm"
                   />
-                  <div className="space-y-2 mb-4">
-                    <div className="flex items-center gap-2">
-                      <Instagram size={16} className="text-pink-500" />
-                      <Input
-                        className="h-8 text-xs"
-                        placeholder="@username"
-                        value={proLinks.instagram}
-                        onChange={(e) =>
-                          setProLinks({
-                            ...proLinks,
-                            instagram: e.target.value,
-                          })
-                        }
-                      />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Twitter size={16} className="text-blue-400" />
-                      <Input
-                        className="h-8 text-xs"
-                        placeholder="@username"
-                        value={proLinks.twitter}
-                        onChange={(e) =>
-                          setProLinks({ ...proLinks, twitter: e.target.value })
-                        }
-                      />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Youtube size={16} className="text-red-500" />
-                      <Input
-                        className="h-8 text-xs"
-                        placeholder="Video URL"
-                        value={proLinks.youtube}
-                        onChange={(e) =>
-                          setProLinks({ ...proLinks, youtube: e.target.value })
-                        }
-                      />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Globe size={16} className="text-slate-500" />
-                      <Input
-                        className="h-8 text-xs"
-                        placeholder="Blog URL"
-                        value={proLinks.blog}
-                        onChange={(e) =>
-                          setProLinks({ ...proLinks, blog: e.target.value })
-                        }
-                      />
-                    </div>
-                  </div>
-                  <div className="flex gap-2 justify-end">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => setIsEditingBio(false)}
-                    >
-                      キャンセル
-                    </Button>
-                    <Button size="sm" onClick={handleSaveProProfile}>
-                      保存
-                    </Button>
-                  </div>
+                  <Button size="sm" onClick={handleUpdateName}>
+                    保存
+                  </Button>
                 </div>
               ) : (
-                <div className="text-center relative group/bio">
-                  <p
-                    className={`text-sm text-slate-600 leading-relaxed ${!profile?.bio && "text-slate-400 italic"}`}
-                  >
-                    {profile?.bio || "自己紹介を入力..."}
-                  </p>
-                  <div className="flex items-center justify-center gap-3 mt-3">
-                    {profile?.instagramUrl && (
-                      <a
-                        href={`https://instagram.com/${profile.instagramUrl}`}
-                        target="_blank"
-                        className="text-pink-500 hover:scale-110 transition-transform"
-                      >
-                        <Instagram size={18} />
-                      </a>
-                    )}
-                    {profile?.twitterUrl && (
-                      <a
-                        href={`https://twitter.com/${profile.twitterUrl}`}
-                        target="_blank"
-                        className="text-blue-400 hover:scale-110 transition-transform"
-                      >
-                        <Twitter size={18} />
-                      </a>
-                    )}
-                    {profile?.youtubeUrl && (
-                      <a
-                        href={profile.youtubeUrl}
-                        target="_blank"
-                        className="text-red-500 hover:scale-110 transition-transform"
-                      >
-                        <Youtube size={18} />
-                      </a>
-                    )}
-                    {profile?.blogUrl && (
-                      <a
-                        href={profile.blogUrl}
-                        target="_blank"
-                        className="text-slate-500 hover:scale-110 transition-transform"
-                      >
-                        <Globe size={18} />
-                      </a>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-lg font-bold text-slate-800">
+                      {profile?.userName || "ユーザー"}
+                    </h2>
+                    {profile?.isPro && (
+                      <span className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
+                        PRO
+                      </span>
                     )}
                     <button
                       onClick={() => {
-                        setIsEditingBio(true);
-                        setShowProModal(true);
+                        setNewName(profile?.userName || "");
+                        setIsEditingName(true);
                       }}
-                      className="absolute -right-2 top-0 opacity-0 group-hover/bio:opacity-100 p-2 text-slate-300 hover:text-orange-500"
+                      className="p-1 text-slate-400 hover:text-orange-500 transition-colors"
                     >
                       <Pencil size={14} />
                     </button>
                   </div>
-                  {Object.values(proLinks).every((v) => !v) &&
-                    !profile?.bio && (
-                      <button
-                        onClick={() => setIsEditingBio(true)}
-                        className="text-xs text-orange-500 font-bold mt-2"
-                      >
-                        ＋ プロフィール・SNSを編集
-                      </button>
-                    )}
+                  <p className="text-xs text-slate-500 mt-1 line-clamp-2">
+                    {profile?.bio || "自己紹介がまだありません"}
+                  </p>
                 </div>
               )}
-            </div>
 
-            {/* My Allergens (Restored) */}
-            <div className="w-full max-w-sm bg-orange-50/50 rounded-2xl p-4 border border-orange-100 mb-6">
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="text-xs font-bold text-orange-800 flex items-center gap-1">
-                  <AlertCircle size={12} /> My Allergens
-                </h3>
-                <button
-                  onClick={() => setShowAllergyModal(true)}
-                  className="text-[10px] bg-white px-2 py-1 rounded-full text-orange-500 font-bold shadow-sm active:scale-95"
-                >
-                  編集
-                </button>
+              {/* Stats & SNS */}
+              <div className="flex items-center gap-4 text-xs font-bold text-slate-500 mt-1">
+                <div className="flex items-center gap-1">
+                  <Utensils size={12} className="text-orange-400" />
+                  <span>{profile?.stats?.recipeCount || 0} レシピ</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <FileText size={12} className="text-green-400" />
+                  <span>{profile?.stats?.reportCount || 0} レポ</span>
+                </div>
               </div>
-              {myAllergens.length > 0 ? (
-                <div className="flex flex-wrap gap-1 justify-center">
-                  {myAllergens.map((a) => (
-                    <span
-                      key={a}
-                      className="px-2 py-0.5 bg-white text-orange-600 text-[10px] font-bold rounded-md shadow-sm border border-orange-100"
-                    >
-                      {a}
-                    </span>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-[10px] text-orange-300">
-                  アレルギー情報は未登録です
-                </div>
-              )}
-            </div>
 
-            {/* Children List */}
-            <div className="w-full overflow-x-auto no-scrollbar pb-2 flex items-center justify-center gap-3 min-h-[80px]">
-              {profile?.children &&
-                profile.children.length > 0 &&
-                profile.children.map((child) => (
+              {/* Children */}
+              <div className="flex gap-2 mt-2 overflow-x-auto no-scrollbar">
+                {profile?.children?.map((child) => (
                   <div
                     key={child.id}
                     onClick={() => openChildModal(child)}
-                    className="flex flex-col items-center gap-1 cursor-pointer group animate-in zoom-in duration-300"
+                    className="flex items-center gap-1 bg-orange-50 px-2 py-1 rounded-full border border-orange-100 cursor-pointer hover:bg-orange-100 transition-colors shrink-0"
                   >
-                    <div className="w-12 h-12 rounded-full bg-blue-50 border-2 border-white shadow-md flex items-center justify-center text-xl group-hover:scale-110 transition-transform overflow-hidden">
-                      {child.photo ? (
-                        <img
-                          src={child.photo}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        child.icon
-                      )}
-                    </div>
-                    <span className="text-[10px] font-bold text-slate-600">
+                    <span className="text-xs">{child.icon}</span>
+                    <span className="text-xs font-bold text-orange-800">
                       {child.name}
                     </span>
                   </div>
                 ))}
-              <button
-                onClick={() => openChildModal(null)}
-                className="flex flex-col items-center gap-1 cursor-pointer group"
-              >
-                <div className="w-12 h-12 rounded-full bg-slate-100 border-2 border-slate-200 border-dashed flex items-center justify-center text-slate-400 group-hover:bg-slate-200 transition-colors">
-                  <Plus size={20} />
-                </div>
-                <span className="text-[10px] font-bold text-slate-400">
-                  追加
-                </span>
-              </button>
+                <button
+                  onClick={() => openChildModal(null)}
+                  className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 hover:bg-slate-200 shrink-0"
+                >
+                  <Plus size={12} />
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* 2. Action Menu (Grid Layout) */}
-      <div className="px-4 mt-6 mb-6">
-        <div className="grid grid-cols-2 gap-3">
-          <ActionCard
-            icon={<Info size={20} />}
-            title="運営からの"
-            subtitle="お知らせ"
-            color="blue"
-            onClick={() => setShowAnnouncementsModal(true)}
-          />
-          <Link href="/shortcut-guide" className="block">
-            <ActionCard
-              icon={<Zap size={20} />}
-              title="便利機能"
-              subtitle="活用ガイド"
-              color="purple"
-            />
+          <Link
+            href="/settings"
+            className="p-2 bg-slate-50 rounded-full text-slate-400 hover:text-slate-600"
+          >
+            <Settings size={20} />
           </Link>
-          <ActionCard
-            icon={<Mail size={20} />}
-            title="困ったら"
-            subtitle="お問い合わせ"
-            color="green"
-            onClick={() => setShowInquiryModal(true)}
-          />
-          {/* Future Button Placeholder */}
-          <div className="bg-slate-50/50 rounded-2xl border border-slate-100 border-dashed flex items-center justify-center text-slate-300 text-xs font-bold">
-            Coming Soon
-          </div>
         </div>
       </div>
 
-      {/* 4. Content Tabs */}
-      <div className="px-4 pb-20 min-h-[300px]">
-        {/* Sub Tabs */}
-        <div className="flex gap-4 overflow-x-auto no-scrollbar mb-4 border-b border-slate-200">
-          {["my_recipes", "saved", "reports"].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setKitchenTab(tab)}
-              className={`pb-2 px-2 text-sm font-bold whitespace-nowrap border-b-2 transition-colors ${kitchenTab === tab ? "border-slate-800 text-slate-800" : "border-transparent text-slate-400"}`}
-            >
-              {tab === "my_recipes"
-                ? "Myレシピ"
-                : tab === "saved"
-                  ? "保存済み"
-                  : "つくレポ"}
-            </button>
-          ))}
-        </div>
-
-        {/* List Content */}
-        <div className="space-y-3 animate-in fade-in slide-in-from-bottom-4">
-          {isLoadingData ? (
-            <div className="py-10 flex justify-center">
-              <Loader2 className="animate-spin text-slate-300" />
+      {/* 2. Action Menu (Restored) */}
+      <div className="flex gap-3 px-2 mb-6 overflow-x-auto no-scrollbar">
+        <button
+          onClick={() => setShowAnnouncementsModal(true)}
+          className="flex items-center gap-2 bg-white px-4 py-3 rounded-2xl shadow-sm border border-slate-100 min-w-[140px] hover:bg-slate-50 transition-colors"
+        >
+          <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-500">
+            <Info size={18} />
+          </div>
+          <div className="text-left">
+            <div className="text-[10px] font-bold text-slate-400">
+              運営からの
             </div>
-          ) : kitchenTab === "my_recipes" ? (
-            kitchenData.myRecipes.length === 0 ? (
-              <div className="text-center py-10">
-                <Button onClick={() => router.push("/recipe/new")}>
-                  レシピ投稿
-                </Button>
+            <div className="text-xs font-bold text-slate-700">お知らせ</div>
+          </div>
+        </button>
+
+        <Link
+          href="/shortcut-guide"
+          className="flex items-center gap-2 bg-white px-4 py-3 rounded-2xl shadow-sm border border-slate-100 min-w-[140px] hover:bg-slate-50 transition-colors"
+        >
+          <div className="w-8 h-8 rounded-full bg-purple-50 flex items-center justify-center text-purple-500">
+            <Zap size={18} />
+          </div>
+          <div className="text-left">
+            <div className="text-[10px] font-bold text-slate-400">
+              アプリをもっと
+            </div>
+            <div className="text-xs font-bold text-slate-700">便利な使い方</div>
+          </div>
+        </Link>
+
+        <button
+          onClick={() => setShowInquiryModal(true)}
+          className="flex items-center gap-2 bg-white px-4 py-3 rounded-2xl shadow-sm border border-slate-100 min-w-[140px] hover:bg-slate-50 transition-colors"
+        >
+          <div className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center text-green-500">
+            <Mail size={18} />
+          </div>
+          <div className="text-left">
+            <div className="text-[10px] font-bold text-slate-400">
+              困ったときは
+            </div>
+            <div className="text-xs font-bold text-slate-700">お問い合わせ</div>
+          </div>
+        </button>
+      </div>
+
+      {/* 3. App Switcher Tabs */}
+      <div className="flex p-1 bg-slate-100 rounded-2xl relative mx-4">
+        <div
+          className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-white rounded-xl shadow-sm transition-all duration-300 ease-out ${appMode === "map" ? "translate-x-[calc(100%+4px)]" : "translate-x-1"}`}
+        />
+        <button
+          onClick={() => setAppMode("kitchen")}
+          className={`flex-1 relative z-10 py-3 flex items-center justify-center gap-2 text-sm font-bold transition-colors ${appMode === "kitchen" ? "text-orange-600" : "text-slate-400"}`}
+        >
+          <Utensils size={18} /> マイキッチン
+        </button>
+        <button
+          onClick={() => setAppMode("map")}
+          className={`flex-1 relative z-10 py-3 flex items-center justify-center gap-2 text-sm font-bold transition-colors ${appMode === "map" ? "text-blue-600" : "text-slate-400"}`}
+        >
+          <MapPin size={18} /> マイマップ
+        </button>
+      </div>
+
+      {/* 4. Content Area */}
+      <div className="px-4 py-6">
+        {appMode === "map" ? (
+          <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+            {/* MAP CONTENT */}
+            <div className="flex items-center gap-4 mb-6 border-b border-slate-200 px-2">
+              {["bookmarks", "reviews", "likes"].map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setMapTab(tab)}
+                  className={`pb-2 text-sm font-bold border-b-2 transition-all px-2 ${mapTab === tab ? "border-blue-500 text-blue-600" : "border-transparent text-slate-400"}`}
+                >
+                  {tab === "bookmarks" && "行きたい"}
+                  {tab === "reviews" && "食べた！"}
+                  {tab === "likes" && "いいね"}
+                </button>
+              ))}
+            </div>
+
+            {isLoadingData ? (
+              <div className="flex justify-center py-10">
+                <Loader2 className="animate-spin text-blue-400" />
               </div>
             ) : (
-              kitchenData.myRecipes.map((r) => (
-                <RecipeCard
-                  key={r.id}
-                  recipe={r}
-                  onClick={() => router.push(`/recipe/${r.id}`)}
-                />
-              ))
-            )
-          ) : kitchenTab === "saved" ? (
-            kitchenData.savedRecipes.map((s) => (
-              <RecipeCard
-                key={s.id}
-                recipe={s.recipes}
-                onClick={() => router.push(`/recipe/${s.recipes.id}`)}
-              />
-            ))
-          ) : (
-            kitchenData.reports.map((rep) => (
-              <RecipeCard
-                key={rep.id}
-                recipe={rep.recipes}
-                onClick={() => router.push(`/recipe/${rep.recipes.id}`)}
-              />
-            ))
-          )}
-        </div>
+              <div className="space-y-4">
+                {mapTab === "bookmarks" &&
+                  (mapData.bookmarks.length === 0 ? (
+                    <EmptyState
+                      icon={<Bookmark size={48} />}
+                      text="行きたいお店を保存しましょう"
+                      color="blue"
+                    />
+                  ) : (
+                    mapData.bookmarks.map((b) => {
+                      const r = restaurants.find(
+                        (rest) => rest.id === b.restaurant_id,
+                      );
+                      return r ? (
+                        <div
+                          key={b.restaurant_id}
+                          className="bg-white p-4 rounded-2xl shadow-sm flex justify-between items-center"
+                          onClick={() => router.push(`/map/${r.id}`)}
+                        >
+                          <div className="font-bold text-slate-700">
+                            {r.name}
+                          </div>
+                          <ChevronRight size={16} className="text-slate-300" />
+                        </div>
+                      ) : null;
+                    })
+                  ))}
+                {mapTab === "reviews" &&
+                  (mapData.reviews.length === 0 ? (
+                    <EmptyState
+                      icon={<Camera size={48} />}
+                      text="食べたお店を記録しましょう"
+                      color="blue"
+                    />
+                  ) : (
+                    mapData.reviews.map((r) => (
+                      <div
+                        key={r.id}
+                        className="bg-white p-4 rounded-2xl shadow-sm mb-3"
+                      >
+                        <div className="text-sm font-bold text-slate-800">
+                          {r.restaurants?.name}
+                        </div>
+                        <div className="text-xs text-slate-500 mt-1">
+                          {r.menus?.name || "メニュー記録なし"}
+                        </div>
+                        {r.comment && (
+                          <div className="mt-2 text-sm bg-slate-50 p-2 rounded-lg">
+                            {r.comment}
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+            {/* KITCHEN CONTENT */}
+            <div className="flex items-center gap-4 mb-6 border-b border-slate-200 px-2">
+              {["my_recipes", "saved", "reports"].map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setKitchenTab(tab)}
+                  className={`pb-2 text-sm font-bold border-b-2 transition-all px-2 ${kitchenTab === tab ? "border-orange-500 text-orange-600" : "border-transparent text-slate-400"}`}
+                >
+                  {tab === "my_recipes" && "レシピ"}
+                  {tab === "saved" && "保存"}
+                  {tab === "reports" && "つくレポ"}
+                </button>
+              ))}
+            </div>
+
+            {isLoadingData ? (
+              <div className="flex justify-center py-10">
+                <Loader2 className="animate-spin text-orange-400" />
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {kitchenTab === "my_recipes" &&
+                  (kitchenData.myRecipes.length === 0 ? (
+                    <div className="text-center py-8">
+                      <EmptyState
+                        icon={<Utensils size={48} />}
+                        text="レシピを投稿してみましょう"
+                        color="orange"
+                      />
+                      <Button
+                        className="mt-4 bg-orange-400 hover:bg-orange-500 text-white"
+                        onClick={() => router.push("/recipe/new")}
+                      >
+                        投稿する
+                      </Button>
+                    </div>
+                  ) : (
+                    kitchenData.myRecipes.map((r) => (
+                      <div
+                        key={r.id}
+                        onClick={() => router.push(`/recipe/${r.id}`)}
+                        className="bg-white p-3 rounded-2xl shadow-sm flex gap-3 items-center cursor-pointer"
+                      >
+                        <div className="w-16 h-16 bg-slate-100 rounded-xl overflow-hidden relative shrink-0">
+                          {r.image && (
+                            <Image
+                              src={r.image}
+                              fill
+                              className="object-cover"
+                              alt={r.title}
+                            />
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="font-bold text-slate-800 truncate">
+                            {r.title}
+                          </div>
+                          <div className="text-xs text-slate-400 mt-1">
+                            ❤ {r.likes_count || 0}
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ))}
+                {kitchenTab === "saved" &&
+                  (kitchenData.savedRecipes.length === 0 ? (
+                    <EmptyState
+                      icon={<Heart size={48} />}
+                      text="お気に入りのレシピを保存"
+                      color="orange"
+                    />
+                  ) : (
+                    kitchenData.savedRecipes.map((s) => (
+                      <div
+                        key={s.id}
+                        onClick={() => router.push(`/recipe/${s.recipes?.id}`)}
+                        className="bg-white p-3 rounded-2xl shadow-sm flex gap-3 items-center cursor-pointer"
+                      >
+                        <div className="w-16 h-16 bg-slate-100 rounded-xl overflow-hidden relative shrink-0">
+                          {s.recipes?.image && (
+                            <Image
+                              src={s.recipes.image}
+                              fill
+                              className="object-cover"
+                              alt={s.recipes.title}
+                            />
+                          )}
+                        </div>
+                        <div className="font-bold text-slate-800 truncate">
+                          {s.recipes?.title}
+                        </div>
+                      </div>
+                    ))
+                  ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Modals */}
-      {showAllergyModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white w-full max-w-sm rounded-[32px] p-6 shadow-2xl animate-in slide-in-from-bottom-10">
-            <h3 className="font-bold text-center mb-4">マイアレルギー設定</h3>
-            <AllergySelector
-              selectedAllergens={myAllergens}
-              onChange={setMyAllergens}
-            />
-            <Button
-              className="w-full mt-6 bg-orange-500 hover:bg-orange-600 font-bold"
-              onClick={handleSaveAllergens}
-            >
-              保存する
-            </Button>
-          </div>
-        </div>
-      )}
-
+      {/* Modals placeholders */}
+      {/* Keeping existing modals logic if needed */}
       {showChildModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white w-full max-w-sm rounded-[32px] p-6 shadow-2xl animate-in slide-in-from-bottom-10 max-h-[90vh] overflow-y-auto">
-            <h3 className="font-bold text-center mb-6 text-lg">
-              {editingChild ? "お子様編集" : "お子様追加"}
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-xl">
+            <h3 className="text-lg font-bold mb-4 text-center">
+              {editingChild ? "お子様情報を編集" : "お子様を追加"}
             </h3>
-            <div className="flex justify-center mb-6 relative">
+
+            <div className="flex justify-center mb-6">
               <div
-                className="w-24 h-24 rounded-full bg-slate-50 border-2 border-slate-100 flex items-center justify-center text-4xl overflow-hidden cursor-pointer"
+                className="w-24 h-24 rounded-full bg-orange-50 border-2 border-orange-100 flex items-center justify-center text-4xl relative cursor-pointer"
                 onClick={() => childFileInputRef.current?.click()}
               >
                 {childPhoto ? (
                   <img
                     src={childPhoto}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full rounded-full object-cover"
                   />
                 ) : (
                   childIcon
                 )}
-                <div className="absolute bottom-0 right-0 bg-white p-2 rounded-full shadow-md text-orange-400">
-                  <Camera size={16} />
+                <div className="absolute bottom-0 right-0 bg-white rounded-full p-2 shadow-md border border-slate-100">
+                  <Camera size={16} className="text-orange-400" />
                 </div>
               </div>
               <input
@@ -681,27 +634,30 @@ export default function ProfilePage() {
                 ref={childFileInputRef}
                 className="hidden"
                 accept="image/*"
-                onChange={(e) => {
-                  if (e.target.files?.[0]) setChildPhotoFile(e.target.files[0]);
+                onChange={async (e) => {
+                  const f = e.target.files?.[0];
+                  if (f) setChildPhotoFile(f);
                 }}
               />
             </div>
+
             <div className="space-y-4">
               <div>
-                <label className="text-xs font-bold text-slate-400 pl-1 block mb-1">
+                <label className="text-xs font-bold text-slate-500 mb-1 block">
                   お名前
                 </label>
                 <Input
                   value={childName}
                   onChange={(e) => setChildName(e.target.value)}
-                  className="bg-slate-50 border-none rounded-xl"
+                  placeholder="例: はなちゃん"
+                  className="bg-slate-50 border-none"
                 />
                 {formErrors.name && (
-                  <p className="text-red-500 text-xs pl-1">{formErrors.name}</p>
+                  <p className="text-red-500 text-xs mt-1">{formErrors.name}</p>
                 )}
               </div>
               <div>
-                <label className="text-xs font-bold text-slate-400 pl-1 block mb-1">
+                <label className="text-xs font-bold text-slate-500 mb-1 block">
                   アレルギー
                 </label>
                 <AllergySelector
@@ -709,62 +665,100 @@ export default function ProfilePage() {
                   onChange={setChildAllergens}
                 />
                 {formErrors.allergens && (
-                  <p className="text-red-500 text-xs pl-1">
+                  <p className="text-red-500 text-xs mt-1">
                     {formErrors.allergens}
                   </p>
                 )}
               </div>
             </div>
+
             <div className="flex gap-3 mt-8">
               <Button
                 variant="ghost"
-                className="flex-1 rounded-xl"
+                className="flex-1"
                 onClick={closeChildModal}
               >
                 キャンセル
               </Button>
               <Button
-                className="flex-1 bg-orange-500 hover:bg-orange-600 rounded-xl font-bold text-white"
+                className="flex-1 bg-orange-500 hover:bg-orange-600 text-white"
                 onClick={handleSaveChild}
               >
-                保存
+                保存する
               </Button>
             </div>
             {editingChild && (
               <button
-                onClick={() => {
-                  if (confirm("削除しますか？")) deleteChild(editingChild.id);
-                  closeChildModal();
+                onClick={async () => {
+                  if (confirm("本当に削除しますか？")) {
+                    await deleteChild(editingChild.id);
+                    closeChildModal();
+                  }
                 }}
-                className="w-full text-center text-xs text-red-300 font-bold mt-4 py-2"
+                className="w-full mt-4 text-xs text-red-400 py-2"
               >
-                この子を削除
+                このお子様を削除
               </button>
             )}
           </div>
         </div>
       )}
-
+      {/* Announcements Modal */}
       {showAnnouncementsModal && (
-        <SimpleModal
-          title="お知らせ"
-          content="アップデート情報や運営からのお知らせが表示されます。"
-          onClose={() => setShowAnnouncementsModal(false)}
-        />
-      )}
-      {showInquiryModal && (
-        <SimpleModal
-          title="お問い合わせ"
-          content={
-            <a
-              href="mailto:support@anshin.com"
-              className="block w-full bg-slate-100 p-4 rounded-xl text-center font-bold text-slate-600 hover:bg-slate-200"
+        <div
+          className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          onClick={() => setShowAnnouncementsModal(false)}
+        >
+          <div
+            className="bg-white w-full max-w-md max-h-[85vh] rounded-[32px] p-6 shadow-2xl overflow-hidden flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold">お知らせ</h3>
+              <button
+                onClick={() => setShowAnnouncementsModal(false)}
+                className="text-slate-400 text-xl"
+              >
+                ×
+              </button>
+            </div>
+            <div className="bg-slate-50 p-4 rounded-2xl font-bold text-sm">
+              ✨ 新機能：活動記録が見られるようになりました！
+            </div>
+            <Button
+              onClick={() => setShowAnnouncementsModal(false)}
+              className="mt-4"
             >
-              メールを送る
+              閉じる
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {showInquiryModal && (
+        <div
+          className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          onClick={() => setShowInquiryModal(false)}
+        >
+          <div
+            className="bg-white w-full max-w-xs rounded-[32px] p-8 text-center shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-xl font-bold mb-6">お問い合わせ</h3>
+            <a
+              href="mailto:support@anshinrecipe.com"
+              className="flex items-center justify-center gap-3 w-full py-4 bg-slate-100 text-slate-700 rounded-2xl font-bold"
+            >
+              <Mail size={20} /> メール
             </a>
-          }
-          onClose={() => setShowInquiryModal(false)}
-        />
+            <button
+              onClick={() => setShowInquiryModal(false)}
+              className="mt-6 text-sm font-bold text-slate-400"
+            >
+              閉じる
+            </button>
+          </div>
+        </div>
       )}
 
       <Footer />
@@ -772,96 +766,28 @@ export default function ProfilePage() {
   );
 }
 
-// Sub Components
-const ActionCard = ({ icon, title, subtitle, color, onClick }) => {
-  const colors = {
-    blue: "bg-blue-50 text-blue-500 shadow-blue-100",
-    purple: "bg-purple-50 text-purple-500 shadow-purple-100",
-    green: "bg-green-50 text-green-500 shadow-green-100",
-    orange: "bg-orange-50 text-orange-500 shadow-orange-100",
+// Simple Empty State Component
+const EmptyState = ({ icon, text, color }) => {
+  // Tailwind needs full class names to be present in the source
+  const colorStyles = {
+    orange: {
+      container: "text-orange-300 bg-orange-50/30 border-orange-100",
+      text: "text-orange-400",
+    },
+    blue: {
+      container: "text-blue-300 bg-blue-50/30 border-blue-100",
+      text: "text-blue-400",
+    },
   };
+
+  const styles = colorStyles[color] || colorStyles.orange;
+
   return (
     <div
-      onClick={onClick}
-      className="bg-white p-3 rounded-2xl shadow-sm border border-slate-50 flex items-center gap-3 cursor-pointer hover:bg-slate-50 transition-colors"
+      className={`flex flex-col items-center justify-center py-12 rounded-3xl border-2 border-dashed ${styles.container}`}
     >
-      <div
-        className={`w-10 h-10 rounded-full flex items-center justify-center ${colors[color]}`}
-      >
-        {icon}
-      </div>
-      <div className="min-w-0">
-        <div className="text-[10px] font-bold text-slate-400 truncate">
-          {title}
-        </div>
-        <div className="text-xs font-black text-slate-700 truncate">
-          {subtitle}
-        </div>
-      </div>
+      <div className="mb-3 opacity-50">{icon}</div>
+      <p className={`font-bold text-sm ${styles.text}`}>{text}</p>
     </div>
   );
 };
-
-const RecipeCard = ({ recipe, onClick }) => (
-  <div
-    onClick={onClick}
-    className="bg-white p-3 rounded-2xl shadow-sm flex items-center gap-3 active:scale-98 transition-transform"
-  >
-    <div className="w-16 h-16 bg-slate-100 rounded-xl overflow-hidden shrink-0 relative">
-      {recipe?.image ? (
-        <Image src={recipe.image} fill className="object-cover" />
-      ) : (
-        <div className="w-full h-full flex items-center justify-center text-slate-300">
-          <Utensils size={20} />
-        </div>
-      )}
-    </div>
-    <div className="min-w-0 flex-1">
-      <div className="font-bold text-sm text-slate-800 line-clamp-1">
-        {recipe?.title || "無題のレシピ"}
-      </div>
-      <div className="flex items-center gap-3 mt-1">
-        <span className="text-[10px] bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded-md font-bold">
-          ❤ {recipe?.likes_count || 0}
-        </span>
-        <span className="text-[10px] text-slate-400">
-          {new Date(recipe?.created_at).toLocaleDateString()}
-        </span>
-      </div>
-    </div>
-  </div>
-);
-
-const EmptyState = ({ text }) => (
-  <div className="flex flex-col items-center justify-center py-12 text-slate-300 gap-2">
-    <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-2">
-      <Heart size={24} />
-    </div>
-    <p className="text-xs font-bold">{text}</p>
-  </div>
-);
-
-const SimpleModal = ({ title, content, onClose }) => (
-  <div
-    className="fixed inset-0 z-[110] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in"
-    onClick={onClose}
-  >
-    <div
-      className="bg-white w-full max-w-sm rounded-[32px] p-6 shadow-2xl"
-      onClick={(e) => e.stopPropagation()}
-    >
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="font-bold text-lg">{title}</h3>
-        <button
-          onClick={onClose}
-          className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center text-slate-400"
-        >
-          ×
-        </button>
-      </div>
-      <div className="text-sm text-slate-600 leading-relaxed font-medium">
-        {content}
-      </div>
-    </div>
-  </div>
-);
