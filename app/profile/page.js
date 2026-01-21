@@ -36,6 +36,7 @@ import { uploadImage } from "@/lib/imageUpload";
 import AllergySelector from "@/components/AllergySelector";
 
 export default function ProfilePage() {
+  const router = useRouter();
   const {
     user,
     profile,
