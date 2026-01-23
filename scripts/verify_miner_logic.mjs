@@ -1,8 +1,8 @@
 import * as cheerio from "cheerio";
 
-// --- MOCK FUNCTION IMPORTS (Because we can't import node module easily in mjs script without package.json "type":"module" complexities sometimes, but sticking to logic copy for verification speed unless we use proper test runner) ---
+// --- MOCK FUNCTION IMPORTS ---
 
-// 1. Feature Detection Logic (Copied from miner.js for verification)
+// 1. Feature Detection Logic (Copied from miner.js)
 function detectFeaturesFromText(pageText) {
   const features = {};
   if (pageText.match(/アレルギー表|アレルゲン一覧|成分表/)) {
@@ -23,7 +23,7 @@ function extractMenusRuleBased($, baseUrl) {
   const menus = [];
   const seenNames = new Set();
   const BLOCKLIST =
-    /logo|icon|btn|button|arrow|banner|map|spacer|link|tel|mail|line|instagram|facebook|twitter|nav|menu|hero|slide|bg|shadow|影|様子|袋|注が|温め|問合|登録|詳細|クリック|タップ|ページ|戻る|次へ|ホーム|会社|概要|ポリシー|規約|特定商取引|Copyright|All Rights|This is|Image|view|scene|interior|exterior/i;
+    /logo|icon|btn|button|arrow|banner|map|spacer|link|tel|mail|line|instagram|facebook|twitter|nav|menu|hero|slide|bg|shadow|影|様子|袋|注が|温め|問合|登録|詳細|クリック|タップ|ページ|戻る|次へ|ホーム|会社|概要|ポリシー|規約|特定商取引|Copyright|All Rights|This is|Image|view|scene|interior|exterior|熨斗|包装|ラッピング|ギフト|送料|カート|注文|発送|お届け/i;
 
   $("li, div, p, td, dt, dd").each((i, el) => {
     const text = $(el).text().replace(/\s+/g, " ").trim();
@@ -77,10 +77,12 @@ const baseUrl = "https://example.com/shop/";
 const testHtml = `
 <html>
 <body>
-    <img src="shadow.jpg" alt="植物の葉の影">   <!-- Garbage -->
-    <img src="making.jpg" alt="ワッフルを作っている様子"> <!-- Garbage -->
-    <img src="bag.jpg" alt="茶色の紙袋に入った小麦粉"> <!-- Garbage -->
-    <img src="line.jpg" alt="お問い合わせ・LINE登録"> <!-- Garbage -->
+    <img src="shadow.jpg" alt="植物の葉の影">
+    <img src="making.jpg" alt="ワッフルを作っている様子">
+    <img src="bag.jpg" alt="茶色の紙袋に入った小麦粉">
+    <img src="line.jpg" alt="お問い合わせ・LINE登録">
+    <img src="noshi.jpg" alt="熨斗（表書きなし）"> <!-- New Garbage Check -->
+    <img src="gift.jpg" alt="ギフト包装"> <!-- New Garbage Check -->
     <img src="pantry/waffle.jpg" alt="米粉のワッフル"> <!-- Valid -->
 </body>
 </html>
@@ -88,8 +90,9 @@ const testHtml = `
 const $ = cheerio.load(testHtml);
 const results = extractMenusRuleBased($, baseUrl);
 
-if (results.some((r) => r.name.match(/影|様子|袋|お問い合わせ/))) {
+if (results.some((r) => r.name.match(/影|様子|袋|お問い合わせ|熨斗|包装/))) {
   console.error("❌ FAILED: Garbage items were not filtered.");
+  console.error("Found:", results.map(r => r.name));
   passed = false;
 } else if (!results.find((r) => r.name === "米粉のワッフル")) {
   console.error("❌ FAILED: Valid item '米粉のワッフル' was missed.");
@@ -101,7 +104,7 @@ if (results.some((r) => r.name.match(/影|様子|袋|お問い合わせ/))) {
   console.error("❌ FAILED: URL Resolution incorrect.");
   passed = false;
 } else {
-  console.log("✅ PASSED");
+  console.log("✅ PASSED: Garbage filtering and URL resolution.");
 }
 
 // TEST 2: Feature Detection (Logic Check)
@@ -123,9 +126,9 @@ const cases = [
     label: "Simple Negative",
   },
   {
-    text: "コンタミ防止の除去対応は難しいです",
+    text: "コンタミ対応は致しかねます",
     expectRemoval: false,
-    label: "Soft Negative",
+    label: "Polite Negative",
   },
   {
     text: "アレルギー表をご用意しております",

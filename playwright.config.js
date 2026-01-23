@@ -10,9 +10,9 @@ export default defineConfig({
   reporter: "html",
   use: {
     baseURL: "http://localhost:3001",
-    trace: "on-first-retry",
-    screenshot: "only-on-failure",
-    video: "on-first-retry",
+    trace: "retain-on-failure", // 失敗時のみトレース保存（デバッグ効率化）
+    screenshot: "on", // 全テストでスクリーンショット保存
+    video: "retain-on-failure", // 失敗時のみビデオ保存
   },
 
   projects: [
@@ -20,10 +20,17 @@ export default defineConfig({
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
     },
-    // {
-    //   name: 'Mobile Chrome',
-    //   use: { ...devices['Pixel 5'] },
-    // },
+    {
+      name: "mobile-chrome",
+      use: {
+        // iPhone 16相当 (393x852)
+        viewport: { width: 393, height: 852 },
+        userAgent:
+          "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15",
+        isMobile: true,
+        hasTouch: true,
+      },
+    },
   ],
 
   // Run your local dev server before starting the tests

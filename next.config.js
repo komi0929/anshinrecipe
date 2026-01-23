@@ -121,6 +121,20 @@ const nextConfig = {
       },
     ],
   },
+  // 🚀 開発速度最適化
+  webpack: (config, { dev }) => {
+    if (dev) {
+      // ファイル監視の効率化
+      config.watchOptions = {
+        poll: 1000, // 1秒ごとにポーリング
+        aggregateTimeout: 300, // 変更後300ms待機してからビルド
+        ignored: ["**/node_modules/**", "**/.git/**", "**/.next/**"],
+      };
+    }
+    return config;
+  },
+  // Fast Refresh改善
+  reactStrictMode: true,
 };
 
 export default withPWA(nextConfig);

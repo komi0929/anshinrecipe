@@ -2,8 +2,14 @@ import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabaseClient";
 import { deepDiveCandidate } from "@/lib/collection/miner";
 
-// POST /api/admin/candidates/deep-dive
-// Runs the Miner (Gemini + Scraping) on a specific candidate to get rich data
+/**
+ * POST /api/admin/candidates/deep-dive
+ *
+ * REVISED 2026-01-24:
+ * - Now collects: overview, classified_images, features
+ * - NO LONGER collects: menus (removed from Miner)
+ * - Menus are now UGC/Owner responsibility
+ */
 export async function POST(request) {
   try {
     const { candidateId } = await request.json();
@@ -25,7 +31,7 @@ export async function POST(request) {
     if (fetchError) throw fetchError;
 
     console.log(
-      `[DeepDiveAPI] Starting deep dive for ${candidate.id}:${candidate.shop_name}`,
+      `[DeepDiveAPI] Starting deep dive (Image-Centric) for ${candidate.id}:${candidate.shop_name}`,
     );
 
     // Debug info container
@@ -36,46 +42,39 @@ export async function POST(request) {
       miner_results: {},
     };
 
-    // 2. Run Miner
+    // 2. Run Miner (Image-Centric Mode)
     const minerInput = {
       place_id: candidate.place_id,
       name: candidate.shop_name,
       website_url: candidate.website_url,
       address: candidate.address,
-      photo_refs: [], // We don't rely on passed photo_refs for now, Miner fetches fresh if needed or uses logic
+      photo_refs: [],
     };
 
     const deepData = await deepDiveCandidate(minerInput);
 
-    // Populate debug info
+    // Populate debug info with new data structure
+    const totalImages = Object.values(deepData.classified_images || {}).flat()
+      .length;
     debugInfo.miner_results = {
       phone: deepData.phone,
       website: deepData.website,
-      images_count: deepData.images?.length || 0,
-      menus_count: deepData.menus?.length || 0,
-      place_details_success: !!deepData.phone, // Approximate check
+      overview_generated: !!deepData.overview,
+      total_images: totalImages,
+      images_exterior: deepData.classified_images?.exterior?.length || 0,
+      images_interior: deepData.classified_images?.interior?.length || 0,
+      images_food: deepData.classified_images?.food?.length || 0,
+      place_details_success: !!deepData.phone,
     };
 
-    // 3. Merge Data
-    // Simple dedupe by name: verify if new menu exists in old menu
-    const existingMenus = candidate.menus || [];
-    const newMenus = deepData.menus || [];
-
-    const combinedMenus = [...existingMenus];
-    for (const m of newMenus) {
-      if (!combinedMenus.some((ex) => ex.name === m.name)) {
-        combinedMenus.push(m);
-      }
-    }
-
-    // Merge features
+    // 3. Merge Features (NO MENU MERGING ANYMORE)
     const combinedFeatures = {
       ...(candidate.features || {}),
       ...deepData.features,
     };
 
     // Merge sources
-    const newSources = deepData.sources_checked.map((s) => ({
+    const newSources = (deepData.sources_checked || []).map((s) => ({
       type: s.type,
       url: s.url,
       status: "checked",
@@ -83,38 +82,40 @@ export async function POST(request) {
     }));
     const combinedSources = [...(candidate.sources || []), ...newSources];
 
-    // 4. Update Database
+    // 4. Build Update Payload (New Structure)
     const updatePayload = {
-      menus: combinedMenus,
       features: combinedFeatures,
       sources: combinedSources,
     };
 
-    // Add discovered basic info if available (and overwrite if better? Yes, Miner is trustier)
-    if (deepData.phone) updatePayload.phone = deepData.phone;
-    if (deepData.shop_name) updatePayload.shop_name = deepData.shop_name;
-    if (deepData.images && deepData.images.length > 0) {
-      // 'images' column might not exist, utilize 'features' jsonb
-      updatePayload.features.images = deepData.images;
+    // Overview
+    if (deepData.overview) {
+      updatePayload.overview = deepData.overview;
     }
 
-    // URL Management:
-    // 1. Official Website -> 'website' column
+    // Classified Images (stored in JSONB)
+    if (totalImages > 0) {
+      updatePayload.classified_images = deepData.classified_images;
+    }
+
+    // Basic Info
+    if (deepData.phone) updatePayload.phone = deepData.phone;
+    if (deepData.shop_name) updatePayload.shop_name = deepData.shop_name;
+
+    // URL Management
     if (deepData.website) {
       updatePayload.website = deepData.website;
     }
 
-    // 2. Instagram -> 'features' column (as instagram_url)
-    // This allows both to exist simultaneously without DB schema change
+    // Instagram -> features column
     if (deepData.instagram) {
       updatePayload.features.instagram_url = deepData.instagram;
-
-      // Fallback: If no official website, put instagram in main website column too
       if (!updatePayload.website) {
         updatePayload.website = deepData.instagram;
       }
     }
 
+    // 5. Update Database
     const { data: updated, error: updateError } = await supabase
       .from("candidate_restaurants")
       .update(updatePayload)
@@ -131,6 +132,8 @@ export async function POST(request) {
       success: true,
       data: updated,
       debug: debugInfo,
+      message:
+        "Deep dive complete. Images and overview collected. Menus can be added by users/owners.",
     });
   } catch (error) {
     console.error("Deep Dive API Error:", error);

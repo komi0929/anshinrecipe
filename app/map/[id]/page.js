@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useParams, useRouter } from "next/navigation";
 import { useMapData } from "@/hooks/useMapData";
@@ -10,7 +10,6 @@ import {
   Phone,
   Globe,
   Star,
-  AlertTriangle,
   CheckCircle,
   HelpCircle,
   Instagram,
@@ -19,6 +18,12 @@ import {
   Flag,
   Share2,
   Clock,
+  ChevronLeft,
+  ChevronRight,
+  Mail,
+  ShoppingBag,
+  BadgeCheck,
+  Users,
 } from "lucide-react";
 import { MenuList } from "@/components/map/MenuList";
 import { ReviewModal } from "@/components/map/ReviewModal";
@@ -26,6 +31,7 @@ import { ReportModal } from "@/components/map/ReportModal";
 import { ReviewList } from "@/components/map/ReviewList";
 import { MenuGallery } from "@/components/map/MenuGallery";
 import { BookmarkButton } from "@/components/social/BookmarkButton";
+import { InviteOwnerButton } from "@/components/map/InviteOwnerButton";
 import "./RestaurantDetailPage.css";
 
 export default function RestaurantDetailPage() {
@@ -34,10 +40,11 @@ export default function RestaurantDetailPage() {
   const { restaurants, loading } = useMapData();
   const [restaurant, setRestaurant] = useState(null);
   const [customMenus, setCustomMenus] = useState([]);
-  const [activeTab, setActiveTab] = useState("menu");
+  const [activeTab, setActiveTab] = useState("overview");
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [menuToReport, setMenuToReport] = useState(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   // Fetch Restaurant
   useEffect(() => {
@@ -49,7 +56,7 @@ export default function RestaurantDetailPage() {
     }
   }, [params.id, restaurants, loading]);
 
-  // Fetch Custom Menus
+  // Fetch Custom Menus (User-submitted)
   useEffect(() => {
     const fetchCustomMenus = async () => {
       if (!restaurant?.id) return;
@@ -95,21 +102,92 @@ export default function RestaurantDetailPage() {
       </div>
     );
 
+  // Collect all images for carousel
+  const allImages = [];
+  const classifiedImages = restaurant.classified_images || {};
+
+  // Priority order: food > interior > exterior > other
+  if (classifiedImages.food) allImages.push(...classifiedImages.food);
+  if (classifiedImages.interior) allImages.push(...classifiedImages.interior);
+  if (classifiedImages.exterior) allImages.push(...classifiedImages.exterior);
+  if (classifiedImages.other) allImages.push(...classifiedImages.other);
+
+  // Fallback to legacy images
+  if (allImages.length === 0) {
+    if (restaurant.image_url) allImages.push({ url: restaurant.image_url });
+    if (restaurant.menus?.[0]?.image_url)
+      allImages.push({ url: restaurant.menus[0].image_url });
+  }
+
   const displayMenus = [...(restaurant.menus || []), ...customMenus];
+  const isVerified = restaurant.is_owner_verified;
+
+  const nextImage = () => {
+    setCurrentImageIndex((prev) => (prev + 1) % Math.max(allImages.length, 1));
+  };
+
+  const prevImage = () => {
+    setCurrentImageIndex(
+      (prev) => (prev - 1 + allImages.length) % Math.max(allImages.length, 1),
+    );
+  };
 
   return (
     <div className="bg-slate-50 min-h-screen pb-32">
-      {/* HER0 IMAGE AREA */}
-      <div className="relative h-80 w-full overflow-hidden">
-        <div className="absolute inset-0 bg-slate-900/20 z-10" />
-        {restaurant.image_url || restaurant.menus?.[0]?.image_url ? (
-          <img
-            src={restaurant.image_url || restaurant.menus?.[0]?.image_url}
-            className="w-full h-full object-cover animate-in fade-in zoom-in duration-700"
-          />
+      {/* IMAGE CAROUSEL HERO */}
+      <div className="relative h-80 w-full overflow-hidden bg-slate-900">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 z-10" />
+
+        {allImages.length > 0 ? (
+          <>
+            <img
+              src={allImages[currentImageIndex]?.url}
+              alt={allImages[currentImageIndex]?.alt || "店舗画像"}
+              className="w-full h-full object-cover animate-in fade-in duration-500"
+            />
+
+            {/* Image Navigation */}
+            {allImages.length > 1 && (
+              <>
+                <button
+                  onClick={prevImage}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-black/30 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-black/50 transition-colors"
+                >
+                  <ChevronLeft size={24} />
+                </button>
+                <button
+                  onClick={nextImage}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-black/30 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-black/50 transition-colors"
+                >
+                  <ChevronRight size={24} />
+                </button>
+
+                {/* Image Indicators */}
+                <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-20 flex gap-1.5">
+                  {allImages.slice(0, 8).map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setCurrentImageIndex(i)}
+                      className={`w-2 h-2 rounded-full transition-all ${
+                        i === currentImageIndex ? "bg-white w-4" : "bg-white/50"
+                      }`}
+                    />
+                  ))}
+                  {allImages.length > 8 && (
+                    <span className="text-white/70 text-xs ml-1">
+                      +{allImages.length - 8}
+                    </span>
+                  )}
+                </div>
+              </>
+            )}
+          </>
         ) : (
-          <div className="w-full h-full bg-slate-200 flex items-center justify-center text-slate-400">
-            <Globe size={48} />
+          <div className="w-full h-full bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center">
+            <div className="text-center text-white/40">
+              <Globe size={48} className="mx-auto mb-2" />
+              <p className="text-sm">画像なし</p>
+            </div>
           </div>
         )}
 
@@ -117,12 +195,12 @@ export default function RestaurantDetailPage() {
         <div className="absolute top-0 left-0 right-0 p-4 pt-safe flex justify-between items-center z-20">
           <button
             onClick={() => router.back()}
-            className="w-10 h-10 bg-white/30 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white hover:bg-white/50 transition-colors shadow-lg"
+            className="w-10 h-10 bg-white/20 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white hover:bg-white/30 transition-colors shadow-lg"
           >
             <ArrowLeft size={20} />
           </button>
           <div className="flex gap-3">
-            <button className="w-10 h-10 bg-white/30 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white hover:bg-white/50 transition-colors shadow-lg">
+            <button className="w-10 h-10 bg-white/20 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white hover:bg-white/30 transition-colors shadow-lg">
               <Share2 size={18} />
             </button>
             <div className="shadow-lg rounded-full overflow-hidden">
@@ -131,11 +209,26 @@ export default function RestaurantDetailPage() {
           </div>
         </div>
 
-        {/* Rating Badge */}
-        <div className="absolute bottom-12 right-6 z-20 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1">
-          <Star size={14} className="text-orange-400 fill-orange-400" />
-          <span className="text-sm font-black text-slate-800">4.5</span>
-          <span className="text-[10px] text-slate-400 font-bold">(12件)</span>
+        {/* Verified Badge (if owner verified) */}
+        {isVerified && (
+          <div className="absolute bottom-20 left-6 z-20 bg-blue-500 text-white px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1.5">
+            <BadgeCheck size={16} />
+            <span className="text-xs font-bold">公認店舗</span>
+          </div>
+        )}
+
+        {/* Image Category Labels */}
+        <div className="absolute bottom-20 right-6 z-20 flex gap-2">
+          {classifiedImages.exterior?.length > 0 && (
+            <span className="bg-white/80 backdrop-blur-sm text-slate-700 text-[10px] font-bold px-2 py-1 rounded-full">
+              外観 {classifiedImages.exterior.length}枚
+            </span>
+          )}
+          {classifiedImages.food?.length > 0 && (
+            <span className="bg-orange-100/90 backdrop-blur-sm text-orange-700 text-[10px] font-bold px-2 py-1 rounded-full">
+              料理 {classifiedImages.food.length}枚
+            </span>
+          )}
         </div>
       </div>
 
@@ -150,6 +243,11 @@ export default function RestaurantDetailPage() {
             {restaurant.features?.wheelchair_accessible === "◯" && (
               <span className="text-[10px] font-bold bg-green-100 text-green-600 px-3 py-1 rounded-full">
                 バリアフリー
+              </span>
+            )}
+            {isVerified && (
+              <span className="text-[10px] font-bold bg-blue-100 text-blue-600 px-3 py-1 rounded-full flex items-center gap-1">
+                <BadgeCheck size={10} /> オーナー公認
               </span>
             )}
           </div>
@@ -171,6 +269,15 @@ export default function RestaurantDetailPage() {
           </a>
         </div>
 
+        {/* OVERVIEW SECTION (NEW) */}
+        {restaurant.overview && (
+          <div className="mb-8 p-5 bg-gradient-to-br from-slate-50 to-orange-50/30 rounded-3xl border border-slate-100">
+            <p className="text-sm text-slate-700 leading-relaxed">
+              {restaurant.overview}
+            </p>
+          </div>
+        )}
+
         {/* Contact Actions Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
           {restaurant.phone && (
@@ -181,9 +288,11 @@ export default function RestaurantDetailPage() {
               <Phone size={16} /> 電話する
             </a>
           )}
-          {restaurant.instagram_url && (
+          {(restaurant.instagram_url || restaurant.features?.instagram_url) && (
             <a
-              href={restaurant.instagram_url}
+              href={
+                restaurant.instagram_url || restaurant.features?.instagram_url
+              }
               target="_blank"
               className="flex items-center justify-center gap-2 py-3 bg-pink-50 border border-pink-100 rounded-2xl font-bold text-pink-600 text-sm hover:bg-pink-100 transition-colors"
             >
@@ -204,47 +313,102 @@ export default function RestaurantDetailPage() {
           </div>
         </div>
 
-        {/* HIGHLIGHT: Visual Menu List */}
+        {/* TAKEOUT / ONLINE SHOP SECTION (NEW) */}
+        <div className="mb-8 p-5 bg-amber-50/50 rounded-3xl border border-amber-100">
+          <h3 className="font-bold text-sm text-amber-800 flex items-center gap-2 mb-3">
+            <ShoppingBag size={16} /> お取り寄せ・通販
+          </h3>
+          {restaurant.takeout_url ? (
+            <a
+              href={restaurant.takeout_url}
+              target="_blank"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500 text-white rounded-xl font-bold text-sm hover:bg-amber-600 transition-colors"
+            >
+              <ShoppingBag size={14} /> 通販サイトへ
+            </a>
+          ) : !isVerified ? (
+            <div className="text-xs text-amber-600/70">
+              <p className="mb-2">まだ登録されていません</p>
+              <InviteOwnerButton
+                restaurantId={restaurant.id}
+                restaurantName={restaurant.name}
+                variant="text"
+              />
+            </div>
+          ) : (
+            <p className="text-xs text-amber-600/70">オーナー情報待ち</p>
+          )}
+        </div>
+
+        {/* MENU SECTION - Now UGC Focused */}
         <div className="mb-10">
           <div className="flex justify-between items-end mb-4 px-1">
             <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
               <span className="text-xl">🍽️</span> 食べられるもの
             </h2>
-            <button
-              onClick={() => setActiveTab("menu")}
-              className="text-xs font-bold text-orange-500"
-            >
-              もっと見る
-            </button>
-          </div>
-          <div className="flex gap-4 overflow-x-auto pb-4 -mx-6 px-6 scrollbar-hide snap-x">
-            {displayMenus.slice(0, 5).map((menu, i) => (
-              <div
-                key={i}
-                className="snap-center shrink-0 w-36 group cursor-pointer"
+            {displayMenus.length > 0 && (
+              <button
                 onClick={() => setActiveTab("menu")}
+                className="text-xs font-bold text-orange-500"
               >
-                <div className="aspect-square rounded-2xl bg-slate-100 overflow-hidden mb-2 relative border border-slate-100">
-                  {menu.image_url ? (
-                    <img
-                      src={menu.image_url}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-2xl">
-                      🍳
+                もっと見る
+              </button>
+            )}
+          </div>
+
+          {displayMenus.length > 0 ? (
+            <div className="flex gap-4 overflow-x-auto pb-4 -mx-6 px-6 scrollbar-hide snap-x">
+              {displayMenus.slice(0, 5).map((menu, i) => (
+                <div
+                  key={i}
+                  className="snap-center shrink-0 w-36 group cursor-pointer"
+                  onClick={() => setActiveTab("menu")}
+                >
+                  <div className="aspect-square rounded-2xl bg-slate-100 overflow-hidden mb-2 relative border border-slate-100">
+                    {menu.image_url ? (
+                      <img
+                        src={menu.image_url}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-2xl">
+                        🍳
+                      </div>
+                    )}
+                    {menu.is_user_submitted && (
+                      <div className="absolute top-2 right-2 bg-orange-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full">
+                        投稿
+                      </div>
+                    )}
+                  </div>
+                  <div className="font-bold text-xs text-slate-800 line-clamp-2 leading-relaxed mb-0.5">
+                    {menu.name}
+                  </div>
+                  {menu.price > 0 && (
+                    <div className="font-bold text-[10px] text-slate-400">
+                      ¥{menu.price?.toLocaleString()}
                     </div>
                   )}
                 </div>
-                <div className="font-bold text-xs text-slate-800 line-clamp-2 leading-relaxed mb-0.5">
-                  {menu.name}
-                </div>
-                <div className="font-bold text-[10px] text-slate-400">
-                  ¥{menu.price}
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 bg-slate-50 rounded-3xl border border-dashed border-slate-200">
+              <Users size={32} className="mx-auto text-slate-300 mb-3" />
+              <p className="text-sm text-slate-500 font-bold mb-2">
+                メニュー情報はまだありません
+              </p>
+              <p className="text-xs text-slate-400 mb-4">
+                ユーザーまたは店舗オーナーが追加できます
+              </p>
+              <button
+                onClick={() => setIsReviewModalOpen(true)}
+                className="inline-flex items-center gap-1 px-4 py-2 bg-orange-500 text-white rounded-xl font-bold text-sm hover:bg-orange-600 transition-colors"
+              >
+                <Plus size={14} /> メニューを追加
+              </button>
+            </div>
+          )}
         </div>
 
         {/* INFO SECTIONS: List Style for Readability */}
@@ -253,6 +417,9 @@ export default function RestaurantDetailPage() {
             title="アレルギー対応"
             icon={<ShieldCheck size={18} className="text-orange-500" />}
             color="orange"
+            restaurantId={restaurant.id}
+            restaurantName={restaurant.name}
+            isVerified={isVerified}
             items={[
               {
                 label: "メニュー表記",
@@ -270,6 +437,9 @@ export default function RestaurantDetailPage() {
             title="キッズ対応"
             icon={<span className="text-lg">👶</span>}
             color="blue"
+            restaurantId={restaurant.id}
+            restaurantName={restaurant.name}
+            isVerified={isVerified}
             items={[
               { label: "キッズチェア", value: restaurant.features?.kids_chair },
               { label: "ベビーカー入店", value: restaurant.features?.stroller },
@@ -282,12 +452,13 @@ export default function RestaurantDetailPage() {
         {/* TABS & CONTENT */}
         <div className="sticky top-0 bg-white z-30 pt-2 pb-0 mb-4 border-b border-slate-100">
           <div className="flex gap-6 overflow-x-auto no-scrollbar">
-            {["menu", "reviews", "gallery"].map((tab) => (
+            {["overview", "menu", "reviews", "gallery"].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`pb-3 text-sm font-bold whitespace-nowrap border-b-2 transition-all ${activeTab === tab ? "border-slate-900 text-slate-900 scale-105" : "border-transparent text-slate-400"}`}
               >
+                {tab === "overview" && "概要"}
                 {tab === "menu" && "メニュー詳細"}
                 {tab === "reviews" && "口コミ・記録"}
                 {tab === "gallery" && "写真"}
@@ -297,6 +468,47 @@ export default function RestaurantDetailPage() {
         </div>
 
         <div className="min-h-[400px]">
+          {activeTab === "overview" && (
+            <div className="animate-in fade-in slide-in-from-bottom-4 space-y-6">
+              {restaurant.overview ? (
+                <div className="prose prose-sm max-w-none">
+                  <p className="text-slate-700 leading-relaxed">
+                    {restaurant.overview}
+                  </p>
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <p className="text-slate-400 text-sm">
+                    概要情報はまだありません
+                  </p>
+                </div>
+              )}
+
+              {/* Quick Feature Grid */}
+              <div className="grid grid-cols-2 gap-3">
+                <FeatureCard
+                  icon="🅿️"
+                  label="駐車場"
+                  value={restaurant.features?.parking}
+                />
+                <FeatureCard
+                  icon="♿"
+                  label="車椅子"
+                  value={restaurant.features?.wheelchair_accessible}
+                />
+                <FeatureCard
+                  icon="🚼"
+                  label="キッズ"
+                  value={restaurant.features?.kids_friendly}
+                />
+                <FeatureCard
+                  icon="🍽️"
+                  label="アレルギー対応"
+                  value={restaurant.features?.allergen_label}
+                />
+              </div>
+            </div>
+          )}
           {activeTab === "menu" && (
             <div className="animate-in fade-in slide-in-from-bottom-4">
               <MenuList menus={displayMenus} onReportMenu={setMenuToReport} />
@@ -311,7 +523,7 @@ export default function RestaurantDetailPage() {
             <div className="animate-in fade-in slide-in-from-bottom-4">
               <MenuGallery
                 restaurantId={restaurant.id}
-                images={restaurant.images}
+                images={allImages.map((img) => img.url)}
               />
             </div>
           )}
@@ -328,8 +540,20 @@ export default function RestaurantDetailPage() {
           <span className="text-sm">投稿</span>
         </button>
       </div>
+
+      {/* Owner Request Button */}
+      {!isVerified && (
+        <div className="fixed bottom-8 left-6 z-30">
+          <InviteOwnerButton
+            restaurantId={restaurant.id}
+            restaurantName={restaurant.name}
+            variant="default"
+          />
+        </div>
+      )}
+
       {/* Report Button */}
-      <div className="fixed bottom-8 left-6 z-30 opacity-50 hover:opacity-100 transition-opacity">
+      <div className="fixed bottom-8 right-6 z-30 opacity-50 hover:opacity-100 transition-opacity">
         <button
           onClick={() => setIsReportModalOpen(true)}
           className="flex items-center gap-1 text-xs font-bold text-slate-400 hover:text-red-400"
@@ -366,8 +590,16 @@ export default function RestaurantDetailPage() {
   );
 }
 
-// Compact Feature List Component
-const FeatureList = ({ title, icon, color, items }) => {
+// Compact Feature List Component with Request Button
+const FeatureList = ({
+  title,
+  icon,
+  color,
+  items,
+  restaurantId,
+  restaurantName,
+  isVerified,
+}) => {
   const colors = {
     orange: "bg-orange-50 border-orange-100 text-orange-800",
     blue: "bg-blue-50 border-blue-100 text-blue-800",
@@ -377,11 +609,24 @@ const FeatureList = ({ title, icon, color, items }) => {
     blue: "text-blue-600",
   };
 
+  const hasAnyValue = items.some(
+    (item) => item.value === "◯" || item.value === true || item.value === "△",
+  );
+
   return (
     <div className={`rounded-3xl border p-5 ${colors[color] || colors.orange}`}>
-      <h3 className="font-bold mb-4 flex items-center gap-2 text-sm">
-        {icon} {title}
-      </h3>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-bold flex items-center gap-2 text-sm">
+          {icon} {title}
+        </h3>
+        {!hasAnyValue && !isVerified && restaurantId && (
+          <InviteOwnerButton
+            restaurantId={restaurantId}
+            restaurantName={restaurantName}
+            variant="text"
+          />
+        )}
+      </div>
       <div className="space-y-3">
         {items.map((item, i) => (
           <div
@@ -402,12 +647,38 @@ const FeatureList = ({ title, icon, color, items }) => {
                     className={activeText[color] || activeText.orange}
                   />
                 </>
+              ) : item.value === "△" ? (
+                <>
+                  <span className="text-xs font-bold text-amber-500">
+                    要確認
+                  </span>
+                  <HelpCircle size={14} className="text-amber-500" />
+                </>
               ) : (
                 <span className="text-[10px] font-bold opacity-30 px-2">-</span>
               )}
             </div>
           </div>
         ))}
+      </div>
+    </div>
+  );
+};
+
+// Quick Feature Card for Overview
+const FeatureCard = ({ icon, label, value }) => {
+  const isAvailable = value === "◯" || value === true || value === "△";
+
+  return (
+    <div
+      className={`p-4 rounded-2xl border ${isAvailable ? "bg-green-50 border-green-100" : "bg-slate-50 border-slate-100"}`}
+    >
+      <div className="text-2xl mb-2">{icon}</div>
+      <div className="text-xs font-bold text-slate-600">{label}</div>
+      <div
+        className={`text-xs font-bold mt-1 ${isAvailable ? "text-green-600" : "text-slate-300"}`}
+      >
+        {isAvailable ? (value === "△" ? "要確認" : "対応") : "未確認"}
       </div>
     </div>
   );
