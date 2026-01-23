@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -11,7 +11,7 @@ import {
   BadgeCheck,
 } from "lucide-react";
 
-export default function AcceptInvitationPage() {
+function AcceptInvitationContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
@@ -266,5 +266,29 @@ export default function AcceptInvitationPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+// Loading fallback for Suspense
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="text-center">
+        <Loader2
+          size={48}
+          className="text-orange-500 animate-spin mx-auto mb-4"
+        />
+        <p className="text-slate-500 font-bold">読み込み中...</p>
+      </div>
+    </div>
+  );
+}
+
+// Default export wrapped in Suspense for useSearchParams
+export default function AcceptInvitationPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <AcceptInvitationContent />
+    </Suspense>
   );
 }
