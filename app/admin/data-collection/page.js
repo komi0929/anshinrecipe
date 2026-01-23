@@ -83,113 +83,6 @@ export default function DataCollectionAdminPage() {
     "沖縄県",
   ];
 
-  // Common municipalities for quick selection (major cities)
-  const MAJOR_CITIES = {
-    北海道: ["札幌市", "函館市", "旭川市", "小樽市"],
-    宮城県: ["仙台市青葉区", "仙台市宮城野区", "仙台市太白区"],
-    埼玉県: ["さいたま市大宮区", "さいたま市浦和区", "川越市", "越谷市"],
-    千葉県: ["千葉市中央区", "船橋市", "柏市", "松戸市"],
-    東京都: [
-      "千代田区",
-      "中央区",
-      "港区",
-      "新宿区",
-      "渋谷区",
-      "豊島区",
-      "世田谷区",
-      "品川区",
-      "目黒区",
-      "大田区",
-      "杉並区",
-      "練馬区",
-      "足立区",
-      "江戸川区",
-      "葛飾区",
-      "板橋区",
-      "中野区",
-      "北区",
-      "荒川区",
-      "台東区",
-      "墨田区",
-      "江東区",
-      "文京区",
-      "八王子市",
-      "町田市",
-      "立川市",
-      "武蔵野市",
-      "三鷹市",
-    ],
-    神奈川県: [
-      "横浜市中区",
-      "横浜市西区",
-      "横浜市神奈川区",
-      "川崎市川崎区",
-      "川崎市中原区",
-      "相模原市",
-      "藤沢市",
-      "横須賀市",
-    ],
-    愛知県: [
-      "名古屋市中区",
-      "名古屋市中村区",
-      "名古屋市東区",
-      "名古屋市千種区",
-      "名古屋市昭和区",
-      "名古屋市瑞穂区",
-      "豊田市",
-      "岡崎市",
-    ],
-    京都府: [
-      "京都市中京区",
-      "京都市下京区",
-      "京都市東山区",
-      "京都市左京区",
-      "京都市北区",
-      "京都市上京区",
-    ],
-    大阪府: [
-      "大阪市北区",
-      "大阪市中央区",
-      "大阪市浪速区",
-      "大阪市天王寺区",
-      "大阪市西区",
-      "大阪市福島区",
-      "堺市",
-      "東大阪市",
-      "豊中市",
-      "吹田市",
-    ],
-    兵庫県: [
-      "神戸市中央区",
-      "神戸市東灘区",
-      "神戸市灘区",
-      "姫路市",
-      "西宮市",
-      "尼崎市",
-    ],
-    広島県: ["広島市中区", "広島市南区", "広島市西区", "福山市", "呉市"],
-    福岡県: [
-      "福岡市中央区",
-      "福岡市博多区",
-      "福岡市東区",
-      "福岡市南区",
-      "福岡市西区",
-      "福岡市城南区",
-      "福岡市早良区",
-      "北九州市小倉北区",
-      "北九州市小倉南区",
-      "北九州市八幡東区",
-      "北九州市八幡西区",
-      "久留米市",
-      "飯塚市",
-      "大牟田市",
-    ],
-    沖縄県: ["那覇市", "浦添市", "宜野湾市", "沖縄市", "名護市"],
-  };
-
-  // Update municipality suggestions when prefecture changes
-  const municipalitySuggestions = MAJOR_CITIES[selectedPrefecture] || [];
-
   // Fetch collection history
   useEffect(() => {
     fetchCollectionHistory();
@@ -273,12 +166,12 @@ export default function DataCollectionAdminPage() {
   };
 
   const handleStartCollection = async () => {
-    const area = selectedMunicipality || selectedPrefecture;
+    const area = selectedPrefecture;
     setIsCollecting(true);
     setStatus("processing");
     setLogs((prev) => [
       ...prev,
-      `[${new Date().toLocaleTimeString()}] 処理を開始しました: ${area}`,
+      `[${new Date().toLocaleTimeString()}] 処理を開始しました: ${area} (自動ズームイン検索機能が有効です)`,
     ]);
     setActiveTab("inbox");
 
@@ -288,9 +181,6 @@ export default function DataCollectionAdminPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           area: area,
-          municipalityCode: selectedMunicipality
-            ? municipalities.find((m) => m.name === selectedMunicipality)?.code
-            : null,
         }),
       });
 
@@ -431,9 +321,9 @@ export default function DataCollectionAdminPage() {
 
         {/* NEW: Area Selection with Municipality */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
             {/* Prefecture */}
-            <div>
+            <div className="md:col-span-3">
               <label className="block text-xs font-bold text-slate-500 mb-2">
                 都道府県
               </label>
@@ -450,31 +340,8 @@ export default function DataCollectionAdminPage() {
               </select>
             </div>
 
-            {/* Municipality */}
-            <div>
-              <label className="block text-xs font-bold text-slate-500 mb-2">
-                市区町村（任意）
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  list="municipality-suggestions"
-                  value={selectedMunicipality}
-                  onChange={(e) => setSelectedMunicipality(e.target.value)}
-                  placeholder="例: 渋谷区"
-                  className="w-full h-12 rounded-xl border-slate-200 bg-slate-50 font-bold px-4 outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
-                />
-                <datalist id="municipality-suggestions">
-                  <option value="全域（県単位）" />
-                  {municipalitySuggestions.map((m) => (
-                    <option key={m} value={m} />
-                  ))}
-                </datalist>
-              </div>
-            </div>
-
             {/* Collect Button */}
-            <div>
+            <div className="md:col-span-1">
               <Button
                 onClick={handleStartCollection}
                 disabled={isCollecting}
