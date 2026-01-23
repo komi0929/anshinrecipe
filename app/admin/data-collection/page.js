@@ -10,6 +10,7 @@ import {
   Edit3,
   ShieldCheck,
   Search,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { supabase } from "@/lib/supabaseClient";
@@ -122,7 +123,7 @@ export default function DataCollectionAdminPage() {
 
   const fetchCandidates = async () => {
     try {
-      const res = await fetch("/api/admin/candidates");
+      const res = await fetch("/api/admin/candidates", { cache: "no-store" });
       const data = await res.json();
       if (data.success) {
         const mapped = data.data.map((c) => ({
@@ -286,6 +287,37 @@ export default function DataCollectionAdminPage() {
           `[ERROR] 本番データ削除中にエラーが発生しました: ${e.message}`,
         ]);
       }
+    }
+  };
+
+  const handlePurgeCandidates = async () => {
+    if (
+      !confirm(
+        "承認待ちの候補データを全て削除しますか？\n（この操作は取り消せません）",
+      )
+    )
+      return;
+
+    try {
+      const res = await fetch("/api/admin/candidates/purge", {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (data.success) {
+        setLogs((prev) => [
+          ...prev,
+          `[削除] 承認待ちデータ ${data.count}件 を全削除しました`,
+        ]);
+        await fetchCandidates();
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (e) {
+      console.error("Purge error:", e);
+      setLogs((prev) => [
+        ...prev,
+        `[ERROR] データ削除中にエラーが発生しました: ${e.message}`,
+      ]);
     }
   };
 
@@ -469,25 +501,36 @@ export default function DataCollectionAdminPage() {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 bg-slate-200/50 p-1 rounded-xl w-fit">
-          <button
-            onClick={() => setActiveTab("inbox")}
-            className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === "inbox" ? "bg-white shadow-sm text-orange-600" : "text-slate-500 hover:text-slate-700"}`}
-          >
-            承認待ち ({candidates.length})
-          </button>
-          <button
-            onClick={() => setActiveTab("live")}
-            className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === "live" ? "bg-white shadow-sm text-orange-600" : "text-slate-500 hover:text-slate-700"}`}
-          >
-            本番データ ({liveData.length})
-          </button>
-          <button
-            onClick={() => setActiveTab("reports")}
-            className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === "reports" ? "bg-white shadow-sm text-orange-600" : "text-slate-500 hover:text-slate-700"}`}
-          >
-            不備報告 ({reports.length})
-          </button>
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex gap-1 bg-slate-200/50 p-1 rounded-xl w-fit">
+            <button
+              onClick={() => setActiveTab("inbox")}
+              className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === "inbox" ? "bg-white shadow-sm text-orange-600" : "text-slate-500 hover:text-slate-700"}`}
+            >
+              承認待ち ({candidates.length})
+            </button>
+            <button
+              onClick={() => setActiveTab("live")}
+              className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === "live" ? "bg-white shadow-sm text-orange-600" : "text-slate-500 hover:text-slate-700"}`}
+            >
+              本番データ ({liveData.length})
+            </button>
+            <button
+              onClick={() => setActiveTab("reports")}
+              className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === "reports" ? "bg-white shadow-sm text-orange-600" : "text-slate-500 hover:text-slate-700"}`}
+            >
+              不備報告 ({reports.length})
+            </button>
+          </div>
+
+          {activeTab === "inbox" && candidates.length > 0 && (
+            <button
+              onClick={handlePurgeCandidates}
+              className="text-xs text-red-500 font-bold bg-white border border-red-200 px-3 py-2 rounded-lg hover:bg-red-50 flex items-center gap-2"
+            >
+              <Trash2 size={14} /> 承認待ちを全削除
+            </button>
+          )}
         </div>
 
         {/* Content Area */}
