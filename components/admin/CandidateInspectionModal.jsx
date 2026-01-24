@@ -722,7 +722,7 @@ export const CandidateInspectionModal = ({
           </div>
 
           <div className="absolute bottom-4 text-xs text-slate-400 font-bold bg-white/80 px-3 py-1 rounded-full backdrop-blur">
-            iPhone 13 Pro プレビュー (新デザイン)
+            iPhone 16 Pro プレビュー (新デザイン)
           </div>
         </div>
       </div>

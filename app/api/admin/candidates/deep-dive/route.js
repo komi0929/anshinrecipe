@@ -48,7 +48,7 @@ export async function POST(request) {
       name: candidate.shop_name,
       website_url: candidate.website_url,
       address: candidate.address,
-      photo_refs: [],
+      photo_refs: candidate.photo_refs || [],
     };
 
     const deepData = await deepDiveCandidate(minerInput);
