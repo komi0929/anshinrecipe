@@ -24,6 +24,7 @@ export async function POST(request) {
       .insert({
         area_name: area,
         status: "processing",
+        created_at: new Date().toISOString(), // Distinctly set created_at
       })
       .select()
       .single();
@@ -41,6 +42,7 @@ export async function POST(request) {
 
     // 2. SCOUT (Broad Search)
     const candidates = await scoutArea(area);
+    console.log(`[CollectAPI] Scout returned ${candidates.length} candidates.`);
 
     // 3. PIPELINE (Dedup & Score)
     const uniqueCandidates = deduplicateAndMerge(candidates);

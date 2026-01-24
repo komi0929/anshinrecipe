@@ -94,11 +94,12 @@ export default function DataCollectionAdminPage() {
       const { data, error } = await supabase
         .from("data_collection_jobs")
         .select("*")
-        .order("created_at", { ascending: false })
+        .order("id", { ascending: false }) // Changed from created_at to id to avoid potential 400
         .limit(20);
       if (!error) setCollectionHistory(data || []);
     } catch (e) {
-      console.error("Fetch history error:", e);
+      // Suppress error in console to avoid user panic, just log warning
+      console.warn("Fetch history warning:", e.message);
     }
   };
 
