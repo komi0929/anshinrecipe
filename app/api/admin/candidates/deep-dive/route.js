@@ -65,6 +65,7 @@ export async function POST(request) {
       images_interior: deepData.classified_images?.interior?.length || 0,
       images_food: deepData.classified_images?.food?.length || 0,
       place_details_success: !!deepData.phone,
+      logs: deepData.debug_logs || [],
     };
 
     // 3. Merge Features (NO MENU MERGING ANYMORE)

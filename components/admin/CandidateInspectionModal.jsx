@@ -143,7 +143,7 @@ export const CandidateInspectionModal = ({
         }
 
         const debugInfo = result.debug
-          ? `\n\n[Debug Info]\n概要: ${newData.overview ? "取得済" : "なし"}\n画像分類: 外観${classifiedImages.exterior?.length || 0}枚, 内観${classifiedImages.interior?.length || 0}枚, 料理${classifiedImages.food?.length || 0}枚`
+          ? `\n\n[Debug Info]\n概要: ${newData.overview ? "取得済" : "なし"}\n画像分類: 外観${classifiedImages.exterior?.length || 0}枚, 内観${classifiedImages.interior?.length || 0}枚, 料理${classifiedImages.food?.length || 0}枚\n\n[Logs]\n${result.debug.miner_results?.logs?.join("\n") || "No logs"}`
           : "";
         alert("詳細情報の取得が完了しました" + debugInfo);
       } else {
@@ -478,6 +478,7 @@ export const CandidateInspectionModal = ({
                     <img
                       src={url}
                       className="w-full h-full object-cover"
+                      referrerPolicy="no-referrer"
                       alt=""
                     />
                     <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[8px] px-1 py-0.5 flex items-center gap-1">
