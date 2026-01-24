@@ -590,7 +590,7 @@ export default function RestaurantDetailPage() {
   );
 }
 
-// Compact Feature List Component with Request Button
+// Compact Feature List Component with explicit "Request" UI
 const FeatureList = ({
   title,
   icon,
@@ -614,53 +614,73 @@ const FeatureList = ({
   );
 
   return (
-    <div className={`rounded-3xl border p-5 ${colors[color] || colors.orange}`}>
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-bold flex items-center gap-2 text-sm">
+    <div
+      className={`rounded-3xl border p-6 transition-all ${colors[color] || colors.orange}`}
+    >
+      <div className="flex items-center justify-between mb-5">
+        <h3 className="font-black text-lg flex items-center gap-2">
           {icon} {title}
         </h3>
-        {!hasAnyValue && !isVerified && restaurantId && (
-          <InviteOwnerButton
-            restaurantId={restaurantId}
-            restaurantName={restaurantName}
-            variant="text"
-          />
+        {/* Verification Badge within Card */}
+        {isVerified && (
+          <span className="bg-white/80 px-2 py-1 rounded-md text-[10px] font-bold border border-black/5">
+            店舗確認済
+          </span>
         )}
       </div>
-      <div className="space-y-3">
+
+      <div className="space-y-4">
         {items.map((item, i) => (
           <div
             key={i}
-            className="flex items-center justify-between border-b border-black/5 pb-2 last:border-0 last:pb-0"
+            className="flex items-center justify-between border-b border-black/5 pb-3 last:border-0 last:pb-0"
           >
-            <span className="text-xs font-bold opacity-70">{item.label}</span>
+            <span className="font-bold text-sm opacity-80">{item.label}</span>
             <div className="flex items-center gap-2">
               {item.value === "◯" || item.value === true ? (
-                <>
+                <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-full shadow-sm">
+                  <CheckCircle
+                    size={16}
+                    className={activeText[color] || activeText.orange}
+                    strokeWidth={3}
+                  />
                   <span
-                    className={`text-xs font-black ${activeText[color] || activeText.orange}`}
+                    className={`text-sm font-black ${activeText[color] || activeText.orange}`}
                   >
                     対応
                   </span>
-                  <CheckCircle
-                    size={14}
-                    className={activeText[color] || activeText.orange}
-                  />
-                </>
+                </div>
               ) : item.value === "△" ? (
-                <>
-                  <span className="text-xs font-bold text-amber-500">
+                <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-full shadow-sm border border-amber-100">
+                  <HelpCircle size={16} className="text-amber-500" />
+                  <span className="text-sm font-bold text-amber-500">
                     要確認
                   </span>
-                  <HelpCircle size={14} className="text-amber-500" />
-                </>
+                </div>
               ) : (
-                <span className="text-[10px] font-bold opacity-30 px-2">-</span>
+                <span className="text-xs font-bold opacity-30 bg-black/5 px-3 py-1.5 rounded-full">
+                  情報なし
+                </span>
               )}
             </div>
           </div>
         ))}
       </div>
+
+      {/* Explicit Request UI if no data */}
+      {!hasAnyValue && !isVerified && restaurantId && (
+        <div className="mt-5 pt-4 border-t border-black/5 text-center">
+          <p className="text-xs font-bold opacity-60 mb-3">
+            詳細情報が登録されていません
+          </p>
+          <InviteOwnerButton
+            restaurantId={restaurantId}
+            restaurantName={restaurantName}
+            variant="default" // Use primary style for emphasis
+            label="オーナーに情報の掲載をリクエストする"
+          />
+        </div>
+      )}
     </div>
   );
 };
