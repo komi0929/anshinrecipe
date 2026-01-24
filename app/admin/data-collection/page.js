@@ -32,6 +32,7 @@ export default function DataCollectionAdminPage() {
   const [reports, setReports] = useState([]);
   const [inspectingCandidate, setInspectingCandidate] = useState(null); // Modal State
   const [showOnlyAllergyRelevant, setShowOnlyAllergyRelevant] = useState(false);
+  const [showHistory, setShowHistory] = useState(true);
 
   // All 47 prefectures of Japan
   const ALL_PREFECTURES = [
@@ -404,103 +405,117 @@ export default function DataCollectionAdminPage() {
 
         {/* NEW: Collection History */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-          <h2 className="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">
-            <Database size={16} className="text-orange-500" />
-            収集履歴
-          </h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-100">
-                  <th className="text-left py-2 px-3 font-bold text-slate-500 text-xs">
-                    エリア
-                  </th>
-                  <th className="text-left py-2 px-3 font-bold text-slate-500 text-xs">
-                    収集日時
-                  </th>
-                  <th className="text-left py-2 px-3 font-bold text-slate-500 text-xs">
-                    経過
-                  </th>
-                  <th className="text-left py-2 px-3 font-bold text-slate-500 text-xs">
-                    ステータス
-                  </th>
-                  <th className="text-left py-2 px-3 font-bold text-slate-500 text-xs">
-                    件数
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {collectionHistory.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="text-center py-8 text-slate-400">
-                      収集履歴がありません
-                    </td>
+          <div
+            className="flex justify-between items-center cursor-pointer mb-4"
+            onClick={() => setShowHistory(!showHistory)}
+          >
+            <h2 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+              <Database size={16} className="text-orange-500" />
+              収集履歴
+            </h2>
+            <span className="text-slate-400 text-xs font-bold bg-slate-100 px-2 py-1 rounded">
+              {showHistory ? "たたむ" : "表示する"}
+            </span>
+          </div>
+
+          {showHistory && (
+            <div className="overflow-x-auto transition-all">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-100">
+                    <th className="text-left py-2 px-3 font-bold text-slate-500 text-xs">
+                      エリア
+                    </th>
+                    <th className="text-left py-2 px-3 font-bold text-slate-500 text-xs">
+                      収集日時
+                    </th>
+                    <th className="text-left py-2 px-3 font-bold text-slate-500 text-xs">
+                      経過
+                    </th>
+                    <th className="text-left py-2 px-3 font-bold text-slate-500 text-xs">
+                      ステータス
+                    </th>
+                    <th className="text-left py-2 px-3 font-bold text-slate-500 text-xs">
+                      件数
+                    </th>
                   </tr>
-                ) : (
-                  collectionHistory.slice(0, 10).map((job) => (
-                    <tr
-                      key={job.id}
-                      className="border-b border-slate-50 hover:bg-slate-50 transition-colors"
-                    >
-                      <td className="py-3 px-3 font-bold text-slate-800">
-                        {job.area_name}
-                      </td>
-                      <td className="py-3 px-3 text-slate-600">
-                        {new Date(
-                          job.created_at || job.start_time || Date.now(),
-                        ).toLocaleDateString("ja-JP", {
-                          year: "numeric",
-                          month: "2-digit",
-                          day: "2-digit",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </td>
-                      <td className="py-3 px-3">
-                        <span
-                          className={`text-xs px-2 py-1 rounded-full font-bold ${
-                            formatRelativeTime(job.created_at) === "直近"
-                              ? "bg-green-100 text-green-700"
-                              : formatRelativeTime(job.created_at).includes(
-                                    "日",
-                                  )
-                                ? "bg-yellow-100 text-yellow-700"
-                                : "bg-slate-100 text-slate-600"
-                          }`}
-                        >
-                          {formatRelativeTime(job.created_at)}
-                        </span>
-                      </td>
-                      <td className="py-3 px-3">
-                        <span
-                          className={`text-xs px-2 py-1 rounded-full font-bold ${
-                            job.status === "completed"
-                              ? "bg-green-100 text-green-700"
-                              : job.status === "processing"
-                                ? "bg-blue-100 text-blue-700"
-                                : job.status === "failed"
-                                  ? "bg-red-100 text-red-700"
-                                  : "bg-slate-100 text-slate-600"
-                          }`}
-                        >
-                          {job.status === "completed"
-                            ? "完了"
-                            : job.status === "processing"
-                              ? "処理中"
-                              : job.status === "failed"
-                                ? "失敗"
-                                : job.status}
-                        </span>
-                      </td>
-                      <td className="py-3 px-3 text-slate-600">
-                        {job.collected_count || "-"}
+                </thead>
+                <tbody>
+                  {collectionHistory.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={5}
+                        className="text-center py-8 text-slate-400"
+                      >
+                        収集履歴がありません
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                  ) : (
+                    collectionHistory.slice(0, 10).map((job) => (
+                      <tr
+                        key={job.id}
+                        className="border-b border-slate-50 hover:bg-slate-50 transition-colors"
+                      >
+                        <td className="py-3 px-3 font-bold text-slate-800">
+                          {job.area_name}
+                        </td>
+                        <td className="py-3 px-3 text-slate-600">
+                          {new Date(
+                            job.created_at || job.start_time || Date.now(),
+                          ).toLocaleDateString("ja-JP", {
+                            year: "numeric",
+                            month: "2-digit",
+                            day: "2-digit",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </td>
+                        <td className="py-3 px-3">
+                          <span
+                            className={`text-xs px-2 py-1 rounded-full font-bold ${
+                              formatRelativeTime(job.created_at) === "直近"
+                                ? "bg-green-100 text-green-700"
+                                : formatRelativeTime(job.created_at).includes(
+                                      "日",
+                                    )
+                                  ? "bg-yellow-100 text-yellow-700"
+                                  : "bg-slate-100 text-slate-600"
+                            }`}
+                          >
+                            {formatRelativeTime(job.created_at)}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3">
+                          <span
+                            className={`text-xs px-2 py-1 rounded-full font-bold ${
+                              job.status === "completed"
+                                ? "bg-green-100 text-green-700"
+                                : job.status === "processing"
+                                  ? "bg-blue-100 text-blue-700"
+                                  : job.status === "failed"
+                                    ? "bg-red-100 text-red-700"
+                                    : "bg-slate-100 text-slate-600"
+                            }`}
+                          >
+                            {job.status === "completed"
+                              ? "完了"
+                              : job.status === "processing"
+                                ? "処理中"
+                                : job.status === "failed"
+                                  ? "失敗"
+                                  : job.status}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3 text-slate-600">
+                          {job.collected_count || "-"}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
         {/* Tabs */}
