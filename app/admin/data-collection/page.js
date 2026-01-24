@@ -324,7 +324,7 @@ export default function DataCollectionAdminPage() {
 
   // Format relative time
   const formatRelativeTime = (dateString) => {
-    if (!dateString) return "未収集";
+    if (!dateString) return "不明";
     const date = new Date(dateString);
     const now = new Date();
     const diffMs = now - date;
@@ -446,7 +446,9 @@ export default function DataCollectionAdminPage() {
                         {job.area_name}
                       </td>
                       <td className="py-3 px-3 text-slate-600">
-                        {new Date(job.created_at).toLocaleDateString("ja-JP", {
+                        {new Date(
+                          job.created_at || job.start_time || Date.now(),
+                        ).toLocaleDateString("ja-JP", {
                           year: "numeric",
                           month: "2-digit",
                           day: "2-digit",

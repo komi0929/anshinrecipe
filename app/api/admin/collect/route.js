@@ -24,7 +24,6 @@ export async function POST(request) {
       .insert({
         area_name: area,
         status: "processing",
-        created_at: new Date().toISOString(), // Distinctly set created_at
       })
       .select()
       .single();
@@ -101,7 +100,6 @@ export async function POST(request) {
       .update({
         status: "completed",
         collected_count: savedCount,
-        completed_at: new Date().toISOString(),
       })
       .eq("id", job.id);
 
