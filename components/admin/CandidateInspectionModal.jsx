@@ -476,7 +476,11 @@ export const CandidateInspectionModal = ({
                     className={`relative w-16 h-16 rounded-lg overflow-hidden border-2 cursor-pointer flex-shrink-0 ${currentImageIndex === idx ? "border-orange-500 ring-2 ring-orange-100" : "border-transparent opacity-70"}`}
                   >
                     <img
-                      src={url}
+                      src={
+                        url.startsWith("http")
+                          ? url
+                          : `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${url}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
+                      }
                       className="w-full h-full object-cover"
                       referrerPolicy="no-referrer"
                       alt=""
@@ -555,7 +559,11 @@ export const CandidateInspectionModal = ({
                 {editedData.images?.length > 0 ? (
                   <>
                     <img
-                      src={editedData.images[currentImageIndex]}
+                      src={
+                        editedData.images[currentImageIndex].startsWith("http")
+                          ? editedData.images[currentImageIndex]
+                          : `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${editedData.images[currentImageIndex]}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
+                      }
                       className="w-full h-full object-cover transition-opacity duration-300"
                       alt=""
                     />
