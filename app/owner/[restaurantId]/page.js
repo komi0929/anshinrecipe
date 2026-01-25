@@ -93,7 +93,7 @@ export default function OwnerDashboard() {
 
         // Load restaurant data
         const { data: rest } = await supabase
-          .from("candidate_restaurants")
+          .from("restaurants")
           .select("*")
           .eq("id", restaurantId)
           .single();
@@ -101,7 +101,7 @@ export default function OwnerDashboard() {
         if (rest) {
           setRestaurant(rest);
           setBasicInfo({
-            shop_name: rest.shop_name || "",
+            name: rest.name || "",
             phone: rest.phone || "",
             website: rest.website || "",
             overview: rest.overview || "",
@@ -151,9 +151,9 @@ export default function OwnerDashboard() {
       };
 
       const { error } = await supabase
-        .from("candidate_restaurants")
+        .from("restaurants")
         .update({
-          shop_name: basicInfo.shop_name,
+          name: basicInfo.name,
           phone: basicInfo.phone,
           website: basicInfo.website,
           overview: basicInfo.overview,
@@ -188,7 +188,7 @@ export default function OwnerDashboard() {
 
     try {
       const { error } = await supabase
-        .from("candidate_restaurants")
+        .from("restaurants")
         .update({ menus: updatedMenus })
         .eq("id", restaurantId);
 
@@ -210,7 +210,7 @@ export default function OwnerDashboard() {
 
     try {
       const { error } = await supabase
-        .from("candidate_restaurants")
+        .from("restaurants")
         .update({ menus: updatedMenus })
         .eq("id", restaurantId);
 

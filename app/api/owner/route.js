@@ -95,7 +95,7 @@ export async function PUT(request) {
     }
 
     const { data, error } = await supabaseAdmin
-      .from("candidate_restaurants")
+      .from("restaurants")
       .update(safeUpdates)
       .eq("id", restaurantId)
       .select()
@@ -195,7 +195,7 @@ export async function POST(request) {
 
     // Update restaurant verified status
     await supabaseAdmin
-      .from("candidate_restaurants")
+      .from("restaurants")
       .update({ is_owner_verified: true })
       .eq("id", invitation.restaurant_id);
 

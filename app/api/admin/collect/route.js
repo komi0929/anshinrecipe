@@ -75,6 +75,10 @@ export async function POST(request) {
             reliability_score: candidate.finalReliabilityScore || 0,
             sources: candidate.sources || [],
             menus: candidate.menus || [],
+            photo_refs: candidate.photo_refs || [],
+            place_id: candidate.place_id || null,
+            website_url: candidate.website_url || null,
+            phone: candidate.phone || null,
           })
           .select();
 

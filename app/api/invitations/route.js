@@ -42,8 +42,8 @@ export async function POST(request) {
 
     // Check if restaurant exists
     const { data: restaurant, error: restError } = await supabaseAdmin
-      .from("candidate_restaurants")
-      .select("id, shop_name, is_owner_verified")
+      .from("restaurants")
+      .select("id, name, is_owner_verified")
       .eq("id", restaurantId)
       .single();
 
@@ -95,7 +95,7 @@ export async function POST(request) {
         inviter_user_id: inviterUserId || null,
         inviter_type: inviterType,
         target_email: targetEmail,
-        restaurant_name: restaurant.shop_name,
+        restaurant_name: restaurant.name,
         token,
         status: "pending",
       })
@@ -121,7 +121,7 @@ export async function POST(request) {
     try {
       const emailResult = await sendOwnerInvitation(
         targetEmail,
-        restaurant.shop_name,
+        restaurant.name,
         token,
         inviterName,
       );
@@ -140,7 +140,7 @@ export async function POST(request) {
         invitation: {
           id: invitation.id,
           status: "sent",
-          restaurantName: restaurant.shop_name,
+          restaurantName: restaurant.name,
         },
         email: emailResult,
       });
@@ -153,7 +153,7 @@ export async function POST(request) {
         invitation: {
           id: invitation.id,
           status: "pending",
-          restaurantName: restaurant.shop_name,
+          restaurantName: restaurant.name,
         },
         emailError: emailError.message,
         message:

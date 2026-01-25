@@ -4,17 +4,25 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, PlusCircle, Heart, User, Map } from "lucide-react";
-import { useProfile } from "../hooks/useProfile";
-import { useNotifications } from "../hooks/useNotifications";
+import { useProfile } from "@/hooks/useProfile";
+import { useNotifications } from "@/hooks/useNotifications";
 import "./BottomNav.css";
 
+/**
+ * BottomNav 改善版（92件改善 Phase3）
+ * 3.9 BottomNavに投稿ボタン追加
+ */
 const BottomNav = () => {
   const pathname = usePathname();
   const { user, profile } = useProfile();
   const { unreadCount } = useNotifications(user?.id);
 
   // Don't show bottom nav on login/welcome pages
-  if (pathname === "/login" || pathname === "/welcome") {
+  if (
+    pathname === "/login" ||
+    pathname === "/welcome" ||
+    pathname === "/welcome/map"
+  ) {
     return null;
   }
 
@@ -32,18 +40,6 @@ const BottomNav = () => {
         <span>レシピ</span>
       </Link>
 
-      {/* Center Button Removed per request
-            <Link
-                href="/recipe/new"
-                className={`nav-item ${pathname === '/recipe/new' ? 'active' : ''}`}
-            >
-                <div className="bg-orange-400 text-white p-3 -mt-6 rounded-full shadow-lg border-4 border-white transform transition-transform active:scale-95">
-                    <PlusCircle size={24} />
-                </div>
-                <span className="font-bold text-orange-400 text-[10px]">レシピ</span>
-            </Link>
-            */}
-
       <Link
         href="/map"
         className={`nav-item ${pathname?.startsWith("/map") && pathname !== "/map/post" ? "active" : ""}`}
@@ -51,6 +47,18 @@ const BottomNav = () => {
       >
         <Map size={24} aria-hidden="true" />
         <span>地図</span>
+      </Link>
+
+      {/* Center FAB - 投稿ボタン */}
+      <Link
+        href={isMapMode ? "/map/post" : "/recipe/new"}
+        className="nav-item-fab"
+        title={isMapMode ? "口コミ投稿" : "レシピ投稿"}
+      >
+        <div className="fab-button">
+          <PlusCircle size={24} />
+        </div>
+        <span className="fab-label">{isMapMode ? "投稿" : "レシピ"}</span>
       </Link>
 
       <Link

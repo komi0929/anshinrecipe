@@ -32,6 +32,8 @@ import { ReviewList } from "@/components/map/ReviewList";
 import { MenuGallery } from "@/components/map/MenuGallery";
 import { BookmarkButton } from "@/components/social/BookmarkButton";
 import { InviteOwnerButton } from "@/components/map/InviteOwnerButton";
+import { ShareButton } from "@/components/map/ShareButton";
+import { CommentSection } from "@/components/map/CommentSection";
 import "./RestaurantDetailPage.css";
 
 export default function RestaurantDetailPage() {
@@ -200,9 +202,11 @@ export default function RestaurantDetailPage() {
             <ArrowLeft size={20} />
           </button>
           <div className="flex gap-3">
-            <button className="w-10 h-10 bg-white/20 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white hover:bg-white/30 transition-colors shadow-lg">
-              <Share2 size={18} />
-            </button>
+            <ShareButton
+              title={restaurant.name}
+              text={`${restaurant.name}のアレルギー対応情報をチェック！`}
+              variant="icon"
+            />
             <div className="shadow-lg rounded-full overflow-hidden">
               <BookmarkButton restaurantId={restaurant.id} />
             </div>
@@ -572,8 +576,16 @@ export default function RestaurantDetailPage() {
             </div>
           )}
           {activeTab === "reviews" && (
-            <div className="animate-in fade-in slide-in-from-bottom-4">
+            <div className="animate-in fade-in slide-in-from-bottom-4 space-y-6">
               <ReviewList restaurantId={restaurant.id} />
+
+              {/* コメントセクション（92件改善 Phase3.2）*/}
+              <div className="mt-8 pt-6 border-t border-slate-100">
+                <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                  💬 コメント
+                </h3>
+                <CommentSection reviewId={restaurant.id} />
+              </div>
             </div>
           )}
           {activeTab === "gallery" && (
