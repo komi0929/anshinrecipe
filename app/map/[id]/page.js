@@ -308,9 +308,25 @@ export default function RestaurantDetailPage() {
               <Globe size={16} /> Web
             </a>
           )}
-          <div className="flex items-center justify-center gap-2 py-3 bg-slate-50 border border-slate-100 rounded-2xl font-bold text-slate-400 text-sm">
-            <Clock size={16} /> 営業時間
-          </div>
+          {/* 営業時間 - 実データ表示 */}
+          {restaurant.features?.opening_hours?.weekdayDescriptions ? (
+            <div className="flex flex-col items-center justify-center gap-1 py-3 bg-green-50 border border-green-100 rounded-2xl text-sm">
+              <div className="flex items-center gap-1 font-bold text-green-700">
+                <Clock size={14} />
+                <span>今日</span>
+              </div>
+              <span className="text-green-800 font-bold text-xs">
+                {/* 曜日に応じて今日の営業時間を取得 */}
+                {restaurant.features.opening_hours.weekdayDescriptions[
+                  new Date().getDay() === 0 ? 6 : new Date().getDay() - 1
+                ]?.replace(/^[月火水木金土日].*?:/, "") || "確認中"}
+              </span>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center gap-2 py-3 bg-slate-50 border border-slate-100 rounded-2xl font-bold text-slate-400 text-sm">
+              <Clock size={16} /> 営業時間
+            </div>
+          )}
         </div>
 
         {/* TAKEOUT / ONLINE SHOP SECTION (NEW) */}
@@ -507,6 +523,47 @@ export default function RestaurantDetailPage() {
                   value={restaurant.features?.allergen_label}
                 />
               </div>
+
+              {/* 4大アレルゲン対応状況 */}
+              <div className="mt-6">
+                <h3 className="text-sm font-bold text-slate-600 mb-3 flex items-center gap-2">
+                  <span>🛡️</span> 4大アレルゲン対応
+                </h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <FeatureCard
+                    icon="🌾"
+                    label="小麦不使用"
+                    value={restaurant.features?.gluten_free}
+                  />
+                  <FeatureCard
+                    icon="🥚"
+                    label="卵不使用"
+                    value={restaurant.features?.egg_free}
+                  />
+                  <FeatureCard
+                    icon="🥛"
+                    label="乳不使用"
+                    value={restaurant.features?.dairy_free}
+                  />
+                  <FeatureCard
+                    icon="🥜"
+                    label="ナッツ不使用"
+                    value={restaurant.features?.nut_free}
+                  />
+                </div>
+                {/* 信頼性表示 */}
+                <div className="mt-3 text-center">
+                  {isVerified ? (
+                    <span className="text-xs font-bold text-green-600 bg-green-50 px-3 py-1 rounded-full">
+                      ✓ この情報は店舗が確認済みです
+                    </span>
+                  ) : (
+                    <span className="text-xs text-slate-400 bg-slate-50 px-3 py-1 rounded-full">
+                      ⚠ システムが自動検出した情報です。店舗にご確認ください。
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
           )}
           {activeTab === "menu" && (
@@ -630,41 +687,57 @@ const FeatureList = ({
       </div>
 
       <div className="space-y-4">
-        {items.map((item, i) => (
-          <div
-            key={i}
-            className="flex items-center justify-between border-b border-black/5 pb-3 last:border-0 last:pb-0"
-          >
-            <span className="font-bold text-sm opacity-80">{item.label}</span>
-            <div className="flex items-center gap-2">
-              {item.value === "◯" || item.value === true ? (
-                <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-full shadow-sm">
-                  <CheckCircle
-                    size={16}
-                    className={activeText[color] || activeText.orange}
-                    strokeWidth={3}
-                  />
-                  <span
-                    className={`text-sm font-black ${activeText[color] || activeText.orange}`}
-                  >
-                    対応
+        {items.map((item, i) => {
+          // Check if value exists and is truthy
+          const hasValue =
+            item.value !== undefined &&
+            item.value !== null &&
+            item.value !== "" &&
+            item.value !== false;
+          const isExplicitConfirm = item.value === "◯" || item.value === true;
+          const isPartial = item.value === "△";
+          const isTextValue =
+            typeof item.value === "string" &&
+            item.value !== "◯" &&
+            item.value !== "△" &&
+            item.value.length > 0;
+
+          return (
+            <div
+              key={i}
+              className="flex items-center justify-between border-b border-black/5 pb-3 last:border-0 last:pb-0"
+            >
+              <span className="font-bold text-sm opacity-80">{item.label}</span>
+              <div className="flex items-center gap-2">
+                {isExplicitConfirm || isTextValue ? (
+                  <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-full shadow-sm">
+                    <CheckCircle
+                      size={16}
+                      className={activeText[color] || activeText.orange}
+                      strokeWidth={3}
+                    />
+                    <span
+                      className={`text-sm font-black ${activeText[color] || activeText.orange}`}
+                    >
+                      {isTextValue ? item.value : "対応"}
+                    </span>
+                  </div>
+                ) : isPartial ? (
+                  <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-full shadow-sm border border-amber-100">
+                    <HelpCircle size={16} className="text-amber-500" />
+                    <span className="text-sm font-bold text-amber-500">
+                      要確認
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-xs font-bold opacity-30 bg-black/5 px-3 py-1.5 rounded-full">
+                    情報なし
                   </span>
-                </div>
-              ) : item.value === "△" ? (
-                <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-full shadow-sm border border-amber-100">
-                  <HelpCircle size={16} className="text-amber-500" />
-                  <span className="text-sm font-bold text-amber-500">
-                    要確認
-                  </span>
-                </div>
-              ) : (
-                <span className="text-xs font-bold opacity-30 bg-black/5 px-3 py-1.5 rounded-full">
-                  情報なし
-                </span>
-              )}
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Explicit Request UI if no data */}

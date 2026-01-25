@@ -331,7 +331,7 @@ const RecipeListPage = () => {
                 className="w-[280px] h-auto object-contain"
               />
             </div>
-            <h2 className="text-lg font-bold text-slate-700 leading-snug">
+            <h2 className="text-lg font-bold text-slate-700 leading-snug heading-tight">
               アレルギーっ子が笑顔になれる
               <span className="text-primary block text-xl mt-1">
                 みんなのレシピ帳
@@ -354,7 +354,7 @@ const RecipeListPage = () => {
                     className="object-contain"
                   />
                 </div>
-                <h3 className="text-base font-black text-slate-800 mb-1">
+                <h3 className="text-base font-bold text-slate-800 mb-1">
                   レシピを簡単メモ
                 </h3>
                 <p className="text-xs font-bold text-slate-500 leading-tight">
@@ -374,7 +374,7 @@ const RecipeListPage = () => {
                     className="object-contain"
                   />
                 </div>
-                <h3 className="text-sm font-black text-slate-800 mb-1">
+                <h3 className="text-sm font-bold text-slate-800 mb-1">
                   感謝を伝える
                 </h3>
                 <p className="text-[10px] font-bold text-slate-500 leading-tight">
@@ -397,7 +397,7 @@ const RecipeListPage = () => {
                     className="object-contain"
                   />
                 </div>
-                <h3 className="text-sm font-black text-slate-800 mb-1">
+                <h3 className="text-sm font-bold text-slate-800 mb-1">
                   AIでかんたん登録
                 </h3>
                 <p className="text-[10px] font-bold text-slate-500 leading-tight">
@@ -418,7 +418,7 @@ const RecipeListPage = () => {
                     className="object-contain"
                   />
                 </div>
-                <h3 className="text-base font-black text-slate-800 mb-1">
+                <h3 className="text-base font-bold text-slate-800 mb-1">
                   安心レシピを共有
                 </h3>
                 <p className="text-xs font-bold text-slate-500 leading-tight">

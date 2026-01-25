@@ -18,8 +18,8 @@
   /* orange-300 */
   --color-text-main: #334155;
   /* slate-700 */
-  --color-text-sub: #94a3b8;
-  /* slate-400 */
+  --color-text-sub: #64748b;
+  /* slate-500 - WCAG 4.5:1 contrast ratio on white */
 
   /* Alert - Gentle Rose */
   --color-alert: #fb7185;
@@ -152,6 +152,7 @@ textarea {
   align-items: center;
   justify-content: center;
   padding: 12px 24px;
+  min-height: 48px; /* Rule #4: 48px minimum target size */
   border-radius: var(--radius-full);
   font-weight: 700;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -263,6 +264,15 @@ textarea {
 
 .font-bold {
   font-weight: 700;
+}
+
+/* Rule #6: Heading letter-spacing (tighten large text) */
+.heading-tight {
+  letter-spacing: -0.02em;
+}
+
+.heading-loose {
+  letter-spacing: 0.01em;
 }
 
 .text-center {

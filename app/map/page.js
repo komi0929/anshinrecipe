@@ -68,6 +68,7 @@ const SelectRestaurantModal = ({ isOpen, onClose, onSelect }) => {
                     src={r.menus[0].image_url}
                     className="w-full h-full object-cover"
                     alt={r.name}
+                    loading="lazy"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-lg">
@@ -225,6 +226,14 @@ function MapPageContent() {
         router.push(`/map/${restaurant.id || restaurant.place_id}`)
       }
       className={`map-list-card ${restaurant.is_owner_verified ? "verified" : ""}`}
+      role="button"
+      tabIndex={0}
+      aria-label={`${restaurant.name}の詳細を見る`}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          router.push(`/map/${restaurant.id || restaurant.place_id}`);
+        }
+      }}
     >
       <div className="card-image-container">
         {/* Use first menu image if available, else placeholder */}
@@ -233,12 +242,14 @@ function MapPageContent() {
             src={restaurant.menus[0].image_url}
             className="card-image"
             alt={restaurant.name}
+            loading="lazy"
           />
         ) : restaurant.classified_images?.food?.[0]?.url ? (
           <img
             src={restaurant.classified_images.food[0].url}
             className="card-image"
             alt={restaurant.name}
+            loading="lazy"
           />
         ) : (
           <div className="card-image-placeholder">🍳</div>
@@ -260,7 +271,10 @@ function MapPageContent() {
               <BadgeCheck size={14} className="text-blue-500 shrink-0" />
             )}
           </h3>
-          <span className="card-rating">★ 4.5</span>
+          {/* Show review count if available, otherwise hide */}
+          {restaurant.review_count > 0 && (
+            <span className="card-rating">💬 {restaurant.review_count}</span>
+          )}
         </div>
         <p className="card-address">{restaurant.address}</p>
 
@@ -283,6 +297,46 @@ function MapPageContent() {
           </div>
         )}
 
+        {/* === P0 UX FIX: アレルゲン対応バッジ === */}
+        {/* 親が一目で「この店は卵NGかOKか」わかるように */}
+        <div className="flex flex-wrap gap-1 mt-2">
+          {restaurant.features?.gluten_free === "◯" && (
+            <span className="bg-green-100 text-green-700 text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+              🌾 小麦OK
+            </span>
+          )}
+          {restaurant.features?.egg_free === "◯" && (
+            <span className="bg-green-100 text-green-700 text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+              🥚 卵OK
+            </span>
+          )}
+          {restaurant.features?.dairy_free === "◯" && (
+            <span className="bg-green-100 text-green-700 text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+              🥛 乳OK
+            </span>
+          )}
+          {restaurant.features?.nut_free === "◯" && (
+            <span className="bg-green-100 text-green-700 text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+              🥜 ナッツOK
+            </span>
+          )}
+          {/* 信頼性ラベル */}
+          {restaurant.is_verified && (
+            <span className="bg-blue-100 text-blue-700 text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+              ✓ 店舗確認済
+            </span>
+          )}
+          {!restaurant.is_verified &&
+            (restaurant.features?.gluten_free ||
+              restaurant.features?.egg_free ||
+              restaurant.features?.dairy_free ||
+              restaurant.features?.nut_free) && (
+              <span className="bg-slate-100 text-slate-500 text-[10px] px-1.5 py-0.5 rounded-full">
+                ⚠ 自動検出
+              </span>
+            )}
+        </div>
+
         <div className="card-tags">
           {restaurant.tags?.slice(0, 3).map((t) => (
             <span key={t} className="tag-chip">
@@ -299,17 +353,22 @@ function MapPageContent() {
       {/* Search Bar - Floating */}
       <div className="map-search-bar-container">
         <div className="map-search-bar">
-          <Search className="map-search-icon" size={20} />
+          <Search className="map-search-icon" size={20} aria-hidden="true" />
           <input
             type="text"
             placeholder="エリア、店名、メニューで検索..."
             className="map-search-input"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            aria-label="店舗検索"
           />
         </div>
         {/* Quick Filters */}
-        <div className="map-quick-filters">
+        <div
+          className="map-quick-filters"
+          role="group"
+          aria-label="アレルゲンフィルター"
+        >
           {ALLERGENS.map((a) => (
             <AllergenChip key={a.value} {...a} />
           ))}
@@ -331,9 +390,20 @@ function MapPageContent() {
         >
           <div className="list-content-padding">
             {loading ? (
-              <div className="loading-state">
-                <div className="spinner"></div>
-                <p>美味しいお店を探しています...</p>
+              <div className="loading-skeleton">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="skeleton-card">
+                    <div className="skeleton-image" />
+                    <div className="skeleton-content">
+                      <div className="skeleton-title" />
+                      <div className="skeleton-text" />
+                      <div className="skeleton-tags">
+                        <div className="skeleton-tag" />
+                        <div className="skeleton-tag" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : restaurants.length === 0 ? (
               <div className="empty-state">
@@ -381,15 +451,16 @@ function MapPageContent() {
       <button
         className="map-view-toggle-btn mobile-only"
         onClick={() => setViewMode((prev) => (prev === "map" ? "list" : "map"))}
+        aria-label={viewMode === "map" ? "リスト表示に切替" : "地図表示に切替"}
       >
         {viewMode === "map" ? (
           <>
-            <List size={20} strokeWidth={2.5} />
+            <List size={20} strokeWidth={2.5} aria-hidden="true" />
             <span>リスト</span>
           </>
         ) : (
           <>
-            <MapIcon size={20} strokeWidth={2.5} />
+            <MapIcon size={20} strokeWidth={2.5} aria-hidden="true" />
             <span>地図</span>
           </>
         )}
