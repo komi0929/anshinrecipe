@@ -2,94 +2,89 @@
 > anshin-recipe@0.0.0 build
 > next build
 
-   笆ｲ Next.js 15.1.11
+   ▲ Next.js 15.1.11
    - Environments: .env.local
 
    Creating an optimized production build ...
- 笳・(pwa) PWA support is disabled.
- 笨・Compiled successfully
+ ○ (pwa) PWA support is disabled.
+ ✓ Compiled successfully
    Skipping linting
    Checking validity of types ...
    Collecting page data ...
 [Scout] Chain filter loaded: 9 brands will be SKIPPED
- 笞 Using edge runtime on a page currently disables static generation for that page
-   Generating static pages (0/51) ...
+ ⚠ Using edge runtime on a page currently disables static generation for that page
+   Generating static pages (0/47) ...
 [Scout] Chain filter loaded: 9 brands will be SKIPPED
-   Generating static pages (12/51) 
-   Generating static pages (25/51) 
-   Generating static pages (38/51) 
- 笨・Generating static pages (51/51)
+   Generating static pages (11/47) 
+   Generating static pages (23/47) 
+   Generating static pages (35/47) 
+ ✓ Generating static pages (47/47)
    Finalizing page optimization ...
    Collecting build traces ...
 
 Route (app)                              Size     First Load JS
-笏・笳・/                                    11.4 kB         190 kB
-笏・笳・/_not-found                          218 B           106 kB
-笏・笳・/admin                               8.14 kB         168 kB
-笏・笳・/admin/approve                       4.24 kB         164 kB
-笏・笳・/admin/data-collection               14 kB           174 kB
-笏・笳・/admin/shops                         3.95 kB         164 kB
-笏・ﾆ・/admin/shops/[id]                    3.75 kB         164 kB
-笏・ﾆ・/api/account/delete                  218 B           106 kB
-笏・ﾆ・/api/admin/analytics                 218 B           106 kB
-笏・ﾆ・/api/admin/announcement              218 B           106 kB
-笏・ﾆ・/api/admin/candidates                218 B           106 kB
-笏・ﾆ・/api/admin/candidates/deep-dive      218 B           106 kB
-笏・ﾆ・/api/admin/candidates/purge          218 B           106 kB
-笏・ﾆ・/api/admin/candidates/reject         218 B           106 kB
-笏・ﾆ・/api/admin/collect                   218 B           106 kB
-笏・ﾆ・/api/admin/content                   218 B           106 kB
-笏・ﾆ・/api/admin/diagnose                  218 B           106 kB
-笏・ﾆ・/api/admin/enrich                    218 B           106 kB
-笏・ﾆ・/api/admin/stats                     218 B           106 kB
-笏・ﾆ・/api/admin/users                     218 B           106 kB
-笏・ﾆ・/api/admin/verify-pin                218 B           106 kB
-笏・ﾆ・/api/announcements                   218 B           106 kB
-笏・ﾆ・/api/auth/line                       218 B           106 kB
-笏・ﾆ・/api/invitations                     218 B           106 kB
-笏・ﾆ・/api/og                              218 B           106 kB
-笏・ﾆ・/api/ogp                             218 B           106 kB
-笏・ﾆ・/api/owner                           218 B           106 kB
-笏・ﾆ・/api/requests                        218 B           106 kB
-笏・ﾆ・/api/restaurants                     218 B           106 kB
-笏・ﾆ・/api/smart-import                    218 B           106 kB
-笏・ﾆ・/api/youtube/search                  218 B           106 kB
-笏・笳・/auth/callback/line                  2.56 kB         168 kB
-笏・笳・/icon.png                            0 B                0 B
-笏・笳・/login                               373 B           106 kB
-笏・笳・/map                                 17.1 kB         187 kB
-笏・ﾆ・/map/[id]                            7.33 kB         167 kB
-笏・笳・/map/post/thanks                     6.71 kB         116 kB
-笏・笳・/notifications                       4.13 kB         174 kB
-笏・ﾆ・/owner/[restaurantId]                4.59 kB         164 kB
-笏・笳・/owner/accept                        4.39 kB         164 kB
-笏・笳・/owner/benefits                      3.31 kB         113 kB
-笏・笳・/privacy                             2.54 kB         112 kB
-笏・ﾆ・/pro/[userId]                        2.24 kB         172 kB
-笏・笳・/pro/login                           4.73 kB         174 kB
-笏・笳・/profile                             11.9 kB         190 kB
-笏・笳・/profile/pro-settings                2.46 kB         172 kB
-笏・笳・/quick-save-guide                    3.01 kB         112 kB
-笏・ﾆ・/recipe/[id]                         218 B           106 kB
-笏・ﾆ・/recipe/[id]/edit                    3.58 kB         173 kB
-笏・ﾆ・/recipe/edit/[id]                    1.33 kB         183 kB
-笏・笳・/recipe/new                          4.94 kB         192 kB
-笏・笳・/recipe/quick-save                   1.36 kB         171 kB
-笏・笳・/robots.txt                          0 B                0 B
-笏・ﾆ・/search/ingredient/[name]            2.42 kB         176 kB
-笏・笳・/settings                            3.18 kB         163 kB
-笏・笳・/shortcut-guide                      3.17 kB         112 kB
-笏・笳・/sns-save-guide                      3.02 kB         112 kB
-笏・笳・/team                                1.74 kB         175 kB
-笏・笳・/terms                               3.32 kB         113 kB
-笏・笳・/welcome                             179 B           109 kB
-笏・笳・/welcome/map                         3.1 kB          112 kB
+┌ ○ /                                    11.8 kB         190 kB
+├ ○ /_not-found                          213 B           106 kB
+├ ƒ /api/account/delete                  213 B           106 kB
+├ ƒ /api/admin/analytics                 213 B           106 kB
+├ ƒ /api/admin/announcement              213 B           106 kB
+├ ƒ /api/admin/candidates                213 B           106 kB
+├ ƒ /api/admin/candidates/deep-dive      213 B           106 kB
+├ ƒ /api/admin/candidates/purge          213 B           106 kB
+├ ƒ /api/admin/candidates/reject         213 B           106 kB
+├ ƒ /api/admin/collect                   213 B           106 kB
+├ ƒ /api/admin/content                   213 B           106 kB
+├ ƒ /api/admin/diagnose                  213 B           106 kB
+├ ƒ /api/admin/enrich                    213 B           106 kB
+├ ƒ /api/admin/stats                     213 B           106 kB
+├ ƒ /api/admin/users                     213 B           106 kB
+├ ƒ /api/admin/verify-pin                213 B           106 kB
+├ ƒ /api/announcements                   213 B           106 kB
+├ ƒ /api/auth/line                       213 B           106 kB
+├ ƒ /api/invitations                     213 B           106 kB
+├ ƒ /api/og                              213 B           106 kB
+├ ƒ /api/ogp                             213 B           106 kB
+├ ƒ /api/owner                           213 B           106 kB
+├ ƒ /api/requests                        213 B           106 kB
+├ ƒ /api/restaurants                     213 B           106 kB
+├ ƒ /api/smart-import                    213 B           106 kB
+├ ƒ /api/youtube/search                  213 B           106 kB
+├ ○ /auth/callback/line                  1.95 kB         168 kB
+├ ○ /icon.png                            0 B                0 B
+├ ○ /login                               371 B           106 kB
+├ ○ /map                                 18.1 kB         191 kB
+├ ƒ /map/[id]                            8.64 kB         169 kB
+├ ○ /map/post/thanks                     6.71 kB         116 kB
+├ ○ /notifications                       4.6 kB          174 kB
+├ ƒ /owner/[restaurantId]                5.71 kB         166 kB
+├ ○ /owner/accept                        1.56 kB         111 kB
+├ ○ /owner/benefits                      1.56 kB         111 kB
+├ ○ /privacy                             197 B           109 kB
+├ ƒ /pro/[userId]                        2.72 kB         172 kB
+├ ○ /pro/login                           4.14 kB         174 kB
+├ ○ /profile                             8.01 kB         178 kB
+├ ○ /profile/pro-settings                2.46 kB         172 kB
+├ ○ /quick-save-guide                    3.03 kB         112 kB
+├ ƒ /recipe/[id]                         7.41 kB         177 kB
+├ ƒ /recipe/[id]/edit                    3.58 kB         173 kB
+├ ○ /recipe/create                       4.38 kB         187 kB
+├ ƒ /recipe/edit/[id]                    1.28 kB         188 kB
+├ ○ /recipe/quick-save                   1.36 kB         171 kB
+├ ○ /robots.txt                          0 B                0 B
+├ ƒ /search/ingredient/[name]            3.23 kB         176 kB
+├ ○ /settings                            2.53 kB         167 kB
+├ ○ /shortcut-guide                      3.17 kB         112 kB
+├ ○ /sns-save-guide                      3.02 kB         112 kB
+├ ○ /team                                1.74 kB         175 kB
+├ ○ /terms                               197 B           109 kB
+├ ○ /welcome                             178 B           109 kB
+└ ○ /welcome/map                         3.11 kB         112 kB
 + First Load JS shared by all            106 kB
-  笏・chunks/1517-435444df1757f416.js      50.5 kB
-  笏・chunks/4bd1b696-985ea69065c278c6.js  52.9 kB
-  笏・other shared chunks (total)          2.1 kB
+  ├ chunks/1517-392bb120d5c87aa3.js      50.5 kB
+  ├ chunks/4bd1b696-985ea69065c278c6.js  52.9 kB
+  └ other shared chunks (total)          2.1 kB
 
 
-笳・ (Static)   prerendered as static content
-ﾆ・ (Dynamic)  server-rendered on demand
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
 

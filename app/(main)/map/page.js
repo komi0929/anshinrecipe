@@ -382,14 +382,14 @@ function MapPageContent() {
       <div className="map-content">
         {/* Map View - Visible on Mobile if mode=map, Always on Desktop */}
         <div
-          className={`map-view-container ${viewMode === "list" ? "hidden-mobile" : ""}`}
+          className={`map-view-container ${viewMode === "list" ? "hidden lg:block" : "block"}`}
         >
           <MapContainerWrapper restaurants={restaurants} />
         </div>
 
         {/* List View - Visible on Mobile if mode=list, Always on Desktop */}
         <div
-          className={`map-list-view ${viewMode === "map" ? "hidden-mobile" : ""}`}
+          className={`map-list-view ${viewMode === "map" ? "hidden lg:block" : "block"}`}
         >
           <div className="list-content-padding">
             {loading ? (

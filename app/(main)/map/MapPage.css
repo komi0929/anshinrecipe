@@ -135,7 +135,7 @@
 }
 
 .list-content-padding {
-  padding: 24px 16px 120px 16px;
+  padding: 100px 16px 120px 16px;
   display: flex;
   flex-direction: column;
   gap: 16px;
