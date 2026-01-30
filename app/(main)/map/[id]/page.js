@@ -24,6 +24,17 @@ import { supabase } from "@/lib/supabaseClient";
 import { useParams, useRouter } from "next/navigation";
 import { useMapData } from "@/hooks/useMapData";
 
+// Components
+import { ShareButton } from "@/components/map/ShareButton";
+import { BookmarkButton } from "@/components/social/BookmarkButton";
+import { InviteOwnerButton } from "@/components/map/InviteOwnerButton";
+import { ReviewList } from "@/components/map/ReviewList";
+import { CommentSection } from "@/components/map/CommentSection";
+import { MenuGallery } from "@/components/map/MenuGallery";
+import { MenuList } from "@/components/map/MenuList";
+import { ReviewModal } from "@/components/map/ReviewModal";
+import { ReportModal } from "@/components/map/ReportModal";
+
 import "./RestaurantDetailPage.css";
 
 export default function RestaurantDetailPage() {
