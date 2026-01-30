@@ -1,0 +1,19 @@
+
+> anshin-recipe@0.0.0 build
+> next build
+
+   笆ｲ Next.js 15.1.11
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+ 笳・(pwa) PWA support is disabled.
+Failed to compile.
+
+./app/admin/data-collection/page.js
+Attempted import error: '@/components/admin/CandidateInspectionModal' does not contain a default export (imported as 'CandidateInspectionModal').
+
+Import trace for requested module:
+./app/admin/data-collection/page.js
+
+
+> Build failed because of webpack errors

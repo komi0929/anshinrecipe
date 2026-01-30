@@ -1,0 +1,174 @@
+"use client";
+
+import Link from "next/link";
+import {
+  ArrowLeft,
+  Instagram,
+  Share,
+  Camera,
+  Settings,
+  Download,
+  Smartphone,
+  Zap,
+  Copy,
+} from "lucide-react";
+
+/**
+ * SNS保存ガイド画面（92件改善 Phase4）
+ */
+const SNSSaveGuidePage = () => {
+  return (
+    <div className="min-h-screen bg-slate-50 pb-24">
+      {/* Header */}
+      <div className="bg-white border-b sticky top-0 z-10">
+        <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-3">
+          <Link
+            href="/profile"
+            className="p-2 -ml-2 hover:bg-slate-100 rounded-full"
+          >
+            <ArrowLeft size={24} className="text-slate-600" />
+          </Link>
+          <h1 className="text-lg font-bold text-slate-800">
+            SNSからかんたん保存
+          </h1>
+        </div>
+      </div>
+
+      <div className="max-w-md mx-auto p-4">
+        {/* Hero */}
+        <div className="bg-gradient-to-br from-orange-400 to-amber-500 rounded-2xl p-5 text-white mb-6">
+          <div className="flex items-center gap-3 mb-3">
+            <Zap size={28} />
+            <h2 className="text-xl font-bold">SNSからワンタップ保存！</h2>
+          </div>
+          <p className="text-white/90 text-sm leading-relaxed">
+            Instagram・TikTok・Webサイトで見つけたレシピを
+            <br />
+            URLをコピーするだけで保存できます。
+          </p>
+        </div>
+
+        {/* Method 1: Android Share (Galaxy等) - ACTIVE */}
+        <div className="bg-white rounded-2xl p-5 shadow-sm mb-4 border-2 border-blue-100">
+          <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+            <span className="w-7 h-7 bg-blue-500 text-white text-sm rounded-full flex items-center justify-center font-black">
+              1
+            </span>
+            共有メニューから直接開く
+            <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold">
+              Android
+            </span>
+          </h3>
+
+          <div className="space-y-3 text-sm text-slate-600 mb-4">
+            <p className="text-slate-700">
+              Galaxy/Androidでホーム画面に追加すると、Instagramの共有メニューに「あんしんレシピ」が表示されます。
+            </p>
+          </div>
+
+          <div className="p-4 bg-blue-50 rounded-xl text-sm text-blue-700">
+            <p className="font-bold mb-2 flex items-center gap-2">
+              <Settings size={16} /> 設定方法:
+            </p>
+            <ol className="list-decimal list-inside space-y-1 text-xs">
+              <li>Chromeで右上メニュー（⋮）をタップ</li>
+              <li>「ホーム画面に追加」または「アプリをインストール」</li>
+              <li>
+                インストール後、Instagramの共有で「あんしんレシピ」を選択！
+              </li>
+            </ol>
+          </div>
+        </div>
+
+        {/* Method 2: Copy URL - 開発中 */}
+        <div className="bg-white rounded-2xl p-5 shadow-sm mb-4 opacity-75">
+          <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+            <span className="w-7 h-7 bg-slate-400 text-white text-sm rounded-full flex items-center justify-center font-black">
+              2
+            </span>
+            URLをコピーして保存
+            <span className="text-xs bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full">
+              開発中
+            </span>
+          </h3>
+
+          <div className="space-y-4 text-sm text-slate-600">
+            <div className="flex gap-3 items-start">
+              <Copy size={18} className="text-slate-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-bold text-slate-700">レシピのURLをコピー</p>
+                <p className="text-xs text-slate-500 mt-1">
+                  Instagram/TikTokで「リンクをコピー」をタップ
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-3 items-start">
+              <Smartphone
+                size={18}
+                className="text-slate-400 flex-shrink-0 mt-0.5"
+              />
+              <div>
+                <p className="font-bold text-slate-700">あんしんレシピを開く</p>
+                <p className="text-xs text-slate-500 mt-1">
+                  クリップボードのURLを自動で検出する機能を開発中です
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 p-3 bg-slate-100 rounded-xl border border-slate-200">
+            <div className="flex items-center gap-2 text-slate-600 font-medium text-sm">
+              <Settings size={16} />
+              現在は方法1をご利用ください
+            </div>
+          </div>
+        </div>
+
+        {/* Method 3: iOS Shortcut (Coming Soon) */}
+        <div className="bg-white rounded-2xl p-5 shadow-sm mb-4 opacity-75">
+          <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+            <span className="w-7 h-7 bg-slate-400 text-white text-sm rounded-full flex items-center justify-center">
+              3
+            </span>
+            iOSショートカット
+            <span className="text-xs bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full">
+              開発中
+            </span>
+          </h3>
+
+          <p className="text-sm text-slate-500 mb-4">
+            iPhoneの「ショートカット」アプリで共有メニューに追加できる機能を準備中です。
+            しばらくお待ちください。
+          </p>
+
+          <div className="p-3 bg-slate-100 rounded-xl text-xs text-slate-500">
+            現在は方法1または2をご利用ください。
+          </div>
+        </div>
+
+        {/* Tips */}
+        <div className="bg-amber-50 rounded-2xl p-4 border border-amber-100">
+          <h4 className="font-bold text-amber-800 text-sm mb-2">
+            💡 URLの取得方法
+          </h4>
+          <div className="text-amber-700 text-xs leading-relaxed space-y-2">
+            <p>
+              <b>Instagram:</b> 投稿右上の「…」→「リンクをコピー」
+            </p>
+            <p>
+              <b>TikTok:</b> 共有ボタン→「リンクをコピー」
+            </p>
+            <p>
+              <b>YouTube:</b> 「共有」→「コピー」
+            </p>
+            <p>
+              <b>Webサイト:</b> ブラウザのアドレスバーからコピー
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default SNSSaveGuidePage;

@@ -1,0 +1,163 @@
+.restaurant-detail-page {
+  background-color: #f3f4f6;
+  min-height: 100vh;
+}
+
+.restaurant-hero {
+  background-size: cover;
+  background-position: center;
+}
+
+/* Image Carousel Animations */
+.image-carousel img {
+  transition: opacity 0.3s ease-in-out;
+}
+
+/* Carousel Navigation Buttons */
+.carousel-nav-btn {
+  backdrop-filter: blur(8px);
+  transition: all 0.2s ease;
+}
+
+.carousel-nav-btn:hover {
+  transform: scale(1.05);
+}
+
+/* Image Category Labels */
+.image-category-label {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Overview Section Glassmorphism */
+.overview-section {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.9) 0%,
+    rgba(255, 247, 237, 0.7) 100%
+  );
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+/* Takeout Section */
+.takeout-section {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+}
+
+/* Menu UGC Empty State */
+.menu-empty-state {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 2px dashed #e2e8f0;
+}
+
+/* Verified Badge Pulse */
+.verified-badge {
+  animation: verifiedPulse 2s ease-in-out infinite;
+}
+
+@keyframes verifiedPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(59, 130, 246, 0);
+  }
+}
+
+/* Feature Cards */
+.feature-card {
+  transition: all 0.2s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Request Button Animation */
+.request-btn {
+  animation: slideInUp 0.5s ease-out 1s both;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Smooth Tab Transitions */
+.tab-content {
+  animation: tabFadeIn 0.3s ease-out;
+}
+
+@keyframes tabFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Image Indicator Dots */
+.image-indicator {
+  transition: all 0.2s ease;
+}
+
+.image-indicator.active {
+  width: 16px;
+  border-radius: 4px;
+}
+
+/* Modal Overlay */
+.modal-overlay {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modal-content {
+  animation: slideInUp 0.3s ease-out;
+}
+
+/* Owner Request Button */
+.owner-request-btn {
+  animation: slideInUp 0.5s ease-out 1.2s both;
+}
+
+/* Scrollbar Hide Utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* No Scrollbar for Tabs */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}

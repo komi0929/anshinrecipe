@@ -1,0 +1,291 @@
+/* Pro Login Page Styles */
+
+.pro-login-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 50%, #fff7ed 100%);
+}
+
+/* Hero Section */
+.pro-hero {
+    padding: 3rem 1.5rem;
+    text-align: center;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.8), transparent);
+}
+
+.pro-hero-content {
+    max-width: 480px;
+    margin: 0 auto;
+}
+
+.pro-logo {
+    width: 240px;
+    height: auto;
+    margin: 0 auto 1rem;
+}
+
+.pro-hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 9999px;
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 12px rgba(255, 165, 0, 0.3);
+}
+
+.pro-hero-title {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: #1e293b;
+    line-height: 1.4;
+    margin-bottom: 0.75rem;
+}
+
+.pro-highlight {
+    background: linear-gradient(135deg, #f97316, #ea580c);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.pro-hero-subtitle {
+    font-size: 0.9rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+/* Section */
+.pro-section {
+    padding: 2rem 1.5rem;
+    max-width: 480px;
+    margin: 0 auto;
+}
+
+.pro-section-title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 1.25rem;
+    text-align: center;
+}
+
+/* Appeal Text */
+.pro-appeal-text {
+    text-align: center;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #f97316;
+    line-height: 1.6;
+    margin: 1rem auto;
+    padding: 0 1.5rem;
+    max-width: 480px;
+}
+
+/* Intro Card */
+.pro-intro-card {
+    background: white;
+    border-radius: 24px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    text-align: center;
+}
+
+.pro-intro-image {
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+    border-radius: 16px;
+}
+
+.pro-intro-image img {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+}
+
+.pro-intro-text {
+    font-size: 1rem;
+    color: #475569;
+    line-height: 1.7;
+    font-weight: 500;
+}
+
+.pro-highlight-block {
+    background: #fff7ed;
+    border-left: 4px solid #f97316;
+    padding: 1rem;
+    margin: 1rem 0;
+    border-radius: 0 8px 8px 0;
+}
+
+/* Benefits */
+.pro-benefits {
+    background: white;
+    padding-top: 2.5rem;
+    padding-bottom: 2.5rem;
+    margin-left: 0;
+    margin-right: 0;
+    max-width: 100%;
+}
+
+.pro-benefits-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+}
+
+.pro-benefit-card {
+    background: #f8fafc;
+    padding: 1.25rem;
+    border-radius: 16px;
+    text-align: center;
+}
+
+.pro-benefit-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    color: white;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 0.75rem;
+}
+
+.pro-benefit-card h3 {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.5rem;
+}
+
+.pro-benefit-card p {
+    font-size: 0.75rem;
+    color: #64748b;
+    line-height: 1.5;
+}
+
+/* Easy Start */
+.pro-easy-start {
+    text-align: center;
+}
+
+.pro-easy-content {
+    background: linear-gradient(135deg, #fef3c7, #fff7ed);
+    border: 2px solid #fbbf24;
+    border-radius: 24px;
+    padding: 2rem 1.5rem;
+}
+
+.pro-easy-emoji {
+    font-size: 48px;
+    margin-bottom: 1rem;
+}
+
+.pro-easy-content h2 {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #92400e;
+    margin-bottom: 1rem;
+}
+
+.pro-easy-description {
+    font-size: 0.9rem;
+    color: #78350f;
+    line-height: 1.8;
+    margin-bottom: 1.5rem;
+}
+
+.pro-easy-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    text-align: left;
+    max-width: 280px;
+    margin: 0 auto;
+}
+
+.pro-easy-list li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.95rem;
+    color: #78350f;
+}
+
+/* CTA */
+.pro-cta {
+    padding-bottom: 1.5rem;
+}
+
+.pro-cta-card {
+    background: white;
+    border-radius: 24px;
+    padding: 2rem;
+    text-align: center;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+}
+
+.pro-cta-card h2 {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #1e293b;
+    margin-bottom: 0.5rem;
+}
+
+.pro-cta-card>p {
+    font-size: 0.9rem;
+    color: #64748b;
+    margin-bottom: 1.5rem;
+}
+
+.pro-cta-note {
+    font-size: 0.7rem;
+    color: #94a3b8;
+    margin-top: 1rem;
+}
+
+.pro-link {
+    color: #64748b;
+    text-decoration: underline;
+}
+
+/* Footer */
+.pro-footer {
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.pro-back-link {
+    font-size: 0.9rem;
+    color: #f97316;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.pro-back-link:hover {
+    text-decoration: underline;
+}
+
+/* Utility classes */
+.text-yellow-500 {
+    color: #eab308;
+}
+
+.text-green-500 {
+    color: #22c55e;
+}

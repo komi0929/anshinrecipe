@@ -1,0 +1,28 @@
+
+> anshin-recipe@0.0.0 build
+> next build
+
+   笆ｲ Next.js 15.1.11
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+ 笳・(pwa) PWA support is disabled.
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../../../../../.antigravity/extensions/wallabyjs.console-ninja-1.0.514-universal/out/buildHook/index' in C:\Users\soyst\OneDrive\繝・せ繧ｯ繝医ャ繝予縺ゅｓ縺励ｓ繝ｬ繧ｷ繝能node_modules\next\dist\compiled\webpack for build dependencies doesn't lead to expected result 'c:\Users\soyst\.antigravity\extensions\wallabyjs.console-ninja-1.0.514-universal\out\buildHook\index.js', but to 'C:\Users\soyst\.antigravity\extensions\wallabyjs.console-ninja-1.0.514-universal\out\buildHook\index.js' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../../../../../.antigravity/extensions/wallabyjs.console-ninja-1.0.514-universal/out/buildHook/index (expected c:\Users\soyst\.antigravity\extensions\wallabyjs.console-ninja-1.0.514-universal\out\buildHook\index.js)
+<w>  at file dependencies C:\Users\soyst\OneDrive\繝・せ繧ｯ繝医ャ繝予縺ゅｓ縺励ｓ繝ｬ繧ｷ繝能node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file C:\Users\soyst\OneDrive\繝・せ繧ｯ繝医ャ繝予縺ゅｓ縺励ｓ繝ｬ繧ｷ繝能node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file dependencies C:\Users\soyst\OneDrive\繝・せ繧ｯ繝医ャ繝予縺ゅｓ縺励ｓ繝ｬ繧ｷ繝能node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file C:\Users\soyst\OneDrive\繝・せ繧ｯ繝医ャ繝予縺ゅｓ縺励ｓ繝ｬ繧ｷ繝能node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file dependencies C:\Users\soyst\OneDrive\繝・せ繧ｯ繝医ャ繝予縺ゅｓ縺励ｓ繝ｬ繧ｷ繝能node_modules\next\dist\compiled\webpack\webpack-lib.js
+<w>  at file C:\Users\soyst\OneDrive\繝・せ繧ｯ繝医ャ繝予縺ゅｓ縺励ｓ繝ｬ繧ｷ繝能node_modules\next\dist\compiled\webpack\webpack-lib.js
+<w>  at file dependencies C:\Users\soyst\OneDrive\繝・せ繧ｯ繝医ャ繝予縺ゅｓ縺励ｓ繝ｬ繧ｷ繝能node_modules\workbox-webpack-plugin\build\generate-sw.js
+<w>  at file C:\Users\soyst\OneDrive\繝・せ繧ｯ繝医ャ繝予縺ゅｓ縺励ｓ繝ｬ繧ｷ繝能node_modules\workbox-webpack-plugin\build\generate-sw.js
+<w>  at file dependencies C:\Users\soyst\OneDrive\繝・せ繧ｯ繝医ャ繝予縺ゅｓ縺励ｓ繝ｬ繧ｷ繝能node_modules\workbox-webpack-plugin\build\index.js
+<w>  at file C:\Users\soyst\OneDrive\繝・せ繧ｯ繝医ャ繝予縺ゅｓ縺励ｓ繝ｬ繧ｷ繝能node_modules\workbox-webpack-plugin\build\index.js
+<w>  at resolve esm file workbox-webpack-plugin
+<w>  at file dependencies C:\Users\soyst\OneDrive\繝・せ繧ｯ繝医ャ繝予縺ゅｓ縺励ｓ繝ｬ繧ｷ繝能node_modules\@ducanh2912\next-pwa\dist\index.js
+<w>  at file C:\Users\soyst\OneDrive\繝・せ繧ｯ繝医ャ繝予縺ゅｓ縺励ｓ繝ｬ繧ｷ繝能node_modules\@ducanh2912\next-pwa\dist\index.js
+<w>  at resolve esm file @ducanh2912/next-pwa
+<w>  at file dependencies C:\Users\soyst\OneDrive\繝・せ繧ｯ繝医ャ繝予縺ゅｓ縺励ｓ繝ｬ繧ｷ繝能next.config.js
+<w>  at file C:\Users\soyst\OneDrive\繝・せ繧ｯ繝医ャ繝予縺ゅｓ縺励ｓ繝ｬ繧ｷ繝能next.config.js
+<w>  at resolve commonjs C:\Users\soyst\OneDrive\繝・せ繧ｯ繝医ャ繝予縺ゅｓ縺励ｓ繝ｬ繧ｷ繝能next.config.js

@@ -1,0 +1,31 @@
+
+> anshin-recipe@0.0.0 build
+> next build
+
+   ▲ Next.js 15.1.11
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+ ○ (pwa) PWA support is disabled.
+ ✓ Compiled successfully
+   Skipping linting
+   Checking validity of types ...
+   Collecting page data ...
+[Scout] Chain filter loaded: 9 brands will be SKIPPED
+ ⚠ Using edge runtime on a page currently disables static generation for that page
+   Generating static pages (0/47) ...
+[Scout] Chain filter loaded: 9 brands will be SKIPPED
+Error occurred prerendering page "/". Read more: https://nextjs.org/docs/messages/prerender-error
+ReferenceError: Suspense is not defined
+    at p (C:\Users\soyst\OneDrive\デスクトップ\あんしんレシピ\.next\server\app\(main)\page.js:28:8716)
+    at nO (C:\Users\soyst\OneDrive\デスクトップ\あんしんレシピ\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:20:45959)
+    at nI (C:\Users\soyst\OneDrive\デスクトップ\あんしんレシピ\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:20:47734)
+    at nL (C:\Users\soyst\OneDrive\デスクトップ\あんしんレシピ\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:20:65533)
+    at nN (C:\Users\soyst\OneDrive\デスクトップ\あんしんレシピ\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:20:63164)
+    at n$ (C:\Users\soyst\OneDrive\デスクトップ\あんしんレシピ\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:20:46311)
+    at nI (C:\Users\soyst\OneDrive\デスクトップ\あんしんレシピ\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:20:47780)
+    at nI (C:\Users\soyst\OneDrive\デスクトップ\あんしんレシピ\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:20:62515)
+    at nL (C:\Users\soyst\OneDrive\デスクトップ\あんしんレシピ\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:20:65533)
+    at nN (C:\Users\soyst\OneDrive\デスクトップ\あんしんレシピ\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:20:63164)
+Export encountered an error on /(main)/page: /, exiting the build.
+ ⨯ Next.js build worker exited with code: 1 and signal: null
