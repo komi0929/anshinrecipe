@@ -1,6 +1,13 @@
 "use client";
 
-import { Heart, Eye, ChevronUp, ChevronDown, CheckCheck } from "lucide-react";
+import {
+  Heart,
+  Eye,
+  ChevronUp,
+  ChevronDown,
+  CheckCheck,
+  Megaphone,
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
@@ -450,4 +457,3 @@ const NotificationsPage = () => {
 };
 
 export default NotificationsPage;
-

@@ -1,6 +1,23 @@
 "use client";
 
-import { Clock, ArrowLeft, MapPin, Phone, Globe, Instagram, Flag, Users, ShieldCheck, BadgeCheck, ShoppingBag } from "lucide-react";
+import {
+  Clock,
+  ArrowLeft,
+  MapPin,
+  Phone,
+  Globe,
+  Instagram,
+  Flag,
+  Users,
+  ShieldCheck,
+  BadgeCheck,
+  ShoppingBag,
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  CheckCircle,
+  HelpCircle,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { supabase } from "@/lib/supabaseClient";
@@ -761,4 +778,3 @@ const FeatureCard = ({ icon, label, value }) => {
     </div>
   );
 };
-
