@@ -2,11 +2,34 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+import Link from "next/link";
+import {
+  User,
+  Camera,
+  Pencil,
+  Star,
+  ChevronRight,
+  Plus,
+  Info,
+  HelpCircle,
+  Mail,
+  Users,
+  Smartphone,
+  Zap,
+  LogOut,
+  Trash2,
+} from "lucide-react";
 
 import { useProfile } from "@/hooks/useProfile";
 import { useNotifications } from "@/hooks/useNotifications";
 import { supabase } from "@/lib/supabaseClient";
 import { uploadImage } from "@/lib/imageUpload";
+
+// Components
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import IconPicker from "@/components/IconPicker";
 
 export default function ProfilePage() {
   // ... hook destructuring
