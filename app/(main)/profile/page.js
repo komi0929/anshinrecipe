@@ -30,6 +30,8 @@ import { uploadImage } from "@/lib/imageUpload";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import IconPicker from "@/components/IconPicker";
+import { Modal } from "@/components/ui/Modal";
+import BottomNav from "@/components/BottomNav";
 
 export default function ProfilePage() {
   // ... hook destructuring
@@ -928,186 +930,193 @@ export default function ProfilePage() {
       )}
 
       {/* Inquiry Modal */}
-      <Dialog open={showInquiryModal} onOpenChange={setShowInquiryModal}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>お問い合わせ</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <p className="text-sm text-slate-600">
-              ご意見・ご要望・不具合のご報告は、以下のフォームよりお願いいたします。
-            </p>
-            <a
-              href="https://forms.gle/ExampleFormID" // Replace with actual Google Form
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block w-full py-3 bg-slate-800 text-white text-center rounded-xl font-bold hover:bg-slate-700 transition-colors"
-            >
-              お問い合わせフォームを開く
-            </a>
-            <Button
-              variant="ghost"
-              className="w-full"
-              onClick={() => setShowInquiryModal(false)}
-            >
-              閉じる
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <Modal
+        open={showInquiryModal}
+        onClose={() => setShowInquiryModal(false)}
+        title="お問い合わせ"
+        size="md"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-slate-600">
+            ご意見・ご要望・不具合のご報告は、以下のフォームよりお願いいたします。
+          </p>
+          <a
+            href="https://forms.gle/ExampleFormID" // Replace with actual Google Form
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block w-full py-3 bg-slate-800 text-white text-center rounded-xl font-bold hover:bg-slate-700 transition-colors"
+          >
+            お問い合わせフォームを開く
+          </a>
+          <Button
+            variant="ghost"
+            className="w-full"
+            onClick={() => setShowInquiryModal(false)}
+          >
+            閉じる
+          </Button>
+        </div>
+      </Modal>
 
       {/* FAQ Modal */}
-      <Dialog open={showFAQModal} onOpenChange={setShowFAQModal}>
-        <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>よくある質問</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-2">
-            {[
-              {
-                q: "無料で使えますか？",
-                a: "はい、すべての機能を無料でご利用いただけます。",
-              },
-              {
-                q: "機種変更をした場合のデータ移行は？",
-                a: "同じアカウント（LINEまたはGoogle）でログインしていただければ、新しい端末でもデータを引き継ぐことができます。",
-              },
-              {
-                q: "レシピの公開範囲は？",
-                a: "「公開」に設定したレシピは、すべてのユーザーが閲覧できます。「非公開」にすると自分だけが見ることができます。",
-              },
-            ].map((item, i) => (
-              <div
-                key={i}
-                className="border border-slate-100 rounded-xl overflow-hidden"
-              >
-                <button
-                  onClick={() =>
-                    setExpandedFaqIndex(expandedFaqIndex === i ? null : i)
-                  }
-                  className="w-full p-4 flex items-center justify-between bg-slate-50 text-left font-bold text-slate-700 text-sm"
-                >
-                  {item.q}
-                  <ChevronRight
-                    size={16}
-                    className={`transition-transform ${expandedFaqIndex === i ? "rotate-90" : ""}`}
-                  />
-                </button>
-                {expandedFaqIndex === i && (
-                  <div className="p-4 bg-white text-sm text-slate-600 leading-relaxed border-t border-slate-100">
-                    {item.a}
-                  </div>
-                )}
-              </div>
-            ))}
-            <Button
-              variant="ghost"
-              className="w-full mt-4"
-              onClick={() => setShowFAQModal(false)}
+      <Modal
+        open={showFAQModal}
+        onClose={() => setShowFAQModal(false)}
+        title="よくある質問"
+        size="lg"
+      >
+        <div className="space-y-2">
+          {[
+            {
+              q: "無料で使えますか？",
+              a: "はい、すべての機能を無料でご利用いただけます。",
+            },
+            {
+              q: "機種変更をした場合のデータ移行は？",
+              a: "同じアカウント（LINEまたはGoogle）でログインしていただければ、新しい端末でもデータを引き継ぐことができます。",
+            },
+            {
+              q: "レシピの公開範囲は？",
+              a: "「公開」に設定したレシピは、すべてのユーザーが閲覧できます。「非公開」にすると自分だけが見ることができます。",
+            },
+          ].map((item, i) => (
+            <div
+              key={i}
+              className="border border-slate-100 rounded-xl overflow-hidden"
             >
-              閉じる
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+              <button
+                onClick={() =>
+                  setExpandedFaqIndex(expandedFaqIndex === i ? null : i)
+                }
+                className="w-full p-4 flex items-center justify-between bg-slate-50 text-left font-bold text-slate-700 text-sm"
+              >
+                {item.q}
+                <ChevronRight
+                  size={16}
+                  className={`transition-transform ${expandedFaqIndex === i ? "rotate-90" : ""}`}
+                />
+              </button>
+              {expandedFaqIndex === i && (
+                <div className="p-4 bg-white text-sm text-slate-600 leading-relaxed border-t border-slate-100">
+                  {item.a}
+                </div>
+              )}
+            </div>
+          ))}
+          <Button
+            variant="ghost"
+            className="w-full mt-4"
+            onClick={() => setShowFAQModal(false)}
+          >
+            閉じる
+          </Button>
+        </div>
+      </Modal>
 
       {/* Announcements Modal */}
-      <Dialog
+      <Modal
         open={showAnnouncementsModal}
-        onOpenChange={setShowAnnouncementsModal}
+        onClose={() => setShowAnnouncementsModal(false)}
+        title="お知らせ"
+        size="lg"
       >
-        <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto p-0 gap-0">
+        <div className="p-0 gap-0">
           <div className="sticky top-0 bg-white z-10 border-b border-slate-100 px-6 pt-6 pb-2">
-            <DialogTitle className="mb-4">お知らせ</DialogTitle>
-            <Tabs
-              value={announcementTab}
-              onValueChange={setAnnouncementTab}
-              className="w-full"
-            >
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="roadmap">ロードマップ</TabsTrigger>
-                <TabsTrigger value="updates">アップデート</TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
+            <div className="w-full">
+              <div className="grid w-full grid-cols-2 mb-4">
+                <button
+                  className={`py-2 text-sm font-bold border-b-2 transition-colors ${announcementTab === "roadmap" ? "border-orange-500 text-orange-600" : "border-transparent text-slate-400"}`}
+                  onClick={() => setAnnouncementTab("roadmap")}
+                >
+                  ロードマップ
+                </button>
+                <button
+                  className={`py-2 text-sm font-bold border-b-2 transition-colors ${announcementTab === "updates" ? "border-orange-500 text-orange-600" : "border-transparent text-slate-400"}`}
+                  onClick={() => setAnnouncementTab("updates")}
+                >
+                  アップデート
+                </button>
+              </div>
 
-          <div className="p-6">
-            <Tabs value={announcementTab} className="w-full">
-              <TabsContent value="roadmap" className="mt-0 space-y-4">
-                <div className="bg-orange-50 rounded-2xl p-5 border border-orange-100">
-                  <h3 className="font-bold text-orange-800 mb-2 flex items-center gap-2">
-                    🚀 今後の開発予定
-                  </h3>
-                  <p className="text-xs text-orange-600 mb-4">
-                    2024年の春頃までに実装予定の機能です
-                  </p>
-                  <ul className="space-y-3">
-                    <li className="flex gap-3 items-start bg-white p-3 rounded-xl shadow-sm">
-                      <span className="text-xl">🤖</span>
-                      <div>
-                        <p className="font-bold text-slate-800 text-sm">
-                          AIレシピ提案
-                        </p>
-                        <p className="text-xs text-slate-500">
-                          冷蔵庫の余り物からアレルギー対応レシピを提案
-                        </p>
-                      </div>
-                    </li>
-                    <li className="flex gap-3 items-start bg-white p-3 rounded-xl shadow-sm">
-                      <span className="text-xl">📅</span>
-                      <div>
-                        <p className="font-bold text-slate-800 text-sm">
-                          献立カレンダー
-                        </p>
-                        <p className="text-xs text-slate-500">
-                          1週間の献立を自動作成＆買い物リスト化
-                        </p>
-                      </div>
-                    </li>
-                  </ul>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="updates" className="mt-0 space-y-4">
-                {[
-                  {
-                    date: "2024.03.15",
-                    title: "SNS保存機能を追加しました",
-                    type: "new",
-                  },
-                  {
-                    date: "2024.03.01",
-                    title: "プロフィール画面をリニューアル",
-                    type: "update",
-                  },
-                  {
-                    date: "2024.02.20",
-                    title: "アレルギー項目の表示を改善",
-                    type: "fix",
-                  },
-                ].map((item, i) => (
-                  <div key={i} className="group cursor-pointer">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs text-slate-400 font-mono">
-                        {item.date}
-                      </span>
-                      {item.type === "new" && (
-                        <span className="text-[10px] bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded font-bold">
-                          NEW
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-sm font-bold text-slate-700 group-hover:text-primary transition-colors">
-                      {item.title}
+              {announcementTab === "roadmap" && (
+                <div className="mt-0 space-y-4 animate-fadeIn">
+                  <div className="bg-orange-50 rounded-2xl p-5 border border-orange-100">
+                    <h3 className="font-bold text-orange-800 mb-2 flex items-center gap-2">
+                      🚀 今後の開発予定
+                    </h3>
+                    <p className="text-xs text-orange-600 mb-4">
+                      2024年の春頃までに実装予定の機能です
                     </p>
-                    {i < 2 && <div className="h-px bg-slate-100 my-3" />}
+                    <ul className="space-y-3">
+                      <li className="flex gap-3 items-start bg-white p-3 rounded-xl shadow-sm">
+                        <span className="text-xl">🤖</span>
+                        <div>
+                          <p className="font-bold text-slate-800 text-sm">
+                            AIレシピ提案
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            冷蔵庫の余り物からアレルギー対応レシピを提案
+                          </p>
+                        </div>
+                      </li>
+                      <li className="flex gap-3 items-start bg-white p-3 rounded-xl shadow-sm">
+                        <span className="text-xl">📅</span>
+                        <div>
+                          <p className="font-bold text-slate-800 text-sm">
+                            献立カレンダー
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            1週間の献立を自動作成＆買い物リスト化
+                          </p>
+                        </div>
+                      </li>
+                    </ul>
                   </div>
-                ))}
-              </TabsContent>
-            </Tabs>
+                </div>
+              )}
+
+              {announcementTab === "updates" && (
+                <div className="mt-0 space-y-4 animate-fadeIn">
+                  {[
+                    {
+                      date: "2024.03.15",
+                      title: "SNS保存機能を追加しました",
+                      type: "new",
+                    },
+                    {
+                      date: "2024.03.01",
+                      title: "プロフィール画面をリニューアル",
+                      type: "update",
+                    },
+                    {
+                      date: "2024.02.20",
+                      title: "アレルギー項目の表示を改善",
+                      type: "fix",
+                    },
+                  ].map((item, i) => (
+                    <div key={i} className="group cursor-pointer">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs text-slate-400 font-mono">
+                          {item.date}
+                        </span>
+                        {item.type === "new" && (
+                          <span className="text-[10px] bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded font-bold">
+                            NEW
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm font-bold text-slate-700 group-hover:text-primary transition-colors">
+                        {item.title}
+                      </p>
+                      {i < 2 && <div className="h-px bg-slate-100 my-3" />}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
-          <div className="p-4 border-t border-slate-100">
+          <div className="p-4 border-t border-slate-100 mt-4">
             <Button
               variant="outline"
               className="w-full"
@@ -1116,8 +1125,9 @@ export default function ProfilePage() {
               閉じる
             </Button>
           </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+      </Modal>
+
       <BottomNav />
     </div>
   );
