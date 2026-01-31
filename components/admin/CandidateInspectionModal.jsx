@@ -181,20 +181,51 @@ export const CandidateInspectionModal = ({
     }
   };
 
+  // Helper to safely get URL from image entry (string or object)
+  const getImageUrl = (img) => {
+    if (!img) return "";
+    return typeof img === "string" ? img : img.url || "";
+  };
+
   // Get image category icon
-  const getImageCategoryIcon = (url) => {
+  const getImageCategoryIcon = (img) => {
     const ci = editedData.classified_images;
-    if (ci?.exterior?.includes(url)) return <Home size={12} />;
-    if (ci?.interior?.includes(url)) return <Camera size={12} />;
-    if (ci?.food?.includes(url)) return <UtensilsCrossed size={12} />;
+    const url = getImageUrl(img);
+
+    // Check if directly in list (for strings) or by URL matching
+    const isExterior = ci?.exterior?.some((i) =>
+      typeof i === "string" ? i === url : i.url === url,
+    );
+    const isInterior = ci?.interior?.some((i) =>
+      typeof i === "string" ? i === url : i.url === url,
+    );
+    const isFood = ci?.food?.some((i) =>
+      typeof i === "string" ? i === url : i.url === url,
+    );
+
+    if (isExterior) return <Home size={12} />;
+    if (isInterior) return <Camera size={12} />;
+    if (isFood) return <UtensilsCrossed size={12} />;
     return <ImageIcon size={12} />;
   };
 
-  const getImageCategoryLabel = (url) => {
+  const getImageCategoryLabel = (img) => {
     const ci = editedData.classified_images;
-    if (ci?.exterior?.includes(url)) return "外観";
-    if (ci?.interior?.includes(url)) return "内観";
-    if (ci?.food?.includes(url)) return "料理";
+    const url = getImageUrl(img);
+
+    const isExterior = ci?.exterior?.some((i) =>
+      typeof i === "string" ? i === url : i.url === url,
+    );
+    const isInterior = ci?.interior?.some((i) =>
+      typeof i === "string" ? i === url : i.url === url,
+    );
+    const isFood = ci?.food?.some((i) =>
+      typeof i === "string" ? i === url : i.url === url,
+    );
+
+    if (isExterior) return "外観";
+    if (isInterior) return "内観";
+    if (isFood) return "料理";
     return "その他";
   };
 
@@ -475,28 +506,31 @@ export const CandidateInspectionModal = ({
                 画像 ({editedData.images?.length || 0}枚)
               </h3>
               <div className="flex gap-2 overflow-x-auto pb-2">
-                {editedData.images?.map((url, idx) => (
-                  <div
-                    key={idx}
-                    onClick={() => setCurrentImageIndex(idx)}
-                    className={`relative w-16 h-16 rounded-lg overflow-hidden border-2 cursor-pointer flex-shrink-0 ${currentImageIndex === idx ? "border-orange-500 ring-2 ring-orange-100" : "border-transparent opacity-70"}`}
-                  >
-                    <img
-                      src={
-                        url.startsWith("http")
-                          ? url
-                          : `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${url}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
-                      }
-                      className="w-full h-full object-cover"
-                      referrerPolicy="no-referrer"
-                      alt=""
-                    />
-                    <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[8px] px-1 py-0.5 flex items-center gap-1">
-                      {getImageCategoryIcon(url)}
-                      {getImageCategoryLabel(url)}
+                {editedData.images?.map((img, idx) => {
+                  const url = getImageUrl(img);
+                  return (
+                    <div
+                      key={idx}
+                      onClick={() => setCurrentImageIndex(idx)}
+                      className={`relative w-16 h-16 rounded-lg overflow-hidden border-2 cursor-pointer flex-shrink-0 ${currentImageIndex === idx ? "border-orange-500 ring-2 ring-orange-100" : "border-transparent opacity-70"}`}
+                    >
+                      <img
+                        src={
+                          url.startsWith("http")
+                            ? url
+                            : `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${url}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
+                        }
+                        className="w-full h-full object-cover"
+                        referrerPolicy="no-referrer"
+                        alt=""
+                      />
+                      <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[8px] px-1 py-0.5 flex items-center gap-1">
+                        {getImageCategoryIcon(img)}
+                        {getImageCategoryLabel(img)}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
                 {(!editedData.images || editedData.images.length === 0) && (
                   <div className="w-full py-4 text-center text-slate-400 text-xs">
                     画像なし - Deep Diveで取得できます
@@ -567,9 +601,11 @@ export const CandidateInspectionModal = ({
                   <>
                     <img
                       src={
-                        editedData.images[currentImageIndex].startsWith("http")
-                          ? editedData.images[currentImageIndex]
-                          : `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${editedData.images[currentImageIndex]}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
+                        getImageUrl(
+                          editedData.images[currentImageIndex],
+                        ).startsWith("http")
+                          ? getImageUrl(editedData.images[currentImageIndex])
+                          : `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${getImageUrl(editedData.images[currentImageIndex])}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
                       }
                       className="w-full h-full object-cover transition-opacity duration-300"
                       alt=""
