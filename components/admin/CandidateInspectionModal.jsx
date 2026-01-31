@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   X,
   CheckCircle,
@@ -22,7 +22,7 @@ import {
   ImageIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import "@/app/map/[id]/RestaurantDetailPage.css";
+import "@/app/(main)/map/[id]/RestaurantDetailPage.css";
 
 export const CandidateInspectionModal = ({
   candidate,
@@ -271,7 +271,12 @@ export const CandidateInspectionModal = ({
               </p>
             </div>
             <div className="flex gap-2">
-              <Button variant="ghost" size="sm" onClick={onClose}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onClose}
+                disabled={false}
+              >
                 <X size={20} />
               </Button>
             </div>
@@ -444,6 +449,7 @@ export const CandidateInspectionModal = ({
                             variant="ghost"
                             size="xs"
                             className="shrink-0"
+                            disabled={false}
                             onClick={(e) => {
                               e.stopPropagation();
                               setActiveTab((prev) =>
@@ -521,6 +527,7 @@ export const CandidateInspectionModal = ({
             </Button>
             <Button
               onClick={handleApprove}
+              disabled={false}
               className="w-full bg-emerald-500 hover:bg-emerald-600 h-12 text-lg shadow-emerald-200"
             >
               <CheckCircle className="mr-2" />
